@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\MonthlyPaymentController;
@@ -196,4 +197,9 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
         ->name('monthly-payments.crear-estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
         ->name('monthly-payments.store-estudiante');
+});
+
+// HU24: Notas finales por materia - Estudiante y Padre/Tutor
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notas-finales', [FinalGradesController::class, 'index'])->name('notas-finales.index');
 });
