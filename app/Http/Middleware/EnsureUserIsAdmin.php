@@ -10,8 +10,8 @@ class EnsureUserIsAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! auth()->check() || auth()->user()->rol->nombre !== 'Administrador') {
-            abort(403, 'No tiene permisos para acceder a esta sección.');
+        if (! $request->user()?->esAdmin()) {
+            abort(403, 'Solo el administrador puede gestionar usuarios.');
         }
 
         return $next($request);

@@ -28,13 +28,19 @@ class UserFactory extends Factory
         return [
             'nombre' => fake()->firstName(),
             'apellido' => fake()->lastName(),
-            'email' => fake()->unique()->safeEmail(),
+            'correo' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
-            'rol_id' => fn () => Role::query()->inRandomOrder()->value('id')
-                ?? Role::query()->create(['nombre' => 'Docente', 'descripcion' => 'Registro de grades_scores y asistencia'])->id,
+            'rol_id' => fn () => Role::query()->firstOrCreate(['nombre' => 'Estudiante'])->id,
             'telefono' => fake()->optional()->phoneNumber(),
             'estado' => 'ACTIVO',
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'rol_id' => Role::query()->firstOrCreate(['nombre' => 'Administrador'])->id,
+        ]);
     }
 }

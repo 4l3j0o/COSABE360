@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // RUTA PRINCIPAL
@@ -38,6 +39,16 @@ Route::get('/dashboard', function () {
 
     return view($vista);
 })->middleware('auth')->name('dashboard');
+
+// HU02: Gestionar usuarios - solo Administrador (crear, editar, activar/desactivar, validar correo único)
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
+    Route::get('/usuarios/crear', [UserController::class, 'create'])->name('users.create');
+    Route::post('/usuarios', [UserController::class, 'store'])->name('users.store');
+    Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('/usuarios/{user}/alternar', [UserController::class, 'toggle'])->name('users.toggle');
+});
 
 // CRUD ESTUDIANTES (solo Administrador)
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
