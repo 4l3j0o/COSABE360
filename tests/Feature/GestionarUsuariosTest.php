@@ -146,4 +146,37 @@ class GestionarUsuariosTest extends TestCase
         $this->get('/usuarios')->assertForbidden();
         $this->post('/usuarios', [])->assertForbidden();
     }
+
+    public function test_admin_puede_eliminar_usuario(): void
+    {
+        $this->actingAsAdmin();
+
+        $user = User::factory()->create(['estado' => 'ACTIVO']);
+
+        $this->delete("/usuarios/{$user->id}")->assertRedirect(route('users.index'));
+
+        $this->assertSame('ELIMINADO', $user->fresh()->estado);
+    }
+
+    public function test_admin_no_puede_eliminar_su_propia_cuenta(): void
+    {
+        $admin = $this->actingAsAdmin();
+
+        $this->delete("/usuarios/{$admin->id}")->assertRedirect(route('users.index'));
+
+        $this->assertSame('ACTIVO', $admin->fresh()->estado);
+    }
+
+    public function test_usuarios_eliminados_no_aparecen_en_listado(): void
+    {
+        $this->actingAsAdmin();
+
+        User::factory()->create(['nombre' => 'Activo', 'estado' => 'ACTIVO']);
+        User::factory()->create(['nombre' => 'Eliminado', 'estado' => 'ELIMINADO']);
+
+        $this->get('/usuarios')
+            ->assertOk()
+            ->assertSee('Activo')
+            ->assertDontSee('Eliminado');
+    }
 }
