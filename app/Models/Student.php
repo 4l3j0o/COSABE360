@@ -32,6 +32,7 @@ class Student extends Model
         'cultura',
         'discapacidad',
         'estado',
+        'quien_es_tutor',
     ];
 
     protected $casts = [

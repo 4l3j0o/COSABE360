@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
+use App\Models\ParentGuardian;
+use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'rudeRecord'])
+        $query = Student::with(['user', 'rudeRecord', 'parentGuardians'])
             ->where('estado', '!=', 'ELIMINADO');
 
         if ($request->filled('buscar')) {
@@ -27,12 +32,30 @@ class StudentController extends Controller
         }
 
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
-        return view('students.index', compact('students'));
+        $eliminadosCount = Student::where('estado', 'ELIMINADO')->count();
+        return view('students.index', compact('students', 'eliminadosCount'));
     }
 
     public function create()
     {
         return view('students.create');
+    }
+
+    public function buscarPersona(Request $request)
+    {
+        $q = $request->input('q', '');
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+        $personas = ParentGuardian::where('numero_documento', 'like', "%{$q}%")
+            ->orWhere(function ($query) use ($q) {
+                $query->where('nombres', 'like', "%{$q}%")
+                      ->orWhere('apellidos', 'like', "%{$q}%");
+            })
+            ->where('estado', 'ACTIVO')
+            ->limit(10)
+            ->get(['id', 'nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'complemento', 'telefono', 'correo', 'direccion', 'ocupacion']);
+        return response()->json($personas);
     }
 
     public function store(Request $request)
@@ -54,6 +77,32 @@ class StudentController extends Controller
             'cultura'            => 'nullable|string|max:50',
             'discapacidad'       => 'nullable|string|max:100',
             'estado'             => 'nullable|in:ACTIVO,INACTIVO,EGRESADO,TRASLADADO',
+            'correo_estudiante'  => 'nullable|email|max:150',
+            'padre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'padre_nombres'      => 'nullable|string|max:150',
+            'padre_apellidos'    => 'nullable|string|max:150',
+            'padre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'padre_num_doc'      => 'nullable|string|max:20',
+            'padre_complemento'  => 'nullable|string|max:5',
+            'padre_telefono'     => 'nullable|string|max:20',
+            'madre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'madre_nombres'      => 'nullable|string|max:150',
+            'madre_apellidos'    => 'nullable|string|max:150',
+            'madre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'madre_num_doc'      => 'nullable|string|max:20',
+            'madre_complemento'  => 'nullable|string|max:5',
+            'madre_telefono'     => 'nullable|string|max:20',
+            'quien_es_tutor'     => 'required|in:PADRE,MADRE,TUTOR',
+            'tutor_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'tutor_nombres'      => 'nullable|string|max:150',
+            'tutor_apellidos'    => 'nullable|string|max:150',
+            'tutor_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'tutor_num_doc'      => 'nullable|string|max:20',
+            'tutor_complemento'  => 'nullable|string|max:5',
+            'tutor_telefono'     => 'nullable|string|max:20',
+            'tutor_correo'       => 'required|email|max:150',
+            'tutor_direccion'    => 'nullable|string|max:255',
+            'tutor_ocupacion'    => 'nullable|string|max:100',
         ]);
 
         $complemento = $datos['complemento'] ?? '';
@@ -65,17 +114,78 @@ class StudentController extends Controller
             return back()->withErrors(['numero_documento' => 'Ya existe un estudiante con ese documento y complemento.'])->withInput();
         }
 
-        $datos['codigo'] = $this->generarCodigo();
-        $datos['complemento'] = $complemento;
-        $datos['estado'] = $datos['estado'] ?? 'ACTIVO';
+        DB::beginTransaction();
 
-        if ($request->hasFile('fotografia')) {
-            $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+        try {
+            $datos['codigo'] = $this->generarCodigo();
+            $datos['complemento'] = $complemento;
+            $datos['estado'] = $datos['estado'] ?? 'ACTIVO';
+
+            if (!empty($datos['correo_estudiante'])) {
+                $datos['correo'] = $datos['correo_estudiante'];
+            } else {
+                $base = Str::ascii(strtolower($datos['nombres'] . '.' . $datos['apellidos']));
+                $email = $base . '@sanber.edu.bo';
+                $i = 1;
+                while (Student::where('correo', $email)->exists()) {
+                    $email = $base . $i . '@sanber.edu.bo';
+                    $i++;
+                }
+                $datos['correo'] = $email;
+            }
+            unset($datos['correo_estudiante']);
+
+            if ($request->hasFile('fotografia')) {
+                $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+            }
+
+            $student = Student::create($datos);
+
+            // --- Crear o asociar padre ---
+            $padre = $this->obtenerOCrearPadre($request, 'padre', $datos, 'PADRE');
+            if ($padre) {
+                $student->parentGuardians()->attach($padre->id, [
+                    'tipo_relacion' => 'PADRE',
+                    'es_principal'  => ($datos['quien_es_tutor'] === 'PADRE'),
+                    'convive'       => true,
+                ]);
+            }
+
+            // --- Crear o asociar madre ---
+            $madre = $this->obtenerOCrearPadre($request, 'madre', $datos, 'MADRE');
+            if ($madre) {
+                $student->parentGuardians()->attach($madre->id, [
+                    'tipo_relacion' => 'MADRE',
+                    'es_principal'  => ($datos['quien_es_tutor'] === 'MADRE'),
+                    'convive'       => true,
+                ]);
+            }
+
+            // --- Tutor (puede ser padre, madre u otro) ---
+            if ($datos['quien_es_tutor'] === 'TUTOR') {
+                $tutor = $this->obtenerOCrearPadre($request, 'tutor', $datos, 'TUTOR');
+                if ($tutor) {
+                    $student->parentGuardians()->attach($tutor->id, [
+                        'tipo_relacion' => 'TUTOR',
+                        'es_principal'  => true,
+                        'convive'       => true,
+                    ]);
+                    $this->crearCuentaUsuarioSiNoExiste($tutor);
+                }
+            } elseif ($datos['quien_es_tutor'] === 'PADRE' && $padre) {
+                $this->crearCuentaUsuarioSiNoExiste($padre);
+            } elseif ($datos['quien_es_tutor'] === 'MADRE' && $madre) {
+                $this->crearCuentaUsuarioSiNoExiste($madre);
+            }
+
+            DB::commit();
+
+            return redirect()->route('students.index')->with('mensaje', 'Estudiante registrado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['general' => 'Error al registrar: ' . $e->getMessage()])->withInput();
         }
-
-        Student::create($datos);
-
-        return redirect()->route('students.index')->with('mensaje', 'Estudiante registrado correctamente.');
     }
 
     public function show(Student $student)
@@ -108,6 +218,32 @@ class StudentController extends Controller
             'cultura'            => 'nullable|string|max:50',
             'discapacidad'       => 'nullable|string|max:100',
             'estado'             => 'required|in:ACTIVO,INACTIVO,EGRESADO,TRASLADADO',
+            'correo_estudiante'  => 'nullable|email|max:150',
+            'padre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'padre_nombres'      => 'nullable|string|max:150',
+            'padre_apellidos'    => 'nullable|string|max:150',
+            'padre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'padre_num_doc'      => 'nullable|string|max:20',
+            'padre_complemento'  => 'nullable|string|max:5',
+            'padre_telefono'     => 'nullable|string|max:20',
+            'madre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'madre_nombres'      => 'nullable|string|max:150',
+            'madre_apellidos'    => 'nullable|string|max:150',
+            'madre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'madre_num_doc'      => 'nullable|string|max:20',
+            'madre_complemento'  => 'nullable|string|max:5',
+            'madre_telefono'     => 'nullable|string|max:20',
+            'quien_es_tutor'     => 'required|in:PADRE,MADRE,TUTOR',
+            'tutor_id_existente' => 'nullable|integer|exists:parent_guardians,id',
+            'tutor_nombres'      => 'nullable|string|max:150',
+            'tutor_apellidos'    => 'nullable|string|max:150',
+            'tutor_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
+            'tutor_num_doc'      => 'nullable|string|max:20',
+            'tutor_complemento'  => 'nullable|string|max:5',
+            'tutor_telefono'     => 'nullable|string|max:20',
+            'tutor_correo'       => 'nullable|email|max:150',
+            'tutor_direccion'    => 'nullable|string|max:255',
+            'tutor_ocupacion'    => 'nullable|string|max:100',
         ]);
 
         $complemento = $datos['complemento'] ?? '';
@@ -120,15 +256,66 @@ class StudentController extends Controller
             return back()->withErrors(['numero_documento' => 'Ya existe otro estudiante con ese documento y complemento.'])->withInput();
         }
 
-        $datos['complemento'] = $complemento;
+        DB::beginTransaction();
 
-        if ($request->hasFile('fotografia')) {
-            $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+        try {
+            $datos['complemento'] = $complemento;
+
+            if (!empty($datos['correo_estudiante'])) {
+                $datos['correo'] = $datos['correo_estudiante'];
+            }
+            unset($datos['correo_estudiante']);
+
+            if ($request->hasFile('fotografia')) {
+                $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+            }
+
+            $student->update($datos);
+
+            $student->parentGuardians()->detach();
+
+            $padre = $this->obtenerOCrearPadre($request, 'padre', $datos, 'PADRE');
+            if ($padre) {
+                $student->parentGuardians()->attach($padre->id, [
+                    'tipo_relacion' => 'PADRE',
+                    'es_principal'  => ($datos['quien_es_tutor'] === 'PADRE'),
+                    'convive'       => true,
+                ]);
+            }
+
+            $madre = $this->obtenerOCrearPadre($request, 'madre', $datos, 'MADRE');
+            if ($madre) {
+                $student->parentGuardians()->attach($madre->id, [
+                    'tipo_relacion' => 'MADRE',
+                    'es_principal'  => ($datos['quien_es_tutor'] === 'MADRE'),
+                    'convive'       => true,
+                ]);
+            }
+
+            if ($datos['quien_es_tutor'] === 'TUTOR') {
+                $tutor = $this->obtenerOCrearPadre($request, 'tutor', $datos, 'TUTOR');
+                if ($tutor) {
+                    $student->parentGuardians()->attach($tutor->id, [
+                        'tipo_relacion' => 'TUTOR',
+                        'es_principal'  => true,
+                        'convive'       => true,
+                    ]);
+                    $this->crearCuentaUsuarioSiNoExiste($tutor);
+                }
+            } elseif ($datos['quien_es_tutor'] === 'PADRE' && $padre) {
+                $this->crearCuentaUsuarioSiNoExiste($padre);
+            } elseif ($datos['quien_es_tutor'] === 'MADRE' && $madre) {
+                $this->crearCuentaUsuarioSiNoExiste($madre);
+            }
+
+            DB::commit();
+
+            return redirect()->route('students.index')->with('mensaje', 'Estudiante actualizado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['general' => 'Error al actualizar: ' . $e->getMessage()])->withInput();
         }
-
-        $student->update($datos);
-
-        return redirect()->route('students.show', $student)->with('mensaje', 'Estudiante actualizado correctamente.');
     }
 
     public function destroy(Student $student)
@@ -150,6 +337,62 @@ class StudentController extends Controller
     {
         $student->update(['estado' => 'ACTIVO']);
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
+    }
+
+    private function obtenerOCrearPadre(Request $request, string $prefijo, array $datos, string $tipoRelacion): ?ParentGuardian
+    {
+        $idExistente = $request->input("{$prefijo}_id_existente");
+
+        if ($idExistente) {
+            return ParentGuardian::find($idExistente);
+        }
+
+        $nombres = $request->input("{$prefijo}_nombres");
+        $numDoc = $request->input("{$prefijo}_num_doc");
+
+        if (empty($nombres) || empty($numDoc)) {
+            return null;
+        }
+
+        $complemento = $request->input("{$prefijo}_complemento") ?? '';
+
+        return ParentGuardian::firstOrCreate(
+            ['numero_documento' => $numDoc, 'complemento' => $complemento],
+            [
+                'nombres'        => $nombres,
+                'apellidos'      => $request->input("{$prefijo}_apellidos") ?? '',
+                'tipo_documento' => $request->input("{$prefijo}_tipo_doc") ?? 'CI',
+                'telefono'       => $request->input("{$prefijo}_telefono"),
+                'correo'         => $request->input("{$prefijo}_correo") ?? null,
+                'direccion'      => $request->input("{$prefijo}_direccion") ?? null,
+                'ocupacion'      => $request->input("{$prefijo}_ocupacion") ?? null,
+                'estado'         => 'ACTIVO',
+            ]
+        );
+    }
+
+    private function crearCuentaUsuarioSiNoExiste(ParentGuardian $tutor): void
+    {
+        if ($tutor->usuario_id || empty($tutor->correo)) {
+            return;
+        }
+
+        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
+        if (!$rolPadre) {
+            return;
+        }
+
+        $password = Str::random(8);
+        $usuario = User::create([
+            'nombre'   => $tutor->nombres,
+            'apellido' => $tutor->apellidos,
+            'email'    => $tutor->correo,
+            'password' => $password,
+            'rol_id'   => $rolPadre->id,
+            'telefono' => $tutor->telefono,
+            'estado'   => 'ACTIVO',
+        ]);
+        $tutor->update(['usuario_id' => $usuario->id]);
     }
 
     private function generarCodigo(): string

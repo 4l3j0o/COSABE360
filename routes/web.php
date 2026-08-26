@@ -44,6 +44,7 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
     Route::patch('students/{student}/restaurar', [StudentController::class, 'restaurar'])->name('students.restaurar');
+    Route::get('buscar-persona', [StudentController::class, 'buscarPersona'])->name('students.buscarPersona');
 });
 
 // CONFIGURACIÓN TRIBUTARIA (solo Administrador)
