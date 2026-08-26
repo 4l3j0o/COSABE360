@@ -52,6 +52,17 @@
             document.getElementById('sidebar-mobile-wrap').classList.remove('open');
             document.getElementById('sidebar-backdrop').classList.remove('open');
         }
+        function openModal(id) {
+            var el = document.getElementById(id);
+            el.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            el.style.display = 'none';
+            document.body.style.overflow = '';
+        }
     </script>
+    @stack('modals')
 </body>
 </html>

@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('medical_records', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('estudiante_id')->constrained('students')->cascadeOnDelete();
+            $table->string('grupo_sanguineo', 5)->nullable();
+            $table->text('alergias')->nullable();
+            $table->text('medicamentos')->nullable();
+            $table->text('condiciones_especiales')->nullable();
+            $table->string('contacto_emergencia_nombre', 150)->nullable();
+            $table->string('contacto_emergencia_telefono', 20)->nullable();
+            $table->string('contacto_emergencia_parentesco', 50)->nullable();
             $table->timestamps();
         });
     }

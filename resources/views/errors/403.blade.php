@@ -2,6 +2,10 @@
 
 @section('titulo', 'Acceso Denegado')
 
+@section('sidebar')
+    @include('dashboard.partials._sidebar-admin')
+@endsection
+
 @section('contenido')
     <div class="flex flex-col items-center justify-center py-20">
         <div class="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mb-6">

@@ -47,12 +47,12 @@ class Student extends Model
 
     public function rudeRecord(): HasOne
     {
-        return $this->hasOne(StudentRudeRecord::class);
+        return $this->hasOne(StudentRudeRecord::class, 'estudiante_id');
     }
 
     public function medicalRecord(): HasOne
     {
-        return $this->hasOne(MedicalRecord::class);
+        return $this->hasOne(MedicalRecord::class, 'estudiante_id');
     }
 
     public function parentGuardians(): BelongsToMany
