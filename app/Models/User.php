@@ -16,7 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'nombre',
         'apellido',
-        'email',
+        'correo',
         'password',
         'rol_id',
         'telefono',
@@ -58,5 +58,27 @@ class User extends Authenticatable
     public function estaBloqueado(): bool
     {
         return $this->bloqueado_hasta !== null && $this->bloqueado_hasta->isFuture();
+    }
+
+    public function esAdmin(): bool
+    {
+        return $this->rol?->nombre === 'Administrador';
+    }
+
+    public function estaActivo(): bool
+    {
+        return $this->estado === 'ACTIVO';
+    }
+
+    // HU05 compat: helpers de permisos
+    public function hasRole(string $role): bool
+    {
+        return $this->rol && $this->rol->nombre === $role;
+    }
+
+    public function hasAnyRole(string|array $roles): bool
+    {
+        $roles = is_string($roles) ? array_map('trim', explode(',', $roles)) : $roles;
+        return $this->rol && in_array($this->rol->nombre, $roles, true);
     }
 }
