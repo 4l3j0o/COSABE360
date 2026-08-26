@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSectionRequest;
+use App\Http\Requests\UpdateSectionRequest;
+use App\Http\Resources\SectionResource;
 use App\Models\Section;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
 
 class SectionController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $sections = Section::with(['grade', 'responsable']);
 
@@ -25,47 +28,29 @@ class SectionController extends Controller
 
         $sections->orderBy('grado_id')->orderBy('nombre');
 
-        return response()->json(['data' => $sections->get()]);
+        return SectionResource::collection($sections->get());
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSectionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'grado_id'       => 'required|exists:grades,id',
-            'nombre'         => ['required', 'string', 'max:10', Rule::unique('sections')->where(fn ($q) => $q->where('grado_id', $request->grado_id))],
-            'responsable_id' => 'nullable|exists:teachers,id',
-            'capacidad'      => 'nullable|integer|min:1|max:255',
-        ]);
-
+        $validated = $request->validated();
         $validated['estado'] = 'ACTIVO';
 
         $section = Section::create($validated);
 
-        return response()->json(['data' => $section->fresh()->load(['grade', 'responsable'])], 201);
+        return (new SectionResource($section->fresh()->load(['grade', 'responsable'])))->response()->setStatusCode(201);
     }
 
-    public function show(Section $section): JsonResponse
+    public function show(Section $section): SectionResource
     {
-        return response()->json(['data' => $section->load(['grade', 'responsable'])]);
+        return new SectionResource($section->load(['grade', 'responsable']));
     }
 
-    public function update(Request $request, Section $section): JsonResponse
+    public function update(UpdateSectionRequest $request, Section $section): SectionResource
     {
-        $validated = $request->validate([
-            'nombre'         => [
-                'sometimes', 'string', 'max:10',
-                Rule::unique('sections', 'nombre')
-                    ->where('grado_id', $section->grado_id)
-                    ->ignore($section->id),
-            ],
-            'responsable_id' => 'nullable|exists:teachers,id',
-            'capacidad'      => 'sometimes|integer|min:1|max:255',
-            'estado'         => ['sometimes', Rule::in(['ACTIVO', 'INACTIVO'])],
-        ]);
+        $section->update($request->validated());
 
-        $section->update($validated);
-
-        return response()->json(['data' => $section->fresh()->load(['grade', 'responsable'])]);
+        return new SectionResource($section->fresh()->load(['grade', 'responsable']));
     }
 
     public function destroy(Section $section): JsonResponse

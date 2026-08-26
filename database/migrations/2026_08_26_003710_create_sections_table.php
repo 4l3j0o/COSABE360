@@ -14,14 +14,13 @@ return new class extends Migration
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('grado_id')->constrained('grades')->restrictOnDelete();
-            $table->string('nombre', 10);
+            $table->string('nombre', 10)->nullable(false);
             $table->foreignId('responsable_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->unsignedTinyInteger('capacidad')->default(40);
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
 
             $table->unique(['grado_id', 'nombre'], 'uk_grado_paralelo');
-            $table->index('grado_id');
             $table->index('responsable_id');
         });
     }

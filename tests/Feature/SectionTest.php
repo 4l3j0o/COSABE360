@@ -331,4 +331,69 @@ class SectionTest extends TestCase
             ->assertJsonPath('data.grade.id', $grado->id)
             ->assertJsonPath('data.grade.nombre', '1ro Primaria');
     }
+
+    public function test_asigna_docente_responsable_a_paralelo(): void
+    {
+        $this->ensureTables();
+        $nivel = DB::table('levels')->first();
+        $grado = $this->createGrado($nivel->id);
+
+        DB::table('teachers')->insert([
+            'id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/sections', [
+            'grado_id'       => $grado->id,
+            'nombre'         => 'A',
+            'responsable_id' => 1,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.responsable_id', 1);
+        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => 1]);
+    }
+
+    public function test_crea_paralelo_sin_docente_responsable(): void
+    {
+        $this->ensureTables();
+        $nivel = DB::table('levels')->first();
+        $grado = $this->createGrado($nivel->id);
+
+        $response = $this->postJson('/api/sections', [
+            'grado_id' => $grado->id,
+            'nombre'   => 'A',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.responsable_id', null);
+    }
+
+    public function test_edita_docente_responsable(): void
+    {
+        $this->ensureTables();
+        $nivel = DB::table('levels')->first();
+        $grado = $this->createGrado($nivel->id);
+
+        DB::table('teachers')->insert([
+            ['id' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $sec = DB::table('sections')->insertGetId([
+            'grado_id' => $grado->id,
+            'nombre'   => 'A',
+            'responsable_id' => 1,
+            'capacidad' => 40,
+            'estado'    => 'ACTIVO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->putJson("/api/sections/{$sec}", ['responsable_id' => 2]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.responsable_id', 2);
+    }
 }
