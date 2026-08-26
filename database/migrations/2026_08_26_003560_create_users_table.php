@@ -16,13 +16,12 @@ return new class extends Migration
             $table->string('password');
             $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
             $table->string('telefono', 20)->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->unsignedTinyInteger('intentos_fallidos')->default(0);
             $table->timestamp('bloqueado_hasta')->nullable();
             $table->timestamp('ultimo_acceso')->nullable();
             $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index('estado');
         });
