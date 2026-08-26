@@ -30,8 +30,8 @@
         <div class="space-y-4 md:space-y-5">
 
             <div class="bg-card border border-border rounded-xl overflow-hidden">
-                <div class="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
-                    <h3 class="text-sm font-semibold text-foreground">Datos de la Entidad</h3>
+                <div class="px-4 md:px-6 py-3 md:py-4 bg-primary/10 border-b border-primary/20">
+                    <h3 class="text-sm font-semibold text-primary">Datos de la Entidad</h3>
                 </div>
                 <div class="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
                     <div class="space-y-1">
@@ -78,8 +78,8 @@
             </div>
 
             <div class="bg-card border border-border rounded-xl overflow-hidden">
-                <div class="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
-                    <h3 class="text-sm font-semibold text-foreground">Servicios de Facturación Electrónica</h3>
+                <div class="px-4 md:px-6 py-3 md:py-4 bg-primary/10 border-b border-primary/20">
+                    <h3 class="text-sm font-semibold text-primary">Servicios de Facturación Electrónica</h3>
                 </div>
                 <div class="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                     <div class="space-y-1">
@@ -117,8 +117,8 @@
             </div>
 
             <div class="bg-card border border-border rounded-xl overflow-hidden">
-                <div class="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
-                    <h3 class="text-sm font-semibold text-foreground">Exenciones Tributarias</h3>
+                <div class="px-4 md:px-6 py-3 md:py-4 bg-primary/10 border-b border-primary/20">
+                    <h3 class="text-sm font-semibold text-primary">Exenciones Tributarias</h3>
                 </div>
                 <div class="p-4 md:p-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -151,8 +151,8 @@
             </div>
 
             <div class="bg-card border border-border rounded-xl overflow-hidden">
-                <div class="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
-                    <h3 class="text-sm font-semibold text-foreground">Leyendas Obligatorias en Facturas</h3>
+                <div class="px-4 md:px-6 py-3 md:py-4 bg-primary/10 border-b border-primary/20">
+                    <h3 class="text-sm font-semibold text-primary">Leyendas Obligatorias en Facturas</h3>
                 </div>
                 <div class="p-4 md:p-6 space-y-4">
                     <div class="space-y-1">
