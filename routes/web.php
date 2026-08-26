@@ -40,7 +40,7 @@ Route::get('/dashboard', function () {
     return view($vista);
 })->middleware('auth')->name('dashboard');
 
-// HU02: Gestionar usuarios - solo Administrador (crear, editar, activar/desactivar, validar correo único)
+// HU02: Gestionar usuarios - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
     Route::get('/usuarios/crear', [UserController::class, 'create'])->name('users.create');
@@ -48,9 +48,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('users.update');
     Route::patch('/usuarios/{user}/alternar', [UserController::class, 'toggle'])->name('users.toggle');
+    Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
-// CRUD ESTUDIANTES (solo Administrador)
+// CRUD ESTUDIANTES solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
@@ -58,18 +59,8 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::get('buscar-persona', [StudentController::class, 'buscarPersona'])->name('students.buscarPersona');
 });
 
-// CONFIGURACIÓN TRIBUTARIA (solo Administrador)
+// CONFIGURACIÓN TRIBUTARIA solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
-});
-
-// GESTIÓN DE USUARIOS (solo Administrador)
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
-    Route::get('/usuarios/crear', [UserController::class, 'create'])->name('users.create');
-    Route::post('/usuarios', [UserController::class, 'store'])->name('users.store');
-    Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::patch('/usuarios/{user}/alternar', [UserController::class, 'toggle'])->name('users.toggle');
 });

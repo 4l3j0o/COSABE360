@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('rol')->orderBy('nombre')->paginate(10);
+        $users = User::with('rol')->where('estado', '!=', 'ELIMINADO')->orderBy('nombre')->paginate(10);
 
         return view('users.index', compact('users'));
     }
@@ -85,5 +85,16 @@ class UserController extends Controller
         $accion = $nuevoEstado === 'ACTIVO' ? 'activado' : 'desactivado';
 
         return redirect()->route('users.index')->with('success', "Usuario {$accion} correctamente.");
+    }
+
+    public function destroy(User $user)
+    {
+        if ($user->is(auth()->user())) {
+            return redirect()->route('users.index')->with('error', 'No puedes eliminar tu propia cuenta.');
+        }
+
+        $user->update(['estado' => 'ELIMINADO']);
+
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
     }
 }
