@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('levels', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre', 50)->unique();
+            $table->string('descripcion', 255)->nullable();
+            $table->unsignedTinyInteger('orden');
+            $table->string('estado')->default('ACTIVO'); // ACTIVO / INACTIVO
             $table->timestamps();
         });
     }

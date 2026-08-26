@@ -13,11 +13,18 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('nombre', 100);
+            $table->string('apellido', 100);
+            $table->string('correo', 150)->unique();
             $table->string('password');
+            $table->foreignId('rol_id')->constrained('roles')->onDelete('restrict');
+            $table->string('telefono', 20)->nullable();
+            $table->string('estado')->default('ACTIVO'); // ACTIVO / INACTIVO
+            $table->unsignedTinyInteger('intentos_fallidos')->default(0);
+            $table->timestamp('bloqueado_hasta')->nullable();
+            $table->timestamp('ultimo_acceso')->nullable();
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
         });
 
