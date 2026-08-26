@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre', 100);
             $table->string('apellido', 100);
-            $table->string('email', 150)->unique();
+            $table->string('correo', 150)->unique();
             $table->string('password');
             $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
             $table->string('telefono', 20)->nullable();
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
 
+            $table->index('correo');
             $table->index('estado');
         });
 
