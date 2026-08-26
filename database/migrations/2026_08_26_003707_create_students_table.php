@@ -30,9 +30,8 @@ return new class extends Migration
             $table->string('idioma', 50)->default('Castellano');
             $table->string('cultura', 50)->nullable();
             $table->string('discapacidad', 100)->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
-            $table->softDeletes();
             $table->unique(['numero_documento', 'complemento']);
             $table->index('codigo');
             $table->index(['nombres', 'apellidos']);
