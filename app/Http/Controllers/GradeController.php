@@ -3,63 +3,83 @@
 namespace App\Http\Controllers;
 
 use App\Models\Grade;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 class GradeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        //
+        $grades = Grade::with('level')
+            ->when($request->query('nivel_id'), fn ($q, $v) => $q->where('nivel_id', $v))
+            ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
+            ->orderBy('nivel_id')
+            ->orderBy('orden')
+            ->get();
+
+        return response()->json(['data' => $grades]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request): JsonResponse
     {
-        //
+        $validated = $request->validate([
+            'nivel_id' => ['required', 'integer', 'exists:levels,id'],
+            'nombre' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('grades', 'nombre')->where('nivel_id', $request->integer('nivel_id')),
+            ],
+            'orden' => ['required', 'integer', 'min:1'],
+            'estado' => ['sometimes', 'in:ACTIVO,INACTIVO'],
+        ]);
+
+        $grade = Grade::create($validated + ['estado' => 'ACTIVO']);
+
+        return response()->json(['data' => $grade->load('level')], 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show(Grade $grade): JsonResponse
     {
-        //
+        return response()->json(['data' => $grade->load('level')]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Grade $grade)
+    public function update(Request $request, Grade $grade): JsonResponse
     {
-        //
+        $validated = $request->validate([
+            'nivel_id' => ['sometimes', 'integer', 'exists:levels,id'],
+            'nombre' => [
+                'sometimes',
+                'string',
+                'max:50',
+                Rule::unique('grades', 'nombre')
+                    ->where('nivel_id', $request->integer('nivel_id', $grade->nivel_id))
+                    ->ignore($grade->id),
+            ],
+            'orden' => ['sometimes', 'integer', 'min:1'],
+            'estado' => ['sometimes', 'in:ACTIVO,INACTIVO'],
+        ]);
+
+        $grade->update($validated);
+
+        return response()->json(['data' => $grade->fresh('level')]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Grade $grade)
+    public function destroy(Grade $grade): JsonResponse
     {
-        //
-    }
+        $hasSections = Schema::hasColumn('sections', 'grado_id')
+            && $grade->sections()->exists();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Grade $grade)
-    {
-        //
-    }
+        if ($hasSections) {
+            return response()->json([
+                'message' => 'No se puede eliminar el grado porque tiene paralelos o estudiantes matriculados asociados.',
+            ], 409);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Grade $grade)
-    {
-        //
+        $grade->delete();
+
+        return response()->json(['message' => 'Grado eliminado correctamente.']);
     }
 }
