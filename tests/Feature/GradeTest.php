@@ -134,6 +134,81 @@ class GradeTest extends TestCase
         $this->assertDatabaseHas('grades', ['id' => $grade->id]);
     }
 
+    public function test_no_elimina_un_grado_con_estudiantes_matriculados(): void
+    {
+        Schema::table('sections', function ($table) {
+            $table->foreignId('grado_id')->nullable();
+        });
+        Schema::table('courses', function ($table) {
+            $table->foreignId('grado_id')->nullable();
+            $table->foreignId('paralelo_id')->nullable();
+        });
+        Schema::table('registrations', function ($table) {
+            $table->foreignId('curso_id')->nullable();
+            $table->string('estado')->default('ACTIVA');
+        });
+
+        $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
+        $grade = Grade::create([
+            'nivel_id' => $nivel->id,
+            'nombre' => '4to Primaria',
+            'orden' => 4,
+        ]);
+
+        \DB::table('courses')->insert([
+            'grado_id' => $grade->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('registrations')->insert([
+            'curso_id' => \DB::getPdo()->lastInsertId(),
+            'estado' => 'ACTIVA',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->deleteJson("/api/grades/{$grade->id}");
+
+        $response->assertStatus(409)
+            ->assertJsonPath('message', 'No se puede eliminar el grado porque tiene estudiantes matriculados.');
+        $this->assertDatabaseHas('grades', ['id' => $grade->id]);
+    }
+
+    public function test_permite_eliminar_grado_cuya_matricula_fue_cancelada(): void
+    {
+        Schema::table('courses', function ($table) {
+            $table->foreignId('grado_id')->nullable();
+        });
+        Schema::table('registrations', function ($table) {
+            $table->foreignId('curso_id')->nullable();
+            $table->string('estado')->default('ACTIVA');
+        });
+
+        $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
+        $grade = Grade::create([
+            'nivel_id' => $nivel->id,
+            'nombre' => '5to Primaria',
+            'orden' => 5,
+        ]);
+
+        \DB::table('courses')->insert([
+            'grado_id' => $grade->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        \DB::table('registrations')->insert([
+            'curso_id' => \DB::getPdo()->lastInsertId(),
+            'estado' => 'CANCELADA',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->deleteJson("/api/grades/{$grade->id}");
+
+        $response->assertOk();
+        $this->assertDatabaseMissing('grades', ['id' => $grade->id]);
+    }
+
     public function test_elimina_un_grado_sin_paralelos_ni_matriculados(): void
     {
         $nivel = Level::where('nombre', 'Inicial')->firstOrFail();

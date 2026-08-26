@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Grade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
@@ -69,12 +70,27 @@ class GradeController extends Controller
 
     public function destroy(Grade $grade): JsonResponse
     {
-        $hasSections = Schema::hasColumn('sections', 'grado_id')
-            && $grade->sections()->exists();
+        $bloqueadoPor = [];
 
-        if ($hasSections) {
+        if (Schema::hasColumn('sections', 'grado_id') && $grade->sections()->exists()) {
+            $bloqueadoPor[] = 'paralelos asociados';
+        }
+
+        if (Schema::hasColumn('courses', 'grado_id') && Schema::hasColumn('registrations', 'curso_id')) {
+            $tieneMatriculados = DB::table('registrations')
+                ->join('courses', 'registrations.curso_id', '=', 'courses.id')
+                ->where('courses.grado_id', $grade->id)
+                ->where('registrations.estado', '!=', 'CANCELADA')
+                ->exists();
+
+            if ($tieneMatriculados) {
+                $bloqueadoPor[] = 'estudiantes matriculados';
+            }
+        }
+
+        if ($bloqueadoPor !== []) {
             return response()->json([
-                'message' => 'No se puede eliminar el grado porque tiene paralelos o estudiantes matriculados asociados.',
+                'message' => 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.',
             ], 409);
         }
 
