@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('content')
+@section('contenido')
     <div class="max-w-xl mx-auto">
         <h1 class="text-2xl font-semibold mb-6">Nuevo usuario</h1>
 
@@ -29,10 +29,10 @@
             </div>
 
             <div>
-                <label for="correo" class="block text-sm font-medium mb-1.5">Correo electrónico</label>
-                <input id="correo" name="correo" type="email" value="{{ old('correo') }}" required
+                <label for="email" class="block text-sm font-medium mb-1.5">Correo electrónico</label>
+                <input id="email" name="email" type="email" value="{{ old('email') }}" required
                        class="w-full rounded-sm border-[#19140035] dark:border-[#3E3E3A] bg-transparent px-3 py-2 text-sm focus:border-[#1b1b18] dark:focus:border-[#EDEDEC] focus:ring-0">
-                @error('correo')
+                @error('email')
                     <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>

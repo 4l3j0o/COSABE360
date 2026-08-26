@@ -14,15 +14,10 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'nombre',
         'apellido',
-        'correo',
+        'email',
         'password',
         'rol_id',
         'telefono',
@@ -32,33 +27,23 @@ class User extends Authenticatable
         'ultimo_acceso',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
             'bloqueado_hasta' => 'datetime',
             'ultimo_acceso' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 
     public function rol(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'rol_id');
     }
 
     public function esAdmin(): bool
@@ -69,5 +54,10 @@ class User extends Authenticatable
     public function estaActivo(): bool
     {
         return $this->estado === 'ACTIVO';
+    }
+
+    public function estaBloqueado(): bool
+    {
+        return $this->bloqueado_hasta !== null && $this->bloqueado_hasta->isFuture();
     }
 }

@@ -41,14 +41,14 @@ class GestionarUsuariosTest extends TestCase
         $this->post('/usuarios', [
             'nombre' => 'Maria',
             'apellido' => 'Lopez',
-            'correo' => 'maria@sanber.com',
+            'email' => 'maria@sanber.com',
             'password' => 'password123',
             'rol_id' => $rolDocente->id,
             'telefono' => '70012345',
         ])->assertRedirect(route('users.index'));
 
         $this->assertDatabaseHas('users', [
-            'correo' => 'maria@sanber.com',
+            'email' => 'maria@sanber.com',
             'nombre' => 'Maria',
             'apellido' => 'Lopez',
             'rol_id' => $rolDocente->id,
@@ -56,9 +56,9 @@ class GestionarUsuariosTest extends TestCase
         ]);
     }
 
-    public function test_no_permite_crear_usuario_con_correo_duplicado(): void
+    public function test_no_permite_crear_usuario_con_email_duplicado(): void
     {
-        User::factory()->create(['correo' => 'duplicado@sanber.com']);
+        User::factory()->create(['email' => 'duplicado@sanber.com']);
 
         $this->actingAsAdmin();
 
@@ -67,10 +67,10 @@ class GestionarUsuariosTest extends TestCase
         $this->post('/usuarios', [
             'nombre' => 'Otro',
             'apellido' => 'Usuario',
-            'correo' => 'duplicado@sanber.com',
+            'email' => 'duplicado@sanber.com',
             'password' => 'password123',
             'rol_id' => $rol->id,
-        ])->assertSessionHasErrors('correo');
+        ])->assertSessionHasErrors('email');
 
         $this->assertDatabaseCount('users', 2);
     }
@@ -85,7 +85,7 @@ class GestionarUsuariosTest extends TestCase
         $this->put("/usuarios/{$user->id}", [
             'nombre' => 'NombreEditado',
             'apellido' => 'ApellidoEditado',
-            'correo' => $user->correo,
+            'email' => $user->email,
             'rol_id' => $rolDirector->id,
             'telefono' => '70098765',
         ])->assertRedirect(route('users.index'));
@@ -98,21 +98,21 @@ class GestionarUsuariosTest extends TestCase
         ]);
     }
 
-    public function test_no_permite_editar_con_correo_de_otro_usuario(): void
+    public function test_no_permite_editar_con_email_de_otro_usuario(): void
     {
-        User::factory()->create(['correo' => 'otro@sanber.com']);
+        User::factory()->create(['email' => 'otro@sanber.com']);
 
         $this->actingAsAdmin();
 
-        $user = User::factory()->create(['correo' => 'actual@sanber.com']);
+        $user = User::factory()->create(['email' => 'actual@sanber.com']);
         $rol = Role::query()->firstOrCreate(['nombre' => 'Estudiante']);
 
         $this->put("/usuarios/{$user->id}", [
             'nombre' => $user->nombre,
             'apellido' => $user->apellido,
-            'correo' => 'otro@sanber.com',
+            'email' => 'otro@sanber.com',
             'rol_id' => $rol->id,
-        ])->assertSessionHasErrors('correo');
+        ])->assertSessionHasErrors('email');
     }
 
     public function test_admin_puede_desactivar_y_activar_usuarios(): void

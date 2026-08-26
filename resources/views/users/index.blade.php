@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('content')
+@section('contenido')
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold">Gestión de usuarios</h1>
 
@@ -26,7 +26,7 @@
                 @forelse ($users as $user)
                     <tr class="border-b border-[#19140015] dark:border-[#3E3E3A]/50 last:border-0 hover:bg-[#FDFDFC] dark:hover:bg-[#0a0a0a] transition">
                         <td class="px-4 py-3 font-medium">{{ $user->nombre }} {{ $user->apellido }}</td>
-                        <td class="px-4 py-3 text-[#706f6c] dark:text-[#A1A09A]">{{ $user->correo }}</td>
+                        <td class="px-4 py-3 text-[#706f6c] dark:text-[#A1A09A]">{{ $user->email }}</td>
                         <td class="px-4 py-3 text-[#706f6c] dark:text-[#A1A09A]">{{ $user->telefono ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <span class="inline-block px-2 py-0.5 rounded-full text-xs {{ $user->esAdmin() ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300' }}">

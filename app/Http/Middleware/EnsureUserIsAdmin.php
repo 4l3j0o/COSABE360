@@ -8,13 +8,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsAdmin
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->esAdmin()) {
-            abort(403, 'Solo el administrador puede gestionar usuarios.');
+        if (! auth()->check() || ! auth()->user()->esAdmin()) {
+            abort(403, 'No tiene permisos para acceder a esta sección.');
         }
 
         return $next($request);

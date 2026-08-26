@@ -26,7 +26,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
-            'correo' => ['required', 'string', 'lowercase', 'email', 'max:150', 'unique:users,correo'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'rol_id' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
@@ -50,13 +50,13 @@ class UserController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
-            'correo' => [
+            'email' => [
                 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:150',
-                Rule::unique('users', 'correo')->ignore($user->id),
+                Rule::unique('users', 'email')->ignore($user->id),
             ],
             'password' => ['nullable', 'string', 'min:8'],
             'rol_id' => ['required', 'integer', 'exists:roles,id'],

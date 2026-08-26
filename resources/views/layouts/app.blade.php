@@ -1,59 +1,68 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ config('app.name', 'Sanber') }}</title>
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@yield('titulo', 'San Bernardo')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] min-h-screen">
-    <header class="border-b border-[#19140035] dark:border-[#3E3E3A] bg-white/80 dark:bg-[#161615]/80 backdrop-blur sticky top-0 z-10">
-        <nav class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
-            <a href="{{ url('/') }}" class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Sanber</a>
+<body class="bg-background text-foreground min-h-screen font-sans flex">
 
-            <div class="flex items-center gap-4">
-                @auth
-                    <a href="{{ route('users.index') }}"
-                       class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition">
-                        Usuarios
-                    </a>
-                    <span class="text-[#706f6c] dark:text-[#A1A09A]">{{ auth()->user()->nombre }} ({{ auth()->user()->rol?->nombre }})</span>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit"
-                                class="inline-block px-4 py-1.5 border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] rounded-sm transition">
-                            Salir
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('login') }}"
-                       class="inline-block px-4 py-1.5 border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm transition">
-                        Iniciar sesión
-                    </a>
-                @endauth
-            </div>
-        </nav>
-    </header>
+    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
-    <main class="max-w-5xl mx-auto px-6 py-8">
-        @if (session('success'))
-            <div class="mb-6 rounded-sm border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950 px-4 py-3 text-sm text-green-800 dark:text-green-200">
-                {{ session('success') }}
-            </div>
-        @endif
+    <div id="sidebar-desktop" class="app-sidebar">
+        @include('layouts._sidebar-content')
+    </div>
 
-        @if (session('error'))
-            <div class="mb-6 rounded-sm border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950 px-4 py-3 text-sm text-red-800 dark:text-red-200">
-                {{ session('error') }}
-            </div>
-        @endif
+    <div id="sidebar-mobile-wrap">
+        <aside class="app-sidebar">
+            @include('layouts._sidebar-content')
+        </aside>
+    </div>
 
-        @yield('content')
-    </main>
+    <div class="app-main flex-1 min-h-screen flex flex-col min-w-0">
+        <header class="bg-white border-b border-border h-14 flex items-center px-4 md:px-6 sticky top-0 z-30">
+            <button id="btn-menu" type="button" onclick="openSidebar()" class="mr-3 p-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <h2 class="text-base font-semibold text-foreground">@yield('titulo', 'Dashboard')</h2>
+        </header>
+
+        <main class="flex-1 p-4 md:p-6">
+            @if(session('mensaje'))
+                <div class="mb-4 bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm">
+                    {{ session('mensaje') }}
+                </div>
+            @endif
+
+            @yield('contenido')
+        </main>
+    </div>
+
+    @stack('scripts')
+
+    <script>
+        function openSidebar() {
+            document.getElementById('sidebar-mobile-wrap').classList.add('open');
+            document.getElementById('sidebar-backdrop').classList.add('open');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar-mobile-wrap').classList.remove('open');
+            document.getElementById('sidebar-backdrop').classList.remove('open');
+        }
+        function openModal(id) {
+            var el = document.getElementById(id);
+            el.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            el.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    </script>
+    @stack('modals')
 </body>
 </html>
