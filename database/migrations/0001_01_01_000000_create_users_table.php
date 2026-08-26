@@ -11,18 +11,34 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string('nombre', 50)->unique();
+            $table->string('descripcion', 255)->nullable();
             $table->timestamps();
         });
 
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('nombre', 100);
+            $table->string('apellido', 100);
+            $table->string('correo', 150)->unique();
+            $table->string('password');
+            $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
+            $table->string('telefono', 20)->nullable();
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->unsignedTinyInteger('intentos_fallidos')->default(0);
+            $table->timestamp('bloqueado_hasta')->nullable();
+            $table->timestamp('ultimo_acceso')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('estado');
+        });
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            $table->string('correo')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
@@ -43,6 +59,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
+        Schema::dropIfExists('roles');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
