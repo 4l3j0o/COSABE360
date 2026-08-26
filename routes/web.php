@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TaxConfigurationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,4 +38,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
     Route::patch('students/{student}/restaurar', [StudentController::class, 'restaurar'])->name('students.restaurar');
+
+    Route::middleware('admin')->prefix('configuracion')->group(function () {
+        Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
+        Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
+    });
 });
