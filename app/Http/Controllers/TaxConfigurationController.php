@@ -29,7 +29,7 @@ class TaxConfigurationController extends Controller
             ]
         );
 
-        return view('tax-configuration.index', compact('config'));
+        return view('config.tax-configuration', compact('config'));
     }
 
     public function update(Request $request)

@@ -11,7 +11,7 @@ Route::get('/', function () {
 });
 
 // Página de acceso denegado
-Route::view('/acceso-denegado', 'errors.acceso-denegado')->name('acceso.denegado');
+Route::view('/acceso-denegado', 'errors.403')->name('acceso.denegado');
 
 // Autenticación (solo usuarios NO logueados)
 Route::middleware('guest')->group(function () {
@@ -27,13 +27,13 @@ Route::get('/dashboard', function () {
     $rol = auth()->user()->rol->nombre;
 
     $vista = match ($rol) {
-        'Administrador' => 'dashboards.administrador',
-        'Director'      => 'dashboards.director',
-        'Secretaría'    => 'dashboards.secretaria',
-        'Docente'       => 'dashboards.docente',
-        'Padre/Tutor'   => 'dashboards.padre',
-        'Estudiante'    => 'dashboards.estudiante',
-        default         => 'dashboards.administrador',
+        'Administrador' => 'dashboard.administrador',
+        'Director'      => 'dashboard.director',
+        'Secretaría'    => 'dashboard.secretaria',
+        'Docente'       => 'dashboard.docente',
+        'Padre/Tutor'   => 'dashboard.padre',
+        'Estudiante'    => 'dashboard.estudiante',
+        default         => 'dashboard.administrador',
     };
 
     return view($vista);
