@@ -20,18 +20,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credenciales = $request->validate([
-            'correo' => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('correo', $credenciales['correo'])->first();
+        $user = User::where('email', $credenciales['email'])->first();
 
         if ($user && $user->estaBloqueado()) {
             $minutos = (int) ceil(now()->diffInMinutes($user->bloqueado_hasta));
 
             return back()
-                ->withErrors(['correo' => "Cuenta bloqueada temporalmente. Intente en {$minutos} minuto(s)."])
-                ->onlyInput('correo');
+                ->withErrors(['email' => "Cuenta bloqueada temporalmente. Intente en {$minutos} minuto(s)."])
+                ->onlyInput('email');
         }
 
         if (! Auth::attempt($credenciales)) {
@@ -40,8 +40,8 @@ class AuthController extends Controller
             }
 
             return back()
-                ->withErrors(['correo' => 'Credenciales incorrectas.'])
-                ->onlyInput('correo');
+                ->withErrors(['email' => 'Credenciales incorrectas.'])
+                ->onlyInput('email');
         }
 
         /** @var User $user */
@@ -51,8 +51,8 @@ class AuthController extends Controller
             Auth::logout();
 
             return back()
-                ->withErrors(['correo' => 'Su cuenta se encuentra inactiva. Contacte al administrador.'])
-                ->onlyInput('correo');
+                ->withErrors(['email' => 'Su cuenta se encuentra inactiva. Contacte al administrador.'])
+                ->onlyInput('email');
         }
 
         $request->session()->regenerate();

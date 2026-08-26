@@ -28,7 +28,7 @@ class UserFactory extends Factory
         return [
             'nombre' => fake()->firstName(),
             'apellido' => fake()->lastName(),
-            'correo' => fake()->unique()->safeEmail(),
+            'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'rol_id' => fn () => Role::query()->inRandomOrder()->value('id')
                 ?? Role::query()->create(['nombre' => 'Docente', 'descripcion' => 'Registro de grades_scores y asistencia'])->id,

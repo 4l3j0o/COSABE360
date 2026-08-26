@@ -18,7 +18,7 @@ class AuthLoginTest extends TestCase
         parent::setUp();
 
         $this->usuario = User::factory()->create([
-            'correo' => 'docente@sanber.edu.bo',
+            'email' => 'docente@sanber.edu.bo',
             'password' => Hash::make('secret1234'),
             'estado' => 'ACTIVO',
             'intentos_fallidos' => 0,
@@ -36,7 +36,7 @@ class AuthLoginTest extends TestCase
     public function test_login_correcto_redirige_al_dashboard(): void
     {
         $this->post(route('login.attempt'), [
-            'correo' => 'docente@sanber.edu.bo',
+            'email' => 'docente@sanber.edu.bo',
             'password' => 'secret1234',
         ])->assertRedirect(route('dashboard'));
 
@@ -51,7 +51,7 @@ class AuthLoginTest extends TestCase
     public function test_credenciales_incorrectas_incrementan_intentos(): void
     {
         $this->post(route('login.attempt'), [
-            'correo' => 'docente@sanber.edu.bo',
+            'email' => 'docente@sanber.edu.bo',
             'password' => 'incorrecta1',
         ]);
 
@@ -63,7 +63,7 @@ class AuthLoginTest extends TestCase
     {
         foreach (range(1, 5) as $i) {
             $this->post(route('login.attempt'), [
-                'correo' => 'docente@sanber.edu.bo',
+                'email' => 'docente@sanber.edu.bo',
                 'password' => "incorrecta{$i}",
             ]);
         }
@@ -75,11 +75,11 @@ class AuthLoginTest extends TestCase
         $this->assertGuest();
 
         $respuesta = $this->post(route('login.attempt'), [
-            'correo' => 'docente@sanber.edu.bo',
+            'email' => 'docente@sanber.edu.bo',
             'password' => 'secret1234',
         ]);
 
-        $respuesta->assertSessionHasErrors('correo');
+        $respuesta->assertSessionHasErrors('email');
         $this->assertGuest();
     }
 
@@ -88,7 +88,7 @@ class AuthLoginTest extends TestCase
         $this->usuario->update(['estado' => 'INACTIVO']);
 
         $this->post(route('login.attempt'), [
-            'correo' => 'docente@sanber.edu.bo',
+            'email' => 'docente@sanber.edu.bo',
             'password' => 'secret1234',
         ]);
 

@@ -11,15 +11,58 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['correo' => 'admin@sanber.edu.bo'],
+        $password = Hash::make('password123');
+
+        $usuarios = [
             [
-                'nombre' => 'Administrador',
-                'apellido' => 'San Bernardo',
-                'password' => Hash::make('admin12345'),
-                'rol_id' => Role::where('nombre', 'Administrador')->value('id'),
-                'estado' => 'ACTIVO',
-            ]
-        );
+                'email' => 'admin@sanber.edu.bo',
+                'nombre' => 'Carlos',
+                'apellido' => 'Mamani',
+                'rol' => 'Administrador',
+            ],
+            [
+                'email' => 'director@sanber.edu.bo',
+                'nombre' => 'María',
+                'apellido' => 'López',
+                'rol' => 'Director',
+            ],
+            [
+                'email' => 'secretaria@sanber.edu.bo',
+                'nombre' => 'Ana',
+                'apellido' => 'Quispe',
+                'rol' => 'Secretaría',
+            ],
+            [
+                'email' => 'docente@sanber.edu.bo',
+                'nombre' => 'Pedro',
+                'apellido' => 'García',
+                'rol' => 'Docente',
+            ],
+            [
+                'email' => 'padre@sanber.edu.bo',
+                'nombre' => 'Jorge',
+                'apellido' => 'Flores',
+                'rol' => 'Padre/Tutor',
+            ],
+            [
+                'email' => 'estudiante@sanber.edu.bo',
+                'nombre' => 'Lucía',
+                'apellido' => 'Torres',
+                'rol' => 'Estudiante',
+            ],
+        ];
+
+        foreach ($usuarios as $datos) {
+            User::updateOrCreate(
+                ['email' => $datos['email']],
+                [
+                    'nombre' => $datos['nombre'],
+                    'apellido' => $datos['apellido'],
+                    'password' => $password,
+                    'rol_id' => Role::where('nombre', $datos['rol'])->value('id'),
+                    'estado' => 'ACTIVO',
+                ]
+            );
+        }
     }
 }
