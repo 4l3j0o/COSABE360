@@ -4,7 +4,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
+<<<<<<< HEAD
 use App\Http\Controllers\UserController;
+=======
+use App\Http\Controllers\TeacherController;
+>>>>>>> fcc8cd8 (feat: HU10 registrar docentes - alta con datos completos, codigo unico autogenerado, activar/desactivar, vistas app.css)
 use Illuminate\Support\Facades\Route;
 
 // RUTA PRINCIPAL
@@ -41,6 +45,7 @@ Route::get('/dashboard', function () {
     return view($vista);
 })->middleware('auth')->name('dashboard');
 
+<<<<<<< HEAD
 // HU02: Gestionar usuarios - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
@@ -53,6 +58,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
 });
 
 // CRUD ESTUDIANTES solo Administrador
+=======
+// HU10: Registrar docentes - solo Administrador
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
+    Route::get('/docentes/crear', [TeacherController::class, 'create'])->name('teachers.create');
+    Route::post('/docentes', [TeacherController::class, 'store'])->name('teachers.store');
+    Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
+    Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
+    Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
+});
+
+// CRUD ESTUDIANTES (solo Administrador)
+>>>>>>> fcc8cd8 (feat: HU10 registrar docentes - alta con datos completos, codigo unico autogenerado, activar/desactivar, vistas app.css)
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
