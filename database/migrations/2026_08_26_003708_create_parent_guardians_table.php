@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('parent_guardians', function (Blueprint $table) {
@@ -23,9 +20,8 @@ return new class extends Migration
             $table->string('correo', 150)->nullable();
             $table->string('direccion', 255)->nullable();
             $table->string('ocupacion', 100)->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
-            $table->softDeletes();
             $table->unique(['numero_documento', 'complemento']);
             $table->unique('correo');
             $table->index(['nombres', 'apellidos']);
@@ -33,9 +29,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('parent_guardians');

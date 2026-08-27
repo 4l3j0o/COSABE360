@@ -15,9 +15,12 @@ class LevelController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection|\Illuminate\Contracts\View\View
     {
-        $levels = Level::orderBy('orden')->get();
+        $levels = Level::withCount('grades')
+            ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
+            ->orderBy('orden')
+            ->get();
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
             return LevelResource::collection($levels);
         }
 
@@ -36,8 +39,8 @@ class LevelController extends Controller
 
         $level = Level::create($validated);
 
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return (new LevelResource($level))->response()->setStatusCode(201);
+        if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
+            return (new LevelResource($level->loadCount('grades')))->response()->setStatusCode(201);
         }
 
         return redirect()->route('levels.index')->with('success', 'Nivel creado correctamente.');
@@ -45,11 +48,12 @@ class LevelController extends Controller
 
     public function show(Level $level, Request $request): LevelResource|\Illuminate\Contracts\View\View
     {
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return new LevelResource($level);
+        if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
+            return new LevelResource($level->loadCount('grades'));
         }
 
         $level->load('grades');
+        $level->loadCount('grades');
         return view('levels.show', compact('level'));
     }
 
@@ -62,8 +66,8 @@ class LevelController extends Controller
     {
         $level->update($request->validated());
 
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return new LevelResource($level->fresh());
+        if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
+            return new LevelResource($level->fresh()->loadCount('grades'));
         }
 
         return redirect()->route('levels.index')->with('success', 'Nivel actualizado correctamente.');
@@ -71,9 +75,10 @@ class LevelController extends Controller
 
     public function destroy(Level $level, Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
-        if (Schema::hasColumn('grades', 'nivel_id') && $level->grades()->exists()) {
+        $column = Schema::hasColumn('grades', 'nivel_id') ? 'nivel_id' : (Schema::hasColumn('grades', 'level_id') ? 'level_id' : null);
+        if ($column && $level->grades()->exists()) {
             $message = 'No se puede eliminar el nivel porque tiene grados asociados.';
-            if ($request->wantsJson() || $request->is('api/*')) {
+            if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => $message], 409);
             }
             return redirect()->route('levels.index')->with('error', $message);
@@ -81,7 +86,7 @@ class LevelController extends Controller
 
         $level->delete();
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
             return response()->json(['message' => 'Nivel eliminado correctamente.']);
         }
 

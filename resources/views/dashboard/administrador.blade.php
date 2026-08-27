@@ -6,32 +6,32 @@
 
 @section('contenido')
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Estudiantes</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="estudiantes-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/60"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Docentes</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="docentes-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/40"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Usuarios</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="usuarios-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/30"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Año Académico</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="ano-academico">--</p>
             </div>
         </div>
     </div>
@@ -48,13 +48,13 @@
                     <p class="text-muted-foreground text-xs">CRUD completo</p>
                 </div>
             </a>
-            <a href="#" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
+            <a href="{{ route('users.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
                 <span class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </span>
                 <div>
-                    <span class="text-foreground font-medium">Docentes</span>
-                    <p class="text-muted-foreground text-xs">Gestión de personal</p>
+                    <span class="text-foreground font-medium">Usuarios</span>
+                    <p class="text-muted-foreground text-xs">Gestión completa HU02</p>
                 </div>
             </a>
             <a href="{{ route('tax-configuration.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
