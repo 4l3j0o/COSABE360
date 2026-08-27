@@ -74,3 +74,7 @@ Route::middleware('auth')->get('sistema/estado', function () {
         'timestamp' => now(),
     ];
 })->name('sistema.estado');
+
+// HU-18: Registrar matrícula
+Route::middleware('auth')->post('estudiantes/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
+    ->name('estudiantes.matricular');

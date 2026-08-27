@@ -339,6 +339,64 @@ class StudentController extends Controller
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
     }
 
+    public function matricular(Request $request, Student $student)
+    {
+        // Validar que el estudiante tenga inscripción completada
+        $inscripcionCompleta = $student->enrollments()
+            ->where('status', 'PENDIENTE')
+            ->whereHas('academicYear', function ($q) {
+                $q->where('activo', true);
+            })
+            ->exists();
+
+        if (!$inscripcionCompleta) {
+            return back()->withErrors([
+                'general' => 'No se puede matricular. El estudiante debe tener una inscripción completada en el período activo.'
+            ])->withInput();
+        }
+
+        // Validar que no ya esté matriculado
+        $yaMatriculado = $student->enrollments()
+            ->where('status', 'MATRICULADO')
+            ->exists();
+
+        if ($yaMatriculado) {
+            return back()->withErrors([
+                'general' => 'El estudiante ya se encuentra matriculado en el período actual.'
+            ]);
+        }
+
+        // Obtener datos del formulario
+        $datos = $request->validate([
+            'grado_id' => 'required|exists:grades,id',
+            'paralelo_id' => 'required|exists:parallels,id',
+            'ano_academico' => 'required|exists:academic_years,id',
+            'matricula' => 'required|numeric|min:0',
+            'mensualidad' => 'required|numeric|min:0',
+            'observaciones' => 'nullable|string|max:255',
+        ]);
+
+        // Crear la matrícula
+        try {
+            $matricula = $student->enrollments()->create([
+                'grade_id' => $datos['grado_id'],
+                'parallel_id' => $datos['paralelo_id'],
+                'academic_year_id' => $datos['ano_academico'],
+                'status' => 'MATRICULADO',
+                'matriculation_cost' => $datos['matricula'],
+                'monthly_fee' => $datos['mensualidad'],
+                'observations' => $datos['observaciones'] ?? null,
+            ]);
+
+            return redirect()->route('students.show', $student)
+                ->with('mensaje', 'Matrícula registrada correctamente para el estudiante.');
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'general' => 'Error al registrar matrícula: ' . $e->getMessage()
+            ])->withInput();
+        }
+    }
+
     private function obtenerOCrearPadre(Request $request, string $prefijo, array $datos, string $tipoRelacion): ?ParentGuardian
     {
         $idExistente = $request->input("{$prefijo}_id_existente");
