@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre', 100);
             $table->string('apellido', 100);
-            $table->string('correo', 150)->unique();
+            $table->string('email', 150)->unique();
             $table->string('password');
             $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
             $table->string('telefono', 20)->nullable();
