@@ -6,8 +6,6 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-
 Route::resource('usuarios', UserController::class);
 
 // RUTA PRINCIPAL
