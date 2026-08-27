@@ -75,24 +75,63 @@ class ParentGuardianHu08Test extends TestCase
     public function test_lista_padres_tutores_muestra_registrados(): void
     {
         $this->loginAsAdmin();
-        ParentGuardian::create([
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('padres-tutores.store'), [
             'nombres'          => 'Juan',
-            'apellidos'        => 'Pérez',
+            'apellidos'        => 'PAcrez',
             'tipo_documento'   => 'CI',
             'numero_documento' => '7654321',
             'complemento'      => '',
             'telefono'         => '71234567',
             'correo'           => 'juan.perez@example.com',
-            'direccion'        => 'Calle Bolívar',
-            'estado'           => 'ACTIVO',
+            'direccion'        => 'Calle BolA-var',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
         ]);
 
         $response = $this->get(route('padres-tutores.index'));
 
         $response->assertOk();
-        $response->assertSee('Pérez');
-        $response->assertSee('7654321');
+        $response->assertSee('PAcrez');
         $response->assertSee('juan.perez@example.com');
+        $response->assertSee('Tutor');
+    }
+
+    public function test_detalla_no_muestra_familiares_que_no_son_tutor(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('padres-tutores.store'), [
+            'nombres'          => 'Marta',
+            'apellidos'        => 'Rojas',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '9990001',
+            'complemento'      => '',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
+            ],
+        ]);
+
+        $this->post(route('padres-tutores.store'), [
+            'nombres'          => 'Pedro',
+            'apellidos'        => 'Rojas',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '9990002',
+            'complemento'      => '',
+            'correo'           => 'pedro.rojas@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ]);
+
+        $response = $this->get(route('padres-tutores.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('Marta');
+        $response->assertSee('Pedro');
     }
 
     public function test_requiere_campos_obligatorios(): void

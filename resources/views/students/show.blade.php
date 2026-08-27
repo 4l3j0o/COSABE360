@@ -137,28 +137,27 @@
 
             @php
                 $pgs = $student->parentGuardians;
-                $padre = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'PADRE');
-                $madre = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'MADRE');
-                $tutorPg = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'TUTOR');
-                $qt = $student->quien_es_tutor ?? 'PADRE';
-                $tutorRef = $qt === 'PADRE' ? $padre : ($qt === 'MADRE' ? $madre : $tutorPg);
+                $etiquetas = [
+                    'PADRE' => 'Padre', 'MADRE' => 'Madre', 'TIO' => 'Tío', 'TIA' => 'Tía',
+                    'ABUELO' => 'Abuelo', 'ABUELA' => 'Abuela', 'HERMANO' => 'Hermano',
+                    'HERMANA' => 'Hermana', 'OTRO' => 'Otro familiar', 'TUTOR' => 'Tutor',
+                ];
             @endphp
             @if($pgs->isNotEmpty())
                 <div class="bg-card border border-border rounded-xl p-6">
-                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Familia (Tutor · Padre · Madre)</h3>
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Familia y Tutor</h3>
                     <ul class="space-y-2">
-                        @foreach([
-                            ['TUTOR', $tutorRef],
-                            ['PADRE', $padre],
-                            ['MADRE', $madre],
-                        ] as [$rol, $persona])
-                            @if($persona)
-                                <li class="p-3 rounded-lg border {{ $rol === 'TUTOR' ? 'border-primary/30 bg-primary/5' : 'border-border' }}">
-                                    <div class="text-xs font-semibold uppercase tracking-wider {{ $rol === 'TUTOR' ? 'text-primary' : 'text-muted-foreground' }}">{{ $rol === 'TUTOR' ? 'Tutor principal' : $rol }}</div>
-                                    <div class="text-foreground font-medium">{{ $persona->nombres }} {{ $persona->apellidos }}</div>
-                                    <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $rol === 'TUTOR' && $persona->correo ? ' · ' . $persona->correo : '' }}</div>
-                                </li>
-                            @endif
+                        @foreach($pgs as $persona)
+                            @php
+                                $rol = $persona->pivot->tipo_relacion;
+                                $esTutor = $persona->pivot->es_principal;
+                                $etiqueta = $etiquetas[$rol] ?? $rol;
+                            @endphp
+                            <li class="p-3 rounded-lg border {{ $esTutor ? 'border-primary/30 bg-primary/5' : 'border-border' }}">
+                                <div class="text-xs font-semibold uppercase tracking-wider {{ $esTutor ? 'text-primary' : 'text-muted-foreground' }}">{{ $etiqueta }}{{ $esTutor ? ' · Tutor' : '' }}</div>
+                                <div class="text-foreground font-medium">{{ $persona->nombres }} {{ $persona->apellidos }}</div>
+                                <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $esTutor && $persona->correo ? ' · ' . $persona->correo : '' }}</div>
+                            </li>
                         @endforeach
                     </ul>
                 </div>

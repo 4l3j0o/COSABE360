@@ -18,8 +18,10 @@ class ParentGuardianController extends Controller
             return $this->apiIndex($request);
         }
 
-        $padres = ParentGuardian::withCount('students')
-            ->with(['students:id,nombres,apellidos'])
+        $padres = ParentGuardian::with(['user:id,nombre,apellido,email', 'students:id,nombres,apellidos'])
+            ->whereHas('students', function ($q) {
+                $q->where('student_parent.es_principal', true);
+            })
             ->when($request->query('buscar'), function ($q, $b) {
                 $buscable = addcslashes($b, '%_');
                 $q->where(fn ($w) =>

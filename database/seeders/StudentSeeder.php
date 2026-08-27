@@ -141,7 +141,7 @@ class StudentSeeder extends Seeder
                 'discapacidad' => null,
                 'quien_es_tutor' => 'PADRE',
                 'padre_indices' => [0, 1],
-                'relaciones' => ['MADRE', 'PADRE'],
+                'relaciones' => ['PADRE', 'MADRE'],
                 'principal' => 0,
             ],
             [
