@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('idioma', 50)->default('Castellano');
             $table->string('cultura', 50)->nullable();
             $table->string('discapacidad', 100)->nullable();
+            $table->enum('quien_es_tutor', ['PADRE', 'MADRE', 'TUTOR'])->default('PADRE');
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['numero_documento', 'complemento']);

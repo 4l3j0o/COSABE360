@@ -17,6 +17,7 @@ class UpdateSectionRequest extends FormRequest
         $section = $this->route('section');
 
         return [
+            'grado_id'       => 'sometimes|exists:grades,id',
             'nombre'         => [
                 'sometimes', 'string', 'max:10',
                 Rule::unique('sections', 'nombre')

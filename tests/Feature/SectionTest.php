@@ -2,398 +2,287 @@
 
 namespace Tests\Feature;
 
+use App\Models\Grade;
+use App\Models\Level;
+use App\Models\Role;
+use App\Models\Section;
+use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class SectionTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function ensureTables(): void
+    protected function setUp(): void
     {
-        if (!Schema::hasColumn('levels', 'nombre')) {
-            Schema::table('levels', function ($t) {
-                $t->string('nombre', 50)->unique();
-                $t->string('descripcion', 255)->nullable();
-                $t->unsignedTinyInteger('orden');
-                $t->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
-            });
-        }
-        if (!Schema::hasColumn('grades', 'nivel_id')) {
-            Schema::table('grades', function ($t) {
-                $t->foreignId('nivel_id')->constrained('levels');
-                $t->string('nombre', 50);
-                $t->unsignedTinyInteger('orden');
-                $t->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
-            });
-        }
-        DB::table('levels')->insert(['nombre' => 'Primaria', 'orden' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        parent::setUp();
+        $this->seed(['RoleSeeder', 'AdminUserSeeder']);
     }
 
-    private function createGrado(int $nivelId, string $nombre = '1ro Primaria'): object
+    private function loginAsAdmin(): void
     {
-        DB::table('grades')->insert([
-            'nivel_id'  => $nivelId,
-            'nombre'    => $nombre,
-            'orden'     => 1,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+        $this->actingAs($admin);
+    }
+
+    private function crearGrado(string $nombre = '1ro Primaria'): Grade
+    {
+        $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
+        return Grade::create([
+            'level_id' => $nivel->id,
+            'nombre'   => $nombre,
+            'orden'    => 1,
+            'estado'   => 'ACTIVO',
         ]);
-        return DB::table('grades')->where('nombre', $nombre)->first();
+    }
+
+    private function crearDocente(string $sufijo = '1'): Teacher
+    {
+        return Teacher::create([
+            'codigo'           => 'DOC'.$sufijo,
+            'nombres'          => 'Juan '.$sufijo,
+            'apellidos'        => 'Perez '.$sufijo,
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '100000'.$sufijo,
+            'complemento'      => '',
+            'telefono'         => '1234567',
+            'correo'           => 'docente'.$sufijo.'@test.com',
+            'estado'           => 'ACTIVO',
+        ]);
+    }
+
+    public function test_sections_index_requires_auth(): void
+    {
+        $this->get('/paralelos')->assertRedirect('/login');
     }
 
     public function test_crea_paralelo_asociado_a_grado(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
 
-        $response = $this->postJson('/api/sections', [
+        $response = $this->post('/paralelos', [
             'grado_id' => $grado->id,
             'nombre'   => 'A',
         ]);
 
-        $response->assertCreated()
-            ->assertJsonPath('data.nombre', 'A')
-            ->assertJsonPath('data.grado_id', $grado->id)
-            ->assertJsonPath('data.estado', 'ACTIVO')
-            ->assertJsonPath('data.capacidad', 40);
-        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'nombre' => 'A']);
+        $response->assertRedirect(route('sections.index'));
+        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'nombre' => 'A', 'estado' => 'ACTIVO']);
     }
 
     public function test_no_crea_paralelo_sin_datos_obligatorios(): void
     {
-        $response = $this->postJson('/api/sections', []);
+        $this->loginAsAdmin();
+        $response = $this->post('/paralelos', []);
 
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors(['grado_id', 'nombre']);
     }
 
     public function test_no_crea_paralelo_con_grado_inexistente(): void
     {
-        $response = $this->postJson('/api/sections', [
+        $this->loginAsAdmin();
+        $response = $this->post('/paralelos', [
             'grado_id' => 999,
             'nombre'   => 'A',
         ]);
 
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors('grado_id');
     }
 
     public function test_no_permite_paralelos_duplicados_en_mismo_grado(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
 
-        $this->postJson('/api/sections', ['grado_id' => $grado->id, 'nombre' => 'A'])->assertCreated();
+        $response = $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
 
-        $response = $this->postJson('/api/sections', ['grado_id' => $grado->id, 'nombre' => 'A']);
-
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors('nombre');
     }
 
     public function test_permite_mismo_paralelo_en_distinto_grado(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $g1 = $this->createGrado($nivel->id, '1ro');
-        $g2 = $this->createGrado($nivel->id, '2do');
+        $this->loginAsAdmin();
+        $g1 = $this->crearGrado('1ro');
+        $g2 = $this->crearGrado('2do');
 
-        $this->postJson('/api/sections', ['grado_id' => $g1->id, 'nombre' => 'A'])->assertCreated();
-        $this->postJson('/api/sections', ['grado_id' => $g2->id, 'nombre' => 'A'])->assertCreated();
+        $this->post('/paralelos', ['grado_id' => $g1->id, 'nombre' => 'A']);
+        $response = $this->post('/paralelos', ['grado_id' => $g2->id, 'nombre' => 'A']);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertTrue(Section::where('grado_id', $g1->id)->where('nombre', 'A')->exists());
+        $this->assertTrue(Section::where('grado_id', $g2->id)->where('nombre', 'A')->exists());
     }
 
     public function test_edita_paralelo_cambiando_nombre_y_capacidad(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        $response = $this->putJson("/api/sections/{$sec}", [
+        $response = $this->put("/paralelos/{$sec->id}", [
             'nombre'    => 'B',
             'capacidad' => 35,
         ]);
 
-        $response->assertOk()
-            ->assertJsonPath('data.nombre', 'B')
-            ->assertJsonPath('data.capacidad', 35);
+        $response->assertRedirect(route('sections.index'));
+        $this->assertDatabaseHas('sections', ['id' => $sec->id, 'nombre' => 'B', 'capacidad' => 35]);
     }
 
     public function test_no_permite_duplicar_nombre_al_editar_dentro_del_mismo_grado(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        Section::create(['grado_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $secA = Section::where('grado_id', $grado->id)->where('nombre', 'A')->first();
 
-        DB::table('sections')->insert([
-            ['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-            ['grado_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        $response = $this->put("/paralelos/{$secA->id}", ['nombre' => 'B']);
 
-        $secA = DB::table('sections')->where(['grado_id' => $grado->id, 'nombre' => 'A'])->first();
-
-        $response = $this->putJson("/api/sections/{$secA->id}", ['nombre' => 'B']);
-
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors('nombre');
     }
 
     public function test_elimina_paralelo_sin_matriculados(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        $response = $this->deleteJson("/api/sections/{$sec}");
+        $response = $this->delete("/paralelos/{$sec->id}");
 
-        $response->assertOk();
-        $this->assertDatabaseMissing('sections', ['id' => $sec]);
+        $response->assertRedirect(route('sections.index'));
+        $this->assertDatabaseMissing('sections', ['id' => $sec->id]);
     }
 
     public function test_no_elimina_paralelo_con_estudiantes_matriculados(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        Schema::table('courses', function ($t) {
-            if (!Schema::hasColumn('courses', 'grado_id')) {
-                $t->foreignId('grado_id')->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'paralelo_id')) {
-                $t->foreignId('paralelo_id')->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'gestion_id')) {
-                $t->unsignedBigInteger('gestion_id')->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'nombre')) {
-                $t->string('nombre', 100)->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'estado')) {
-                $t->string('estado')->nullable()->default('ACTIVO');
-            }
-        });
-        Schema::table('registrations', function ($t) {
-            if (!Schema::hasColumn('registrations', 'curso_id')) {
-                $t->foreignId('curso_id')->nullable();
-            }
-            if (!Schema::hasColumn('registrations', 'estado')) {
-                $t->string('estado')->default('ACTIVA');
-            }
-        });
-
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
+        DB::table('academic_years')->insert([
+            'nombre'       => '2026',
+            'fecha_inicio' => '2026-02-01',
+            'fecha_fin'    => '2026-11-30',
+            'estado'       => 'ACTIVA',
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ]);
+        $gestionId = DB::table('academic_years')->value('id');
 
-        DB::table('courses')->insert([
-            'grado_id'   => $grado->id,
-            'paralelo_id' => $sec,
-            'nombre'     => '1ro A 2026',
-            'estado'     => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
+        $cursoId = DB::table('courses')->insertGetId([
+            'grado_id'    => $grado->id,
+            'paralelo_id' => $sec->id,
+            'gestion_id'  => $gestionId,
+            'nombre'      => '1ro A 2026',
+            'estado'      => 'ACTIVO',
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ]);
-        $cursoId = DB::getPdo()->lastInsertId();
 
         DB::table('registrations')->insert([
-            'curso_id'  => $cursoId,
-            'estado'    => 'ACTIVA',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'curso_id'    => $cursoId,
+            'estado'      => 'ACTIVA',
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ]);
 
-        $response = $this->deleteJson("/api/sections/{$sec}");
+        $response = $this->delete("/paralelos/{$sec->id}");
 
-        $response->assertStatus(409);
-        $this->assertDatabaseHas('sections', ['id' => $sec]);
+        $response->assertRedirect(route('sections.index'));
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('sections', ['id' => $sec->id]);
     }
 
     public function test_permite_eliminar_paralelo_cuya_matricula_fue_cancelada(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        Schema::table('courses', function ($t) {
-            if (!Schema::hasColumn('courses', 'grado_id')) {
-                $t->foreignId('grado_id')->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'paralelo_id')) {
-                $t->foreignId('paralelo_id')->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'nombre')) {
-                $t->string('nombre', 100)->nullable();
-            }
-            if (!Schema::hasColumn('courses', 'estado')) {
-                $t->string('estado')->nullable()->default('ACTIVO');
-            }
-        });
-        Schema::table('registrations', function ($t) {
-            if (!Schema::hasColumn('registrations', 'curso_id')) {
-                $t->foreignId('curso_id')->nullable();
-            }
-            if (!Schema::hasColumn('registrations', 'estado')) {
-                $t->string('estado')->default('ACTIVA');
-            }
-        });
-
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
+        DB::table('academic_years')->insert([
+            'nombre'       => '2026',
+            'fecha_inicio' => '2026-02-01',
+            'fecha_fin'    => '2026-11-30',
+            'estado'       => 'ACTIVA',
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ]);
+        $gestionId = DB::table('academic_years')->value('id');
 
-        DB::table('courses')->insert([
-            'grado_id'   => $grado->id,
-            'paralelo_id' => $sec,
-            'nombre'     => '1ro A 2026',
-            'estado'     => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
+        $cursoId = DB::table('courses')->insertGetId([
+            'grado_id'    => $grado->id,
+            'paralelo_id' => $sec->id,
+            'gestion_id'  => $gestionId,
+            'nombre'      => '1ro A 2026',
+            'estado'      => 'ACTIVO',
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ]);
-        $cursoId = DB::getPdo()->lastInsertId();
 
         DB::table('registrations')->insert([
-            'curso_id'  => $cursoId,
-            'estado'    => 'CANCELADA',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'curso_id'    => $cursoId,
+            'estado'      => 'CANCELADA',
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ]);
 
-        $response = $this->deleteJson("/api/sections/{$sec}");
+        $response = $this->delete("/paralelos/{$sec->id}");
+
+        $response->assertRedirect(route('sections.index'));
+        $this->assertDatabaseMissing('sections', ['id' => $sec->id]);
+    }
+
+    public function test_lista_paralelos_y_muestra_campos_principales(): void
+    {
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+
+        $response = $this->get('/paralelos');
 
         $response->assertOk();
-        $this->assertDatabaseMissing('sections', ['id' => $sec]);
-    }
-
-    public function test_lista_paralelos_filtrando_por_grado(): void
-    {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $g1 = $this->createGrado($nivel->id, '1ro');
-        $g2 = $this->createGrado($nivel->id, '2do');
-
-        DB::table('sections')->insert([
-            ['grado_id' => $g1->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-            ['grado_id' => $g2->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-        ]);
-
-        $response = $this->getJson('/api/sections?grado_id='.$g1->id);
-
-        $response->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.grado_id', $g1->id);
-    }
-
-    public function test_respuesta_muestra_grado_asociado(): void
-    {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $response = $this->getJson("/api/sections/{$sec}");
-
-        $response->assertOk()
-            ->assertJsonPath('data.grade.id', $grado->id)
-            ->assertJsonPath('data.grade.nombre', '1ro Primaria');
+        $response->assertSee('Paralelos');
     }
 
     public function test_asigna_docente_responsable_a_paralelo(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $docente = $this->crearDocente();
 
-        DB::table('teachers')->insert([
-            'id' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $response = $this->postJson('/api/sections', [
+        $this->post('/paralelos', [
             'grado_id'       => $grado->id,
             'nombre'         => 'A',
-            'responsable_id' => 1,
+            'responsable_id' => $docente->id,
         ]);
 
-        $response->assertCreated()
-            ->assertJsonPath('data.responsable_id', 1);
-        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => 1]);
+        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => $docente->id]);
     }
 
     public function test_crea_paralelo_sin_docente_responsable(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
 
-        $response = $this->postJson('/api/sections', [
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-        ]);
+        $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
 
-        $response->assertCreated()
-            ->assertJsonPath('data.responsable_id', null);
+        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => null]);
     }
 
-    public function test_edita_docente_responsable(): void
+    public function test_no_admin_redirigido_a_acceso_denegado(): void
     {
-        $this->ensureTables();
-        $nivel = DB::table('levels')->first();
-        $grado = $this->createGrado($nivel->id);
-
-        DB::table('teachers')->insert([
-            ['id' => 1, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 2, 'created_at' => now(), 'updated_at' => now()],
+        $role = Role::where('nombre', 'Secretaría')->first();
+        $user = User::create([
+            'nombre' => 'Test', 'apellido' => 'Secretaria',
+            'email' => 'test.secretaria.sections@test.com', 'password' => 'password123',
+            'rol_id' => $role->id, 'estado' => 'ACTIVO',
         ]);
+        $this->actingAs($user);
 
-        $sec = DB::table('sections')->insertGetId([
-            'grado_id' => $grado->id,
-            'nombre'   => 'A',
-            'responsable_id' => 1,
-            'capacidad' => 40,
-            'estado'    => 'ACTIVO',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $response = $this->putJson("/api/sections/{$sec}", ['responsable_id' => 2]);
-
-        $response->assertOk()
-            ->assertJsonPath('data.responsable_id', 2);
+        $this->get('/paralelos')->assertRedirect(route('acceso.denegado'));
     }
 }

@@ -20,7 +20,7 @@ class SectionResource extends JsonResource
             'updated_at'     => $this->updated_at,
             'grade'          => $this->whenLoaded('grade', fn () => [
                 'id'       => $this->grade->id,
-                'nivel_id' => $this->grade->nivel_id,
+                'level_id' => $this->grade->level_id,
                 'nombre'   => $this->grade->nombre,
             ]),
             'responsable'    => $this->whenLoaded('responsable', fn () => [

@@ -6,20 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('registrations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('inscripcion_id')->nullable()->constrained('enrollments')->nullOnDelete();
+            $table->foreignId('curso_id')->constrained('courses')->restrictOnDelete();
+            $table->date('fecha')->nullable();
+            $table->decimal('monto_mensual', 10, 2)->nullable();
+            $table->enum('estado', ['ACTIVA', 'INACTIVA', 'CANCELADA'])->default('ACTIVA');
             $table->timestamps();
+
+            $table->index('inscripcion_id');
+            $table->index('curso_id');
+            $table->index('estado');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('registrations');
