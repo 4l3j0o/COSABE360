@@ -13,7 +13,15 @@ return new class extends Migration
     {
         Schema::create('grade_scores', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('evaluacion_id')->constrained('assessments')->cascadeOnDelete();
+            $table->foreignId('estudiante_id')->constrained('students')->cascadeOnDelete();
+            $table->decimal('nota', 5, 2);
+            $table->text('observaciones')->nullable();
             $table->timestamps();
+
+            $table->unique(['evaluacion_id', 'estudiante_id'], 'uk_evaluacion_estudiante');
+            $table->index('estudiante_id');
+            $table->index('evaluacion_id');
         });
     }
 
