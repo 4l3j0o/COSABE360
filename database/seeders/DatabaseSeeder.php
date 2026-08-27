@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             TaxConfigurationSeeder::class,
             GradoSeeder::class,
+            SectionSeeder::class,
             ParentGuardianSeeder::class,
             StudentSeeder::class,
             AcademicYearSeeder::class,
