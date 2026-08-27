@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
@@ -29,12 +30,12 @@ Route::get('/dashboard', function () {
 
     $vista = match ($rol) {
         'Administrador' => 'dashboard.administrador',
-        'Director'      => 'dashboard.director',
-        'Secretaría'    => 'dashboard.secretaria',
-        'Docente'       => 'dashboard.docente',
-        'Padre/Tutor'   => 'dashboard.padre',
-        'Estudiante'    => 'dashboard.estudiante',
-        default         => 'dashboard.administrador',
+        'Director' => 'dashboard.director',
+        'Secretaría' => 'dashboard.secretaria',
+        'Docente' => 'dashboard.docente',
+        'Padre/Tutor' => 'dashboard.padre',
+        'Estudiante' => 'dashboard.estudiante',
+        default => 'dashboard.administrador',
     };
 
     return view($vista);
@@ -63,4 +64,12 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
+});
+
+// HU-17: Registrar inscripciones
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+    Route::get('/inscripciones', [EnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
+    Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });
