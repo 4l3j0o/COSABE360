@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GradeController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
@@ -63,4 +64,12 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
+});
+
+// HU-12: Administrar grados solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
+    Route::get('/', [GradeController::class, 'index'])->name('grades.index');
+    Route::post('/', [GradeController::class, 'store'])->name('grades.store');
+    Route::put('/{grade}', [GradeController::class, 'update'])->name('grades.update');
+    Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grades.destroy');
 });
