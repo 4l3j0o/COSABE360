@@ -18,7 +18,7 @@ class UpdateSubjectRequest extends FormRequest
             'nombre'          => 'sometimes|string|max:100',
             'descripcion'     => 'sometimes|nullable|string|max:255',
             'nivel_id'        => 'sometimes|exists:levels,id',
-            'horas_semanales' => 'sometimes|nullable|integer|min:1|max:255',
+            'horas_semanales' => 'sometimes|nullable|integer|min:0|max:255',
             'estado'          => ['sometimes', Rule::in(['ACTIVO', 'INACTIVO'])],
         ];
     }

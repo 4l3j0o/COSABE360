@@ -113,7 +113,7 @@ class SubjectTest extends TestCase
         $response = $this->postJson('/api/subjects', [
             'nivel_id'        => $nivel->id,
             'nombre'          => 'Física',
-            'horas_semanales' => 0,
+            'horas_semanales' => -1,
         ]);
 
         $response->assertStatus(422)

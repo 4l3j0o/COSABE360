@@ -17,7 +17,7 @@ class StoreSubjectRequest extends FormRequest
             'nombre'          => 'required|string|max:100',
             'descripcion'     => 'nullable|string|max:255',
             'nivel_id'        => 'required|exists:levels,id',
-            'horas_semanales' => 'nullable|integer|min:1|max:255',
+            'horas_semanales' => 'nullable|integer|min:0|max:255',
         ];
     }
 }
