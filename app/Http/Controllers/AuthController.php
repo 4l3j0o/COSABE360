@@ -34,7 +34,7 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        if (! Auth::attempt($credenciales)) {
+        if (! Auth::attempt(array_merge($credenciales, ['remember' => $request->filled('remember')]))) {
             if ($user) {
                 $this->registrarIntentoFallido($user);
             }

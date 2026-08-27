@@ -51,6 +51,18 @@
                     @enderror
                 </div>
 
+                <div class="flex items-center space-x-2">
+                    <input
+                        type="checkbox"
+                        name="remember"
+                        id="remember"
+                        class="w-4 h-4 border border-input rounded bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                    >
+                    <label for="remember" class="text-sm text-muted-foreground remember-me">
+                        Recordarme
+                    </label>
+                </div>
+
                 <button
                     type="submit"
                     class="w-full bg-primary text-primary-foreground font-semibold py-2.5 px-4 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
