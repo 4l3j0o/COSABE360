@@ -6,20 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
+            $table->foreignId('course_id')->constrained('courses')->restrictOnDelete();
+            $table->string('gestion', 9);
+            $table->date('fecha_inscripcion');
+            $table->enum('estado', ['ACTIVO', 'RETIRADO', 'TRANSFERIDO'])->default('ACTIVO');
             $table->timestamps();
+
+            $table->unique(['student_id', 'course_id', 'gestion']);
+            $table->index('student_id');
+            $table->index('course_id');
+            $table->index('gestion');
+            $table->index('estado');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('enrollments');

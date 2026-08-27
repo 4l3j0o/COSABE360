@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\GradeScoreController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
+use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,4 +75,19 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
     Route::post('/', [GradeController::class, 'store'])->name('grados.store');
     Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
     Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
+});
+
+// HU10: Registrar docentes - solo Administrador
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
+    Route::get('/docentes/crear', [TeacherController::class, 'create'])->name('teachers.create');
+    Route::post('/docentes', [TeacherController::class, 'store'])->name('teachers.store');
+    Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
+    Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
+    Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
+});
+
+// HU23: Consultar calificaciones - Estudiante y Padre/Tutor
+Route::middleware(['auth'])->group(function () {
+    Route::get('/calificaciones', [GradeScoreController::class, 'index'])->name('calificaciones.index');
 });

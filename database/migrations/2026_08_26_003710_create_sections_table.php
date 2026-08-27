@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('grado_id')->constrained('grades')->restrictOnDelete();
+            $table->string('nombre', 50);
+            $table->string('paralelo', 5)->default('A');
+            $table->unsignedSmallInteger('capacidad')->default(40);
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
+
+            $table->index('grado_id');
+            $table->index('estado');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('sections');
