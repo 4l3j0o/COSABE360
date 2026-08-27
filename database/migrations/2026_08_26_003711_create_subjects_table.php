@@ -6,20 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('subjects', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo', 10)->unique();
+            $table->string('nombre', 100);
+            $table->string('descripcion', 255)->nullable();
+            $table->unsignedSmallInteger('horas_semanales')->default(1);
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
+            $table->index('nombre');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('subjects');

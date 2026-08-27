@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
@@ -73,4 +74,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
     Route::post('/', [GradeController::class, 'store'])->name('grados.store');
     Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
     Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
+});
+
+// HU24: Notas finales por materia - Estudiante y Padre/Tutor
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notas-finales', [FinalGradesController::class, 'index'])->name('notas-finales.index');
 });
