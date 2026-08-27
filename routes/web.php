@@ -6,6 +6,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -101,4 +102,13 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
     Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
+});
+
+// HU-20: Documentación administrativa solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('documentos-estudiantes')->group(function () {
+    Route::get('/', [StudentDocumentController::class, 'index'])->name('student_documents.index');
+    Route::post('/', [StudentDocumentController::class, 'store'])->name('student_documents.store');
+    Route::patch('/{studentDocument}/estado', [StudentDocumentController::class, 'updateStatus'])->name('student_documents.updateStatus');
+    Route::get('/pendientes', [StudentDocumentController::class, 'pending'])->name('student_documents.pending');
+    Route::get('/buscar-estudiante', [StudentDocumentController::class, 'searchStudent'])->name('student_documents.search_student');
 });

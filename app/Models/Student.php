@@ -71,7 +71,7 @@ class Student extends Model
 
     public function documents(): HasMany
     {
-        return $this->hasMany(StudentDocument::class);
+        return $this->hasMany(StudentDocument::class, 'estudiante_id');
     }
 
     public function gradeScores(): HasMany
