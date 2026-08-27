@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('nombre', 50)->unique();
             $table->string('descripcion', 255)->nullable();
             $table->unsignedTinyInteger('orden');
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+$table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
 
             $table->index('orden');
