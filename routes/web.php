@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\LevelController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
@@ -64,6 +65,15 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
+});
+
+
+// HU-11: Administrar niveles educativos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(function () {
+    Route::get('/', [LevelController::class, 'index'])->name('levels.index');
+    Route::post('/', [LevelController::class, 'store'])->name('levels.store');
+    Route::put('/{level}', [LevelController::class, 'update'])->name('levels.update');
+    Route::delete('/{level}', [LevelController::class, 'destroy'])->name('levels.destroy');
 });
 
 
