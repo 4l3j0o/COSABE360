@@ -131,9 +131,11 @@ class GradeTest extends TestCase
     public function test_no_elimina_un_grado_que_tiene_paralelos_asociados(): void
     {
         $this->loginAsAdmin();
-        Schema::table('sections', function ($table) {
-            $table->foreignId('grado_id')->nullable();
-        });
+        if (! Schema::hasColumn('sections', 'grado_id')) {
+            Schema::table('sections', function ($table) {
+                $table->foreignId('grado_id')->nullable();
+            });
+        }
 
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
         $grade = Grade::create([
@@ -157,17 +159,31 @@ class GradeTest extends TestCase
     public function test_no_elimina_un_grado_con_estudiantes_matriculados(): void
     {
         $this->loginAsAdmin();
-        Schema::table('sections', function ($table) {
-            $table->foreignId('grado_id')->nullable();
-        });
-        Schema::table('courses', function ($table) {
-            $table->foreignId('grado_id')->nullable();
-            $table->foreignId('paralelo_id')->nullable();
-        });
-        Schema::table('registrations', function ($table) {
-            $table->foreignId('curso_id')->nullable();
-            $table->string('estado')->default('ACTIVA');
-        });
+        if (! Schema::hasColumn('sections', 'grado_id')) {
+            Schema::table('sections', function ($table) {
+                $table->foreignId('grado_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('courses', 'grado_id')) {
+            Schema::table('courses', function ($table) {
+                $table->foreignId('grado_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('courses', 'paralelo_id')) {
+            Schema::table('courses', function ($table) {
+                $table->foreignId('paralelo_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('registrations', 'curso_id')) {
+            Schema::table('registrations', function ($table) {
+                $table->foreignId('curso_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('registrations', 'estado')) {
+            Schema::table('registrations', function ($table) {
+                $table->string('estado')->default('ACTIVA');
+            });
+        }
 
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
         $grade = Grade::create([
@@ -198,13 +214,21 @@ class GradeTest extends TestCase
     public function test_permite_eliminar_grado_cuya_matricula_fue_cancelada(): void
     {
         $this->loginAsAdmin();
-        Schema::table('courses', function ($table) {
-            $table->foreignId('grado_id')->nullable();
-        });
-        Schema::table('registrations', function ($table) {
-            $table->foreignId('curso_id')->nullable();
-            $table->string('estado')->default('ACTIVA');
-        });
+        if (! Schema::hasColumn('courses', 'grado_id')) {
+            Schema::table('courses', function ($table) {
+                $table->foreignId('grado_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('registrations', 'curso_id')) {
+            Schema::table('registrations', function ($table) {
+                $table->foreignId('curso_id')->nullable();
+            });
+        }
+        if (! Schema::hasColumn('registrations', 'estado')) {
+            Schema::table('registrations', function ($table) {
+                $table->string('estado')->default('ACTIVA');
+            });
+        }
 
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
         $grade = Grade::create([
