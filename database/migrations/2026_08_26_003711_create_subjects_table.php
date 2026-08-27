@@ -27,17 +27,34 @@ return new class extends Migration
             }
         }
 
-        Schema::create('subjects', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre', 100);
-            $table->string('descripcion', 255)->nullable();
-            $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
-            $table->unsignedTinyInteger('horas_semanales')->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
-            $table->timestamps();
+        if (!Schema::hasTable('subjects')) {
+            Schema::create('subjects', function (Blueprint $table) {
+                $table->id();
+                $table->string('nombre', 100);
+                $table->string('descripcion', 255)->nullable();
+                $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
+                $table->unsignedTinyInteger('horas_semanales')->nullable();
+                $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+                $table->timestamps();
 
-            $table->index('nivel_id', 'idx_nivel');
-            $table->index('estado', 'idx_estado');
+                $table->index('nivel_id', 'idx_nivel');
+                $table->index('estado', 'idx_estado');
+            });
+
+            return;
+        }
+
+        // La tabla ya existe como stub (solo id/timestamps): aplicar el esquema del Anexo A
+        Schema::table('subjects', function (Blueprint $table) {
+            if (!Schema::hasColumn('subjects', 'nombre')) {
+                $table->string('nombre', 100)->after('id');
+                $table->string('descripcion', 255)->nullable()->after('nombre');
+                $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
+                $table->unsignedTinyInteger('horas_semanales')->nullable()->after('nivel_id');
+                $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+                $table->index('nivel_id', 'idx_nivel');
+                $table->index('estado', 'idx_estado');
+            }
         });
     }
 

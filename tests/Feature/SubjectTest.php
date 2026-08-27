@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -10,6 +11,19 @@ use Tests\TestCase;
 class SubjectTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(['RoleSeeder', 'AdminUserSeeder']);
+        $this->ensureLevels();
+    }
+
+    private function loginAsAdmin(): void
+    {
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+        $this->actingAs($admin);
+    }
 
     private function ensureLevels(): void
     {
@@ -43,10 +57,10 @@ class SubjectTest extends TestCase
 
     public function test_crea_materia_asociada_a_nivel(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
-        $response = $this->postJson('/api/subjects', [
+        $response = $this->postJson('/materias', [
             'nivel_id'        => $nivel->id,
             'nombre'          => 'Matemáticas',
             'descripcion'     => 'Matemáticas básicas',
@@ -63,7 +77,9 @@ class SubjectTest extends TestCase
 
     public function test_no_crea_materia_sin_datos_obligatorios(): void
     {
-        $response = $this->postJson('/api/subjects', []);
+        $this->loginAsAdmin();
+
+        $response = $this->postJson('/materias', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['nivel_id', 'nombre']);
@@ -71,7 +87,9 @@ class SubjectTest extends TestCase
 
     public function test_no_crea_materia_con_nivel_inexistente(): void
     {
-        $response = $this->postJson('/api/subjects', [
+        $this->loginAsAdmin();
+
+        $response = $this->postJson('/materias', [
             'nivel_id' => 9999,
             'nombre'   => 'Química',
         ]);
@@ -82,10 +100,10 @@ class SubjectTest extends TestCase
 
     public function test_permite_crear_materia_sin_horas_ni_descripcion(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
-        $response = $this->postJson('/api/subjects', [
+        $response = $this->postJson('/materias', [
             'nivel_id' => $nivel->id,
             'nombre'   => 'Lenguaje',
         ]);
@@ -98,10 +116,10 @@ class SubjectTest extends TestCase
 
     public function test_valida_horas_semanales(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
-        $response = $this->postJson('/api/subjects', [
+        $response = $this->postJson('/materias', [
             'nivel_id'        => $nivel->id,
             'nombre'          => 'Física',
             'horas_semanales' => 300,
@@ -110,7 +128,7 @@ class SubjectTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['horas_semanales']);
 
-        $response = $this->postJson('/api/subjects', [
+        $response = $this->postJson('/materias', [
             'nivel_id'        => $nivel->id,
             'nombre'          => 'Física',
             'horas_semanales' => -1,
@@ -122,7 +140,7 @@ class SubjectTest extends TestCase
 
     public function test_edita_materia(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
@@ -134,7 +152,7 @@ class SubjectTest extends TestCase
             'updated_at'      => now(),
         ]);
 
-        $response = $this->putJson("/api/subjects/{$id}", [
+        $response = $this->putJson("/materias/{$id}", [
             'nombre'          => 'Historia Universal',
             'horas_semanales' => 4,
         ]);
@@ -146,7 +164,7 @@ class SubjectTest extends TestCase
 
     public function test_cambia_estado_a_inactivo(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
@@ -157,7 +175,7 @@ class SubjectTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->putJson("/api/subjects/{$id}", ['estado' => 'INACTIVO']);
+        $response = $this->putJson("/materias/{$id}", ['estado' => 'INACTIVO']);
 
         $response->assertOk()
             ->assertJsonPath('data.estado', 'INACTIVO');
@@ -165,7 +183,7 @@ class SubjectTest extends TestCase
 
     public function test_elimina_materia_sin_asignaciones(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
@@ -176,7 +194,7 @@ class SubjectTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->deleteJson("/api/subjects/{$id}");
+        $response = $this->deleteJson("/materias/{$id}");
 
         $response->assertOk();
         $this->assertDatabaseMissing('subjects', ['id' => $id]);
@@ -184,7 +202,7 @@ class SubjectTest extends TestCase
 
     public function test_no_elimina_materia_con_curso_asignado(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
         $subjectId = DB::table('subjects')->insertGetId([
@@ -262,7 +280,7 @@ class SubjectTest extends TestCase
             $this->markTestSkipped('courses.grado_id no existe');
         }
 
-        $response = $this->deleteJson("/api/subjects/{$subjectId}");
+        $response = $this->deleteJson("/materias/{$subjectId}");
 
         $response->assertStatus(409);
         $this->assertDatabaseHas('subjects', ['id' => $subjectId]);
@@ -270,7 +288,7 @@ class SubjectTest extends TestCase
 
     public function test_lista_materias_filtrando_por_nivel(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $niveles = DB::table('levels')->orderBy('id')->get();
 
         DB::table('subjects')->insert([
@@ -278,7 +296,7 @@ class SubjectTest extends TestCase
             ['nivel_id' => $niveles[1]->id, 'nombre' => 'Mat Primaria', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $response = $this->getJson("/api/subjects?nivel_id={$niveles[0]->id}");
+        $response = $this->getJson("/materias?nivel_id={$niveles[0]->id}");
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -287,7 +305,7 @@ class SubjectTest extends TestCase
 
     public function test_lista_materias_filtrando_por_estado(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
         DB::table('subjects')->insert([
@@ -295,7 +313,7 @@ class SubjectTest extends TestCase
             ['nivel_id' => $nivel->id, 'nombre' => 'Inactiva', 'estado' => 'INACTIVO', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $response = $this->getJson('/api/subjects?estado=INACTIVO');
+        $response = $this->getJson('/materias?estado=INACTIVO');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -304,10 +322,10 @@ class SubjectTest extends TestCase
 
     public function test_respuesta_muestra_nivel_asociado(): void
     {
-        $this->ensureLevels();
+        $this->loginAsAdmin();
         $nivel = DB::table('levels')->first();
 
-        $id = DB::table('subjects')->insertGetId([
+        DB::table('subjects')->insertGetId([
             'nivel_id'   => $nivel->id,
             'nombre'     => 'Física',
             'estado'     => 'ACTIVO',
@@ -315,11 +333,11 @@ class SubjectTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->getJson("/api/subjects/{$id}");
+        $response = $this->getJson('/materias');
 
         $response->assertOk()
-            ->assertJsonPath('data.nivel_id', $nivel->id)
-            ->assertJsonPath('data.level.id', $nivel->id)
-            ->assertJsonPath('data.level.nombre', $nivel->nombre);
+            ->assertJsonPath('data.0.nivel_id', $nivel->id)
+            ->assertJsonPath('data.0.level.id', $nivel->id)
+            ->assertJsonPath('data.0.level.nombre', $nivel->nombre);
     }
 }

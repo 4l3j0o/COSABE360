@@ -6,6 +6,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -93,6 +94,14 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(fu
     Route::post('/', [SectionController::class, 'store'])->name('sections.store');
     Route::put('/{section}', [SectionController::class, 'update'])->name('sections.update');
     Route::delete('/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
+});
+
+// HU-14: Administrar materias solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(function () {
+    Route::get('/', [SubjectController::class, 'index'])->name('subjects.index');
+    Route::post('/', [SubjectController::class, 'store'])->name('subjects.store');
+    Route::put('/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
+    Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
 });
 
 // HU-08: Registrar padres/tutores solo Administrador
