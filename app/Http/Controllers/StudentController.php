@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Student;
 use App\Models\ParentGuardian;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'rudeRecord', 'parentGuardians'])
-            ->where('estado', '!=', 'ELIMINADO');
+        $query = Student::with(['user', 'rudeRecord', 'parentGuardians']);
 
         if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
+            $buscar = addcslashes($request->buscar, '%_');
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombres', 'like', "%{$buscar}%")
                   ->orWhere('apellidos', 'like', "%{$buscar}%")
@@ -32,7 +33,7 @@ class StudentController extends Controller
         }
 
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
-        $eliminadosCount = Student::where('estado', 'ELIMINADO')->count();
+        $eliminadosCount = Student::onlyTrashed()->count();
         return view('students.index', compact('students', 'eliminadosCount'));
     }
 
@@ -47,10 +48,11 @@ class StudentController extends Controller
         if (strlen($q) < 2) {
             return response()->json([]);
         }
-        $personas = ParentGuardian::where('numero_documento', 'like', "%{$q}%")
-            ->orWhere(function ($query) use ($q) {
-                $query->where('nombres', 'like', "%{$q}%")
-                      ->orWhere('apellidos', 'like', "%{$q}%");
+        $qEscaped = addcslashes($q, '%_');
+        $personas = ParentGuardian::where(function ($query) use ($qEscaped) {
+                $query->where('numero_documento', 'like', "%{$qEscaped}%")
+                      ->orWhere('nombres', 'like', "%{$qEscaped}%")
+                      ->orWhere('apellidos', 'like', "%{$qEscaped}%");
             })
             ->where('estado', 'ACTIVO')
             ->limit(10)
@@ -190,7 +192,17 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['user', 'rudeRecord', 'medicalRecord', 'parentGuardians', 'enrollments']);
+        $relations = ['user', 'parentGuardians'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('student_rude_records') && \Illuminate\Support\Facades\Schema::hasColumn('student_rude_records', 'estudiante_id')) {
+            $relations[] = 'rudeRecord';
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('medical_records') && \Illuminate\Support\Facades\Schema::hasColumn('medical_records', 'estudiante_id')) {
+            $relations[] = 'medicalRecord';
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('enrollments') && \Illuminate\Support\Facades\Schema::hasColumn('enrollments', 'estudiante_id')) {
+            $relations[] = 'enrollments';
+        }
+        $student->load($relations);
         return view('students.show', compact('student'));
     }
 
@@ -199,52 +211,9 @@ class StudentController extends Controller
         return view('students.edit', compact('student'));
     }
 
-    public function update(Request $request, Student $student)
+    public function update(UpdateStudentRequest $request, Student $student)
     {
-        $datos = $request->validate([
-            'nombres'            => 'required|string|max:150',
-            'apellidos'          => 'required|string|max:150',
-            'fecha_nacimiento'   => 'required|date|before:today',
-            'lugar_nacimiento'   => 'nullable|string|max:150',
-            'sexo'               => 'required|in:M,F',
-            'tipo_documento'     => 'required|in:CI,PASAPORTE,OTRO',
-            'numero_documento'   => 'required|string|max:20',
-            'complemento'        => 'nullable|string|max:5',
-            'direccion'          => 'nullable|string|max:255',
-            'telefono'           => 'nullable|string|max:20',
-            'correo'             => 'nullable|email|max:150|unique:students,correo,' . $student->id,
-            'fotografia'         => 'nullable|image|max:2048',
-            'idioma'             => 'nullable|string|max:50',
-            'cultura'            => 'nullable|string|max:50',
-            'discapacidad'       => 'nullable|string|max:100',
-            'estado'             => 'required|in:ACTIVO,INACTIVO,EGRESADO,TRASLADADO',
-            'correo_estudiante'  => 'nullable|email|max:150',
-            'padre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
-            'padre_nombres'      => 'nullable|string|max:150',
-            'padre_apellidos'    => 'nullable|string|max:150',
-            'padre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
-            'padre_num_doc'      => 'nullable|string|max:20',
-            'padre_complemento'  => 'nullable|string|max:5',
-            'padre_telefono'     => 'nullable|string|max:20',
-            'madre_id_existente' => 'nullable|integer|exists:parent_guardians,id',
-            'madre_nombres'      => 'nullable|string|max:150',
-            'madre_apellidos'    => 'nullable|string|max:150',
-            'madre_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
-            'madre_num_doc'      => 'nullable|string|max:20',
-            'madre_complemento'  => 'nullable|string|max:5',
-            'madre_telefono'     => 'nullable|string|max:20',
-            'quien_es_tutor'     => 'required|in:PADRE,MADRE,TUTOR',
-            'tutor_id_existente' => 'nullable|integer|exists:parent_guardians,id',
-            'tutor_nombres'      => 'nullable|string|max:150',
-            'tutor_apellidos'    => 'nullable|string|max:150',
-            'tutor_tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
-            'tutor_num_doc'      => 'nullable|string|max:20',
-            'tutor_complemento'  => 'nullable|string|max:5',
-            'tutor_telefono'     => 'nullable|string|max:20',
-            'tutor_correo'       => 'nullable|email|max:150',
-            'tutor_direccion'    => 'nullable|string|max:255',
-            'tutor_ocupacion'    => 'nullable|string|max:100',
-        ]);
+        $datos = $request->validated();
 
         $complemento = $datos['complemento'] ?? '';
         $existe = Student::where('numero_documento', $datos['numero_documento'])
@@ -267,7 +236,12 @@ class StudentController extends Controller
             unset($datos['correo_estudiante']);
 
             if ($request->hasFile('fotografia')) {
+                if ($student->fotografia) {
+                    Storage::disk('public')->delete($student->fotografia);
+                }
                 $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+            } else {
+                unset($datos['fotografia']);
             }
 
             $student->update($datos);
@@ -320,21 +294,23 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
-        $student->update(['estado' => 'ELIMINADO']);
+        $student->delete();
         return redirect()->route('students.index')->with('mensaje', 'Estudiante eliminado correctamente.');
     }
 
     public function eliminados()
     {
-        $students = Student::where('estado', 'ELIMINADO')
+        $students = Student::onlyTrashed()
             ->orderBy('apellidos')
             ->paginate(15);
 
         return view('students.eliminados', compact('students'));
     }
 
-    public function restaurar(Student $student)
+    public function restaurar($id)
     {
+        $student = Student::onlyTrashed()->findOrFail($id);
+        $student->restore();
         $student->update(['estado' => 'ACTIVO']);
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
     }
