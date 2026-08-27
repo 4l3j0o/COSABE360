@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GradeController;
+use App\Http\Controllers\LevelController;
+use App\Http\Controllers\ParentGuardianController;
+use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
@@ -63,4 +67,38 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
+});
+
+
+// HU-11: Administrar niveles educativos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(function () {
+    Route::get('/', [LevelController::class, 'index'])->name('levels.index');
+    Route::post('/', [LevelController::class, 'store'])->name('levels.store');
+    Route::put('/{level}', [LevelController::class, 'update'])->name('levels.update');
+    Route::delete('/{level}', [LevelController::class, 'destroy'])->name('levels.destroy');
+});
+
+
+// HU-12: Administrar grados solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
+    Route::get('/', [GradeController::class, 'index'])->name('grados.index');
+    Route::post('/', [GradeController::class, 'store'])->name('grados.store');
+    Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
+    Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
+});
+
+// HU-13: Administrar paralelos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(function () {
+    Route::get('/', [SectionController::class, 'index'])->name('sections.index');
+    Route::post('/', [SectionController::class, 'store'])->name('sections.store');
+    Route::put('/{section}', [SectionController::class, 'update'])->name('sections.update');
+    Route::delete('/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
+});
+
+// HU-08: Registrar padres/tutores solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(function () {
+    Route::get('/', [ParentGuardianController::class, 'index'])->name('tutores.index');
+    Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
+    Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
+    Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
 });
