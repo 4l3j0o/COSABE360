@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             ParentGuardianSeeder::class,
             StudentSeeder::class,
             AcademicYearSeeder::class,
+            SubjectSeeder::class,
         ]);
     }
 }
