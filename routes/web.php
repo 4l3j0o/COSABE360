@@ -68,8 +68,8 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->grou
 
 // HU-12: Administrar grados solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
-    Route::get('/', [GradeController::class, 'index'])->name('grades.index');
-    Route::post('/', [GradeController::class, 'store'])->name('grades.store');
-    Route::put('/{grade}', [GradeController::class, 'update'])->name('grades.update');
-    Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grades.destroy');
+    Route::get('/', [GradeController::class, 'index'])->name('grados.index');
+    Route::post('/', [GradeController::class, 'store'])->name('grados.store');
+    Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
+    Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
 });

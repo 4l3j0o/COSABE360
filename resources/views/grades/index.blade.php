@@ -25,11 +25,11 @@
     @endif
 
     <div class="bg-card border border-border rounded-xl mb-6">
-        <form method="GET" action="{{ route('grades.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            <select name="nivel_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+        <form method="GET" action="{{ route('grados.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
+            <select name="level_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los niveles</option>
                 @foreach($levels as $level)
-                    <option value="{{ $level->id }}" {{ request('nivel_id') == $level->id ? 'selected' : '' }}>{{ $level->nombre }}</option>
+                    <option value="{{ $level->id }}" {{ request('level_id') == $level->id ? 'selected' : '' }}>{{ $level->nombre }}</option>
                 @endforeach
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
@@ -84,10 +84,10 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarGrado({{ $grade->id }}, '{{ $grade->nivel_id }}', '{{ $grade->nombre }}', '{{ $grade->orden }}', '{{ $grade->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarGrado({{ $grade->id }}, '{{ $grade->level_id }}', '{{ $grade->nombre }}', '{{ $grade->orden }}', '{{ $grade->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
-                                        <form method="POST" action="{{ route('grades.destroy', $grade) }}" onsubmit="return confirm('¿Estás seguro de eliminar este grado?')" class="inline">
+                                        <form method="POST" action="{{ route('grados.destroy', $grade) }}" onsubmit="return confirm('¿Estás seguro de eliminar este grado?')" class="inline">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -115,20 +115,20 @@
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('grades.store') }}" style="padding:1.5rem;">
+                <form method="POST" action="{{ route('grados.store') }}" style="padding:1.5rem;">
                     @csrf
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Grado</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="nivel_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar nivel...</option>
                                     @foreach($levels as $level)
                                         <option value="{{ $level->id }}">{{ $level->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('nivel_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre del Grado <span class="text-error">*</span></label>
@@ -168,12 +168,12 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="nivel_id" id="edit-nivel_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="level_id" id="edit-level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($levels as $level)
                                         <option value="{{ $level->id }}">{{ $level->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('nivel_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre del Grado <span class="text-error">*</span></label>
@@ -214,7 +214,7 @@
         }
         function editarGrado(id, nivelId, nombre, orden, estado) {
             document.getElementById('form-edit').action = '/grados/' + id;
-            document.getElementById('edit-nivel_id').value = nivelId;
+            document.getElementById('edit-level_id').value = nivelId;
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-orden').value = orden;
             document.getElementById('edit-estado').value = estado;

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Grade extends Model
 {
     protected $fillable = [
-        'nivel_id',
+        'level_id',
         'nombre',
         'orden',
         'estado',
@@ -17,7 +17,7 @@ class Grade extends Model
 
     public function level(): BelongsTo
     {
-        return $this->belongsTo(Level::class, 'nivel_id');
+        return $this->belongsTo(Level::class, 'level_id');
     }
 
     public function sections(): HasMany

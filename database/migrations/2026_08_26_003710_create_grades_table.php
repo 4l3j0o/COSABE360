@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('grades', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
+            $table->foreignId('level_id')->constrained('levels')->restrictOnDelete();
             $table->string('nombre', 50);
             $table->unsignedTinyInteger('orden');
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
 
-            $table->unique(['nivel_id', 'nombre'], 'uk_nivel_grado');
-            $table->index('nivel_id');
+            $table->unique(['level_id', 'nombre'], 'uk_level_grado');
+            $table->index('level_id');
             $table->index('orden');
         });
     }

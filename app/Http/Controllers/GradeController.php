@@ -22,9 +22,9 @@ class GradeController extends Controller
 
         $levels = Level::orderBy('orden')->get();
         $grades = Grade::with('level')
-            ->when($request->query('nivel_id'), fn ($q, $v) => $q->where('nivel_id', $v))
+            ->when($request->query('level_id'), fn ($q, $v) => $q->where('level_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->orderBy('nivel_id')
+            ->orderBy('level_id')
             ->orderBy('orden')
             ->get();
 
@@ -34,9 +34,9 @@ class GradeController extends Controller
     private function apiIndex(Request $request): JsonResponse
     {
         $grades = Grade::with('level')
-            ->when($request->query('nivel_id'), fn ($q, $v) => $q->where('nivel_id', $v))
+            ->when($request->query('level_id'), fn ($q, $v) => $q->where('level_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->orderBy('nivel_id')
+            ->orderBy('level_id')
             ->orderBy('orden')
             ->get();
 
@@ -46,12 +46,12 @@ class GradeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nivel_id' => ['required', 'integer', 'exists:levels,id'],
+            'level_id' => ['required', 'integer', 'exists:levels,id'],
             'nombre' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('grades', 'nombre')->where('nivel_id', $request->integer('nivel_id')),
+                Rule::unique('grades', 'nombre')->where('level_id', $request->integer('level_id')),
             ],
             'orden' => ['required', 'integer', 'min:1'],
             'estado' => ['sometimes', 'in:ACTIVO,INACTIVO'],
@@ -64,7 +64,7 @@ class GradeController extends Controller
             return response()->json(['data' => $grade], 201);
         }
 
-        return redirect()->route('grades.index')->with('success', 'Grado creado correctamente.');
+        return redirect()->route('grados.index')->with('success', 'Grado creado correctamente.');
     }
 
     public function show(Grade $grade)
@@ -79,13 +79,13 @@ class GradeController extends Controller
     public function update(Request $request, Grade $grade)
     {
         $validated = $request->validate([
-            'nivel_id' => ['sometimes', 'integer', 'exists:levels,id'],
+            'level_id' => ['sometimes', 'integer', 'exists:levels,id'],
             'nombre' => [
                 'sometimes',
                 'string',
                 'max:50',
                 Rule::unique('grades', 'nombre')
-                    ->where('nivel_id', $request->integer('nivel_id', $grade->nivel_id))
+                    ->where('level_id', $request->integer('level_id', $grade->level_id))
                     ->ignore($grade->id),
             ],
             'orden' => ['sometimes', 'integer', 'min:1'],
@@ -98,7 +98,7 @@ class GradeController extends Controller
             return response()->json(['data' => $grade->fresh('level')]);
         }
 
-        return redirect()->route('grades.index')->with('success', 'Grado actualizado correctamente.');
+        return redirect()->route('grados.index')->with('success', 'Grado actualizado correctamente.');
     }
 
     public function destroy(Grade $grade)
@@ -128,7 +128,7 @@ class GradeController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('grades.index')->with('error', 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.');
+            return redirect()->route('grados.index')->with('error', 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.');
         }
 
         $grade->delete();
@@ -137,6 +137,6 @@ class GradeController extends Controller
             return response()->json(['message' => 'Grado eliminado correctamente.']);
         }
 
-        return redirect()->route('grades.index')->with('success', 'Grado eliminado correctamente.');
+        return redirect()->route('grados.index')->with('success', 'Grado eliminado correctamente.');
     }
 }
