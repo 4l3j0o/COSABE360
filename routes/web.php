@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
@@ -92,4 +93,12 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(fu
     Route::post('/', [SectionController::class, 'store'])->name('sections.store');
     Route::put('/{section}', [SectionController::class, 'update'])->name('sections.update');
     Route::delete('/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
+});
+
+// HU-08: Registrar padres/tutores solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('padres-tutores')->group(function () {
+    Route::get('/', [ParentGuardianController::class, 'index'])->name('padres-tutores.index');
+    Route::post('/', [ParentGuardianController::class, 'store'])->name('padres-tutores.store');
+    Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('padres-tutores.update');
+    Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('padres-tutores.destroy');
 });
