@@ -13,16 +13,8 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -31,10 +23,17 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'rol_id' => fn () => Role::query()->inRandomOrder()->value('id')
-                ?? Role::query()->create(['nombre' => 'Docente', 'descripcion' => 'Registro de grades_scores y asistencia'])->id,
+                ?? Role::query()->create(['nombre' => 'Docente', 'descripcion' => 'Registro de calificaciones y asistencia'])->id,
             'telefono' => fake()->optional()->phoneNumber(),
             'estado' => 'ACTIVO',
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'rol_id' => Role::query()->firstOrCreate(['nombre' => 'Administrador'])->id,
+        ]);
     }
 }

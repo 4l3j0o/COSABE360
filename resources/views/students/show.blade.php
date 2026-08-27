@@ -150,4 +150,46 @@
             @endif
         </div>
     </div>
+
+    <div class="mt-6 bg-card border border-border rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Historial de Cambios</h3>
+
+        @if($historial->isEmpty())
+            <p class="text-sm text-muted-foreground">No se registraron cambios para este estudiante.</p>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Fecha</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Usuario</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Acción</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($historial as $registro)
+                            <tr class="border-b border-border last:border-b-0">
+                                <td class="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{{ $registro->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="px-4 py-2.5 text-foreground">
+                                    @if($registro->user)
+                                        {{ $registro->user->nombre }} {{ $registro->user->apellido }}
+                                    @else
+                                        <span class="text-muted-foreground">Sistema</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    @php
+                                        $coloresBtn = ['EDITAR' => 'bg-primary/10 text-primary', 'CREAR' => 'bg-success/10 text-success', 'ELIMINAR' => 'bg-error/10 text-error'];
+                                    @endphp
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresBtn[$registro->accion] ?? 'bg-muted text-muted-foreground' }}">{{ $registro->accion }}</span>
+                                </td>
+                                <td class="px-4 py-2.5 text-muted-foreground">{{ $registro->detalle }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
 @endsection
