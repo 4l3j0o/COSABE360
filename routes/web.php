@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
@@ -73,4 +74,11 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
     Route::post('/', [GradeController::class, 'store'])->name('grados.store');
     Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
     Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
+});
+
+// HU-16: Asignar docentes a materias y cursos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('asignaciones-docentes')->group(function () {
+    Route::get('/', [CourseSubjectController::class, 'index'])->name('course_subjects.index');
+    Route::get('/crear', [CourseSubjectController::class, 'create'])->name('course_subjects.create');
+    Route::post('/', [CourseSubjectController::class, 'store'])->name('course_subjects.store');
 });
