@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ParentGuardianController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
@@ -101,4 +102,11 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
     Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
+});
+
+// HU-28: Administrar horarios solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
+    Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
+    Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
 });
