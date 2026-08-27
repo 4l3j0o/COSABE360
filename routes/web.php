@@ -64,3 +64,13 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->grou
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
 });
+
+// HU18: Estado y monitoreo del sistema
+Route::middleware('auth')->get('sistema/estado', function () {
+    return [
+        'estado' => 'activo',
+        'version' => '1.0.0',
+        'entorno' => config('app.env'),
+        'timestamp' => now(),
+    ];
+})->name('sistema.estado');
