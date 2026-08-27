@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Padres y Tutores')
+@section('titulo', 'Tutores')
 
 @section('sidebar')
     @include('dashboard.partials._sidebar-admin')
@@ -8,12 +8,12 @@
 @section('contenido')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Padres y Tutores</h1>
+            <h1 class="text-xl font-bold text-foreground">Tutores</h1>
             <p class="text-sm text-muted-foreground">Tutores con acceso al sistema y los estudiantes a su cargo</p>
         </div>
         <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Registrar Padre/Tutor
+            Registrar Tutor
         </button>
     </div>
 
