@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LevelController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,11 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
     Route::patch('students/{student}/restaurar', [StudentController::class, 'restaurar'])->name('students.restaurar');
     Route::get('buscar-persona', [StudentController::class, 'buscarPersona'])->name('students.buscarPersona');
+});
+
+// CATÁLOGOS ACADÉMICOS — Niveles (HU-11)
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
+    Route::resource('levels', LevelController::class);
 });
 
 // CONFIGURACIÓN TRIBUTARIA (solo Administrador)
