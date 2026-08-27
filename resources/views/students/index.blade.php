@@ -94,7 +94,7 @@
                 </table>
             </div>
             <div class="px-4 py-3 border-t border-border">
-                {{ $students->links() }}
+                {{ $students->links('pagina.custom') }}
             </div>
         </div>
 
@@ -640,7 +640,6 @@
             openModal('modal-edit');
         }
 
-        // Radio tutor toggle (works for both create and edit modals)
         function toggleTutorCampos(radio) {
             var modal = radio.closest('[id^="modal-"]');
             var prefix = modal && modal.id === 'modal-edit' ? 'e-' : '';
