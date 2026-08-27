@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\GradeScoreController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\UserController;
@@ -84,4 +85,11 @@ Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(funct
     Route::get('/{assessment}/editar', [AssessmentController::class, 'edit'])->name('evaluaciones.edit');
     Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('evaluaciones.update');
     Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('evaluaciones.destroy');
+});
+
+// HU22: Registrar calificaciones - solo Docente
+Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(function () {
+    Route::get('/', [GradeScoreController::class, 'index'])->name('calificaciones.index');
+    Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
+    Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
 });

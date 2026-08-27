@@ -75,6 +75,10 @@ class AssessmentController extends Controller
 
     public function destroy(Assessment $assessment): RedirectResponse
     {
+        if ($assessment->gradeScores()->exists()) {
+            return redirect()->route('evaluaciones.index')->with('error', 'No se puede eliminar la evaluación porque tiene calificaciones registradas.');
+        }
+
         $assessment->delete();
 
         return redirect()->route('evaluaciones.index')->with('success', 'Evaluación eliminada correctamente.');

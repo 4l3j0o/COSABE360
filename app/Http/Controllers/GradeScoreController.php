@@ -2,64 +2,67 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Assessment;
 use App\Models\GradeScore;
+use App\Models\Student;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class GradeScoreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        //
+        $assessments = Assessment::with(['subject', 'academicYear'])
+            ->withCount('gradeScores')
+            ->orderByDesc('fecha')
+            ->get();
+
+        return view('grade-scores.index', compact('assessments'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Assessment $assessment): View
     {
-        //
+        $assessment->load(['subject', 'academicYear']);
+
+        $students = Student::where('estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $notasExistentes = GradeScore::where('evaluacion_id', $assessment->id)
+            ->get()
+            ->keyBy('estudiante_id');
+
+        return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function update(Request $request, Assessment $assessment): RedirectResponse
     {
-        //
-    }
+        $request->validate([
+            'notas' => ['array'],
+            'notas.*' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'observaciones' => ['array'],
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(GradeScore $gradeScore)
-    {
-        //
-    }
+        $notas = $request->input('notas', []);
+        $observaciones = $request->input('observaciones', []);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(GradeScore $gradeScore)
-    {
-        //
-    }
+        foreach ($notas as $estudianteId => $nota) {
+            if ($nota === null || $nota === '') {
+                continue;
+            }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, GradeScore $gradeScore)
-    {
-        //
-    }
+            GradeScore::updateOrCreate(
+                ['evaluacion_id' => $assessment->id, 'estudiante_id' => $estudianteId],
+                [
+                    'nota' => $nota,
+                    'observaciones' => $observaciones[$estudianteId] ?? null,
+                ]
+            );
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(GradeScore $gradeScore)
-    {
-        //
+        return redirect()->route('calificaciones.show', $assessment)
+            ->with('success', 'Calificaciones registradas correctamente.');
     }
 }
