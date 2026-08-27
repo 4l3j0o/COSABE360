@@ -171,6 +171,7 @@ class GradeScoreTest extends TestCase
     {
         $admin = User::where('email', 'admin@sanber.edu.bo')->first();
         $this->actingAs($admin);
-        $this->get('/calificaciones')->assertRedirect(route('acceso.denegado'));
+        $datos = $this->crearDatosBase();
+        $this->get("/calificaciones/{$datos['assessment']->id}")->assertRedirect(route('acceso.denegado'));
     }
 }

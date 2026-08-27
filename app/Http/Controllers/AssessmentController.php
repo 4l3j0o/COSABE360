@@ -36,12 +36,16 @@ class AssessmentController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:100'],
+            'nombre' => ['required', 'string', 'max:150'],
             'tipo' => ['required', 'string', 'max:50'],
             'materia_id' => ['required', 'integer', 'exists:subjects,id'],
             'gestion_id' => ['required', 'integer', 'exists:academic_years,id'],
+            'course_subject_id' => ['nullable', 'integer', 'exists:course_subjects,id'],
+            'bimestre' => ['nullable', 'integer', 'min:1', 'max:4'],
             'peso' => ['required', 'numeric', 'min:0', 'max:1'],
             'fecha' => ['nullable', 'date'],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'in:ACTIVO,INACTIVO'],
         ]);
 
         Assessment::create($validated);
@@ -60,12 +64,16 @@ class AssessmentController extends Controller
     public function update(Request $request, Assessment $assessment): RedirectResponse
     {
         $validated = $request->validate([
-            'nombre' => ['required', 'string', 'max:100'],
+            'nombre' => ['required', 'string', 'max:150'],
             'tipo' => ['required', 'string', 'max:50'],
             'materia_id' => ['required', 'integer', 'exists:subjects,id'],
             'gestion_id' => ['required', 'integer', 'exists:academic_years,id'],
+            'course_subject_id' => ['nullable', 'integer', 'exists:course_subjects,id'],
+            'bimestre' => ['nullable', 'integer', 'min:1', 'max:4'],
             'peso' => ['required', 'numeric', 'min:0', 'max:1'],
             'fecha' => ['nullable', 'date'],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'in:ACTIVO,INACTIVO'],
         ]);
 
         $assessment->update($validated);
@@ -75,7 +83,7 @@ class AssessmentController extends Controller
 
     public function destroy(Assessment $assessment): RedirectResponse
     {
-        if ($assessment->gradeScores()->exists()) {
+        if ($assessment->gradeScores()->exists() || $assessment->gradeScoresAlt()->exists()) {
             return redirect()->route('evaluaciones.index')->with('error', 'No se puede eliminar la evaluación porque tiene calificaciones registradas.');
         }
 

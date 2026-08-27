@@ -9,12 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Assessment extends Model
 {
     protected $fillable = [
-        'nombre',
-        'tipo',
+        'course_subject_id',
         'materia_id',
         'gestion_id',
+        'nombre',
+        'tipo',
+        'bimestre',
         'peso',
         'fecha',
+        'descripcion',
+        'estado',
     ];
 
     protected function casts(): array
@@ -22,6 +26,7 @@ class Assessment extends Model
         return [
             'peso' => 'float',
             'fecha' => 'date',
+            'bimestre' => 'integer',
         ];
     }
 
@@ -35,8 +40,23 @@ class Assessment extends Model
         return $this->belongsTo(AcademicYear::class, 'gestion_id');
     }
 
+    public function courseSubject(): BelongsTo
+    {
+        return $this->belongsTo(CourseSubject::class, 'course_subject_id');
+    }
+
     public function gradeScores(): HasMany
     {
         return $this->hasMany(GradeScore::class, 'evaluacion_id');
+    }
+
+    public function gradeScoresAlt(): HasMany
+    {
+        return $this->hasMany(GradeScore::class, 'assessment_id');
+    }
+
+    public function estaActivo(): bool
+    {
+        return $this->estado === 'ACTIVO';
     }
 }

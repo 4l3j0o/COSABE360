@@ -87,9 +87,11 @@ Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(funct
     Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('evaluaciones.destroy');
 });
 
-// HU22: Registrar calificaciones - solo Docente
+// HU22: Registrar calificaciones - Docente registra, Estudiante/Padre consulta (HU23)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/calificaciones', [GradeScoreController::class, 'index'])->name('calificaciones.index');
+});
 Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(function () {
-    Route::get('/', [GradeScoreController::class, 'index'])->name('calificaciones.index');
     Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
     Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
 });
