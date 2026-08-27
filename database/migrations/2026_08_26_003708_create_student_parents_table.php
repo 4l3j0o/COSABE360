@@ -11,9 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_parents', function (Blueprint $table) {
+        Schema::create('student_parent', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
+            $table->foreignId('parent_guardian_id')->constrained('parent_guardians')->cascadeOnDelete();
+            $table->string('tipo_relacion', 50)->nullable();
+            $table->boolean('es_principal')->default(false);
+            $table->boolean('convive')->default(false);
             $table->timestamps();
+            $table->unique(['student_id', 'parent_guardian_id']);
         });
     }
 
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_parents');
+        Schema::dropIfExists('student_parent');
     }
 };

@@ -17,15 +17,17 @@ return new class extends Migration
             $table->string('apellido', 100);
             $table->string('correo', 150)->unique();
             $table->string('password');
-            $table->foreignId('rol_id')->constrained('roles')->onDelete('restrict');
+            $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
             $table->string('telefono', 20)->nullable();
-            $table->string('estado')->default('ACTIVO'); // ACTIVO / INACTIVO
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->unsignedTinyInteger('intentos_fallidos')->default(0);
             $table->timestamp('bloqueado_hasta')->nullable();
             $table->timestamp('ultimo_acceso')->nullable();
             $table->rememberToken();
-            $table->softDeletes();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('estado');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
