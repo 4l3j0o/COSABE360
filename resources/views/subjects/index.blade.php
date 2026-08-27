@@ -26,10 +26,10 @@
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('subjects.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            <select name="nivel_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="level_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los niveles</option>
                 @foreach($levels as $level)
-                    <option value="{{ $level->id }}" {{ request('nivel_id') == $level->id ? 'selected' : '' }}>{{ $level->nombre }}</option>
+                    <option value="{{ $level->id }}" {{ request('level_id') == $level->id ? 'selected' : '' }}>{{ $level->nombre }}</option>
                 @endforeach
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
@@ -78,6 +78,7 @@
                                         $colores = [
                                             'ACTIVO'   => 'bg-success/10 text-success',
                                             'INACTIVO' => 'bg-warning/10 text-warning',
+                                            'ELIMINADO' => 'bg-error/10 text-error',
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$subject->estado] ?? 'bg-muted text-muted-foreground' }}">
@@ -85,13 +86,8 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    @php
-                                        $datosEditar = $subject->only([
-                                            'id', 'nivel_id', 'nombre', 'descripcion', 'horas_semanales', 'estado',
-                                        ]);
-                                    @endphp
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarMateria(@json($datosEditar))" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarMateria({{ $subject->id }}, '{{ $subject->level_id }}', '{{ addslashes($subject->nombre) }}', '{{ addslashes($subject->descripcion ?? '') }}', '{{ $subject->horas_semanales ?? '' }}', '{{ $subject->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         <form method="POST" action="{{ route('subjects.destroy', $subject) }}" onsubmit="return confirm('¿Estás seguro de eliminar esta materia?')" class="inline">
@@ -132,18 +128,23 @@
                         <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="nivel_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar nivel...</option>
                                     @foreach($levels as $level)
                                         <option value="{{ $level->id }}">{{ $level->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('nivel_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre de la Materia <span class="text-error">*</span></label>
-                                <input type="text" name="nombre" required maxlength="100" placeholder="Ej: Matemáticas" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                @error('nombre') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                <input type="text" name="nombre" value="{{ old('nombre') }}" required maxlength="100" placeholder="Ej: Matemáticas" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                @error('nombre')
+                                    <div class="mt-2 flex items-start gap-2 text-xs font-medium text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">
+                                        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                                        <span>{{ $message }}</span>
+                                    </div>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Descripción</label>
@@ -183,12 +184,12 @@
                         <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="nivel_id" id="edit-nivel_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="level_id" id="edit-level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($levels as $level)
                                         <option value="{{ $level->id }}">{{ $level->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('nivel_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre de la Materia <span class="text-error">*</span></label>
@@ -232,14 +233,21 @@
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
-        function editarMateria(datos) {
-            document.getElementById('form-edit').action = '/materias/' + datos.id;
-            document.getElementById('edit-nivel_id').value = datos.nivel_id;
-            document.getElementById('edit-nombre').value = datos.nombre ?? '';
-            document.getElementById('edit-descripcion').value = datos.descripcion ?? '';
-            document.getElementById('edit-horas_semanales').value = datos.horas_semanales ?? '';
-            document.getElementById('edit-estado').value = datos.estado || 'ACTIVO';
+        function editarMateria(id, level_id, nombre, descripcion, horas_semanales, estado) {
+            document.getElementById('form-edit').action = '/materias/' + id;
+            document.getElementById('edit-level_id').value = level_id;
+            document.getElementById('edit-nombre').value = nombre;
+            document.getElementById('edit-descripcion').value = descripcion || '';
+            document.getElementById('edit-horas_semanales').value = horas_semanales || '';
+            document.getElementById('edit-estado').value = estado || 'ACTIVO';
             openModal('modal-edit');
         }
+
+        @if($errors->has('nombre') || $errors->has('level_id') || $errors->has('horas_semanales'))
+        // Si hubo error al crear, reabrir el modal y mostrar la advertencia
+        document.addEventListener('DOMContentLoaded', function () {
+            openModal('modal-create');
+        });
+        @endif
     </script>
 @endpush

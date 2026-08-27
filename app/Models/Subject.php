@@ -10,7 +10,7 @@ class Subject extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'nivel_id',
+        'level_id',
         'horas_semanales',
         'estado',
     ];
@@ -24,6 +24,6 @@ class Subject extends Model
 
     public function level(): BelongsTo
     {
-        return $this->belongsTo(Level::class, 'nivel_id');
+        return $this->belongsTo(Level::class, 'level_id');
     }
 }

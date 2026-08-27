@@ -32,12 +32,12 @@ return new class extends Migration
                 $table->id();
                 $table->string('nombre', 100);
                 $table->string('descripcion', 255)->nullable();
-                $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
+                $table->foreignId('level_id')->constrained('levels')->restrictOnDelete();
                 $table->unsignedTinyInteger('horas_semanales')->nullable();
-                $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+                $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
                 $table->timestamps();
 
-                $table->index('nivel_id', 'idx_nivel');
+                $table->index('level_id', 'idx_nivel');
                 $table->index('estado', 'idx_estado');
             });
 
@@ -49,10 +49,10 @@ return new class extends Migration
             if (!Schema::hasColumn('subjects', 'nombre')) {
                 $table->string('nombre', 100)->after('id');
                 $table->string('descripcion', 255)->nullable()->after('nombre');
-                $table->foreignId('nivel_id')->constrained('levels')->restrictOnDelete();
-                $table->unsignedTinyInteger('horas_semanales')->nullable()->after('nivel_id');
-                $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
-                $table->index('nivel_id', 'idx_nivel');
+                $table->foreignId('level_id')->constrained('levels')->restrictOnDelete();
+                $table->unsignedTinyInteger('horas_semanales')->nullable()->after('level_id');
+                $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
+                $table->index('level_id', 'idx_nivel');
                 $table->index('estado', 'idx_estado');
             }
         });

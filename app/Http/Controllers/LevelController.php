@@ -38,6 +38,14 @@ class LevelController extends Controller
     }
 
     /**
+     * Display a single resource.
+     */
+    public function show(Level $level): JsonResponse
+    {
+        return response()->json(['data' => $level->loadCount('grades')]);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)

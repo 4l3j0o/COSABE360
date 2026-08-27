@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->grou
 Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(function () {
     Route::get('/', [LevelController::class, 'index'])->name('levels.index');
     Route::post('/', [LevelController::class, 'store'])->name('levels.store');
+    Route::get('/{level}', [LevelController::class, 'show'])->name('levels.show');
     Route::put('/{level}', [LevelController::class, 'update'])->name('levels.update');
     Route::delete('/{level}', [LevelController::class, 'destroy'])->name('levels.destroy');
 });

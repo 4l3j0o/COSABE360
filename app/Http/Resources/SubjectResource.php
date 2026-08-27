@@ -13,7 +13,7 @@ class SubjectResource extends JsonResource
             'id'              => $this->id,
             'nombre'          => $this->nombre,
             'descripcion'     => $this->descripcion,
-            'nivel_id'        => $this->nivel_id,
+            'level_id'        => $this->level_id,
             'horas_semanales' => $this->horas_semanales,
             'estado'          => $this->estado,
             'created_at'      => $this->created_at,

@@ -19,17 +19,17 @@ class SubjectController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection|View
     {
-        $subjects = Subject::with('level');
+        $subjects = Subject::with('level')->where('estado', '!=', 'ELIMINADO');
 
-        if ($request->filled('nivel_id')) {
-            $subjects->where('nivel_id', $request->nivel_id);
+        if ($request->filled('level_id')) {
+            $subjects->where('level_id', $request->level_id);
         }
 
         if ($request->filled('estado')) {
             $subjects->where('estado', $request->estado);
         }
 
-        $subjects->orderBy('nivel_id')->orderBy('nombre');
+        $subjects->orderBy('level_id')->orderBy('nombre');
 
         if ($request->expectsJson()) {
             return SubjectResource::collection($subjects->get());
@@ -62,8 +62,19 @@ class SubjectController extends Controller
         return new SubjectResource($subject->load('level'));
     }
 
-    public function update(UpdateSubjectRequest $request, Subject $subject): SubjectResource|RedirectResponse
+    public function update(UpdateSubjectRequest $request, Subject $subject): SubjectResource|JsonResponse|RedirectResponse
     {
+        // Una materia ELIMINADA no puede editarse ni reactivarse
+        if ($subject->estado === 'ELIMINADO') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'No se puede editar una materia eliminada.',
+                ], 409);
+            }
+
+            return redirect()->route('subjects.index')->with('error', 'No se puede editar una materia eliminada.');
+        }
+
         $subject->update($request->validated());
 
         if ($request->expectsJson()) {
@@ -90,6 +101,11 @@ class SubjectController extends Controller
             $bloqueadoPor[] = 'horarios asignados';
         }
 
+        // CA-14-03: assessments.materia_id — no borrar si tiene evaluaciones (y por tanto calificaciones registradas)
+        if (Schema::hasColumn('assessments', 'materia_id') && DB::table('assessments')->where('materia_id', $subject->id)->exists()) {
+            $bloqueadoPor[] = 'evaluaciones o calificaciones registradas';
+        }
+
         if ($bloqueadoPor !== []) {
             if (request()->expectsJson()) {
                 return response()->json([
@@ -100,7 +116,8 @@ class SubjectController extends Controller
             return redirect()->route('subjects.index')->with('error', 'No se puede eliminar la materia porque tiene '.implode(' y ', $bloqueadoPor).'.');
         }
 
-        $subject->delete();
+        // Borrado lógico: se marca como ELIMINADO en lugar de borrar físicamente.
+        $subject->update(['estado' => 'ELIMINADO']);
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Materia eliminada correctamente.']);

@@ -6,24 +6,24 @@
 ## 1. Qué se hizo — cerrado al documento
 
 **Migración** `2026_08_26_003711_create_subjects_table.php`
-- Columnas exactas del SQL del Anexo A: `id`, `nombre VARCHAR(100) NOT NULL`, `descripcion VARCHAR(255) NULL`, `nivel_id FK→levels RESTRICT`, `horas_semanales TINYINT UNSIGNED NULL`, `estado ENUM ACTIVO/INACTIVO default ACTIVO`, `timestamps`, `idx_nivel`, `idx_estado`.
-- **Sin** `UNIQUE(nivel_id,nombre)` — el doc no lo tiene (a diferencia de `grades`/`sections`). No inventado.
+- Columnas exactas del SQL del Anexo A: `id`, `nombre VARCHAR(100) NOT NULL`, `descripcion VARCHAR(255) NULL`, `level_id FK→levels RESTRICT`, `horas_semanales TINYINT UNSIGNED NULL`, `estado ENUM ACTIVO/INACTIVO default ACTIVO`, `timestamps`, `idx_nivel`, `idx_estado`.
+- **Sin** `UNIQUE(level_id,nombre)` — el doc no lo tiene (a diferencia de `grades`/`sections`). No inventado.
 - **Sin** `deleted_at` — catálogo no usa soft delete en el doc.
 - Fix defensivo: si `levels` aún es stub (HU-11 no mergeado), la migración lo completa con `nombre,descripcion,orden,estado` y seed Inicial/Primaria/Secundaria — evita FK fail en SQLite.
 
 **Modelo** `Subject.php`
-- `fillable: nombre, descripcion, nivel_id, horas_semanales, estado`, `casts horas_semanales=>integer`, `level(): BelongsTo`.
+- `fillable: nombre, descripcion, level_id, horas_semanales, estado`, `casts horas_semanales=>integer`, `level(): BelongsTo`.
 
 **Fix colateral** `Level.php` — en `develop` seguía stub; se completó con `fillable` y `subjects(): HasMany` para que `Subject->level` funcione si HU-11 aún no mergeó.
 
 **Requests**
-- `StoreSubjectRequest`: `nivel_id required|exists:levels`, `nombre required|max:100`, `descripcion nullable|max:255`, `horas_semanales nullable|integer|min:1|max:255`.
+- `StoreSubjectRequest`: `level_id required|exists:levels`, `nombre required|max:100`, `descripcion nullable|max:255`, `horas_semanales nullable|integer|min:1|max:255`.
 - `UpdateSubjectRequest`: `sometimes` + `estado in:ACTIVO,INACTIVO`.
 
 **Resource** `SubjectResource` — `level` con `whenLoaded`.
 
 **Controller** `SubjectController`
-- `index`: `with('level')`, filtros `?nivel_id` / `?estado`, orden `nivel_id, nombre`.
+- `index`: `with('level')`, filtros `?level_id` / `?estado`, orden `level_id, nombre`.
 - `store`: `estado=ACTIVO`, `201`.
 - `destroy`: `409` si `course_subject(s).materia_id` o `schedules.materia_id` existe (FK RESTRICT del Anexo A). Usa `Schema::hasColumn` para no romper en SQLite stub + maneja ambos nombres `course_subject` (SRS) / `course_subjects` (migración develop).
 
@@ -31,7 +31,7 @@
 
 ## 2. Tests — `tests/Feature/SubjectTest.php` 11/12 (1 skip)
 
-- Crea con nivel OK, fail sin datos, fail nivel inexistente, crea sin horas/descripcion, valida `horas_semanales 1-255`, edita, cambia estado INACTIVO, elimina sin asignaciones, **no elimina con curso asignado** (skip si `course_subjects` stub), lista por `nivel_id` / `estado`, muestra `level`.
+- Crea con nivel OK, fail sin datos, fail nivel inexistente, crea sin horas/descripcion, valida `horas_semanales 1-255`, edita, cambia estado INACTIVO, elimina sin asignaciones, **no elimina con curso asignado** (skip si `course_subjects` stub), lista por `level_id` / `estado`, muestra `level`.
 - El skip se vuelve `PASS` cuando `HU-16`/`Sprint 2` cree `course_subjects` real.
 
 ## 3. Para Keila — integración (lo que pediste: `actualicen siempre develop`)

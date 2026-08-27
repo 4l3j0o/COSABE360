@@ -61,7 +61,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $response = $this->postJson('/materias', [
-            'nivel_id'        => $nivel->id,
+            'level_id'        => $nivel->id,
             'nombre'          => 'Matemáticas',
             'descripcion'     => 'Matemáticas básicas',
             'horas_semanales' => 5,
@@ -69,10 +69,10 @@ class SubjectTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.nombre', 'Matemáticas')
-            ->assertJsonPath('data.nivel_id', $nivel->id)
+            ->assertJsonPath('data.level_id', $nivel->id)
             ->assertJsonPath('data.horas_semanales', 5)
             ->assertJsonPath('data.estado', 'ACTIVO');
-        $this->assertDatabaseHas('subjects', ['nombre' => 'Matemáticas', 'nivel_id' => $nivel->id]);
+        $this->assertDatabaseHas('subjects', ['nombre' => 'Matemáticas', 'level_id' => $nivel->id]);
     }
 
     public function test_no_crea_materia_sin_datos_obligatorios(): void
@@ -82,7 +82,7 @@ class SubjectTest extends TestCase
         $response = $this->postJson('/materias', []);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['nivel_id', 'nombre']);
+            ->assertJsonValidationErrors(['level_id', 'nombre']);
     }
 
     public function test_no_crea_materia_con_nivel_inexistente(): void
@@ -90,12 +90,75 @@ class SubjectTest extends TestCase
         $this->loginAsAdmin();
 
         $response = $this->postJson('/materias', [
-            'nivel_id' => 9999,
+            'level_id' => 9999,
             'nombre'   => 'Química',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['nivel_id']);
+            ->assertJsonValidationErrors(['level_id']);
+    }
+
+    public function test_no_crea_materia_duplicada_en_mismo_nivel(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        DB::table('subjects')->insert([
+            'level_id'   => $nivel->id,
+            'nombre'     => 'Matemáticas',
+            'estado'     => 'ACTIVO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/materias', [
+            'level_id' => $nivel->id,
+            'nombre'   => 'Matemáticas',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['nombre'])
+            ->assertJsonFragment(['nombre' => ['Esta materia ya existe en el nivel seleccionado.']]);
+    }
+
+    public function test_permite_mismo_nombre_en_distintos_niveles(): void
+    {
+        $this->loginAsAdmin();
+        $niveles = DB::table('levels')->orderBy('id')->limit(2)->get();
+
+        DB::table('subjects')->insert([
+            'level_id'   => $niveles[0]->id,
+            'nombre'     => 'Matemáticas',
+            'estado'     => 'ACTIVO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/materias', [
+            'level_id' => $niveles[1]->id,
+            'nombre'   => 'Matemáticas',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.nombre', 'Matemáticas');
+    }
+
+    public function test_no_edita_materia_hacia_nombre_duplicado(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        DB::table('subjects')->insert([
+            ['level_id' => $nivel->id, 'nombre' => 'Matemáticas', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $nivel->id, 'nombre' => 'Física', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $fisicaId = DB::table('subjects')->where('nombre', 'Física')->first()->id;
+
+        $response = $this->putJson("/materias/{$fisicaId}", ['nombre' => 'Matemáticas']);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['nombre']);
     }
 
     public function test_permite_crear_materia_sin_horas_ni_descripcion(): void
@@ -104,7 +167,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $response = $this->postJson('/materias', [
-            'nivel_id' => $nivel->id,
+            'level_id' => $nivel->id,
             'nombre'   => 'Lenguaje',
         ]);
 
@@ -120,7 +183,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $response = $this->postJson('/materias', [
-            'nivel_id'        => $nivel->id,
+            'level_id'        => $nivel->id,
             'nombre'          => 'Física',
             'horas_semanales' => 300,
         ]);
@@ -129,7 +192,7 @@ class SubjectTest extends TestCase
             ->assertJsonValidationErrors(['horas_semanales']);
 
         $response = $this->postJson('/materias', [
-            'nivel_id'        => $nivel->id,
+            'level_id'        => $nivel->id,
             'nombre'          => 'Física',
             'horas_semanales' => -1,
         ]);
@@ -144,7 +207,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
-            'nivel_id'        => $nivel->id,
+            'level_id'        => $nivel->id,
             'nombre'          => 'Historia',
             'horas_semanales' => 3,
             'estado'          => 'ACTIVO',
@@ -168,7 +231,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
-            'nivel_id'   => $nivel->id,
+            'level_id'   => $nivel->id,
             'nombre'     => 'Biología',
             'estado'     => 'ACTIVO',
             'created_at' => now(),
@@ -187,7 +250,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $id = DB::table('subjects')->insertGetId([
-            'nivel_id'   => $nivel->id,
+            'level_id'   => $nivel->id,
             'nombre'     => 'Artes',
             'estado'     => 'ACTIVO',
             'created_at' => now(),
@@ -197,7 +260,76 @@ class SubjectTest extends TestCase
         $response = $this->deleteJson("/materias/{$id}");
 
         $response->assertOk();
-        $this->assertDatabaseMissing('subjects', ['id' => $id]);
+        // Borrado lógico: la materia queda en BD con estado ELIMINADO, no se borra físicamente
+        $this->assertDatabaseHas('subjects', ['id' => $id, 'estado' => 'ELIMINADO']);
+    }
+
+    public function test_no_elimina_materia_con_evaluaciones_o_calificaciones(): void
+    {
+        // CA-14-03: no se debe permitir eliminar una materia con evaluaciones o calificaciones
+        if (!Schema::hasColumn('assessments', 'materia_id')) {
+            $this->markTestSkipped('assessments.materia_id no existe — migración stub (HU-21 no implementada)');
+        }
+
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        $subjectId = DB::table('subjects')->insertGetId([
+            'level_id'   => $nivel->id,
+            'nombre'     => 'Matemáticas Avanzadas',
+            'estado'     => 'ACTIVO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('assessments')->insert([
+            'nombre'     => 'Examen Trimestral',
+            'tipo'       => 'Examen',
+            'materia_id' => $subjectId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->deleteJson("/materias/{$subjectId}");
+
+        $response->assertStatus(409);
+        $this->assertDatabaseHas('subjects', ['id' => $subjectId, 'estado' => 'ACTIVO']);
+    }
+
+    public function test_lista_no_muestra_materias_eliminadas(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        DB::table('subjects')->insert([
+            ['level_id' => $nivel->id, 'nombre' => 'Visible', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $nivel->id, 'nombre' => 'Oculta', 'estado' => 'ELIMINADO', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->getJson('/materias');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.nombre', 'Visible');
+    }
+
+    public function test_no_edita_materia_eliminada(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        $id = DB::table('subjects')->insertGetId([
+            'level_id'   => $nivel->id,
+            'nombre'     => 'Materia a Eliminar',
+            'estado'     => 'ELIMINADO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->putJson("/materias/{$id}", ['nombre' => 'Intento de Edicion']);
+
+        $response->assertStatus(409);
+        $this->assertDatabaseHas('subjects', ['id' => $id, 'nombre' => 'Materia a Eliminar', 'estado' => 'ELIMINADO']);
     }
 
     public function test_no_elimina_materia_con_curso_asignado(): void
@@ -206,7 +338,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         $subjectId = DB::table('subjects')->insertGetId([
-            'nivel_id'   => $nivel->id,
+            'level_id'   => $nivel->id,
             'nombre'     => 'Química Test',
             'estado'     => 'ACTIVO',
             'created_at' => now(),
@@ -248,8 +380,8 @@ class SubjectTest extends TestCase
 
             // Crear grade y section si no existen
             try {
-                if (Schema::hasColumn('grades', 'nivel_id') && DB::table('grades')->count() === 0) {
-                    DB::table('grades')->insert(['nivel_id' => $nivel->id, 'nombre' => '1ro Test', 'orden' => 1, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
+                if (Schema::hasColumn('grades', 'level_id') && DB::table('grades')->count() === 0) {
+                    DB::table('grades')->insert(['level_id' => $nivel->id, 'nombre' => '1ro Test', 'orden' => 1, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
                 }
                 if (DB::table('grades')->count() > 0) {
                     $gradoId = DB::table('grades')->first()->id;
@@ -292,11 +424,11 @@ class SubjectTest extends TestCase
         $niveles = DB::table('levels')->orderBy('id')->get();
 
         DB::table('subjects')->insert([
-            ['nivel_id' => $niveles[0]->id, 'nombre' => 'Mat Inicial', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-            ['nivel_id' => $niveles[1]->id, 'nombre' => 'Mat Primaria', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $niveles[0]->id, 'nombre' => 'Mat Inicial', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $niveles[1]->id, 'nombre' => 'Mat Primaria', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        $response = $this->getJson("/materias?nivel_id={$niveles[0]->id}");
+        $response = $this->getJson("/materias?level_id={$niveles[0]->id}");
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -309,8 +441,8 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         DB::table('subjects')->insert([
-            ['nivel_id' => $nivel->id, 'nombre' => 'Activa', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
-            ['nivel_id' => $nivel->id, 'nombre' => 'Inactiva', 'estado' => 'INACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $nivel->id, 'nombre' => 'Activa', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()],
+            ['level_id' => $nivel->id, 'nombre' => 'Inactiva', 'estado' => 'INACTIVO', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $response = $this->getJson('/materias?estado=INACTIVO');
@@ -326,7 +458,7 @@ class SubjectTest extends TestCase
         $nivel = DB::table('levels')->first();
 
         DB::table('subjects')->insertGetId([
-            'nivel_id'   => $nivel->id,
+            'level_id'   => $nivel->id,
             'nombre'     => 'Física',
             'estado'     => 'ACTIVO',
             'created_at' => now(),
@@ -336,7 +468,7 @@ class SubjectTest extends TestCase
         $response = $this->getJson('/materias');
 
         $response->assertOk()
-            ->assertJsonPath('data.0.nivel_id', $nivel->id)
+            ->assertJsonPath('data.0.level_id', $nivel->id)
             ->assertJsonPath('data.0.level.id', $nivel->id)
             ->assertJsonPath('data.0.level.nombre', $nivel->nombre);
     }
