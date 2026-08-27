@@ -3,7 +3,7 @@
 @section('titulo', 'Editar docente')
 
 @section('sidebar')
-    @include('dashboards.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-admin')
 @endsection
 
 @section('contenido')

@@ -48,7 +48,6 @@
                     <p class="text-muted-foreground text-xs">CRUD completo</p>
                 </div>
             </a>
-<<<<<<< HEAD:resources/views/dashboard/administrador.blade.php
             <a href="{{ route('users.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
                 <span class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -56,7 +55,8 @@
                 <div>
                     <span class="text-foreground font-medium">Usuarios</span>
                     <p class="text-muted-foreground text-xs">Gestión completa HU02</p>
-=======
+                </div>
+            </a>
             <a href="{{ route('teachers.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
                 <span class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l8-4-8-4-8 4 8 4zm0 4l8-4M4 10l8 4 8-4M12 14v7"/></svg>
@@ -64,7 +64,6 @@
                 <div>
                     <span class="text-foreground font-medium">Docentes</span>
                     <p class="text-muted-foreground text-xs">HU10 código único</p>
->>>>>>> fcc8cd8 (feat: HU10 registrar docentes - alta con datos completos, codigo unico autogenerado, activar/desactivar, vistas app.css):resources/views/dashboards/administrador.blade.php
                 </div>
             </a>
             <a href="{{ route('tax-configuration.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">

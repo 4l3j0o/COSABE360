@@ -4,11 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TaxConfigurationController;
-<<<<<<< HEAD
-use App\Http\Controllers\UserController;
-=======
 use App\Http\Controllers\TeacherController;
->>>>>>> fcc8cd8 (feat: HU10 registrar docentes - alta con datos completos, codigo unico autogenerado, activar/desactivar, vistas app.css)
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // RUTA PRINCIPAL
@@ -45,7 +42,6 @@ Route::get('/dashboard', function () {
     return view($vista);
 })->middleware('auth')->name('dashboard');
 
-<<<<<<< HEAD
 // HU02: Gestionar usuarios - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
@@ -57,8 +53,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
-// CRUD ESTUDIANTES solo Administrador
-=======
 // HU10: Registrar docentes - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
@@ -69,8 +63,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
 });
 
-// CRUD ESTUDIANTES (solo Administrador)
->>>>>>> fcc8cd8 (feat: HU10 registrar docentes - alta con datos completos, codigo unico autogenerado, activar/desactivar, vistas app.css)
+// CRUD ESTUDIANTES solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('students', StudentController::class);
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
@@ -83,7 +76,6 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->grou
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
 });
-
 
 // HU-12: Administrar grados solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
