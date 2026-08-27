@@ -20,9 +20,8 @@ return new class extends Migration
             $table->string('complemento', 5)->default('');
             $table->string('telefono', 20)->nullable();
             $table->string('correo', 150)->nullable()->unique();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
-            $table->softDeletes();
 
             $table->unique(['numero_documento', 'complemento'], 'uk_documento');
             $table->index('codigo');

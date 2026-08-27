@@ -65,6 +65,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
     Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
     Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
+    Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
 });
 
 // CRUD ESTUDIANTES solo Administrador

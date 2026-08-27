@@ -8,9 +8,26 @@ use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $teachers = Teacher::orderBy('apellidos')->orderBy('nombres')->paginate(10);
+        $query = Teacher::where('estado', '!=', 'ELIMINADO');
+
+        if ($request->filled('buscar')) {
+            $buscar = addcslashes($request->buscar, '%_');
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombres', 'like', "%{$buscar}%")
+                  ->orWhere('apellidos', 'like', "%{$buscar}%")
+                  ->orWhere('codigo', 'like', "%{$buscar}%")
+                  ->orWhere('numero_documento', 'like', "%{$buscar}%");
+            });
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $teachers = $query->orderBy('apellidos')->orderBy('nombres')
+            ->paginate(15)->withQueryString();
         return view('teachers.index', compact('teachers'));
     }
 
@@ -84,5 +101,11 @@ class TeacherController extends Controller
         $teacher->update(['estado' => $nuevo]);
         $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
         return redirect()->route('teachers.index')->with('success', "Docente {$accion} correctamente.");
+    }
+
+    public function destroy(Teacher $teacher)
+    {
+        $teacher->update(['estado' => 'ELIMINADO']);
+        return redirect()->route('teachers.index')->with('success', 'Docente eliminado correctamente.');
     }
 }

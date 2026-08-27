@@ -3,14 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'usuario_id',
@@ -58,12 +57,12 @@ class Teacher extends Model
      */
     public static function generarCodigo(): string
     {
-        $last = static::withTrashed()->orderByDesc('id')->value('id') ?? 0;
+        $last = static::orderByDesc('id')->value('id') ?? 0;
         $next = $last + 1;
         $codigo = 'DOC-' . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
 
-        // Evitar colisión si se borraron registros
-        while (static::withTrashed()->where('codigo', $codigo)->exists()) {
+        // Evitar colisión si hay códigos preexistentes
+        while (static::where('codigo', $codigo)->exists()) {
             $next++;
             $codigo = 'DOC-' . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
         }
