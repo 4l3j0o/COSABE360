@@ -24,8 +24,9 @@ class SectionResource extends JsonResource
                 'nombre'   => $this->grade->nombre,
             ]),
             'responsable'    => $this->whenLoaded('responsable', fn () => [
-                'id'   => $this->responsable->id,
-                'nombre' => $this->responsable->nombre ?? null,
+                'id'       => $this->responsable->id,
+                'nombres'  => $this->responsable->nombres,
+                'apellidos'=> $this->responsable->apellidos,
             ]),
         ];
     }
