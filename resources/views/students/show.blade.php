@@ -135,15 +135,30 @@
                 </dl>
             </div>
 
-            @if($student->parentGuardians->count())
+            @php
+                $pgs = $student->parentGuardians;
+                $padre = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'PADRE');
+                $madre = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'MADRE');
+                $tutorPg = $pgs->first(fn($p) => $p->pivot->tipo_relacion === 'TUTOR');
+                $qt = $student->quien_es_tutor ?? 'PADRE';
+                $tutorRef = $qt === 'PADRE' ? $padre : ($qt === 'MADRE' ? $madre : $tutorPg);
+            @endphp
+            @if($pgs->isNotEmpty())
                 <div class="bg-card border border-border rounded-xl p-6">
-                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Padres / Tutores</h3>
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Familia (Tutor · Padre · Madre)</h3>
                     <ul class="space-y-2">
-                        @foreach($student->parentGuardians as $padre)
-                            <li class="text-sm">
-                                <span class="text-foreground font-medium">{{ $padre->nombres }} {{ $padre->apellidos }}</span>
-                                <span class="text-muted-foreground block text-xs">{{ $padre->pivot->tipo_relacion }}</span>
-                            </li>
+                        @foreach([
+                            ['TUTOR', $tutorRef],
+                            ['PADRE', $padre],
+                            ['MADRE', $madre],
+                        ] as [$rol, $persona])
+                            @if($persona)
+                                <li class="p-3 rounded-lg border {{ $rol === 'TUTOR' ? 'border-primary/30 bg-primary/5' : 'border-border' }}">
+                                    <div class="text-xs font-semibold uppercase tracking-wider {{ $rol === 'TUTOR' ? 'text-primary' : 'text-muted-foreground' }}">{{ $rol === 'TUTOR' ? 'Tutor principal' : $rol }}</div>
+                                    <div class="text-foreground font-medium">{{ $persona->nombres }} {{ $persona->apellidos }}</div>
+                                    <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $rol === 'TUTOR' && $persona->correo ? ' · ' . $persona->correo : '' }}</div>
+                                </li>
+                            @endif
                         @endforeach
                     </ul>
                 </div>

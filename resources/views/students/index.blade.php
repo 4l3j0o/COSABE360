@@ -214,40 +214,59 @@
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Padre</h3>
-                        <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-padre" placeholder="Buscar padre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('padre', this.value)"><div id="resultados-padre" class="hidden"></div></div>
-                        <input type="hidden" name="padre_id_existente" id="padre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="padre_tipo_doc" id="padre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="padre_complemento" id="padre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                        </div>
-                    </div>
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia (Opcional)</h3>
+                        <p class="text-xs text-muted-foreground mb-4">Agregue el padre y/o la madre si desea registrarlos. Al final seleccione quién será el <strong>tutor</strong>. Si no tiene padre ni madre, puede agregar directamente un tutor.</p>
 
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos de la Madre</h3>
-                        <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-madre" placeholder="Buscar madre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('madre', this.value)"><div id="resultados-madre" class="hidden"></div></div>
-                        <input type="hidden" name="madre_id_existente" id="madre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="madre_tipo_doc" id="madre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="madre_complemento" id="madre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                        <button type="button" id="btn-agregar-padre" onclick="toggleBloque('padre')" class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors mb-3 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar padre
+                        </button>
+                        <div id="bloque-padre" style="display:none; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                                <h4 class="text-sm font-semibold text-foreground">Datos del Padre</h4>
+                                <button type="button" onclick="toggleBloque('padre')" class="text-xs text-error hover:underline cursor-pointer">Quitar padre</button>
+                            </div>
+                            <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-padre" placeholder="Buscar padre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('padre', this.value)"><div id="resultados-padre" class="hidden"></div></div>
+                            <input type="hidden" name="padre_id_existente" id="padre_id_existente">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="padre_tipo_doc" id="padre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="padre_complemento" id="padre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btn-agregar-madre" onclick="toggleBloque('madre')" class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors mb-3 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar madre
+                        </button>
+                        <div id="bloque-madre" style="display:none; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                                <h4 class="text-sm font-semibold text-foreground">Datos de la Madre</h4>
+                                <button type="button" onclick="toggleBloque('madre')" class="text-xs text-error hover:underline cursor-pointer">Quitar madre</button>
+                            </div>
+                            <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-madre" placeholder="Buscar madre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('madre', this.value)"><div id="resultados-madre" class="hidden"></div></div>
+                            <input type="hidden" name="madre_id_existente" id="madre_id_existente">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="madre_tipo_doc" id="madre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="madre_complemento" id="madre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                            </div>
                         </div>
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">¿Quién es el Tutor? <span class="text-error">*</span></h3>
-                        <p class="text-xs text-muted-foreground mb-3">El tutor es quien recibirá acceso al sistema para el seguimiento del estudiante.</p>
+                        <p class="text-xs text-muted-foreground mb-3">El tutor es quien recibirá acceso al sistema para el seguimiento del estudiante. Si no registró padre ni madre, elija "Otro tutor".</p>
                         <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="PADRE" {{ old('quien_es_tutor', 'PADRE') === 'PADRE' ? 'checked' : '' }} class="accent-primary"> Padre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="MADRE" {{ old('quien_es_tutor') === 'MADRE' ? 'checked' : '' }} class="accent-primary"> Madre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="TUTOR" {{ old('quien_es_tutor') === 'TUTOR' ? 'checked' : '' }} class="accent-primary"> Otro tutor</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" id="qt-padre" name="quien_es_tutor" value="PADRE" {{ old('quien_es_tutor', 'PADRE') === 'PADRE' ? 'checked' : '' }} class="accent-primary" onchange="toggleTutorCampos(this)"> Padre</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" id="qt-madre" name="quien_es_tutor" value="MADRE" {{ old('quien_es_tutor') === 'MADRE' ? 'checked' : '' }} class="accent-primary" onchange="toggleTutorCampos(this)"> Madre</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" id="qt-tutor" name="quien_es_tutor" value="TUTOR" {{ old('quien_es_tutor') === 'TUTOR' ? 'checked' : '' }} class="accent-primary" onchange="toggleTutorCampos(this)"> Otro tutor</label>
                         </div>
                         @error('quien_es_tutor') <p class="text-xs text-error mb-3">{{ $message }}</p> @enderror
 
@@ -331,11 +350,8 @@
                         </div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia y Tutor</h3>
-                        <div class="text-sm space-y-2">
-                            <div><span class="text-muted-foreground uppercase tracking-wider text-xs">Tutor asignado:</span> <span class="font-medium text-foreground" id="v-tutor-label"></span></div>
-                            <div id="v-familia-content"></div>
-                        </div>
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia (Tutor · Padre · Madre)</h3>
+                        <div id="v-familia-content" class="text-sm"></div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05);">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Información Adicional</h3>
@@ -450,24 +466,43 @@
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Padre</h3>
-                        <input type="hidden" name="padre_id_existente" id="e-padre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="e-padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="e-padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="e-padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="e-padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                        </div>
-                    </div>
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia (Opcional)</h3>
+                        <p class="text-xs text-muted-foreground mb-4">Agregue el padre y/o la madre si desea registrarlos. Al final seleccione quién será el <strong>tutor</strong>. Si no tiene padre ni madre, puede agregar directamente un tutor.</p>
 
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos de la Madre</h3>
-                        <input type="hidden" name="madre_id_existente" id="e-madre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="e-madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="e-madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="e-madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="e-madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                        <button type="button" id="btn-agregar-padre-edit" onclick="toggleBloqueEdit('padre')" class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors mb-3 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar padre
+                        </button>
+                        <div id="bloque-padre-edit" style="display:none; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                                <h4 class="text-sm font-semibold text-foreground">Datos del Padre</h4>
+                                <button type="button" onclick="toggleBloqueEdit('padre')" class="text-xs text-error hover:underline cursor-pointer">Quitar padre</button>
+                            </div>
+                            <input type="hidden" name="padre_id_existente" id="e-padre_id_existente">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="e-padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="e-padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="e-padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="e-padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btn-agregar-madre-edit" onclick="toggleBloqueEdit('madre')" class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors mb-3 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar madre
+                        </button>
+                        <div id="bloque-madre-edit" style="display:none; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                                <h4 class="text-sm font-semibold text-foreground">Datos de la Madre</h4>
+                                <button type="button" onclick="toggleBloqueEdit('madre')" class="text-xs text-error hover:underline cursor-pointer">Quitar madre</button>
+                            </div>
+                            <input type="hidden" name="madre_id_existente" id="e-madre_id_existente">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="e-madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="e-madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="e-madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="e-madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -585,11 +620,21 @@
             var tutorPg = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'TUTOR'; });
             var qt = s.quien_es_tutor || 'PADRE';
             var tutorRef = qt === 'PADRE' ? padre : qt === 'MADRE' ? madre : tutorPg;
-            document.getElementById('v-tutor-label').textContent = tutorRef ? (tutorRef.nombres + ' ' + tutorRef.apellidos) + ' (' + qt + ')' : '—';
-            var famHtml = '';
-            if (padre) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Padre:</span> ' + padre.nombres + ' ' + padre.apellidos + (padre.numero_documento ? ' — CI ' + padre.numero_documento : '') + '</div>';
-            if (madre) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Madre:</span> ' + madre.nombres + ' ' + madre.apellidos + (madre.numero_documento ? ' — CI ' + madre.numero_documento : '') + '</div>';
-            if (tutorPg) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Tutor externo:</span> ' + tutorPg.nombres + ' ' + tutorPg.apellidos + (tutorPg.correo ? ' — ' + tutorPg.correo : '') + '</div>';
+
+            function filaFamiliar(rol, pg) {
+                if (!pg) return '';
+                var correo = (rol === 'TUTOR' && pg.correo) ? ' · ' + pg.correo : '';
+                var fondo = (rol === 'TUTOR') ? '; background-color:rgba(124,58,237,0.06)' : '';
+                return '<div style="border:1px solid ' + (rol === 'TUTOR' ? 'rgba(124,58,237,0.35)' : 'var(--border)') + '; border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem' + fondo + '">' +
+                    '<div class="text-xs font-semibold uppercase tracking-wider ' + (rol === 'TUTOR' ? 'text-primary' : 'text-muted-foreground') + '">' + (rol === 'TUTOR' ? 'Tutor principal' : rol) + '</div>' +
+                    '<div class="font-medium text-foreground">' + pg.nombres + ' ' + pg.apellidos + '</div>' +
+                    '<div class="text-xs text-muted-foreground">' + (pg.numero_documento ? 'CI ' + pg.numero_documento : '') + correo + '</div>' +
+                    '</div>';
+            }
+
+            var famHtml = filaFamiliar('TUTOR', tutorRef);
+            famHtml += filaFamiliar('PADRE', padre);
+            famHtml += filaFamiliar('MADRE', madre);
             if (!famHtml) famHtml = '<span class="text-muted-foreground">Sin datos familiares registrados</span>';
             document.getElementById('v-familia-content').innerHTML = famHtml;
             var ops = s.operations || [];
@@ -645,6 +690,18 @@
                     document.getElementById('e-tutor_correo').value = pg.correo || '';
                 }
             }
+            if (padre) {
+                var bpE = document.getElementById('bloque-padre-edit');
+                if (bpE) bpE.style.display = 'block';
+                var bpBtnE = document.getElementById('btn-agregar-padre-edit');
+                if (bpBtnE) bpBtnE.style.display = 'none';
+            }
+            if (madre) {
+                var bmE = document.getElementById('bloque-madre-edit');
+                if (bmE) bmE.style.display = 'block';
+                var bmBtnE = document.getElementById('btn-agregar-madre-edit');
+                if (bmBtnE) bmBtnE.style.display = 'none';
+            }
             fillPersona('padre', padre);
             fillPersona('madre', madre);
 
@@ -652,6 +709,7 @@
             document.getElementById('e-qt-' + qt.toLowerCase()).checked = true;
             document.getElementById('e-campos-tutor-externo').style.display = qt === 'TUTOR' ? 'block' : 'none';
             document.getElementById('e-correo-tutor-padre-madre').style.display = qt !== 'TUTOR' ? 'block' : 'none';
+            actualizarRadiosTutorEdit();
             if (qt === 'TUTOR') fillPersona('tutor', tutorPg);
             else {
                 var tCorreo = qt === 'PADRE' ? (padre ? padre.correo : '') : (madre ? madre.correo : '');
@@ -713,5 +771,70 @@
                 if (dd && !dd.contains(e.target) && e.target.id !== 'buscador-' + t) dd.classList.add('hidden');
             });
         });
+
+        function toggleBloque(tipo) {
+            var bloque = document.getElementById('bloque-' + tipo);
+            var btn = document.getElementById('btn-agregar-' + tipo);
+            if (!bloque) return;
+            var visible = bloque.style.display !== 'none';
+            if (visible) {
+                bloque.style.display = 'none';
+                if (btn) { btn.style.display = ''; }
+            } else {
+                bloque.style.display = 'block';
+                if (btn) { btn.style.display = 'none'; }
+            }
+            actualizarRadiosTutor();
+        }
+
+        function toggleBloqueEdit(tipo) {
+            var bloque = document.getElementById('bloque-' + tipo + '-edit');
+            var btn = document.getElementById('btn-agregar-' + tipo + '-edit');
+            if (!bloque) return;
+            if (bloque.style.display !== 'none') {
+                bloque.style.display = 'none';
+                if (btn) btn.style.display = '';
+            } else {
+                bloque.style.display = 'block';
+                if (btn) btn.style.display = 'none';
+            }
+            actualizarRadiosTutorEdit();
+        }
+
+        function actualizarRadiosTutorEdit() {
+            var bloquePadre = document.getElementById('bloque-padre-edit');
+            var bloqueMadre = document.getElementById('bloque-madre-edit');
+            var padreVisible = !!bloquePadre && bloquePadre.style.display !== 'none';
+            var madreVisible = !!bloqueMadre && bloqueMadre.style.display !== 'none';
+            var qPadre = document.getElementById('e-qt-padre');
+            var qMadre = document.getElementById('e-qt-madre');
+            var qTutor = document.getElementById('e-qt-tutor');
+            if (qPadre) qPadre.disabled = !padreVisible;
+            if (qMadre) qMadre.disabled = !madreVisible;
+            if (qPadre && qPadre.checked && !padreVisible && qTutor) qTutor.checked = true;
+            if (qMadre && qMadre.checked && !madreVisible && qTutor) qTutor.checked = true;
+        }
+
+        function actualizarRadiosTutor() {
+            var bloquePadre = document.getElementById('bloque-padre');
+            var bloqueMadre = document.getElementById('bloque-madre');
+            var padreVisible = !!bloquePadre && bloquePadre.style.display !== 'none';
+            var madreVisible = !!bloqueMadre && bloqueMadre.style.display !== 'none';
+            var qPadre = document.getElementById('qt-padre');
+            var qMadre = document.getElementById('qt-madre');
+            var qTutor = document.getElementById('qt-tutor');
+            if (qPadre) qPadre.disabled = !padreVisible;
+            if (qMadre) qMadre.disabled = !madreVisible;
+            if (qPadre && qPadre.checked && !padreVisible && qTutor) qTutor.checked = true;
+            if (qMadre && qMadre.checked && !madreVisible && qTutor) qTutor.checked = true;
+            if (qTutor && qTutor.checked) {
+                var ext = document.getElementById('campos-tutor-externo');
+                var cm = document.getElementById('correo-tutor-padre-madre');
+                if (ext) ext.style.display = 'block';
+                if (cm) cm.style.display = 'none';
+            }
+        }
+
+        if (document.getElementById('bloque-padre')) actualizarRadiosTutor();
     </script>
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParentGuardian;
+use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class ParentGuardianController extends Controller
         }
 
         $padres = ParentGuardian::withCount('students')
+            ->with(['students:id,nombres,apellidos'])
             ->when($request->query('buscar'), function ($q, $b) {
                 $buscable = addcslashes($b, '%_');
                 $q->where(fn ($w) =>
@@ -32,7 +34,12 @@ class ParentGuardianController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('parent_guardians.index', compact('padres'));
+        $estudiantes = Student::where('estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos', 'codigo']);
+
+        return view('parent_guardians.index', compact('padres', 'estudiantes'));
     }
 
     private function apiIndex(Request $request): JsonResponse
@@ -47,6 +54,8 @@ class ParentGuardianController extends Controller
 
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $hayTutor = $this->tieneTutor($request);
+
         $validated = $request->validate([
             'nombres'   => ['required', 'string', 'max:150'],
             'apellidos' => ['required', 'string', 'max:150'],
@@ -55,7 +64,7 @@ class ParentGuardianController extends Controller
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
             'correo'     => [
-                'nullable',
+                $hayTutor ? 'required' : 'nullable',
                 'string',
                 'email',
                 'max:150',
@@ -64,6 +73,9 @@ class ParentGuardianController extends Controller
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],
             'estado'     => ['sometimes', 'in:ACTIVO,INACTIVO'],
+            'students'   => ['nullable', 'array'],
+            'students.*.id'           => ['nullable', 'integer', 'exists:students,id'],
+            'students.*.tipo_relacion' => ['nullable', 'in:PADRE,MADRE,TUTOR'],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
@@ -79,6 +91,8 @@ class ParentGuardianController extends Controller
             throw $e;
         }
 
+        $this->sincronizarEstudiantes($padre, $request->input('students', []));
+
         if ($request->expectsJson()) {
             return response()->json(['data' => $padre->loadCount('students')], 201);
         }
@@ -88,6 +102,8 @@ class ParentGuardianController extends Controller
 
     public function update(Request $request, ParentGuardian $parentGuardian): RedirectResponse|JsonResponse
     {
+        $hayTutor = $this->tieneTutor($request);
+
         $validated = $request->validate([
             'nombres'   => ['sometimes', 'string', 'max:150'],
             'apellidos' => ['sometimes', 'string', 'max:150'],
@@ -96,8 +112,8 @@ class ParentGuardianController extends Controller
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
             'correo'     => [
+                $hayTutor ? 'required' : 'nullable',
                 'sometimes',
-                'nullable',
                 'string',
                 'email',
                 'max:150',
@@ -106,16 +122,49 @@ class ParentGuardianController extends Controller
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],
             'estado'     => ['sometimes', 'in:ACTIVO,INACTIVO'],
+            'students'   => ['nullable', 'array'],
+            'students.*.id'           => ['nullable', 'integer', 'exists:students,id'],
+            'students.*.tipo_relacion' => ['nullable', 'in:PADRE,MADRE,TUTOR'],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
         $parentGuardian->update($validated);
+
+        $this->sincronizarEstudiantes($parentGuardian, $request->input('students', []));
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $parentGuardian->fresh()->loadCount('students')]);
         }
 
         return redirect()->route('padres-tutores.index')->with('success', 'Padre/tutor actualizado correctamente.');
+    }
+
+    private function tieneTutor(Request $request): bool
+    {
+        $students = $request->input('students', []);
+        if (! is_array($students)) {
+            return false;
+        }
+
+        return collect($students)->contains(fn ($s) => ($s['tipo_relacion'] ?? '') === 'TUTOR');
+    }
+
+    private function sincronizarEstudiantes(ParentGuardian $padre, array $students): void
+    {
+        $vinculos = [];
+        foreach ($students as $v) {
+            if (empty($v['id']) || empty($v['tipo_relacion'])) {
+                continue;
+            }
+
+            $vinculos[$v['id']] = [
+                'tipo_relacion' => $v['tipo_relacion'],
+                'es_principal'  => ($v['tipo_relacion'] === 'TUTOR'),
+                'convive'       => true,
+            ];
+        }
+
+        $padre->students()->sync($vinculos);
     }
 
     public function destroy(ParentGuardian $parentGuardian): RedirectResponse|JsonResponse

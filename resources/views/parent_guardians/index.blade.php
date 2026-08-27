@@ -74,11 +74,27 @@
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-foreground">{{ $padre->apellidos }} {{ $padre->nombres }}</div>
-                                    <div class="text-xs text-muted-foreground">{{ $padre->students_count }} estudiante(s) asociado(s)</div>
+                                    @if($padre->students->isNotEmpty())
+                                        <div class="text-xs text-muted-foreground mt-1">
+                                            @foreach($padre->students as $est)
+                                                <span class="inline-block">{{ $est->nombres }} {{ $est->apellidos }}</span>
+                                                <span class="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-semibold {{ $est->pivot->tipo_relacion === 'TUTOR' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground' }}">{{ $est->pivot->tipo_relacion }}</span>
+                                                @if(!$loop->last)<span>, </span>@endif
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-xs text-muted-foreground">Sin estudiantes asociados</div>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{{ $padre->tipo_documento }} {{ $padre->numero_documento }}{{ $padre->complemento ? '-' . $padre->complemento : '' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $padre->telefono ?? '—' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $padre->correo ?? '—' }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">
+                                    @if($padre->correo)
+                                        {{ $padre->correo }}
+                                    @else
+                                        <span class="text-xs italic text-muted-foreground/70">Solo tutor requeere</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $padre->direccion ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     @php
@@ -93,7 +109,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarPadre({{ $padre->id }}, '{{ $padre->nombres }}', '{{ $padre->apellidos }}', '{{ $padre->tipo_documento }}', '{{ $padre->numero_documento }}', '{{ $padre->complemento }}', '{{ $padre->telefono }}', '{{ $padre->correo }}', '{{ $padre->direccion }}', '{{ $padre->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarPadre({{ $padre->id }}, '{{ $padre->nombres }}', '{{ $padre->apellidos }}', '{{ $padre->tipo_documento }}', '{{ $padre->numero_documento }}', '{{ $padre->complemento }}', '{{ $padre->telefono }}', '{{ $padre->correo }}', '{{ $padre->direccion }}', '{{ $padre->estado }}', {!! $padre->students->map(fn($e) => ['id' => $e->id, 'tipo' => $e->pivot->tipo_relacion])->values()->toJson() !!})" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         <form method="POST" action="{{ route('padres-tutores.destroy', $padre) }}" onsubmit="return confirm('¿Estás seguro de eliminar este padre/tutor?')" class="inline">
@@ -176,8 +192,9 @@
                                 <input type="text" name="telefono" maxlength="20" value="{{ old('telefono') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo</label>
-                                <input type="email" name="correo" maxlength="150" value="{{ old('correo') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-correo-create" class="text-error hidden">*</span></label>
+                                <input type="email" name="correo" id="correo-create" maxlength="150" value="{{ old('correo') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
+                                <p class="text-[11px] text-muted-foreground mt-1">El correo es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
                                 @error('correo') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-2">
@@ -185,6 +202,18 @@
                                 <input type="text" name="direccion" maxlength="255" value="{{ old('direccion') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                         </div>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;" id="seccion-estudiantes-create">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                            <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Estudiantes a cargo</h3>
+                            <button type="button" onclick="agregarFilaEstudiantes('create')" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Agregar estudiante
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere correo).</p>
+                        <div id="filas-estudiantes-create"></div>
                     </div>
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
@@ -252,14 +281,27 @@
                                 <input type="text" name="telefono" id="edit-telefono" maxlength="20" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo</label>
-                                <input type="email" name="correo" id="edit-correo" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-correo-edit" class="text-error hidden">*</span></label>
+                                <input type="email" name="correo" id="edit-correo" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
+                                <p class="text-[11px] text-muted-foreground mt-1">El correo es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
                                 <input type="text" name="direccion" id="edit-direccion" maxlength="255" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                         </div>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                            <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Estudiantes a cargo</h3>
+                            <button type="button" onclick="agregarFilaEstudiantes('edit')" class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Agregar estudiante
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere correo).</p>
+                        <div id="filas-estudiantes-edit"></div>
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
@@ -282,9 +324,73 @@
 
 @push('scripts')
     <script>
+        const ESTUDIANTES = @json($estudiantes);
+
         function openModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function editarPadre(id, nombres, apellidos, tipoDoc, numDoc, comp, tel, correo, direccion, estado) {
+
+        function opcionesEstudiantes(selectedId, modo) {
+            let opts = '<option value="">— Seleccionar estudiante —</option>';
+            ESTUDIANTES.forEach(function (e) {
+                const sel = (String(selectedId) === String(e.id)) ? ' selected' : '';
+                opts += '<option value="' + e.id + '"' + sel + '>' + e.apellidos + ' ' + e.nombres + (e.codigo ? ' (' + e.codigo + ')' : '') + '</option>';
+            });
+            return opts;
+        }
+
+        function opcionesTipo(selected, modo) {
+            const tipos = ['PADRE', 'MADRE', 'TUTOR'];
+            let opts = '<option value=""' + (selected ? '' : ' selected') + '>— Tipo —</option>';
+            tipos.forEach(function (t) {
+                const sel = (selected === t) ? ' selected' : '';
+                opts += '<option value="' + t + '"' + sel + '>' + t.charAt(0) + t.slice(1).toLowerCase() + '</option>';
+            });
+            return opts;
+        }
+
+        function nuevaFilaEstudiantes(modo, datos) {
+            datos = datos || {};
+            const contenedor = document.getElementById('filas-estudiantes-' + modo);
+            const fila = document.createElement('div');
+            fila.className = 'fila-estudiante flex flex-col sm:flex-row gap-2 mb-2';
+            fila.innerHTML =
+                '<div class="flex-1">' +
+                    '<select name="students[' + (contenedor.children.length) + '][id]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesEstudiantes(datos.id, modo) + '</select>' +
+                '</div>' +
+                '<div class="w-full sm:w-40">' +
+                    '<select name="students[' + (contenedor.children.length) + '][tipo_relacion]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesTipo(datos.tipo, modo) + '</select>' +
+                '</div>' +
+                '<button type="button" onclick="this.parentElement.remove(); actualizarCorreoRequerido();" class="px-3 py-2.5 rounded-lg border border-error/20 text-error hover:bg-error/10 transition-colors cursor-pointer" title="Quitar">' +
+                    '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+                '</button>';
+            contenedor.appendChild(fila);
+        }
+
+        function agregarFilaEstudiantes(modo) {
+            nuevaFilaEstudiantes(modo, {});
+            actualizarCorreoRequerido();
+        }
+
+        function tieneTutorSeleccionado() {
+            const filas = document.querySelectorAll('.fila-estudiante');
+            for (const fila of filas) {
+                const tipo = fila.querySelector('select[name$="[tipo_relacion]"]');
+                if (tipo && tipo.value === 'TUTOR') return true;
+            }
+            return false;
+        }
+
+        function actualizarCorreoRequerido() {
+            const hayTutor = tieneTutorSeleccionado();
+            ['create', 'edit'].forEach(function (modo) {
+                const input = document.getElementById('correo-' + modo);
+                const lbl = document.getElementById('lbl-correo-' + modo);
+                if (input) input.required = hayTutor;
+                if (lbl) lbl.classList.toggle('hidden', !hayTutor);
+            });
+        }
+
+        function editarPadre(id, nombres, apellidos, tipoDoc, numDoc, comp, tel, correo, direccion, estado, estudiantes) {
             document.getElementById('form-edit').action = '/padres-tutores/' + id;
             document.getElementById('edit-nombres').value = nombres;
             document.getElementById('edit-apellidos').value = apellidos;
@@ -295,6 +401,11 @@
             document.getElementById('edit-correo').value = correo || '';
             document.getElementById('edit-direccion').value = direccion || '';
             document.getElementById('edit-estado').value = estado || 'ACTIVO';
+            document.getElementById('filas-estudiantes-edit').innerHTML = '';
+            (estudiantes || []).forEach(function (e) {
+                nuevaFilaEstudiantes('edit', { id: e.id, tipo: e.tipo });
+            });
+            actualizarCorreoRequerido();
             openModal('modal-edit');
         }
     </script>
