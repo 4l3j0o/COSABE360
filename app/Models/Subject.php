@@ -16,6 +16,13 @@ class Subject extends Model
         'estado',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'horas_semanales' => 'integer',
+        ];
+    }
+
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class, 'nivel_id');
@@ -24,5 +31,10 @@ class Subject extends Model
     public function assessments(): HasMany
     {
         return $this->hasMany(Assessment::class, 'materia_id');
+    }
+
+    public function courseSubjects(): HasMany
+    {
+        return $this->hasMany(CourseSubject::class, 'materia_id');
     }
 }
