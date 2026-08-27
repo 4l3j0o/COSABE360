@@ -12,6 +12,10 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AdminUserSeeder::class,
             TaxConfigurationSeeder::class,
+            GradoSeeder::class,
+            ParentGuardianSeeder::class,
+            StudentSeeder::class,
+            AcademicYearSeeder::class,
         ]);
     }
 }
