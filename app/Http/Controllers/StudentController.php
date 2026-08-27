@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\ParentGuardian;
 use App\Models\User;
@@ -16,7 +17,7 @@ class StudentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'rudeRecord', 'parentGuardians']);
+        $query = Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user']);
 
         if ($request->filled('buscar')) {
             $buscar = addcslashes($request->buscar, '%_');
@@ -203,7 +204,15 @@ class StudentController extends Controller
             $relations[] = 'enrollments';
         }
         $student->load($relations);
-        return view('students.show', compact('student'));
+
+        $historial = OperationHistory::where('modelo', Student::class)
+            ->where('modelo_id', $student->id)
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return view('students.show', compact('student', 'historial'));
     }
 
     public function edit(Student $student)
@@ -244,7 +253,10 @@ class StudentController extends Controller
                 unset($datos['fotografia']);
             }
 
+            $original = $student->getOriginal();
             $student->update($datos);
+
+            $this->registrarHistorial('EDITAR', $student, $datos, $original);
 
             $student->parentGuardians()->detach();
 
@@ -385,5 +397,40 @@ class StudentController extends Controller
         }
 
         return 'EST-' . $anio . '-' . str_pad($consecutivo, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function registrarHistorial(string $accion, Student $student, ?array $nuevos = null, ?array $anterior = null): void
+    {
+        OperationHistory::create([
+            'usuario_id' => auth()->id(),
+            'accion'     => strtoupper($accion),
+            'modulo'     => 'Estudiantes',
+            'modelo'     => Student::class,
+            'modelo_id'  => $student->id,
+            'detalle'    => $this->detalleCambios($student, $nuevos ?? [], $anterior),
+            'ip_address' => request()->ip(),
+            'user_agent' => substr((string) request()->userAgent(), 0, 255),
+        ]);
+    }
+
+    private function detalleCambios(Student $student, array $nuevos, ?array $anterior): string
+    {
+        if ($nuevos === [] || $anterior === null) {
+            return 'Estudiante ' . $student->codigo . ' (' . $student->nombres . ' ' . $student->apellidos . ')';
+        }
+
+        $cambios = [];
+        foreach ($nuevos as $campo => $valor) {
+            $valorAnterior = $anterior[$campo] ?? null;
+            if ((string) $valorAnterior !== (string) $valor) {
+                $cambios[] = $campo . ': "' . $valorAnterior . '" → "' . $valor . '"';
+            }
+        }
+
+        if ($cambios === []) {
+            return 'Estudiante ' . $student->codigo . ' actualizado sin cambios en datos personales.';
+        }
+
+        return 'Estudiante ' . $student->codigo . ': se modificaron ' . count($cambios) . ' campo(s): ' . implode('; ', $cambios);
     }
 }

@@ -345,6 +345,11 @@
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Discapacidad</span><span class="text-foreground" id="v-discapacidad"></span></div>
                         </div>
                     </div>
+                    <br>
+                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05);">
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Historial de Cambios</h3>
+                        <div id="v-historial-content" class="text-sm text-muted-foreground">Sin cambios registrados.</div>
+                    </div>
                     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border);">
                         <button type="button" onclick="closeModal('modal-view')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cerrar</button>
                     </div>
@@ -587,6 +592,21 @@
             if (tutorPg) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Tutor externo:</span> ' + tutorPg.nombres + ' ' + tutorPg.apellidos + (tutorPg.correo ? ' — ' + tutorPg.correo : '') + '</div>';
             if (!famHtml) famHtml = '<span class="text-muted-foreground">Sin datos familiares registrados</span>';
             document.getElementById('v-familia-content').innerHTML = famHtml;
+            var ops = s.operations || [];
+            var histHtml = '';
+            if (ops.length === 0) {
+                histHtml = 'Sin cambios registrados.';
+            } else {
+                histHtml = '<table style="width:100%; border-collapse:collapse; font-size:0.8125rem;">';
+                histHtml += '<thead><tr style="text-align:left; border-bottom:1px solid var(--border);"><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Fecha</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Usuario</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Acción</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Detalle</th></tr></thead><tbody>';
+                for (var i = 0; i < ops.length; i++) {
+                    var op = ops[i];
+                    var u = op.user ? (op.user.nombre + ' ' + op.user.apellido) : 'Sistema';
+                    histHtml += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:0.375rem 0.5rem; white-space:nowrap; color:var(--muted-foreground);">' + (op.created_at || '') + '</td><td style="padding:0.375rem 0.5rem; color:var(--foreground);">' + u + '</td><td style="padding:0.375rem 0.5rem;"><span style="display:inline-block; padding:0.125rem 0.5rem; border-radius:9999px; font-size:0.6875rem; font-weight:500; background:var(--muted); color:var(--muted-foreground);">' + (op.accion || '—') + '</span></td><td style="padding:0.375rem 0.5rem; color:var(--muted-foreground);">' + (op.detalle || '') + '</td></tr>';
+                }
+                histHtml += '</tbody></table>';
+            }
+            document.getElementById('v-historial-content').innerHTML = histHtml;
             openModal('modal-view');
         }
 

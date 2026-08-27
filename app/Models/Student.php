@@ -83,4 +83,11 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function operations(): HasMany
+    {
+        return $this->hasMany(OperationHistory::class, 'modelo_id')
+            ->where('modelo', Student::class)
+            ->orderByDesc('created_at');
+    }
 }

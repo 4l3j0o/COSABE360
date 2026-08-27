@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Role;
+use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -219,5 +220,85 @@ class StudentHu07Test extends TestCase
         $response = $this->actingAs($admin)->patch(route('students.restaurar', $est->id));
         $response->assertRedirect(route('students.eliminados'));
         $this->assertDatabaseHas('students', ['id' => $est->id, 'deleted_at' => null]);
+    }
+
+    public function test_registra_historial_al_editar_estudiante(): void
+    {
+        $admin = $this->adminUser();
+        $est = $this->crearEstudiante(['nombres' => 'Juan', 'apellidos' => 'Pérez', 'numero_documento' => '1010101', 'complemento' => '', 'codigo' => 'EST-2026-0101']);
+
+        $this->actingAs($admin)->put(route('students.update', $est), [
+            'nombres'          => 'Juan Carlos',
+            'apellidos'        => 'Pérez',
+            'fecha_nacimiento' => '2010-01-01',
+            'sexo'             => 'M',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '1010101',
+            'complemento'      => '',
+            'estado'           => 'ACTIVO',
+            'quien_es_tutor'   => 'PADRE',
+        ]);
+
+        $this->assertDatabaseHas('operation_histories', [
+            'modelo'    => Student::class,
+            'modelo_id' => $est->id,
+            'accion'    => 'EDITAR',
+        ]);
+
+        $registro = OperationHistory::where('modelo_id', $est->id)->latest()->first();
+        $this->assertNotNull($registro);
+        $this->assertStringContainsString('Juan Carlos', $registro->detalle);
+        $this->assertEquals($admin->id, $registro->usuario_id);
+    }
+
+    public function test_vista_detalle_muestra_historial_de_cambios(): void
+    {
+        $admin = $this->adminUser();
+        $est = $this->crearEstudiante(['nombres' => 'María', 'apellidos' => 'Gómez', 'numero_documento' => '1212121', 'complemento' => '', 'codigo' => 'EST-2026-0102']);
+
+        $this->actingAs($admin)->put(route('students.update', $est), [
+            'nombres'          => 'María José',
+            'apellidos'        => 'Gómez',
+            'fecha_nacimiento' => '2010-01-01',
+            'sexo'             => 'F',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '1212121',
+            'complemento'      => '',
+            'estado'           => 'ACTIVO',
+            'quien_es_tutor'   => 'PADRE',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('students.show', $est));
+
+        $response->assertOk();
+        $response->assertSee('Historial de Cambios');
+        $response->assertSee('EDITAR');
+        $response->assertSee('María José');
+    }
+
+    public function test_lista_incluye_historial_en_map_para_modal(): void
+    {
+        $admin = $this->adminUser();
+        $est = $this->crearEstudiante(['nombres' => 'Pedro', 'apellidos' => 'López', 'numero_documento' => '1313131', 'complemento' => '', 'codigo' => 'EST-2026-0103']);
+
+        $this->actingAs($admin)->put(route('students.update', $est), [
+            'nombres'          => 'Pedro Pablo',
+            'apellidos'        => 'López',
+            'fecha_nacimiento' => '2010-01-01',
+            'sexo'             => 'M',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '1313131',
+            'complemento'      => '',
+            'estado'           => 'ACTIVO',
+            'quien_es_tutor'   => 'PADRE',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('students.index'));
+
+        $response->assertOk();
+        $response->assertSee('EST-2026-0103');
+        $response->assertSee('EDITAR');
+        $this->assertStringContainsString('operations', $response->getContent());
+        $this->assertStringContainsString('se modificaron', $response->getContent());
     }
 }
