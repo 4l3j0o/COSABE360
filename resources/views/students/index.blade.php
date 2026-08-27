@@ -94,7 +94,7 @@
                 </table>
             </div>
             <div class="px-4 py-3 border-t border-border">
-                {{ $students->links() }}
+                {{ $students->links('pagina.custom') }}
             </div>
         </div>
 
@@ -214,64 +214,16 @@
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Padre</h3>
-                        <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-padre" placeholder="Buscar padre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('padre', this.value)"><div id="resultados-padre" class="hidden"></div></div>
-                        <input type="hidden" name="padre_id_existente" id="padre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="padre_tipo_doc" id="padre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="padre_complemento" id="padre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
+                            <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Familia y Tutor <span class="text-error">*</span></h3>
+                            <button type="button" id="btn-agregar-familiar" onclick="agregarFilaFamiliar()" class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Agregar familiar
+                            </button>
                         </div>
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos de la Madre</h3>
-                        <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-madre" placeholder="Buscar madre por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('madre', this.value)"><div id="resultados-madre" class="hidden"></div></div>
-                        <input type="hidden" name="madre_id_existente" id="madre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc.</label><select name="madre_tipo_doc" id="madre_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="madre_complemento" id="madre_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                        </div>
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">¿Quién es el Tutor? <span class="text-error">*</span></h3>
-                        <p class="text-xs text-muted-foreground mb-3">El tutor es quien recibirá acceso al sistema para el seguimiento del estudiante.</p>
-                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="PADRE" {{ old('quien_es_tutor', 'PADRE') === 'PADRE' ? 'checked' : '' }} class="accent-primary"> Padre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="MADRE" {{ old('quien_es_tutor') === 'MADRE' ? 'checked' : '' }} class="accent-primary"> Madre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="TUTOR" {{ old('quien_es_tutor') === 'TUTOR' ? 'checked' : '' }} class="accent-primary"> Otro tutor</label>
-                        </div>
-                        @error('quien_es_tutor') <p class="text-xs text-error mb-3">{{ $message }}</p> @enderror
-
-                        <div id="campos-tutor-externo" style="display:{{ old('quien_es_tutor') === 'TUTOR' ? 'block' : 'none' }};">
-                            <div style="margin-bottom:0.75rem;"><input type="text" id="buscador-tutor" placeholder="Buscar tutor por CI o nombre..." class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" oninput="buscarPersona('tutor', this.value)"><div id="resultados-tutor" class="hidden"></div></div>
-                            <input type="hidden" name="tutor_id_existente" id="tutor_id_existente">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres <span class="text-error">*</span></label><input type="text" name="tutor_nombres" id="tutor_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos <span class="text-error">*</span></label><input type="text" name="tutor_apellidos" id="tutor_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo Doc. <span class="text-error">*</span></label><select name="tutor_tipo_doc" id="tutor_tipo_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><option value="CI">CI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento <span class="text-error">*</span></label><input type="text" name="tutor_num_doc" id="tutor_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label><input type="text" name="tutor_complemento" id="tutor_complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="tutor_telefono" id="tutor_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div class="sm:col-span-2"><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span class="text-error">*</span></label><input type="email" name="tutor_correo" id="tutor_correo" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"><p class="text-xs text-muted-foreground mt-1">Se usará para acceder al sistema.</p></div>
-                                <div class="sm:col-span-2"><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label><input type="text" name="tutor_direccion" id="tutor_direccion" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div class="sm:col-span-2"><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Ocupación</label><input type="text" name="tutor_ocupacion" id="tutor_ocupacion" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            </div>
-                        </div>
-                        <div id="correo-tutor-padre-madre" style="display:{{ old('quien_es_tutor', 'PADRE') !== 'TUTOR' ? 'block' : 'none' }}; margin-top:1rem;">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del Tutor (para acceso al sistema) <span class="text-error">*</span></label>
-                            <input type="email" name="tutor_correo" id="tutor_correo_common" value="{{ old('tutor_correo') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            <p class="text-xs text-muted-foreground mt-1">Correo personal del padre/madre seleccionado como tutor.</p>
-                            @error('tutor_correo') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                        </div>
+                        <div id="lista-familiares" style="display:none;"></div>
+                        @error('familiares') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
+                        @error('tutor_correo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
                     </div>
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
@@ -331,11 +283,8 @@
                         </div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia y Tutor</h3>
-                        <div class="text-sm space-y-2">
-                            <div><span class="text-muted-foreground uppercase tracking-wider text-xs">Tutor asignado:</span> <span class="font-medium text-foreground" id="v-tutor-label"></span></div>
-                            <div id="v-familia-content"></div>
-                        </div>
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Familia (Tutor · Padre · Madre)</h3>
+                        <div id="v-familia-content" class="text-sm"></div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05);">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Información Adicional</h3>
@@ -344,6 +293,11 @@
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Cultura</span><span class="text-foreground" id="v-cultura"></span></div>
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Discapacidad</span><span class="text-foreground" id="v-discapacidad"></span></div>
                         </div>
+                    </div>
+                    <br>
+                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05);">
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Historial de Cambios</h3>
+                        <div id="v-historial-content" class="text-sm text-muted-foreground">Sin cambios registrados.</div>
                     </div>
                     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border);">
                         <button type="button" onclick="closeModal('modal-view')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cerrar</button>
@@ -445,49 +399,20 @@
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Padre</h3>
-                        <input type="hidden" name="padre_id_existente" id="e-padre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="padre_nombres" id="e-padre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="padre_apellidos" id="e-padre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="padre_num_doc" id="e-padre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="padre_telefono" id="e-padre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
+                            <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Familia y Tutor <span class="text-error">*</span></h3>
+                            <button type="button" id="btn-agregar-familiar-edit" onclick="agregarFilaFamiliarEdit()" class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Agregar familiar
+                            </button>
                         </div>
-                    </div>
+                        <p class="text-xs text-muted-foreground mb-4">Agregue a los familiares del estudiante. Para cada uno elija su <strong>relación</strong> y marque quién será el <strong>tutor</strong> (debe haber exactamente uno). Si no es de la familia, use la relación <strong>TUTOR</strong>.</p>
 
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos de la Madre</h3>
-                        <input type="hidden" name="madre_id_existente" id="e-madre_id_existente">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="madre_nombres" id="e-madre_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="madre_apellidos" id="e-madre_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="madre_num_doc" id="e-madre_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="madre_telefono" id="e-madre_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
+                        <div id="lista-familiares-edit" style="display:none;"></div>
+                        <div id="sin-familiar-edit" class="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border rounded-lg px-4 py-5 text-center">
+                            No hay familiares registrados para este estudiante. Use <strong>"Agregar familiar"</strong>.
                         </div>
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">¿Quién es el Tutor?</h3>
-                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="PADRE" id="e-qt-padre" class="accent-primary"> Padre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="MADRE" id="e-qt-madre" class="accent-primary"> Madre</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" name="quien_es_tutor" value="TUTOR" id="e-qt-tutor" class="accent-primary"> Otro tutor</label>
-                        </div>
-                        <div id="e-campos-tutor-externo" style="display:none;">
-                            <input type="hidden" name="tutor_id_existente" id="e-tutor_id_existente">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" name="tutor_nombres" id="e-tutor_nombres" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" name="tutor_apellidos" id="e-tutor_apellidos" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" name="tutor_num_doc" id="e-tutor_num_doc" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" name="tutor_telefono" id="e-tutor_telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                                <div class="sm:col-span-2"><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo</label><input type="email" name="tutor_correo" id="e-tutor_correo" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"></div>
-                            </div>
-                        </div>
-                        <div id="e-correo-tutor-padre-madre">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del Tutor (para acceso al sistema)</label>
-                            <input type="email" name="tutor_correo" id="e-tutor_correo_common" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            <p class="text-xs text-muted-foreground mt-1">Correo del padre/madre seleccionado como tutor.</p>
-                        </div>
+                        @error('familiares') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
                     </div>
 
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
@@ -545,6 +470,169 @@
             return dia + '/' + mes + '/' + anio + ' (' + edad + ' años)';
         }
 
+        var ETIQUETAS_RELACION = {
+            PADRE: 'Padre',
+            MADRE: 'Madre',
+            TIO: 'Tío',
+            TIA: 'Tía',
+            ABUELO: 'Abuelo',
+            ABUELA: 'Abuela',
+            HERMANO: 'Hermano',
+            HERMANA: 'Hermana',
+            OTRO: 'Otro Familiar',
+            TUTOR: 'Tutor (no familia)'
+        };
+
+        function construirFilaFamiliar(idx, pg, esEdit) {
+            var p = pg || {};
+            var relacion = (pg && pg.pivot) ? pg.pivot.tipo_relacion : 'PADRE';
+            var esTutor = (pg && pg.pivot) ? (pg.pivot.es_principal ? 1 : 0) : 0;
+            var sel = esEdit ? 'lista-familiares-edit' : 'lista-familiares';
+            var opciones = '';
+            var rels = ['PADRE','MADRE','TIO','TIA','ABUELO','ABUELA','HERMANO','HERMANA','OTRO','TUTOR'];
+            for (var r = 0; r < rels.length; r++) {
+                opciones += '<option value="' + rels[r] + '"' + (relacion === rels[r] ? ' selected' : '') + '>' + ETIQUETAS_RELACION[rels[r]] + '</option>';
+            }
+            return '<div class="fila-familiar" data-idx="' + idx + '" style="border:1px solid var(--border); border-radius:0.75rem; padding:1rem; margin-bottom:1rem; background:var(--card);">' +
+                  '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">' +
+                      '<h4 class="text-sm font-semibold text-foreground">Familiar</h4>' +
+                      '<button type="button" onclick="quitarFilaFamiliar(this)" class="text-xs text-error hover:underline cursor-pointer">Quitar</button>' +
+                  '</div>' +
+                  '<div style="margin-bottom:0.75rem;">' +
+                      '<input type="text" class="buscador-familiar" placeholder="Buscar persona existente por CI o nombre..." oninput="buscarPersonaFamiliar(this)" value="" style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
+                      '<div class="resultados-familiar hidden"></div>' +
+                  '</div>' +
+                  '<input type="hidden" data-field="id_existente" name="familiares[' + idx + '][id_existente]" class="f-id" value="' + (p.id || '') + '">' +
+                  '<input type="hidden" data-field="tipo_doc" name="familiares[' + idx + '][tipo_doc]" class="f-tipo_doc" value="' + (p.tipo_documento || 'CI') + '">' +
+                  '<input type="hidden" data-field="complemento" name="familiares[' + idx + '][complemento]" class="f-complemento" value="' + (p.complemento || '') + '">' +
+                  '<input type="hidden" data-field="direccion" name="familiares[' + idx + '][direccion]" class="f-direccion" value="' + (p.direccion || '') + '">' +
+                  '<input type="hidden" data-field="ocupacion" name="familiares[' + idx + '][ocupacion]" class="f-ocupacion" value="' + (p.ocupacion || '') + '">' +
+                  '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" data-field="nombres" name="familiares[' + idx + '][nombres]" class="f-nombres" value="' + (p.nombres || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" data-field="apellidos" name="familiares[' + idx + '][apellidos]" class="f-apellidos" value="' + (p.apellidos || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" data-field="num_doc" name="familiares[' + idx + '][num_doc]" class="f-num_doc" value="' + (p.numero_documento || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" data-field="telefono" name="familiares[' + idx + '][telefono]" class="f-telefono" value="' + (p.telefono || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Relación</label><select data-field="relacion" name="familiares[' + idx + '][relacion]" class="f-relacion" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' + opciones + '</select></div>' +
+                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">¿Es tutor?</label><label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" data-field="es_tutor" name="familiares[' + idx + '][es_tutor]" class="f-es_tutor" value="1" ' + (esTutor ? 'checked' : '') + ' onchange="marcarTutor(this)"> Es el tutor</label></div>' +
+                  '</div>' +
+                  '<div class="campo-correo-tutor" style="' + (esTutor ? '' : 'display:none;') + 'margin-top:0.75rem;">' +
+                      '<label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del tutor (para acceso al sistema) <span class="text-error">*</span></label>' +
+                      '<input type="email" data-field="correo" name="familiares[' + idx + '][correo]" class="f-correo" value="' + (p.correo || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
+                      '<p class="text-xs text-muted-foreground mt-1">El tutor es quien recibe el acceso al sistema.</p>' +
+                  '</div>' +
+              '</div>';
+        }
+
+        var familiarSeq = 0;
+        function agregarFilaFamiliar() {
+            var cont = document.getElementById('lista-familiares');
+            cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(familiarSeq, null, false));
+            familiarSeq++;
+            cont.style.display = 'block';
+            document.getElementById('sin-familiar').style.display = 'none';
+            renumerarFilas('lista-familiares');
+        }
+
+        var familiarSeqEdit = 0;
+        function agregarFilaFamiliarEdit(editIdx) {
+            var cont = document.getElementById('lista-familiares-edit');
+            cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(editIdx, null, true));
+            familiarSeqEdit++;
+            cont.style.display = 'block';
+            var sn = document.getElementById('sin-familiar-edit');
+            if (sn) sn.style.display = 'none';
+            renumerarFilas('lista-familiares-edit');
+        }
+
+        function quitarFilaFamiliar(btn) {
+            var fila = btn.closest('.fila-familiar');
+            var cont = fila.parentNode;
+            fila.remove();
+            renumerarFilas(cont.id);
+        }
+
+        function renumerarFilas(contenedorId) {
+            var cont = document.getElementById(contenedorId);
+            if (!cont) return;
+            var filas = cont.querySelectorAll('.fila-familiar');
+            var idx = 0;
+            filas.forEach(function(fila) {
+                fila.dataset.idx = idx;
+                fila.querySelectorAll('[data-field]').forEach(function(input) {
+                    var campo = input.dataset.field;
+                    input.name = 'familiares[' + idx + '][' + campo + ']';
+                });
+                var buscador = fila.querySelector('.buscador-familiar');
+                if (buscador) buscador.oninput = (function(f){ return function(){ buscarPersonaFamiliar(f); }; })(buscador);
+                idx++;
+            });
+            var vacio = (contenedorId === 'lista-familiares') ? 'sin-familiar' : 'sin-familiar-edit';
+            if (idx === 0) {
+                cont.style.display = 'none';
+                var v = document.getElementById(vacio);
+                if (v) v.style.display = 'block';
+            }
+        }
+
+        var busquedaTimeout = null;
+        function buscarPersonaFamiliar(input) {
+            var fila = input.closest('.fila-familiar');
+            var dd = fila.querySelector('.resultados-familiar');
+            var query = input.value;
+            clearTimeout(busquedaTimeout);
+            if (query.length < 2) { dd.classList.add('hidden'); dd.innerHTML = ''; return; }
+            busquedaTimeout = setTimeout(function() {
+                fetch('{{ route("students.buscarPersona") }}?q=' + encodeURIComponent(query))
+                .then(r => r.json()).then(data => {
+                    if (!data.length) { dd.classList.add('hidden'); return; }
+                    dd.innerHTML = data.map(function(p) {
+                        return '<div class="px-3 py-2 cursor-pointer hover:bg-muted text-sm border-b border-border last:border-0" onclick="seleccionarPersonaFamiliar(this)">' +
+                            '<span class="font-semibold">' + (p.nombres||'') + ' ' + (p.apellidos||'') + '</span> — ' + (p.numero_documento||'') +
+                            '</div>';
+                    }).join('');
+                    dd.classList.remove('hidden');
+                    dd._data = data;
+                });
+            }, 300);
+        }
+
+        function seleccionarPersonaFamiliar(el) {
+            var fila = el.closest('.fila-familiar');
+            var dd = fila.querySelector('.resultados-familiar');
+            var data = dd._data || [];
+            var li = Array.prototype.indexOf.call(dd.children, el);
+            var p = data[li] || {};
+            fila.querySelector('.f-id').value = p.id || '';
+            fila.querySelector('.f-nombres').value = p.nombres || '';
+            fila.querySelector('.f-apellidos').value = p.apellidos || '';
+            fila.querySelector('.f-num_doc').value = p.numero_documento || '';
+            fila.querySelector('.f-tipo_doc').value = p.tipo_documento || 'CI';
+            fila.querySelector('.f-complemento').value = p.complemento || '';
+            fila.querySelector('.f-telefono').value = p.telefono || '';
+            fila.querySelector('.f-correo').value = p.correo || '';
+            fila.querySelector('.f-direccion').value = p.direccion || '';
+            fila.querySelector('.f-ocupacion').value = p.ocupacion || '';
+            fila.querySelector('.f-es_tutor').checked = true;
+            var campoCorreo = fila.querySelector('.campo-correo-tutor');
+            if (campoCorreo) campoCorreo.style.display = 'block';
+            marcarTutor(fila.querySelector('.f-es_tutor'));
+            fila.querySelector('.buscador-familiar').value = '';
+            dd.classList.add('hidden');
+            dd.innerHTML = '';
+        }
+
+        function marcarTutor(cb) {
+            var fila = cb.closest('.fila-familiar');
+            var cont = fila.parentNode;
+            var hermanos = cont.querySelectorAll('.f-es_tutor');
+            hermanos.forEach(function(h) { if (h !== cb) h.checked = false; });
+            cont.querySelectorAll('.campo-correo-tutor').forEach(function(c) { c.style.display = 'none'; });
+            if (cb.checked) {
+                var cc = fila.querySelector('.campo-correo-tutor');
+                if (cc) cc.style.display = 'block';
+            }
+        }
+
         function verEstudiante(btn) {
             var s = estudiantesMap[btn.dataset.id];
             if (!s) return;
@@ -575,18 +663,35 @@
             document.getElementById('v-cultura').textContent = s.cultura || '—';
             document.getElementById('v-discapacidad').textContent = s.discapacidad || '—';
             var pgs = s.parent_guardians || [];
-            var padre = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'PADRE'; });
-            var madre = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'MADRE'; });
-            var tutorPg = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'TUTOR'; });
-            var qt = s.quien_es_tutor || 'PADRE';
-            var tutorRef = qt === 'PADRE' ? padre : qt === 'MADRE' ? madre : tutorPg;
-            document.getElementById('v-tutor-label').textContent = tutorRef ? (tutorRef.nombres + ' ' + tutorRef.apellidos) + ' (' + qt + ')' : '—';
             var famHtml = '';
-            if (padre) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Padre:</span> ' + padre.nombres + ' ' + padre.apellidos + (padre.numero_documento ? ' — CI ' + padre.numero_documento : '') + '</div>';
-            if (madre) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Madre:</span> ' + madre.nombres + ' ' + madre.apellidos + (madre.numero_documento ? ' — CI ' + madre.numero_documento : '') + '</div>';
-            if (tutorPg) famHtml += '<div><span class="text-muted-foreground uppercase tracking-wider text-xs">Tutor externo:</span> ' + tutorPg.nombres + ' ' + tutorPg.apellidos + (tutorPg.correo ? ' — ' + tutorPg.correo : '') + '</div>';
+            pgs.forEach(function(p) {
+                var rol = p.pivot.tipo_relacion || 'OTRO';
+                var etiqueta = ETIQUETAS_RELACION[rol] || rol;
+                var esTutor = p.pivot.es_principal ? 1 : 0;
+                var idTutor = 'v-persona-' + p.id;
+                famHtml += '<div id="' + idTutor + '" style="border:1px solid ' + (esTutor ? 'rgba(124,58,237,0.35)' : 'var(--border)') + '; border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem;' + (esTutor ? ' background-color:rgba(124,58,237,0.06)' : '') + '">' +
+                    '<div class="text-xs font-semibold uppercase tracking-wider ' + (esTutor ? 'text-primary' : 'text-muted-foreground') + '">' + etiqueta + (esTutor ? ' · Tutor' : '') + '</div>' +
+                    '<div class="font-medium text-foreground">' + (p.nombres || '') + ' ' + (p.apellidos || '') + '</div>' +
+                    '<div class="text-xs text-muted-foreground">' + (p.numero_documento ? 'CI ' + p.numero_documento : '') + (esTutor && p.correo ? ' · ' + p.correo : '') + '</div>' +
+                    '</div>';
+            });
             if (!famHtml) famHtml = '<span class="text-muted-foreground">Sin datos familiares registrados</span>';
             document.getElementById('v-familia-content').innerHTML = famHtml;
+            var ops = s.operations || [];
+            var histHtml = '';
+            if (ops.length === 0) {
+                histHtml = 'Sin cambios registrados.';
+            } else {
+                histHtml = '<table style="width:100%; border-collapse:collapse; font-size:0.8125rem;">';
+                histHtml += '<thead><tr style="text-align:left; border-bottom:1px solid var(--border);"><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Fecha</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Usuario</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Acción</th><th style="padding:0.375rem 0.5rem; font-weight:600; color:var(--foreground);">Detalle</th></tr></thead><tbody>';
+                for (var i = 0; i < ops.length; i++) {
+                    var op = ops[i];
+                    var u = op.user ? (op.user.nombre + ' ' + op.user.apellido) : 'Sistema';
+                    histHtml += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:0.375rem 0.5rem; white-space:nowrap; color:var(--muted-foreground);">' + (op.created_at || '') + '</td><td style="padding:0.375rem 0.5rem; color:var(--foreground);">' + u + '</td><td style="padding:0.375rem 0.5rem;"><span style="display:inline-block; padding:0.125rem 0.5rem; border-radius:9999px; font-size:0.6875rem; font-weight:500; background:var(--muted); color:var(--muted-foreground);">' + (op.accion || '—') + '</span></td><td style="padding:0.375rem 0.5rem; color:var(--muted-foreground);">' + (op.detalle || '') + '</td></tr>';
+                }
+                histHtml += '</tbody></table>';
+            }
+            document.getElementById('v-historial-content').innerHTML = histHtml;
             openModal('modal-view');
         }
 
@@ -609,90 +714,27 @@
             document.getElementById('e-idioma').value = s.idioma || '';
             document.getElementById('e-cultura').value = s.cultura || '';
             document.getElementById('e-discapacidad').value = s.discapacidad || '';
+
+            var cont = document.getElementById('lista-familiares-edit');
+            cont.innerHTML = '';
+            familiarSeqEdit = 0;
             var pgs = s.parent_guardians || [];
-            var padre = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'PADRE'; });
-            var madre = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'MADRE'; });
-            var tutorPg = pgs.find(function(p) { return p.pivot && p.pivot.tipo_relacion === 'TUTOR'; });
-
-            function fillPersona(prefix, pg) {
-                if (!pg) return;
-                document.getElementById(prefix + '_id_existente').value = pg.id || '';
-                document.getElementById(prefix + '_nombres').value = pg.nombres || '';
-                document.getElementById(prefix + '_apellidos').value = pg.apellidos || '';
-                document.getElementById(prefix + '_num_doc').value = pg.numero_documento || '';
-                document.getElementById(prefix + '_telefono').value = pg.telefono || '';
-                if (prefix === 'tutor') {
-                    document.getElementById('e-tutor_correo').value = pg.correo || '';
-                }
+            pgs.forEach(function(p) {
+                var idx = familiarSeqEdit;
+                cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(idx, p, true));
+                familiarSeqEdit++;
+            });
+            if (pgs.length > 0) {
+                cont.style.display = 'block';
+                var sn = document.getElementById('sin-familiar-edit');
+                if (sn) sn.style.display = 'none';
+            } else {
+                cont.style.display = 'none';
+                var sn2 = document.getElementById('sin-familiar-edit');
+                if (sn2) sn2.style.display = 'block';
             }
-            fillPersona('padre', padre);
-            fillPersona('madre', madre);
-
-            var qt = s.quien_es_tutor || 'PADRE';
-            document.getElementById('e-qt-' + qt.toLowerCase()).checked = true;
-            document.getElementById('e-campos-tutor-externo').style.display = qt === 'TUTOR' ? 'block' : 'none';
-            document.getElementById('e-correo-tutor-padre-madre').style.display = qt !== 'TUTOR' ? 'block' : 'none';
-            if (qt === 'TUTOR') fillPersona('tutor', tutorPg);
-            else {
-                var tCorreo = qt === 'PADRE' ? (padre ? padre.correo : '') : (madre ? madre.correo : '');
-                document.getElementById('e-tutor_correo_common').value = tCorreo;
-            }
+            renumerarFilas('lista-familiares-edit');
             openModal('modal-edit');
         }
-
-        // Radio tutor toggle (works for both create and edit modals)
-        function toggleTutorCampos(radio) {
-            var modal = radio.closest('[id^="modal-"]');
-            var prefix = modal && modal.id === 'modal-edit' ? 'e-' : '';
-            var ext = document.getElementById(prefix + 'campos-tutor-externo');
-            var cmm = document.getElementById(prefix + 'correo-tutor-padre-madre');
-            if (!ext || !cmm) return;
-            if (radio.value === 'TUTOR') { ext.style.display = 'block'; cmm.style.display = 'none'; }
-            else { ext.style.display = 'none'; cmm.style.display = 'block'; }
-        }
-        document.querySelectorAll('input[name="quien_es_tutor"]').forEach(function(r) {
-            r.addEventListener('change', function() { toggleTutorCampos(this); });
-        });
-
-        // Buscar persona existente
-        var busquedaTimeout = null;
-        function buscarPersona(tipo, query) {
-            var dd = document.getElementById('resultados-' + tipo);
-            clearTimeout(busquedaTimeout);
-            if (query.length < 2) { dd.classList.add('hidden'); dd.innerHTML = ''; return; }
-            busquedaTimeout = setTimeout(function() {
-                fetch('{{ route("students.buscarPersona") }}?q=' + encodeURIComponent(query))
-                .then(r => r.json()).then(data => {
-                    if (!data.length) { dd.classList.add('hidden'); return; }
-                    dd.innerHTML = data.map(p =>
-                        '<div class="px-3 py-2 cursor-pointer hover:bg-muted text-sm border-b border-border last:border-0" onclick="seleccionarPersona(\'' + tipo + '\', ' + p.id + ', \'' + (p.nombres||'').replace(/'/g,"\\'") + '\', \'' + (p.apellidos||'').replace(/'/g,"\\'") + '\', \'' + (p.tipo_documento||'CI') + '\', \'' + (p.numero_documento||'') + '\', \'' + (p.complemento||'') + '\', \'' + (p.telefono||'') + '\', \'' + (p.correo||'') + '\')">' +
-                        '<span class="font-semibold">' + (p.nombres||'') + ' ' + (p.apellidos||'') + '</span> — ' + (p.numero_documento||'') +
-                        '</div>'
-                    ).join('');
-                    dd.classList.remove('hidden');
-                });
-            }, 300);
-        }
-
-        function seleccionarPersona(tipo, id, nombres, apellidos, tipoDoc, numDoc, comp, tel, correo) {
-            document.getElementById(tipo + '_id_existente').value = id;
-            document.getElementById(tipo + '_nombres').value = nombres;
-            document.getElementById(tipo + '_apellidos').value = apellidos;
-            document.getElementById(tipo + '_num_doc').value = numDoc;
-            document.getElementById(tipo + '_complemento').value = comp;
-            document.getElementById(tipo + '_telefono').value = tel;
-            if (tipo === 'tutor') {
-                document.getElementById('tutor_correo').value = correo;
-            }
-            document.getElementById('resultados-' + tipo).classList.add('hidden');
-            document.getElementById('buscador-' + tipo).value = '';
-        }
-
-        document.addEventListener('click', function(e) {
-            ['padre','madre','tutor'].forEach(function(t) {
-                var dd = document.getElementById('resultados-' + t);
-                if (dd && !dd.contains(e.target) && e.target.id !== 'buscador-' + t) dd.classList.add('hidden');
-            });
-        });
     </script>
 @endpush

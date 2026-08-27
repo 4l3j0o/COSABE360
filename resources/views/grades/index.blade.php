@@ -100,6 +100,9 @@
                     </tbody>
                 </table>
             </div>
+            <div class="px-4 py-3 border-t border-border">
+                {{ $grades->links('pagina.custom') }}
+            </div>
         </div>
     @endif
 @endsection
