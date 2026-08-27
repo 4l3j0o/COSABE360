@@ -10,7 +10,7 @@ class EnsureUserIsAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! auth()->check() || auth()->user()->rol->nombre !== 'Administrador') {
+        if (! auth()->check() || ! auth()->user()->esAdmin()) {
             abort(403, 'No tiene permisos para acceder a esta sección.');
         }
 
