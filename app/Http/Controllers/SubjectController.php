@@ -2,64 +2,127 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSubjectRequest;
+use App\Http\Requests\UpdateSubjectRequest;
+use App\Http\Resources\SubjectResource;
+use App\Models\Level;
 use App\Models\Subject;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\View\View;
 
 class SubjectController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): AnonymousResourceCollection|View
     {
-        //
+        $subjects = Subject::with('level')->where('estado', '!=', 'ELIMINADO');
+
+        if ($request->filled('level_id')) {
+            $subjects->where('level_id', $request->level_id);
+        }
+
+        if ($request->filled('estado')) {
+            $subjects->where('estado', $request->estado);
+        }
+
+        $subjects->orderBy('level_id')->orderBy('nombre');
+
+        if ($request->expectsJson()) {
+            return SubjectResource::collection($subjects->get());
+        }
+
+        $levels = Level::orderBy('orden')->get();
+
+        return view('subjects.index', [
+            'subjects' => $subjects->paginate(10)->withQueryString(),
+            'levels'   => $levels,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(StoreSubjectRequest $request): JsonResponse|RedirectResponse
     {
-        //
+        $validated = $request->validated();
+        $validated['estado'] = 'ACTIVO';
+
+        $subject = Subject::create($validated);
+
+        if ($request->expectsJson()) {
+            return (new SubjectResource($subject->fresh()->load('level')))->response()->setStatusCode(201);
+        }
+
+        return redirect()->route('subjects.index')->with('success', 'Materia creada correctamente.');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show(Subject $subject): SubjectResource
     {
-        //
+        return new SubjectResource($subject->load('level'));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Subject $subject)
+    public function update(UpdateSubjectRequest $request, Subject $subject): SubjectResource|JsonResponse|RedirectResponse
     {
-        //
+        // Una materia ELIMINADA no puede editarse ni reactivarse
+        if ($subject->estado === 'ELIMINADO') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'No se puede editar una materia eliminada.',
+                ], 409);
+            }
+
+            return redirect()->route('subjects.index')->with('error', 'No se puede editar una materia eliminada.');
+        }
+
+        $subject->update($request->validated());
+
+        if ($request->expectsJson()) {
+            return new SubjectResource($subject->fresh()->load('level'));
+        }
+
+        return redirect()->route('subjects.index')->with('success', 'Materia actualizada correctamente.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Subject $subject)
+    public function destroy(Subject $subject): JsonResponse|RedirectResponse
     {
-        //
-    }
+        $bloqueadoPor = [];
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Subject $subject)
-    {
-        //
-    }
+        // course_subject.materia_id RESTRICT — no borrar si está asignada a curso
+        if (Schema::hasColumn('course_subject', 'materia_id') || Schema::hasColumn('course_subjects', 'materia_id')) {
+            $tabla = Schema::hasColumn('course_subject', 'materia_id') ? 'course_subject' : 'course_subjects';
+            if (DB::table($tabla)->where('materia_id', $subject->id)->exists()) {
+                $bloqueadoPor[] = 'cursos asignados';
+            }
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Subject $subject)
-    {
-        //
+        // schedules.materia_id RESTRICT
+        if (Schema::hasColumn('schedules', 'materia_id') && DB::table('schedules')->where('materia_id', $subject->id)->exists()) {
+            $bloqueadoPor[] = 'horarios asignados';
+        }
+
+        // CA-14-03: assessments.materia_id — no borrar si tiene evaluaciones (y por tanto calificaciones registradas)
+        if (Schema::hasColumn('assessments', 'materia_id') && DB::table('assessments')->where('materia_id', $subject->id)->exists()) {
+            $bloqueadoPor[] = 'evaluaciones o calificaciones registradas';
+        }
+
+        if ($bloqueadoPor !== []) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => 'No se puede eliminar la materia porque tiene '.implode(' y ', $bloqueadoPor).'.',
+                ], 409);
+            }
+
+            return redirect()->route('subjects.index')->with('error', 'No se puede eliminar la materia porque tiene '.implode(' y ', $bloqueadoPor).'.');
+        }
+
+        // Borrado lógico: se marca como ELIMINADO en lugar de borrar físicamente.
+        $subject->update(['estado' => 'ELIMINADO']);
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Materia eliminada correctamente.']);
+        }
+
+        return redirect()->route('subjects.index')->with('success', 'Materia eliminada correctamente.');
     }
 }

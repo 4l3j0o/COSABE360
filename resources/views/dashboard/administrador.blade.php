@@ -6,32 +6,32 @@
 
 @section('contenido')
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Estudiantes</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="estudiantes-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/60"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Docentes</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="docentes-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/40"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Usuarios</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="usuarios-count">--</p>
             </div>
         </div>
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/30"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Año Académico</p>
-                <p class="text-2xl font-bold text-primary mt-1">--</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="ano-academico">--</p>
             </div>
         </div>
     </div>
@@ -55,6 +55,15 @@
                 <div>
                     <span class="text-foreground font-medium">Usuarios</span>
                     <p class="text-muted-foreground text-xs">Gestión completa HU02</p>
+                </div>
+            </a>
+            <a href="{{ route('teachers.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
+                <span class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l8-4-8-4-8 4 8 4zm0 4l8-4M4 10l8 4 8-4M12 14v7"/></svg>
+                </span>
+                <div>
+                    <span class="text-foreground font-medium">Docentes</span>
+                    <p class="text-muted-foreground text-xs">HU10 código único</p>
                 </div>
             </a>
             <a href="{{ route('tax-configuration.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
