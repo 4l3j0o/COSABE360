@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use App\Models\Grade;
 use App\Models\Level;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class LevelController extends Controller
 {
@@ -39,36 +35,13 @@ class LevelController extends Controller
             ->get();
 
         return response()->json(['data' => $levels]);
-=======
-use App\Http\Requests\StoreLevelRequest;
-use App\Http\Requests\UpdateLevelRequest;
-use App\Http\Resources\LevelResource;
-use App\Models\Level;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Schema;
-
-class LevelController extends Controller
-{
-    public function index(): AnonymousResourceCollection
-    {
-        return LevelResource::collection(Level::orderBy('orden')->get());
     }
 
-    public function store(StoreLevelRequest $request): JsonResponse
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
     {
-        $validated = $request->validated();
-        $validated['estado'] = 'ACTIVO';
-
-        $level = Level::create($validated);
-
-        return (new LevelResource($level))->response()->setStatusCode(201);
->>>>>>> 0b96e2e4b9af81a3a9822c02b9a9a299352e0404
-    }
-
-    public function show(Level $level): LevelResource
-    {
-<<<<<<< HEAD
         $validated = $request->validate([
             'nombre' => [
                 'required',
@@ -139,28 +112,5 @@ class LevelController extends Controller
         }
 
         return redirect()->route('levels.index')->with('success', 'Nivel educativo eliminado correctamente.');
-=======
-        return new LevelResource($level);
-    }
-
-    public function update(UpdateLevelRequest $request, Level $level): LevelResource
-    {
-        $level->update($request->validated());
-
-        return new LevelResource($level->fresh());
-    }
-
-    public function destroy(Level $level): JsonResponse
-    {
-        if (Schema::hasColumn('grades', 'nivel_id') && $level->grades()->exists()) {
-            return response()->json([
-                'message' => 'No se puede eliminar el nivel porque tiene grados asociados.',
-            ], 409);
-        }
-
-        $level->delete();
-
-        return response()->json(['message' => 'Nivel eliminado correctamente.']);
->>>>>>> 0b96e2e4b9af81a3a9822c02b9a9a299352e0404
     }
 }
