@@ -49,7 +49,7 @@ class ParentGuardianHu08Test extends TestCase
     {
         $this->loginAsAdmin();
 
-        $response = $this->post(route('padres-tutores.store'), [
+        $response = $this->post(route('tutores.store'), [
             'nombres'          => 'María',
             'apellidos'        => 'Gómez Ramírez',
             'tipo_documento'   => 'CI',
@@ -60,7 +60,7 @@ class ParentGuardianHu08Test extends TestCase
             'direccion'        => 'Av. La Paz, Tarija',
         ]);
 
-        $response->assertRedirect(route('padres-tutores.index'));
+        $response->assertRedirect(route('tutores.index'));
         $this->assertDatabaseHas('parent_guardians', [
             'nombres'          => 'María',
             'apellidos'        => 'Gómez Ramírez',
@@ -77,7 +77,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Juan',
             'apellidos'        => 'PAcrez',
             'tipo_documento'   => 'CI',
@@ -91,7 +91,7 @@ class ParentGuardianHu08Test extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('padres-tutores.index'));
+        $response = $this->get(route('tutores.index'));
 
         $response->assertOk();
         $response->assertSee('PAcrez');
@@ -104,7 +104,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Marta',
             'apellidos'        => 'Rojas',
             'tipo_documento'   => 'CI',
@@ -115,7 +115,7 @@ class ParentGuardianHu08Test extends TestCase
             ],
         ]);
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Pedro',
             'apellidos'        => 'Rojas',
             'tipo_documento'   => 'CI',
@@ -127,7 +127,7 @@ class ParentGuardianHu08Test extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('padres-tutores.index'));
+        $response = $this->get(route('tutores.index'));
 
         $response->assertOk();
         $response->assertDontSee('Marta');
@@ -138,8 +138,8 @@ class ParentGuardianHu08Test extends TestCase
     {
         $this->loginAsAdmin();
 
-        $response = $this->from(route('padres-tutores.index'))
-            ->post(route('padres-tutores.store'), []);
+        $response = $this->from(route('tutores.index'))
+            ->post(route('tutores.store'), []);
 
         $response->assertSessionHasErrors(['nombres', 'apellidos', 'numero_documento']);
         $this->assertDatabaseCount('parent_guardians', 0);
@@ -147,7 +147,7 @@ class ParentGuardianHu08Test extends TestCase
 
     public function test_no_logueado_no_accede_a_padres_tutores(): void
     {
-        $this->get(route('padres-tutores.index'))->assertRedirect('/login');
+        $this->get(route('tutores.index'))->assertRedirect('/login');
     }
 
     // CA-08-02: registrar el tipo de relación (padre/madre/tutor) al asociar un estudiante
@@ -156,7 +156,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Carlos',
             'apellidos'        => 'Pérez',
             'tipo_documento'   => 'CI',
@@ -166,7 +166,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
             ],
-        ])->assertRedirect(route('padres-tutores.index'));
+        ])->assertRedirect(route('tutores.index'));
 
         $padre = ParentGuardian::where('numero_documento', '9988776')->firstOrFail();
         $this->assertDatabaseHas('student_parent', [
@@ -182,7 +182,7 @@ class ParentGuardianHu08Test extends TestCase
         $hijo1 = $this->crearEstudiante();
         $hijo2 = $this->crearEstudiante();
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Ana María',
             'apellidos'        => 'Flores',
             'tipo_documento'   => 'CI',
@@ -193,7 +193,7 @@ class ParentGuardianHu08Test extends TestCase
                 ['id' => $hijo1->id, 'tipo_relacion' => 'TUTOR'],
                 ['id' => $hijo2->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('padres-tutores.index'));
+        ])->assertRedirect(route('tutores.index'));
 
         $tutor = ParentGuardian::where('numero_documento', '5566778')->firstOrFail();
         $this->assertSame(2, $tutor->students()->count());
@@ -205,8 +205,8 @@ class ParentGuardianHu08Test extends TestCase
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
 
-        $response = $this->from(route('padres-tutores.index'))
-            ->post(route('padres-tutores.store'), [
+        $response = $this->from(route('tutores.index'))
+            ->post(route('tutores.store'), [
                 'nombres'          => 'Rosa',
                 'apellidos'        => 'Quispe',
                 'tipo_documento'   => 'CI',
@@ -226,7 +226,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
 
-        $this->post(route('padres-tutores.store'), [
+        $this->post(route('tutores.store'), [
             'nombres'          => 'Pedro',
             'apellidos'        => 'Mamani',
             'tipo_documento'   => 'CI',
@@ -235,7 +235,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
             ],
-        ])->assertRedirect(route('padres-tutores.index'));
+        ])->assertRedirect(route('tutores.index'));
 
         $this->assertDatabaseHas('parent_guardians', [
             'numero_documento' => '1122334',
@@ -257,7 +257,7 @@ class ParentGuardianHu08Test extends TestCase
             'estado'           => 'ACTIVO',
         ]);
 
-        $this->put(route('padres-tutores.update', $padre), [
+        $this->put(route('tutores.update', $padre), [
             'nombres'          => 'Marta',
             'apellidos'        => 'Torres',
             'tipo_documento'   => 'CI',
@@ -267,7 +267,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('padres-tutores.index'));
+        ])->assertRedirect(route('tutores.index'));
 
         $this->assertDatabaseHas('student_parent', [
             'parent_guardian_id' => $padre->id,

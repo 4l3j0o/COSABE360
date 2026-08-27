@@ -99,7 +99,7 @@ class ParentGuardianController extends Controller
             return response()->json(['data' => $padre->loadCount('students')], 201);
         }
 
-        return redirect()->route('padres-tutores.index')->with('success', 'Padre/tutor registrado correctamente.');
+        return redirect()->route('tutores.index')->with('success', 'Padre/tutor registrado correctamente.');
     }
 
     public function update(Request $request, ParentGuardian $parentGuardian): RedirectResponse|JsonResponse
@@ -138,7 +138,7 @@ class ParentGuardianController extends Controller
             return response()->json(['data' => $parentGuardian->fresh()->loadCount('students')]);
         }
 
-        return redirect()->route('padres-tutores.index')->with('success', 'Padre/tutor actualizado correctamente.');
+        return redirect()->route('tutores.index')->with('success', 'Padre/tutor actualizado correctamente.');
     }
 
     private function tieneTutor(Request $request): bool
@@ -178,7 +178,7 @@ class ParentGuardianController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('padres-tutores.index')->with('error', 'No se puede eliminar el padre/tutor porque está asociado a uno o más estudiantes.');
+            return redirect()->route('tutores.index')->with('error', 'No se puede eliminar el padre/tutor porque está asociado a uno o más estudiantes.');
         }
 
         $parentGuardian->delete();
@@ -187,6 +187,6 @@ class ParentGuardianController extends Controller
             return response()->json(['message' => 'Padre/tutor eliminado correctamente.']);
         }
 
-        return redirect()->route('padres-tutores.index')->with('success', 'Padre/tutor eliminado correctamente.');
+        return redirect()->route('tutores.index')->with('success', 'Padre/tutor eliminado correctamente.');
     }
 }

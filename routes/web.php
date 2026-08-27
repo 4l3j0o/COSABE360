@@ -96,9 +96,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(fu
 });
 
 // HU-08: Registrar padres/tutores solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('padres-tutores')->group(function () {
-    Route::get('/', [ParentGuardianController::class, 'index'])->name('padres-tutores.index');
-    Route::post('/', [ParentGuardianController::class, 'store'])->name('padres-tutores.store');
-    Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('padres-tutores.update');
-    Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('padres-tutores.destroy');
+Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(function () {
+    Route::get('/', [ParentGuardianController::class, 'index'])->name('tutores.index');
+    Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
+    Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
+    Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
 });

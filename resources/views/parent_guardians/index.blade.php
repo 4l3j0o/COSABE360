@@ -34,7 +34,7 @@
     @endif
 
     <div class="bg-card border border-border rounded-xl mb-6">
-        <form method="GET" action="{{ route('padres-tutores.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
+        <form method="GET" action="{{ route('tutores.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, documento o correo" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
@@ -137,7 +137,7 @@
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('padres-tutores.store') }}" style="padding:1.5rem;">
+                <form method="POST" action="{{ route('tutores.store') }}" style="padding:1.5rem;">
                     @csrf
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos Personales</h3>
@@ -276,7 +276,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-correo-edit" class="text-error hidden">*</span></label>
-                                <input type="email" name="correo" id="edit-correo" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
+                                <input type="email" name="correo" id="correo-edit" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
                                 <p class="text-[11px] text-muted-foreground mt-1">El correo es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
                             </div>
                             <div class="sm:col-span-2">
@@ -384,19 +384,19 @@
             });
         }
 
-        function editarPadre(id, nombres, apellidos, tipoDoc, numDoc, comp, tel, correo, direccion, estado, estudiantes) {
-            document.getElementById('form-edit').action = '/padres-tutores/' + id;
-            document.getElementById('edit-nombres').value = nombres;
-            document.getElementById('edit-apellidos').value = apellidos;
-            document.getElementById('edit-tipo_documento').value = tipoDoc || 'CI';
-            document.getElementById('edit-numero_documento').value = numDoc;
-            document.getElementById('edit-complemento').value = comp || '';
-            document.getElementById('edit-telefono').value = tel || '';
-            document.getElementById('edit-correo').value = correo || '';
-            document.getElementById('edit-direccion').value = direccion || '';
-            document.getElementById('edit-estado').value = estado || 'ACTIVO';
+        function editarPadre(datos) {
+            document.getElementById('form-edit').action = '/tutores/' + datos.id;
+            document.getElementById('edit-nombres').value = datos.nombres ?? '';
+            document.getElementById('edit-apellidos').value = datos.apellidos ?? '';
+            document.getElementById('edit-tipo_documento').value = datos.tipo_documento || 'CI';
+            document.getElementById('edit-numero_documento').value = datos.numero_documento ?? '';
+            document.getElementById('edit-complemento').value = datos.complemento ?? '';
+            document.getElementById('edit-telefono').value = datos.telefono ?? '';
+            document.getElementById('correo-edit').value = datos.correo ?? '';
+            document.getElementById('edit-direccion').value = datos.direccion ?? '';
+            document.getElementById('edit-estado').value = datos.estado || 'ACTIVO';
             document.getElementById('filas-estudiantes-edit').innerHTML = '';
-            (estudiantes || []).forEach(function (e) {
+            (datos.students || []).forEach(function (e) {
                 nuevaFilaEstudiantes('edit', { id: e.id, tipo: e.tipo });
             });
             actualizarCorreoRequerido();
