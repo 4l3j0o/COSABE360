@@ -6,6 +6,7 @@ use App\Http\Requests\UpdateStudentRequest;
 use App\Models\AcademicYear;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\MonthlyPayment;
 use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\ParentGuardian;
@@ -34,6 +35,21 @@ class StudentController extends Controller
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
+        }
+
+        // Filtrar solo estudiantes matriculados en el período activo (Ver Matriculados)
+        if ($request->filled('matriculados')) {
+            $periodoActivo = AcademicYear::where('estado', 'ACTIVA')->first();
+            if ($periodoActivo) {
+                $query->whereHas('enrollments', function ($q) use ($periodoActivo) {
+                    $q->where('gestion_id', $periodoActivo->id)
+                        ->whereHas('registration', function ($r) {
+                            $r->where('estado', 'ACTIVA');
+                        });
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
@@ -317,19 +333,23 @@ class StudentController extends Controller
 
         $matricula = $inscripcion?->registration;
 
-        return view('registrations.create', compact('estudiante', 'periodo', 'inscripcion', 'cursos', 'matricula'));
+        $montoMensual = (float) (\App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0);
+
+        return view('registrations.create', compact('estudiante', 'periodo', 'inscripcion', 'cursos', 'matricula', 'montoMensual'));
     }
 
     public function matricular(Request $request, Student $estudiante)
     {
-        // CA-18-01 y CA-18-02: curso/paralelo y costos de matrícula y mensualidad
+        // CA-18-01 y CA-18-02: curso/paralelo y costo de matrícula
         $validated = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'fecha'              => 'required|date',
             'matriculation_cost' => 'required|numeric|min:0',
-            'monto_mensual'      => 'required|numeric|min:0',
             'observaciones'      => 'nullable|string|max:500',
         ]);
+
+        // HU-19 / CA-19-01: mensualidad global definida en configuración (700 para todos)
+        $montoMensual = (float) \App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0;
 
         // CA-18-03: Solo se puede matricular un estudiante que tenga inscripción completada
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
@@ -379,10 +399,29 @@ class StudentController extends Controller
                 'course_id'          => $curso->id,
                 'fecha'              => $validated['fecha'],
                 'matriculation_cost' => $validated['matriculation_cost'],
-                'monto_mensual'      => $validated['monto_mensual'],
+                'monto_mensual'      => $montoMensual,
                 'observaciones'      => $validated['observaciones'] ?? null,
                 'estado'             => 'ACTIVA',
             ]);
+
+            // HU-19 / CA-19-03: generar las 10 mensualidades (cuotas) pendientes
+            // (febrero = 2 hasta noviembre = 11) usando la mensualidad global
+            if ($montoMensual > 0) {
+                $cuotas = [];
+                for ($mes = 2; $mes <= 11; $mes++) {
+                    $cuotas[] = [
+                        'enrollment_id' => $inscripcion->id,
+                        'mes'           => $mes,
+                        'monto'         => $montoMensual,
+                        'fecha'         => null,
+                        'metodo_pago'   => null,
+                        'estado'        => 'PENDIENTE',
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ];
+                }
+                MonthlyPayment::insert($cuotas);
+            }
 
             return redirect()->route('students.show', $estudiante)
                 ->with('mensaje', 'Matrícula registrada correctamente para el estudiante.');

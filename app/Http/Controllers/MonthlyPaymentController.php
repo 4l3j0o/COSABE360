@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 class MonthlyPaymentController extends Controller
 {
     /**
-     * Listado de pagos (mensualidades) registrados.
+     * Listado general de pagos (acceso secundario).
      */
     public function index(Request $request)
     {
@@ -36,38 +36,74 @@ class MonthlyPaymentController extends Controller
     }
 
     /**
-     * Formulario para registrar un pago de mensualidad.
+     * CA-19-02/03: Pagos y saldo de un único estudiante.
      */
-    public function create()
+    public function estudiante(Student $estudiante)
     {
-        // Estudiantes con inscripción completada (tienen matrícula activa potencial)
-        $estudiantes = Student::where('estado', 'ACTIVO')
-            ->whereHas('enrollments', function ($q) {
-                $q->where('estado', 'COMPLETADA')
-                    ->whereHas('registration', function ($r) {
-                        $r->where('estado', 'ACTIVA');
-                    });
+        $inscripcion = $estudiante->enrollments()
+            ->with('gestion')
+            ->where('estado', 'COMPLETADA')
+            ->whereHas('registration', function ($q) {
+                $q->where('estado', 'ACTIVA');
             })
-            ->orderBy('apellidos')
-            ->get(['id', 'codigo', 'nombres', 'apellidos']);
+            ->latest('fecha')
+            ->first();
 
-        return view('monthly-payments.create', compact('estudiantes'));
+        $pagos = collect();
+        $saldoPendiente = 0.0;
+        $totalPagado = 0.0;
+        $mesesPendientes = 0;
+        $mesesPagados = 0;
+
+        if ($inscripcion) {
+            $pagos = MonthlyPayment::where('enrollment_id', $inscripcion->id)
+                ->orderBy('mes')
+                ->get();
+
+            $saldoPendiente = (float) $pagos->where('estado', 'PENDIENTE')->sum('monto');
+            $totalPagado = (float) $pagos->where('estado', 'PAGADA')->sum('monto');
+            $mesesPendientes = $pagos->where('estado', 'PENDIENTE')->count();
+            $mesesPagados = $pagos->where('estado', 'PAGADA')->count();
+        }
+
+        return view('monthly-payments.estudiante', compact(
+            'estudiante',
+            'inscripcion',
+            'pagos',
+            'saldoPendiente',
+            'totalPagado',
+            'mesesPendientes',
+            'mesesPagados'
+        ));
     }
 
     /**
-     * CA-19-01: Registrar un pago con monto, fecha y método de pago.
+     * Formulario para registrar un pago de mensualidad de un estudiante específico.
      */
-    public function store(Request $request)
+    public function crearParaEstudiante(Student $estudiante)
+    {
+        $inscripcion = $estudiante->enrollments()
+            ->where('estado', 'COMPLETADA')
+            ->whereHas('registration', function ($q) {
+                $q->where('estado', 'ACTIVA');
+            })
+            ->latest('fecha')
+            ->first();
+
+        return view('monthly-payments.crear-estudiante', compact('estudiante', 'inscripcion'));
+    }
+
+    /**
+     * CA-19-01: Registrar un pago con fecha y método de pago para un estudiante.
+     * El monto se toma de la cuota ya generada en la matrícula.
+     */
+    public function storeEstudiante(Request $request, Student $estudiante)
     {
         $validated = $request->validate([
-            'estudiante_id' => ['required', 'exists:students,id'],
-            'mes'           => ['required', 'integer', 'between:1,12'],
-            'monto'         => ['required', 'numeric', 'min:0.01'],
+            'mes'           => ['required', 'integer', 'between:2,11'],
             'fecha'         => ['required', 'date'],
             'metodo_pago'   => ['required', Rule::in(MonthlyPayment::METODOS_PAGO)],
         ]);
-
-        $estudiante = Student::findOrFail($validated['estudiante_id']);
 
         // Recuperar la inscripción completada con matrícula activa del estudiante
         $inscripcion = $estudiante->enrollments()
@@ -80,25 +116,33 @@ class MonthlyPaymentController extends Controller
 
         if (! $inscripcion) {
             return back()->withErrors([
-                'estudiante_id' => 'El estudiante no tiene una matrícula activa para registrar el pago.',
+                'mes' => 'El estudiante no tiene una matrícula activa para registrar el pago.',
             ])->withInput();
         }
 
-        // Crear (o actualizar) la cuota mensual correspondiente y marcarla como pagada
-        $cuota = MonthlyPayment::updateOrCreate(
-            [
-                'enrollment_id' => $inscripcion->id,
-                'mes'           => $validated['mes'],
-            ],
-            [
-                'monto'        => $validated['monto'],
-                'fecha'        => $validated['fecha'],
-                'metodo_pago'  => $validated['metodo_pago'],
-                'estado'       => 'PAGADA',
-            ]
-        );
+        $cuota = MonthlyPayment::where('enrollment_id', $inscripcion->id)
+            ->where('mes', $validated['mes'])
+            ->first();
 
-        return redirect()->route('monthly-payments.index')
+        if (! $cuota) {
+            return back()->withErrors([
+                'mes' => 'No se encontró la mensualidad del mes seleccionado para este estudiante.',
+            ])->withInput();
+        }
+
+        if ($cuota->estado === 'PAGADA') {
+            return back()->withErrors([
+                'mes' => 'La mensualidad de este mes ya se encuentra pagada.',
+            ])->withInput();
+        }
+
+        $cuota->update([
+            'fecha'        => $validated['fecha'],
+            'metodo_pago'  => $validated['metodo_pago'],
+            'estado'       => 'PAGADA',
+        ]);
+
+        return redirect()->route('monthly-payments.estudiante', $estudiante)
             ->with('mensaje', 'Pago de la mensualidad registrado correctamente.');
     }
 }

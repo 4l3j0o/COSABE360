@@ -74,6 +74,13 @@
                         </select>
                         @error('estado') <p class="text-xs text-error">{{ $message }}</p> @enderror
                     </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Monto mensualidad (Bs)</p>
+                        <p class="read-view text-sm text-foreground font-medium">{{ $config->monto_mensualidad != null ? 'Bs ' . number_format((float) $config->monto_mensualidad, 2) : '—' }}</p>
+                        <input type="number" name="monto_mensualidad" value="{{ old('monto_mensualidad', $config->monto_mensualidad ?? 0) }}" step="0.01" min="0" required
+                            class="edit-view w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all hidden">
+                        @error('monto_mensualidad') <p class="text-xs text-error">{{ $message }}</p> @enderror
+                    </div>
                 </div>
             </div>
 

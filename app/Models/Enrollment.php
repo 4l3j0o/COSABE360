@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Enrollment extends Model
@@ -66,5 +67,18 @@ class Enrollment extends Model
     public function registration(): HasOne
     {
         return $this->hasOne(Registration::class, 'enrollment_id');
+    }
+
+    public function monthlyPayments(): HasMany
+    {
+        return $this->hasMany(MonthlyPayment::class, 'enrollment_id');
+    }
+
+    // CA-19-02: saldo pendiente = suma de cuotas PENDIENTES
+    public function getSaldoPendienteAttribute(): float
+    {
+        return (float) $this->monthlyPayments()
+            ->where('estado', 'PENDIENTE')
+            ->sum('monto');
     }
 }

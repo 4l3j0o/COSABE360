@@ -67,7 +67,7 @@
                     @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha de matrícula <span class="text-error">*</span></label>
                         <input type="date" name="fecha" value="{{ old('fecha', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
@@ -78,11 +78,14 @@
                         <input type="number" name="matriculation_cost" value="{{ old('matriculation_cost') }}" step="0.01" min="0" required placeholder="0.00" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         @error('matriculation_cost') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Mensualidad (Bs) <span class="text-error">*</span></label>
-                        <input type="number" name="monto_mensual" value="{{ old('monto_mensual') }}" step="0.01" min="0" required placeholder="0.00" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        @error('monto_mensual') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
+                </div>
+
+                <div class="bg-muted/40 border border-border rounded-lg px-4 py-3 text-sm">
+                    <p class="text-muted-foreground">
+                        <span class="font-medium text-foreground">Mensualidad:</span>
+                        <span class="font-semibold text-foreground">Bs {{ number_format($montoMensual, 2) }}</span>
+                        <span class="text-muted-foreground"> (establecida en la configuración del colegio, 10 cuotas de febrero a noviembre)</span>
+                    </p>
                 </div>
 
                 <div>

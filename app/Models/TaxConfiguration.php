@@ -20,6 +20,7 @@ class TaxConfiguration extends Model
         'leyenda_iva_exento',
         'leyenda_it_exento',
         'leyenda_ley070',
+        'monto_mensualidad',
         'estado',
     ];
 
@@ -30,6 +31,7 @@ class TaxConfiguration extends Model
             'exento_it' => 'boolean',
             'iue_exento' => 'boolean',
             'agente_retencion_rc_iva' => 'boolean',
+            'monto_mensualidad' => 'decimal:2',
         ];
     }
 

@@ -29,6 +29,40 @@
         </form>
     </div>
 
+    <div class="bg-card border border-border rounded-xl overflow-hidden mb-6">
+        <div class="px-4 py-3 border-b border-border bg-muted/50">
+            <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Saldo pendiente por estudiante</h2>
+        </div>
+        @if($saldos->isEmpty())
+            <div class="p-6 text-center text-sm text-success font-medium">
+                Todos los estudiantes están al día. No hay saldos pendientes.
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="text-left px-4 py-2 font-semibold text-foreground">Estudiante</th>
+                            <th class="text-left px-4 py-2 font-semibold text-foreground">Código</th>
+                            <th class="text-left px-4 py-2 font-semibold text-foreground">Meses pendientes</th>
+                            <th class="text-right px-4 py-2 font-semibold text-foreground">Saldo pendiente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($saldos as $saldo)
+                            <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <td class="px-4 py-2.5 text-foreground font-medium">{{ $saldo->apellidos }} {{ $saldo->nombres }}</td>
+                                <td class="px-4 py-2.5 text-muted-foreground font-mono">{{ $saldo->codigo }}</td>
+                                <td class="px-4 py-2.5 text-muted-foreground">{{ $saldo->meses_pendientes }} de 12</td>
+                                <td class="px-4 py-2.5 text-right font-semibold text-error">Bs {{ number_format($saldo->total_pendiente, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
     @if($pagos->isEmpty())
         <div class="bg-card border border-border rounded-xl p-12 text-center">
             <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
