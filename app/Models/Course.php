@@ -13,6 +13,7 @@ class Course extends Model
         'section_id',
         'gestion_id',
         'nombre',
+        'aula',
         'estado',
     ];
 

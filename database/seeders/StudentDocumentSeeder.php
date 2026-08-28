@@ -37,6 +37,7 @@ class StudentDocumentSeeder extends Seeder
                     [
                         'estado'        => $esPendiente ? 'PENDIENTE' : 'ENTREGADO',
                         'observaciones' => $esPendiente ? 'Pendiente de entrega' : 'Recibido y verificado',
+                        'archivo'       => 'documentos/' . $student->id . '/' . str_replace(' ', '_', $tipo) . '.pdf',
                     ]
                 );
             }

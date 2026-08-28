@@ -28,6 +28,8 @@ class ScheduleController extends Controller
 
     public function show(Course $course)
     {
+        $course->load(['grade.level', 'section', 'gestion']);
+
         $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
 
         $schedules = Schedule::with(['subject', 'teacher'])

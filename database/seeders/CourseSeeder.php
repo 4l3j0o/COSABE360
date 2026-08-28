@@ -15,7 +15,7 @@ class CourseSeeder extends Seeder
 
         if ($grades->count() > 0 && $sections->count() > 0 && $year) {
             foreach ($grades as $grade) {
-                foreach ($sections->where('grade_id', $grade->id) as $section) {
+                foreach ($sections->where('grade_id', $grade->id) as $index => $section) {
                     $exists = DB::table('courses')->where([
                         'grade_id' => $grade->id,
                         'section_id' => $section->id,
@@ -28,6 +28,7 @@ class CourseSeeder extends Seeder
                             'section_id' => $section->id,
                             'gestion_id' => $year->id,
                             'nombre' => $grade->nombre . ' "' . $section->nombre . '" - ' . $year->nombre,
+                            'aula' => (string) (10 + $index),
                             'estado' => 'ACTIVO',
                             'created_at' => now(),
                             'updated_at' => now(),

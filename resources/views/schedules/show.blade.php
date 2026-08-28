@@ -6,13 +6,13 @@
 @endsection
 
 @section('contenido')
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div class="flex items-center gap-3 min-w-0">
             <a href="{{ route('schedules.index') }}" class="shrink-0 inline-flex items-center gap-1.5 p-2 rounded-lg border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Volver a paralelos">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div class="min-w-0">
-                <h1 class="text-xl font-bold text-foreground truncate">{{ $course->nombre }}</h1>
+                <h1 class="text-xl font-bold text-foreground truncate">{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</h1>
                 <p class="text-sm text-muted-foreground">Horario semanal de clases</p>
             </div>
         </div>
@@ -124,10 +124,10 @@
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
                             <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="{{ $course->id }}" selected>{{ $course->nombre }}</option>
+                                <option value="{{ $course->id }}" selected>{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</option>
                                 @foreach($courses ?? [] as $courseOpt)
                                     @if($courseOpt->id != $course->id)
-                                        <option value="{{ $courseOpt->id }}">{{ $courseOpt->nombre }}</option>
+                                        <option value="{{ $courseOpt->id }}">{{ $courseOpt->nombre }} - {{ $courseOpt->aula ?? 's/a' }}</option>
                                     @endif
                                 @endforeach
                             </select>
@@ -172,7 +172,8 @@
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Aula</label>
-                            <input type="text" name="aula" maxlength="50" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Ej: Aula 101">
+                            <input type="text" name="aula" maxlength="50" value="{{ $course->aula }}" readonly class="w-full px-3 py-2.5 border border-input rounded-lg bg-muted/50 text-foreground text-sm">
+                            <p class="text-xs text-muted-foreground mt-1">Se usa el aula del paralelo ({{ $course->aula ?? 'sin asignar' }}).</p>
                         </div>
                     </div>
 

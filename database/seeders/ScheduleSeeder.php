@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\Schedule;
 use Illuminate\Database\Seeder;
@@ -40,17 +41,22 @@ class ScheduleSeeder extends Seeder
             ->get()
             ->groupBy('course_id');
 
+        // Aula fija de cada paralelo (course.aula)
+        $aulasCurso = Course::pluck('aula', 'id');
+
         // Reserva global docente|dia|bloque para que un docente no esté en dos
         // paralelos a la misma hora (equivalente a CA-28-02).
         $ocupadoDocente = [];
 
         Schedule::query()->delete();
 
-        $idxCurso = 0;
         foreach ($cursoMaterias as $courseId => $items) {
             $ocupadoCurso = []; // dia|bloque ya usados en este paralelo
-            $aula = 'Aula '.($idxCurso + 1);
-            $idxCurso++;
+            // El aula del horario coincide con el aula del paralelo (su salón fijo)
+            $aula = $aulasCurso->get($courseId);
+            if (blank($aula)) {
+                $aula = 'Aula '.$courseId;
+            }
 
             // Prioridad: materias con más horas semanales primero
             $items = $items->sortByDesc(fn ($cs) => (int) ($cs->subject->horas_semanales ?? 1))->values();

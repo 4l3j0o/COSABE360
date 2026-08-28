@@ -45,7 +45,7 @@
                                         <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                         </div>
-                                        <div class="font-medium text-foreground">{{ $paralelo->nombre }}</div>
+                                        <div class="font-medium text-foreground">{{ $paralelo->nombre }} - {{ $paralelo->aula ?? 's/a' }}</div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
@@ -95,7 +95,7 @@
                             <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->nombre }}</option>
+                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</option>
                                 @endforeach
                             </select>
                             @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror

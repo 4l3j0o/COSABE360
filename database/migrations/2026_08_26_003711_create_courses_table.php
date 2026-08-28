@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('section_id')->constrained()->restrictOnDelete();
             $table->foreignId('gestion_id')->constrained('academic_years')->restrictOnDelete();
             $table->string('nombre', 100);
+            $table->string('aula', 100)->nullable();
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['grade_id', 'section_id', 'gestion_id'], 'uk_grado_section_gestion');
