@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseSubjectController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
@@ -38,12 +39,12 @@ Route::get('/dashboard', function () {
 
     $vista = match ($rol) {
         'Administrador' => 'dashboard.administrador',
-        'Director'      => 'dashboard.director',
-        'Secretaría'    => 'dashboard.secretaria',
-        'Docente'       => 'dashboard.docente',
-        'Padre/Tutor'   => 'dashboard.padre',
-        'Estudiante'    => 'dashboard.estudiante',
-        default         => 'dashboard.administrador',
+        'Director' => 'dashboard.director',
+        'Secretaría' => 'dashboard.secretaria',
+        'Docente' => 'dashboard.docente',
+        'Padre/Tutor' => 'dashboard.padre',
+        'Estudiante' => 'dashboard.estudiante',
+        default => 'dashboard.administrador',
     };
 
     return view($vista);
@@ -140,6 +141,14 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(fun
     Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
     Route::patch('/{academicYear}/cerrar', [AcademicYearController::class, 'cerrar'])->name('periodos.cerrar');
     Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
+});
+
+// HU-17: Registrar inscripciones
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+    Route::get('/inscripciones', [EnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
+    Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });
 
 // HU24: Notas finales por materia - Estudiante y Padre/Tutor
