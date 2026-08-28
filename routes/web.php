@@ -154,11 +154,8 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
 
 // HU-20: Documentación administrativa solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('documentos-estudiantes')->group(function () {
-    Route::get('/', [StudentDocumentController::class, 'index'])->name('student_documents.index');
-    Route::post('/', [StudentDocumentController::class, 'store'])->name('student_documents.store');
-    Route::patch('/{studentDocument}/estado', [StudentDocumentController::class, 'updateStatus'])->name('student_documents.updateStatus');
     Route::get('/pendientes', [StudentDocumentController::class, 'pending'])->name('student_documents.pending');
-    Route::get('/buscar-estudiante', [StudentDocumentController::class, 'searchStudent'])->name('student_documents.search_student');
+    Route::patch('/{studentDocument}/estado', [StudentDocumentController::class, 'updateStatus'])->name('student_documents.updateStatus');
 });
 
 // HU18: Estado y monitoreo del sistema

@@ -170,6 +170,54 @@
     </div>
 
     <div class="mt-6 bg-card border border-border rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Documentación</h3>
+
+        @if($documentos->isEmpty())
+            <p class="text-sm text-muted-foreground">Este estudiante no tiene documentos registrados en su expediente.</p>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Tipo de Documento</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Estado</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Fecha</th>
+                            <th class="text-right px-4 py-2.5 font-semibold text-foreground">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($documentos as $doc)
+                            <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <td class="px-4 py-2.5 font-medium text-foreground">{{ $doc->tipo_documento }}</td>
+                                <td class="px-4 py-2.5">
+                                    @php
+                                        $colores = [
+                                            'PENDIENTE' => 'bg-warning/10 text-warning',
+                                            'ENTREGADO' => 'bg-success/10 text-success',
+                                            'VERIFICADO' => 'bg-info/10 text-info',
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$doc->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $doc->estado }}</span>
+                                </td>
+                                <td class="px-4 py-2.5 text-muted-foreground text-xs">{{ $doc->created_at->format('d/m/Y') }}</td>
+                                <td class="px-4 py-2.5">
+                                    <form method="POST" action="{{ route('student_documents.updateStatus', $doc) }}" class="inline">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="{{ $doc->estado === 'PENDIENTE' ? 'ENTREGADO' : 'PENDIENTE' }}">
+                                        <button type="submit" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="{{ $doc->estado === 'PENDIENTE' ? 'Marcar como entregado' : 'Marcar como pendiente' }}">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    <div class="mt-6 bg-card border border-border rounded-xl p-6">
         <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Historial de Cambios</h3>
 
         @if($historial->isEmpty())

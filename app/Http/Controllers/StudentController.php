@@ -217,6 +217,9 @@ class StudentController extends Controller
         if (\Illuminate\Support\Facades\Schema::hasTable('enrollments') && \Illuminate\Support\Facades\Schema::hasColumn('enrollments', 'estudiante_id')) {
             $relations[] = 'enrollments';
         }
+        if (\Illuminate\Support\Facades\Schema::hasTable('student_documents') && \Illuminate\Support\Facades\Schema::hasColumn('student_documents', 'estudiante_id')) {
+            $relations[] = 'documents';
+        }
         $student->load($relations);
 
         $historial = OperationHistory::where('modelo', Student::class)
@@ -226,7 +229,13 @@ class StudentController extends Controller
             ->limit(50)
             ->get();
 
-        return view('students.show', compact('student', 'historial'));
+        $documentos = \Illuminate\Support\Facades\Schema::hasTable('student_documents')
+            ? \App\Models\StudentDocument::where('estudiante_id', $student->id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+            : collect();
+
+        return view('students.show', compact('student', 'historial', 'documentos'));
     }
 
     public function edit(Student $student)
