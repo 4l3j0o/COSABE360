@@ -207,7 +207,7 @@
             </div>
         </div>
     </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

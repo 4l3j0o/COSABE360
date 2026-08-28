@@ -386,6 +386,10 @@ body {
     flex-shrink: 0;
 }
 
+.app-sidebar nav::-webkit-scrollbar {
+    display: none;
+}
+
 #sidebar-mobile-wrap {
     display: none;
 }
