@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class TeacherSeeder extends Seeder
 {
@@ -73,10 +76,25 @@ class TeacherSeeder extends Seeder
         ];
 
         foreach ($docentes as $docente) {
-            Teacher::updateOrCreate(
+            $teacher = Teacher::updateOrCreate(
                 ['numero_documento' => $docente['numero_documento']],
                 $docente
             );
+
+            // Crear/asociar usuario para que el docente pueda entrar al sistema
+            if (! empty($docente['correo'])) {
+                $user = User::updateOrCreate(
+                    ['email' => $docente['correo']],
+                    [
+                        'nombre' => $docente['nombres'],
+                        'apellido' => $docente['apellidos'],
+                        'password' => Hash::make('password123'),
+                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'estado' => $docente['estado'] === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
+                    ]
+                );
+                $teacher->update(['user_id' => $user->id]);
+            }
         }
     }
 }
