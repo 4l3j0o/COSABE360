@@ -28,7 +28,7 @@ class UserController extends Controller
             'apellido' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'rol_id' => ['required', 'integer', 'exists:roles,id'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
@@ -59,7 +59,7 @@ class UserController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'password' => ['nullable', 'string', 'min:8'],
-            'rol_id' => ['required', 'integer', 'exists:roles,id'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 

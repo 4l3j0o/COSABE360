@@ -11,6 +11,9 @@ class Schedule extends Model
         'curso_id',
         'materia_id',
         'docente_id',
+        'course_id',
+        'subject_id',
+        'teacher_id',
         'dia',
         'hora_inicio',
         'hora_fin',
@@ -35,5 +38,20 @@ class Schedule extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(Teacher::class, 'docente_id');
+    }
+
+    public function courseEn(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function subjectEn(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'subject_id');
+    }
+
+    public function teacherEn(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 }

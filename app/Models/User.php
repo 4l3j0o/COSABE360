@@ -18,7 +18,7 @@ class User extends Authenticatable
         'apellido',
         'email',
         'password',
-        'rol_id',
+        'role_id',
         'telefono',
         'estado',
         'intentos_fallidos',
@@ -42,7 +42,7 @@ class User extends Authenticatable
 
     public function rol(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'rol_id');
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function esAdmin(): bool
