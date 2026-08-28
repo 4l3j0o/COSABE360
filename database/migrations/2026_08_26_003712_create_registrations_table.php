@@ -13,7 +13,9 @@ return new class extends Migration
             $table->foreignId('enrollment_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('course_id')->constrained('courses')->restrictOnDelete();
             $table->date('fecha')->nullable();
+            $table->decimal('matriculation_cost', 10, 2)->default(0);
             $table->decimal('monto_mensual', 10, 2)->nullable();
+            $table->text('observaciones')->nullable();
             $table->enum('estado', ['ACTIVA', 'INACTIVA', 'CANCELADA'])->default('ACTIVA');
             $table->timestamps();
 

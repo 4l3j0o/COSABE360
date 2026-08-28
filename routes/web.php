@@ -133,20 +133,6 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
 });
 
-// HU18: Estado y monitoreo del sistema
-Route::middleware('auth')->get('sistema/estado', function () {
-    return [
-        'estado' => 'activo',
-        'version' => '1.0.0',
-        'entorno' => config('app.env'),
-        'timestamp' => now(),
-    ];
-})->name('sistema.estado');
-
-// HU-18: Registrar matrícula
-Route::middleware('auth')->post('estudiantes/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
-    ->name('estudiantes.matricular');
-
 // HU-15: Configurar períodos académicos solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(function () {
     Route::get('/', [AcademicYearController::class, 'index'])->name('periodos.index');
@@ -163,3 +149,17 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
     Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });
+
+// HU18: Estado y monitoreo del sistema
+Route::middleware('auth')->get('sistema/estado', function () {
+    return [
+        'estado' => 'activo',
+        'version' => '1.0.0',
+        'entorno' => config('app.env'),
+        'timestamp' => now(),
+    ];
+})->name('sistema.estado');
+
+// HU-18: Registrar matrícula
+Route::middleware('auth')->post('estudiantes/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
+    ->name('estudiantes.matricular');
