@@ -38,7 +38,7 @@ return new class extends Migration
                 $table->timestamps();
 
                 $table->index('level_id', 'idx_nivel');
-                $table->index('estado', 'idx_estado');
+                $table->index('estado', 'idx_subjects_estado');
             });
 
             return;
@@ -53,7 +53,7 @@ return new class extends Migration
                 $table->unsignedTinyInteger('horas_semanales')->nullable()->after('level_id');
                 $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
                 $table->index('level_id', 'idx_nivel');
-                $table->index('estado', 'idx_estado');
+                $table->index('estado', 'idx_subjects_estado');
             }
         });
     }
