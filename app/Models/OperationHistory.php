@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OperationHistory extends Model
 {
     protected $fillable = [
-        'usuario_id',
+        'user_id',
         'accion',
         'modulo',
         'modelo',
@@ -20,6 +20,6 @@ class OperationHistory extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

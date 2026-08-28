@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('grades', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('level_id')->constrained('levels')->restrictOnDelete();
+            $table->foreignId('level_id')->constrained()->restrictOnDelete();
             $table->string('nombre', 50);
             $table->unsignedTinyInteger('orden');
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');

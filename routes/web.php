@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ParentGuardianController;
@@ -8,6 +10,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TaxConfigurationController;
+use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +59,17 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
+// HU10: Registrar docentes - solo Administrador
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
+    Route::get('/docentes/crear', [TeacherController::class, 'create'])->name('teachers.create');
+    Route::post('/docentes', [TeacherController::class, 'store'])->name('teachers.store');
+    Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
+    Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
+    Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
+    Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
+});
+
 // CRUD ESTUDIANTES solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('students', StudentController::class);
@@ -78,7 +92,6 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(func
     Route::put('/{level}', [LevelController::class, 'update'])->name('levels.update');
     Route::delete('/{level}', [LevelController::class, 'destroy'])->name('levels.destroy');
 });
-
 
 // HU-12: Administrar grados solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
@@ -104,12 +117,28 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(fun
     Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
 });
 
+// HU-16: Asignar docentes a materias y cursos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('asignaciones-docentes')->group(function () {
+    Route::get('/', [CourseSubjectController::class, 'index'])->name('course_subjects.index');
+    Route::get('/crear', [CourseSubjectController::class, 'create'])->name('course_subjects.create');
+    Route::post('/', [CourseSubjectController::class, 'store'])->name('course_subjects.store');
+});
+
 // HU-08: Registrar padres/tutores solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(function () {
     Route::get('/', [ParentGuardianController::class, 'index'])->name('tutores.index');
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
     Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
+});
+
+// HU-15: Configurar períodos académicos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(function () {
+    Route::get('/', [AcademicYearController::class, 'index'])->name('periodos.index');
+    Route::post('/', [AcademicYearController::class, 'store'])->name('periodos.store');
+    Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
+    Route::patch('/{academicYear}/cerrar', [AcademicYearController::class, 'cerrar'])->name('periodos.cerrar');
+    Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
 });
 
 // HU18: Estado y monitoreo del sistema
