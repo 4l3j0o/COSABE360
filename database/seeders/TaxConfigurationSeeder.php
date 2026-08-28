@@ -24,6 +24,7 @@ class TaxConfigurationSeeder extends Seeder
                 'leyenda_iva_exento' => 'EXENTO - NO GENERA DERECHO A CRÉDITO FISCAL',
                 'leyenda_it_exento' => 'EXENTO IT - ART. 13 INC. F LEY 843',
                 'leyenda_ley070' => 'LEY 070 - EDUCACION EXENTA IVA ART. 13 LEY 843',
+                'monto_mensualidad' => 700,
                 'estado' => 'ACTIVO',
             ]
         );

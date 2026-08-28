@@ -6,10 +6,12 @@ use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\TeacherController;
@@ -156,4 +158,36 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(fun
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
+});
+
+// HU-20: Documentación administrativa solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('documentos-estudiantes')->group(function () {
+    Route::get('/pendientes', [StudentDocumentController::class, 'pending'])->name('student_documents.pending');
+    Route::patch('/{studentDocument}/estado', [StudentDocumentController::class, 'updateStatus'])->name('student_documents.updateStatus');
+});
+
+// HU18: Estado y monitoreo del sistema
+Route::middleware('auth')->get('sistema/estado', function () {
+    return [
+        'estado' => 'activo',
+        'version' => '1.0.0',
+        'entorno' => config('app.env'),
+        'timestamp' => now(),
+    ];
+})->name('sistema.estado');
+
+// HU-18: Registrar matrículas
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
+    Route::get('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matriculacionForm'])
+        ->name('estudiantes.matriculacion');
+    Route::post('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
+        ->name('estudiantes.matricular');
+
+    // HU-19: Pagos de mensualidades por estudiante
+    Route::get('/{estudiante}/pagos', [MonthlyPaymentController::class, 'estudiante'])
+        ->name('monthly-payments.estudiante');
+    Route::get('/{estudiante}/pagos/crear', [MonthlyPaymentController::class, 'crearParaEstudiante'])
+        ->name('monthly-payments.crear-estudiante');
+    Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
+        ->name('monthly-payments.store-estudiante');
 });

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -66,12 +67,17 @@ class Student extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'estudiante_id');
+    }
+
+    public function registrations(): HasManyThrough
+    {
+        return $this->hasManyThrough(Registration::class, Enrollment::class, 'estudiante_id', 'enrollment_id');
     }
 
     public function documents(): HasMany
     {
-        return $this->hasMany(StudentDocument::class);
+        return $this->hasMany(StudentDocument::class, 'estudiante_id');
     }
 
     public function gradeScores(): HasMany

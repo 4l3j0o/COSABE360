@@ -2,62 +2,57 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Student;
 use App\Models\StudentDocument;
 use Illuminate\Http\Request;
 
 class StudentDocumentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function updateStatus(Request $request, StudentDocument $studentDocument)
     {
-        //
+        $validated = $request->validate([
+            'estado' => 'required|in:PENDIENTE,ENTREGADO,VERIFICADO',
+        ]);
+
+        $studentDocument->update(['estado' => $validated['estado']]);
+
+        return back()->with('mensaje', 'Estado del documento actualizado correctamente.');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function pending()
     {
-        //
+        $studentsWithPending = Student::whereHas('documents', function ($query) {
+            $query->where('estado', 'PENDIENTE');
+        })->with(['documents' => function ($query) {
+            $query->where('estado', 'PENDIENTE');
+        }])->get()->map(function ($student) {
+            $student->pending_count = $student->documents->where('estado', 'PENDIENTE')->count();
+            return $student;
+        });
+
+        return view('student_documents.pending', compact('studentsWithPending'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(StudentDocument $studentDocument)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    public function create()
+    {
+        //
+    }
+
     public function edit(StudentDocument $studentDocument)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, StudentDocument $studentDocument)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(StudentDocument $studentDocument)
     {
         //
