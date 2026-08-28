@@ -4,12 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subject extends Model
 {
     protected $fillable = [
-        'codigo',
         'nombre',
         'descripcion',
         'level_id',
@@ -29,8 +27,13 @@ class Subject extends Model
         return $this->belongsTo(Level::class, 'level_id');
     }
 
-    public function courseSubjects(): HasMany
+    public function courseSubjects()
     {
-        return $this->hasMany(CourseSubject::class);
+        return $this->hasMany(CourseSubject::class, 'subject_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'subject_id');
     }
 }

@@ -58,13 +58,13 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
-                        <select name="rol_id"
+                        <select name="role_id"
                                 class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             @foreach ($roles as $rol)
-                                <option value="{{ $rol->id }}" @selected(old('rol_id', $user->rol_id) == $rol->id)>{{ $rol->nombre }}</option>
+                                <option value="{{ $rol->id }}" @selected(old('role_id', $user->role_id) == $rol->id)>{{ $rol->nombre }}</option>
                             @endforeach
                         </select>
-                        @error('rol_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        @error('role_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>

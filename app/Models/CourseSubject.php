@@ -3,25 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourseSubject extends Model
 {
-    protected $fillable = ['course_id', 'subject_id', 'teacher_id', 'horas_semanales'];
+    protected $fillable = [
+        'subject_id',
+        'course_id',
+        'teacher_id',
+    ];
 
-    public function course(): BelongsTo
+    public function teacher()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
-    public function subject(): BelongsTo
+    public function subject()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
-    public function assessments(): HasMany
+    public function course()
     {
-        return $this->hasMany(Assessment::class, 'course_subject_id');
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'subject_id', 'subject_id')
+            ->where('course_id', $this->course_id)
+            ->where('teacher_id', $this->teacher_id);
     }
 }

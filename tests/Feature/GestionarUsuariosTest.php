@@ -43,7 +43,7 @@ class GestionarUsuariosTest extends TestCase
             'apellido' => 'Lopez',
             'email' => 'maria@sanber.com',
             'password' => 'password123',
-            'rol_id' => $rolDocente->id,
+            'role_id' => $rolDocente->id,
             'telefono' => '70012345',
         ])->assertRedirect(route('users.index'));
 
@@ -51,7 +51,7 @@ class GestionarUsuariosTest extends TestCase
             'email' => 'maria@sanber.com',
             'nombre' => 'Maria',
             'apellido' => 'Lopez',
-            'rol_id' => $rolDocente->id,
+            'role_id' => $rolDocente->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -69,7 +69,7 @@ class GestionarUsuariosTest extends TestCase
             'apellido' => 'Usuario',
             'email' => 'duplicado@sanber.com',
             'password' => 'password123',
-            'rol_id' => $rol->id,
+            'role_id' => $rol->id,
         ])->assertSessionHasErrors('email');
 
         $this->assertDatabaseCount('users', 2);
@@ -86,7 +86,7 @@ class GestionarUsuariosTest extends TestCase
             'nombre' => 'NombreEditado',
             'apellido' => 'ApellidoEditado',
             'email' => $user->email,
-            'rol_id' => $rolDirector->id,
+            'role_id' => $rolDirector->id,
             'telefono' => '70098765',
         ])->assertRedirect(route('users.index'));
 
@@ -94,7 +94,7 @@ class GestionarUsuariosTest extends TestCase
             'id' => $user->id,
             'nombre' => 'NombreEditado',
             'apellido' => 'ApellidoEditado',
-            'rol_id' => $rolDirector->id,
+            'role_id' => $rolDirector->id,
         ]);
     }
 
@@ -111,7 +111,7 @@ class GestionarUsuariosTest extends TestCase
             'nombre' => $user->nombre,
             'apellido' => $user->apellido,
             'email' => 'otro@sanber.com',
-            'rol_id' => $rol->id,
+            'role_id' => $rol->id,
         ])->assertSessionHasErrors('email');
     }
 

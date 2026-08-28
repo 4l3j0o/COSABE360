@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('parent_guardians', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('usuario_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('nombres', 150);
             $table->string('apellidos', 150);
             $table->enum('tipo_documento', ['CI', 'PASAPORTE', 'OTRO'])->default('CI');
