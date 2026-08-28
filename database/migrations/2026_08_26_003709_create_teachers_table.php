@@ -26,7 +26,7 @@ return new class extends Migration
             $table->unique(['numero_documento', 'complemento'], 'uk_documento');
             $table->index('codigo', 'idx_codigo');
             $table->index(['nombres', 'apellidos'], 'idx_nombre');
-            $table->index('estado', 'idx_estado');
+            $table->index('estado', 'idx_teachers_estado');
         });
     }
 

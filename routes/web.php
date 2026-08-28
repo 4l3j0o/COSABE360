@@ -2,11 +2,8 @@
 
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
-<<<<<<< HEAD
-use App\Http\Controllers\EnrollmentController;
-=======
 use App\Http\Controllers\CourseSubjectController;
->>>>>>> develop
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\ParentGuardianController;
@@ -136,14 +133,6 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
 });
 
-<<<<<<< HEAD
-// HU-17: Registrar inscripciones
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
-    Route::get('/inscripciones', [EnrollmentController::class, 'index'])->name('enrollments.index');
-    Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
-    Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
-    Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
-=======
 // HU-15: Configurar períodos académicos solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(function () {
     Route::get('/', [AcademicYearController::class, 'index'])->name('periodos.index');
@@ -151,5 +140,12 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(fun
     Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
     Route::patch('/{academicYear}/cerrar', [AcademicYearController::class, 'cerrar'])->name('periodos.cerrar');
     Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
->>>>>>> develop
+});
+
+// HU-17: Registrar inscripciones
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+    Route::get('/inscripciones', [EnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
+    Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });

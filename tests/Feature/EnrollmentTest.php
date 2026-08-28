@@ -16,7 +16,7 @@ class EnrollmentTest extends TestCase
 
     private function admin(): User
     {
-        $user = User::factory()->create(['rol_id' => Role::firstOrCreate(['nombre' => 'Administrador'])->id]);
+        $user = User::factory()->create(['role_id' => Role::firstOrCreate(['nombre' => 'Administrador'])->id]);
         $this->actingAs($user);
 
         return $user;
