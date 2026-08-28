@@ -150,6 +150,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });
 
+
 // HU18: Estado y monitoreo del sistema
 Route::middleware('auth')->get('sistema/estado', function () {
     return [
@@ -160,6 +161,10 @@ Route::middleware('auth')->get('sistema/estado', function () {
     ];
 })->name('sistema.estado');
 
-// HU-18: Registrar matrícula
-Route::middleware('auth')->post('estudiantes/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
-    ->name('estudiantes.matricular');
+// HU-18: Registrar matrículas
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
+    Route::get('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matriculacionForm'])
+        ->name('estudiantes.matriculacion');
+    Route::post('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
+        ->name('estudiantes.matricular');
+});

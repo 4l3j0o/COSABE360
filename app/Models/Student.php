@@ -67,7 +67,7 @@ class Student extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'estudiante_id');
     }
 
     public function registrations(): HasManyThrough

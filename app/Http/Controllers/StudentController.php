@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\AcademicYear;
+use App\Models\Course;
 use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\ParentGuardian;
@@ -253,60 +255,100 @@ class StudentController extends Controller
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
     }
 
-    public function matricular(Request $request, Student $student)
+    public function matriculacionForm(Student $estudiante)
     {
-        // Validar que el estudiante tenga inscripción completada
-        $inscripcionCompleta = $student->enrollments()
-            ->where('status', 'PENDIENTE')
-            ->whereHas('academicYear', function ($q) {
-                $q->where('activo', true);
-            })
-            ->exists();
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
 
-        if (!$inscripcionCompleta) {
+        $inscripcion = $estudiante->enrollments()
+            ->with('gestion')
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo?->id)
+            ->latest('fecha')
+            ->first();
+
+        $cursos = collect();
+        if ($periodo) {
+            $cursos = Course::with(['grade', 'section'])
+                ->where('gestion_id', $periodo->id)
+                ->where('estado', 'ACTIVO')
+                ->orderBy('nombre')
+                ->get();
+        }
+
+        $matricula = $inscripcion?->registration;
+
+        return view('registrations.create', compact('estudiante', 'periodo', 'inscripcion', 'cursos', 'matricula'));
+    }
+
+    public function matricular(Request $request, Student $estudiante)
+    {
+        // CA-18-01 y CA-18-02: curso/paralelo y costos de matrícula y mensualidad
+        $validated = $request->validate([
+            'course_id'          => 'required|exists:courses,id',
+            'fecha'              => 'required|date',
+            'matriculation_cost' => 'required|numeric|min:0',
+            'monto_mensual'      => 'required|numeric|min:0',
+            'observaciones'      => 'nullable|string|max:500',
+        ]);
+
+        // CA-18-03: Solo se puede matricular un estudiante que tenga inscripción completada
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        $inscripcion = $estudiante->enrollments()
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo?->id)
+            ->latest('fecha')
+            ->first();
+
+        if (! $inscripcion) {
             return back()->withErrors([
-                'general' => 'No se puede matricular. El estudiante debe tener una inscripción completada en el período activo.'
+                'general' => 'No se puede matricular. El estudiante debe tener una inscripción completada en el período académico activo.',
             ])->withInput();
         }
 
-        // Validar que no ya esté matriculado
-        $yaMatriculado = $student->enrollments()
-            ->where('status', 'MATRICULADO')
+        // CA-18-01: el curso (grado + paralelo) debe pertenecer al período activo
+        $curso = Course::where('id', $validated['course_id'])
+            ->where('gestion_id', $periodo->id)
+            ->where('estado', 'ACTIVO')
+            ->first();
+
+        if (! $curso) {
+            return back()->withErrors([
+                'course_id' => 'El curso seleccionado no es válido para el período académico activo.',
+            ])->withInput();
+        }
+
+        // Evitar duplicar matrícula activa del estudiante en el mismo período
+        $yaMatriculado = $estudiante->registrations()
+            ->where('registrations.estado', 'ACTIVA')
+            ->where(function ($q) use ($periodo) {
+                $q->whereHas('enrollment', function ($enr) use ($periodo) {
+                    $enr->where('gestion_id', $periodo->id);
+                });
+            })
             ->exists();
 
         if ($yaMatriculado) {
             return back()->withErrors([
-                'general' => 'El estudiante ya se encuentra matriculado en el período actual.'
-            ]);
+                'general' => 'El estudiante ya se encuentra matriculado en el período académico activo.',
+            ])->withInput();
         }
 
-        // Obtener datos del formulario
-        $datos = $request->validate([
-            'grado_id' => 'required|exists:grades,id',
-            'paralelo_id' => 'required|exists:parallels,id',
-            'ano_academico' => 'required|exists:academic_years,id',
-            'matricula' => 'required|numeric|min:0',
-            'mensualidad' => 'required|numeric|min:0',
-            'observaciones' => 'nullable|string|max:255',
-        ]);
-
-        // Crear la matrícula
         try {
-            $matricula = $student->enrollments()->create([
-                'grade_id' => $datos['grado_id'],
-                'parallel_id' => $datos['paralelo_id'],
-                'academic_year_id' => $datos['ano_academico'],
-                'status' => 'MATRICULADO',
-                'matriculation_cost' => $datos['matricula'],
-                'monthly_fee' => $datos['mensualidad'],
-                'observations' => $datos['observaciones'] ?? null,
+            $inscripcion->registration()->create([
+                'course_id'          => $curso->id,
+                'fecha'              => $validated['fecha'],
+                'matriculation_cost' => $validated['matriculation_cost'],
+                'monto_mensual'      => $validated['monto_mensual'],
+                'observaciones'      => $validated['observaciones'] ?? null,
+                'estado'             => 'ACTIVA',
             ]);
 
-            return redirect()->route('students.show', $student)
+            return redirect()->route('students.show', $estudiante)
                 ->with('mensaje', 'Matrícula registrada correctamente para el estudiante.');
         } catch (\Exception $e) {
             return back()->withErrors([
-                'general' => 'Error al registrar matrícula: ' . $e->getMessage()
+                'general' => 'Error al registrar matrícula: ' . $e->getMessage(),
             ])->withInput();
         }
     }
