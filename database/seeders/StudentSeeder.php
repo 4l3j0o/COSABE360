@@ -373,7 +373,5 @@ class StudentSeeder extends Seeder
                 ]);
             }
         }
-
-        $this->command->info('10 estudiantes completos con padres/tutores creados exitosamente.');
     }
 }

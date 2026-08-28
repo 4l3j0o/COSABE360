@@ -46,8 +46,8 @@ class SectionController extends Controller
     {
         $sections = Section::with(['grade', 'responsable']);
 
-        if ($request->filled('nivel_id')) {
-            $sections->whereHas('grade', fn ($q) => $q->where('level_id', $request->input('nivel_id')));
+        if ($request->filled('level_id')) {
+            $sections->whereHas('grade', fn ($q) => $q->where('level_id', $request->input('level_id')));
         }
 
         if ($request->filled('grado_id')) {

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -10,6 +11,19 @@ use Tests\TestCase;
 class LevelTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(['RoleSeeder', 'AdminUserSeeder']);
+        $this->ensureLevelsSeeded();
+    }
+
+    private function loginAsAdmin(): void
+    {
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+        $this->actingAs($admin);
+    }
 
     private function ensureLevelsSeeded(): void
     {
@@ -24,9 +38,9 @@ class LevelTest extends TestCase
 
     public function test_lista_niveles_sembrados(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
 
-        $response = $this->getJson('/api/levels');
+        $response = $this->getJson('/niveles');
 
         $response->assertOk()
             ->assertJsonCount(3, 'data')
@@ -35,9 +49,9 @@ class LevelTest extends TestCase
 
     public function test_crea_nivel(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
 
-        $response = $this->postJson('/api/levels', [
+        $response = $this->postJson('/niveles', [
             'nombre'      => 'Pre-Universitario',
             'descripcion' => 'Nivel pre universitario',
             'orden'       => 4,
@@ -52,7 +66,9 @@ class LevelTest extends TestCase
 
     public function test_no_crea_nivel_sin_datos_obligatorios(): void
     {
-        $response = $this->postJson('/api/levels', []);
+        $this->loginAsAdmin();
+
+        $response = $this->postJson('/niveles', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['nombre', 'orden']);
@@ -60,9 +76,9 @@ class LevelTest extends TestCase
 
     public function test_no_permite_nombres_duplicados(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
 
-        $response = $this->postJson('/api/levels', [
+        $response = $this->postJson('/niveles', [
             'nombre' => 'Primaria',
             'orden'  => 10,
         ]);
@@ -73,10 +89,10 @@ class LevelTest extends TestCase
 
     public function test_edita_nivel(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
         $level = DB::table('levels')->where('nombre', 'Inicial')->first();
 
-        $response = $this->putJson("/api/levels/{$level->id}", [
+        $response = $this->putJson("/niveles/{$level->id}", [
             'nombre' => 'Inicial Modificado',
             'orden'  => 10,
         ]);
@@ -87,17 +103,15 @@ class LevelTest extends TestCase
 
     public function test_no_elimina_nivel_con_grados_asociados(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
         $level = DB::table('levels')->where('nombre', 'Primaria')->first();
 
-        // Crear grado asociado (usar DB directo para no depender de Grade model si stub)
         if (Schema::hasTable('grades')) {
-            // Asegurar columnas existen (si migración es stub, no fallar)
-            if (!Schema::hasColumn('grades', 'nivel_id')) {
-                $this->markTestSkipped('grades.nivel_id no existe — migración stub en develop');
+            if (!Schema::hasColumn('grades', 'level_id')) {
+                $this->markTestSkipped('grades.level_id no existe — migración stub en develop');
             }
             DB::table('grades')->insert([
-                'nivel_id'   => $level->id,
+                'level_id'   => $level->id,
                 'nombre'     => '1ro Primaria Test',
                 'orden'      => 1,
                 'estado'     => 'ACTIVO',
@@ -106,7 +120,7 @@ class LevelTest extends TestCase
             ]);
         }
 
-        $response = $this->deleteJson("/api/levels/{$level->id}");
+        $response = $this->deleteJson("/niveles/{$level->id}");
 
         $response->assertStatus(409);
         $this->assertDatabaseHas('levels', ['id' => $level->id]);
@@ -114,10 +128,10 @@ class LevelTest extends TestCase
 
     public function test_elimina_nivel_sin_grados(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
         $level = DB::table('levels')->where('nombre', 'Inicial')->first();
 
-        $response = $this->deleteJson("/api/levels/{$level->id}");
+        $response = $this->deleteJson("/niveles/{$level->id}");
 
         $response->assertOk();
         $this->assertDatabaseMissing('levels', ['id' => $level->id]);
@@ -125,10 +139,10 @@ class LevelTest extends TestCase
 
     public function test_muestra_nivel(): void
     {
-        $this->ensureLevelsSeeded();
+        $this->loginAsAdmin();
         $level = DB::table('levels')->where('nombre', 'Primaria')->first();
 
-        $response = $this->getJson("/api/levels/{$level->id}");
+        $response = $this->getJson("/niveles/{$level->id}");
 
         $response->assertOk()
             ->assertJsonPath('data.nombre', 'Primaria');
