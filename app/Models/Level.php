@@ -18,4 +18,9 @@ class Level extends Model
     {
         return $this->hasMany(Grade::class, 'level_id');
     }
+
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class, 'level_id');
+    }
 }

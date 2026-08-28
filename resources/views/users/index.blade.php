@@ -109,8 +109,8 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-4 py-3 border-t border-border">
-                {{ $users->links() }}
+             <div class="px-4 py-3 border-t border-border">
+                {{ $users->links('pagina.custom') }}
             </div>
         </div>
     @endif

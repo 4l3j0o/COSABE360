@@ -3,7 +3,23 @@
 @section('titulo', 'Acceso Denegado')
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @php
+        $rol = auth()->user()->rol->nombre ?? 'Administrador';
+        $sidebarMap = [
+            'Administrador' => 'dashboard.partials._sidebar-admin',
+            'Director' => 'dashboard.director',
+            'Secretaría' => 'dashboard.secretaria',
+            'Docente' => 'dashboard.docente',
+            'Padre/Tutor' => 'dashboard.padre',
+            'Estudiante' => 'dashboard.estudiante',
+        ];
+        $sidebarView = $sidebarMap[$rol] ?? 'dashboard.partials._sidebar-admin';
+    @endphp
+    @if (in_array($rol, ['Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante']))
+        @include($sidebarView)
+    @else
+        @include('dashboard.partials._sidebar-admin')
+    @endif
 @endsection
 
 @section('contenido')
