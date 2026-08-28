@@ -17,11 +17,11 @@ class UpdateSectionRequest extends FormRequest
         $section = $this->route('section');
 
         return [
-            'grado_id'       => 'sometimes|exists:grades,id',
+            'grade_id'       => 'sometimes|exists:grades,id',
             'nombre'         => [
                 'sometimes', 'string', 'max:10',
                 Rule::unique('sections', 'nombre')
-                    ->where('grado_id', $section->grado_id)
+                    ->where('grade_id', $section->grade_id)
                     ->ignore($section->id),
             ],
             'responsable_id' => 'nullable|exists:teachers,id',

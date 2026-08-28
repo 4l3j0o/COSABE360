@@ -451,7 +451,7 @@ class StudentController extends Controller
 
     private function crearCuentaUsuarioSiNoExiste(ParentGuardian $tutor): void
     {
-        if ($tutor->usuario_id || empty($tutor->correo)) {
+        if ($tutor->user_id || empty($tutor->correo)) {
             return;
         }
 
@@ -466,11 +466,11 @@ class StudentController extends Controller
             'apellido' => $tutor->apellidos,
             'email'    => $tutor->correo,
             'password' => $password,
-            'rol_id'   => $rolPadre->id,
+            'role_id'   => $rolPadre->id,
             'telefono' => $tutor->telefono,
             'estado'   => 'ACTIVO',
         ]);
-        $tutor->update(['usuario_id' => $usuario->id]);
+        $tutor->update(['user_id' => $usuario->id]);
     }
 
     private function generarCodigo(): string
@@ -492,7 +492,7 @@ class StudentController extends Controller
     private function registrarHistorial(string $accion, Student $student, ?array $nuevos = null, ?array $anterior = null): void
     {
         OperationHistory::create([
-            'usuario_id' => auth()->id(),
+            'user_id' => auth()->id(),
             'accion'     => strtoupper($accion),
             'modulo'     => 'Estudiantes',
             'modelo'     => Student::class,

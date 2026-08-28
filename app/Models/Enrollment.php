@@ -8,39 +8,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Enrollment extends Model
 {
     protected $fillable = [
-        'student_id',
-        'grade_id',        // grado (nivel educativo)
-        'parallel_id',     // paralelo (A, B, C, etc.)
-        'academic_year_id',// año académico
-        'status',          // Pendiente, Matriculado, Anulado
-        'matriculation_cost', // costo de matrícula
-        'monthly_fee',     // mensualidad
+        'estudiante_id',
+        'gestion_id',
+        'fecha',
+        'estado',
+        'observaciones',
     ];
 
     protected $casts = [
-        'academic_year_id' => 'integer',
-        'matriculation_cost' => 'decimal:2',
-        'monthly_fee' => 'decimal:2',
-        'status' => 'string',
+        'fecha' => 'date',
     ];
 
-    public function student(): BelongsTo
+    public const ESTADOS = ['PENDIENTE', 'COMPLETADA', 'ANULADA'];
+
+    public function estudiante(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'estudiante_id');
     }
 
-    public function grade()
+    public function gestion(): BelongsTo
     {
-        return $this->belongsTo(Grade::class, 'grade_id');
-    }
-
-    public function parallel()
-    {
-        return $this->belongsTo(Parallel::class, 'parallel_id');
-    }
-
-    public function academicYear()
-    {
-        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+        return $this->belongsTo(AcademicYear::class, 'gestion_id');
     }
 }
