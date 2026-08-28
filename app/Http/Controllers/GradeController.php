@@ -26,7 +26,8 @@ class GradeController extends Controller
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('level_id')
             ->orderBy('orden')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return view('grades.index', compact('grades', 'levels'));
     }

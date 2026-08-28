@@ -9,16 +9,17 @@ class AcademicYearSeeder extends Seeder
 {
     public function run(): void
     {
-        $exists = DB::table('academic_years')->where('nombre', '2026')->exists();
+        $exists = DB::table('academic_years')->where('id', 1)->exists();
 
         if (! $exists) {
             DB::table('academic_years')->insert([
-                'nombre' => '2026',
-                'fecha_inicio' => '2026-02-02',
-                'fecha_fin' => '2026-11-28',
-                'estado' => 'ACTIVA',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'id'           => 1,
+                'nombre'       => '2026',
+                'fecha_inicio' => '2026-02-01',
+                'fecha_fin'    => '2026-11-30',
+                'estado'       => 'ACTIVA',
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ]);
         }
     }
