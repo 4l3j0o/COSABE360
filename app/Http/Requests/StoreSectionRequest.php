@@ -15,11 +15,11 @@ class StoreSectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'grado_id'       => 'required|exists:grades,id',
+            'grade_id'       => 'required|exists:grades,id',
             'nombre'         => [
                 'required', 'string', 'max:10',
                 Rule::unique('sections')->where(
-                    fn ($q) => $q->where('grado_id', $this->input('grado_id'))
+                    fn ($q) => $q->where('grade_id', $this->input('grade_id'))
                 ),
             ],
             'responsable_id' => 'nullable|exists:teachers,id',
