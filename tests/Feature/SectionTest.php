@@ -65,12 +65,12 @@ class SectionTest extends TestCase
         $grado = $this->crearGrado();
 
         $response = $this->post('/paralelos', [
-            'grado_id' => $grado->id,
+            'grade_id' => $grado->id,
             'nombre'   => 'A',
         ]);
 
         $response->assertRedirect(route('sections.index'));
-        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'nombre' => 'A', 'estado' => 'ACTIVO']);
+        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'nombre' => 'A', 'estado' => 'ACTIVO']);
     }
 
     public function test_no_crea_paralelo_sin_datos_obligatorios(): void
@@ -78,27 +78,27 @@ class SectionTest extends TestCase
         $this->loginAsAdmin();
         $response = $this->post('/paralelos', []);
 
-        $response->assertSessionHasErrors(['grado_id', 'nombre']);
+        $response->assertSessionHasErrors(['grade_id', 'nombre']);
     }
 
     public function test_no_crea_paralelo_con_grado_inexistente(): void
     {
         $this->loginAsAdmin();
         $response = $this->post('/paralelos', [
-            'grado_id' => 999,
+            'grade_id' => 999,
             'nombre'   => 'A',
         ]);
 
-        $response->assertSessionHasErrors('grado_id');
+        $response->assertSessionHasErrors('grade_id');
     }
 
     public function test_no_permite_paralelos_duplicados_en_mismo_grado(): void
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
 
-        $response = $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
+        $response = $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
 
         $response->assertSessionHasErrors('nombre');
     }
@@ -109,19 +109,19 @@ class SectionTest extends TestCase
         $g1 = $this->crearGrado('1ro');
         $g2 = $this->crearGrado('2do');
 
-        $this->post('/paralelos', ['grado_id' => $g1->id, 'nombre' => 'A']);
-        $response = $this->post('/paralelos', ['grado_id' => $g2->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $g1->id, 'nombre' => 'A']);
+        $response = $this->post('/paralelos', ['grade_id' => $g2->id, 'nombre' => 'A']);
 
         $response->assertSessionHasNoErrors();
-        $this->assertTrue(Section::where('grado_id', $g1->id)->where('nombre', 'A')->exists());
-        $this->assertTrue(Section::where('grado_id', $g2->id)->where('nombre', 'A')->exists());
+        $this->assertTrue(Section::where('grade_id', $g1->id)->where('nombre', 'A')->exists());
+        $this->assertTrue(Section::where('grade_id', $g2->id)->where('nombre', 'A')->exists());
     }
 
     public function test_edita_paralelo_cambiando_nombre_y_capacidad(): void
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
         $response = $this->put("/paralelos/{$sec->id}", [
             'nombre'    => 'B',
@@ -136,9 +136,9 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
-        Section::create(['grado_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO']);
-        $secA = Section::where('grado_id', $grado->id)->where('nombre', 'A')->first();
+        Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        Section::create(['grade_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $secA = Section::where('grade_id', $grado->id)->where('nombre', 'A')->first();
 
         $response = $this->put("/paralelos/{$secA->id}", ['nombre' => 'B']);
 
@@ -149,7 +149,7 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
         $response = $this->delete("/paralelos/{$sec->id}");
 
@@ -161,7 +161,7 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
         DB::table('academic_years')->insert([
             'nombre'       => '2026',
@@ -174,8 +174,8 @@ class SectionTest extends TestCase
         $gestionId = DB::table('academic_years')->value('id');
 
         $cursoId = DB::table('courses')->insertGetId([
-            'grado_id'    => $grado->id,
-            'paralelo_id' => $sec->id,
+            'grade_id'    => $grado->id,
+            'section_id' => $sec->id,
             'gestion_id'  => $gestionId,
             'nombre'      => '1ro A 2026',
             'estado'      => 'ACTIVO',
@@ -184,7 +184,7 @@ class SectionTest extends TestCase
         ]);
 
         DB::table('registrations')->insert([
-            'curso_id'    => $cursoId,
+            'course_id'    => $cursoId,
             'estado'      => 'ACTIVA',
             'created_at'  => now(),
             'updated_at'  => now(),
@@ -201,7 +201,7 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $sec = Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
         DB::table('academic_years')->insert([
             'nombre'       => '2026',
@@ -214,8 +214,8 @@ class SectionTest extends TestCase
         $gestionId = DB::table('academic_years')->value('id');
 
         $cursoId = DB::table('courses')->insertGetId([
-            'grado_id'    => $grado->id,
-            'paralelo_id' => $sec->id,
+            'grade_id'    => $grado->id,
+            'section_id' => $sec->id,
             'gestion_id'  => $gestionId,
             'nombre'      => '1ro A 2026',
             'estado'      => 'ACTIVO',
@@ -224,7 +224,7 @@ class SectionTest extends TestCase
         ]);
 
         DB::table('registrations')->insert([
-            'curso_id'    => $cursoId,
+            'course_id'    => $cursoId,
             'estado'      => 'CANCELADA',
             'created_at'  => now(),
             'updated_at'  => now(),
@@ -240,7 +240,7 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        Section::create(['grado_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
         $response = $this->get('/paralelos');
 
@@ -255,12 +255,12 @@ class SectionTest extends TestCase
         $docente = $this->crearDocente();
 
         $this->post('/paralelos', [
-            'grado_id'       => $grado->id,
+            'grade_id'       => $grado->id,
             'nombre'         => 'A',
             'responsable_id' => $docente->id,
         ]);
 
-        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => $docente->id]);
+        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'responsable_id' => $docente->id]);
     }
 
     public function test_crea_paralelo_sin_docente_responsable(): void
@@ -268,9 +268,9 @@ class SectionTest extends TestCase
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
 
-        $this->post('/paralelos', ['grado_id' => $grado->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
 
-        $this->assertDatabaseHas('sections', ['grado_id' => $grado->id, 'responsable_id' => null]);
+        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'responsable_id' => null]);
     }
 
     public function test_no_admin_redirigido_a_acceso_denegado(): void
@@ -279,7 +279,7 @@ class SectionTest extends TestCase
         $user = User::create([
             'nombre' => 'Test', 'apellido' => 'Secretaria',
             'email' => 'test.secretaria.sections@test.com', 'password' => 'password123',
-            'rol_id' => $role->id, 'estado' => 'ACTIVO',
+            'role_id' => $role->id, 'estado' => 'ACTIVO',
         ]);
         $this->actingAs($user);
 

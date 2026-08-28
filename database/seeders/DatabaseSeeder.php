@@ -14,9 +14,12 @@ class DatabaseSeeder extends Seeder
             TaxConfigurationSeeder::class,
             GradoSeeder::class,
             SectionSeeder::class,
+            SubjectSeeder::class,
             ParentGuardianSeeder::class,
             StudentSeeder::class,
+            TeacherSeeder::class,
             AcademicYearSeeder::class,
+            CourseSeeder::class,
         ]);
     }
 }

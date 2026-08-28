@@ -100,7 +100,7 @@ class StudentSeeder extends Seeder
                     'nombre' => $datos['nombres'],
                     'apellido' => $datos['apellidos'],
                     'password' => $password,
-                    'rol_id' => Role::where('nombre', 'Padre/Tutor')->value('id'),
+                    'role_id' => Role::where('nombre', 'Padre/Tutor')->value('id'),
                     'telefono' => $datos['telefono'],
                     'estado' => 'ACTIVO',
                 ]
@@ -109,7 +109,7 @@ class StudentSeeder extends Seeder
             $padresGuardians[$i] = ParentGuardian::updateOrCreate(
                 ['numero_documento' => $datos['numero_documento']],
                 [
-                    'usuario_id' => $user->id,
+                    'user_id' => $user->id,
                     'nombres' => $datos['nombres'],
                     'apellidos' => $datos['apellidos'],
                     'tipo_documento' => 'CI',
@@ -334,7 +334,7 @@ class StudentSeeder extends Seeder
                     'nombre' => $datos['nombres'],
                     'apellido' => $datos['apellidos'],
                     'password' => $password,
-                    'rol_id' => $rolEstudiante,
+                    'role_id' => $rolEstudiante,
                     'telefono' => $datos['telefono'],
                     'estado' => 'ACTIVO',
                 ]
@@ -373,7 +373,5 @@ class StudentSeeder extends Seeder
                 ]);
             }
         }
-
-        $this->command->info('10 estudiantes completos con padres/tutores creados exitosamente.');
     }
 }
