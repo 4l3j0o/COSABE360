@@ -9,7 +9,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Horarios</h1>
-            <p class="text-sm text-muted-foreground">Gestión de horarios de clases</p>
+            <p class="text-sm text-muted-foreground">Selecciona un paralelo para ver su horario semanal</p>
         </div>
         <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -17,10 +17,14 @@
         </button>
     </div>
 
-    @if($schedules->isEmpty())
+    @if($paralelos->isEmpty())
         <div class="bg-card border border-border rounded-xl p-12 text-center">
-            <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-muted-foreground text-sm">No hay horarios registrados</p>
+            <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            <p class="text-muted-foreground text-sm mb-4">Aún no hay horarios registrados para ningún paralelo.</p>
+            <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Crear primer horario
+            </button>
         </div>
     @else
         <div class="bg-card border border-border rounded-xl overflow-hidden">
@@ -28,30 +32,39 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-border bg-muted/50">
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Día</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Hora</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Curso</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Materia</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Docente</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Aula</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Paralelo</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Clases</th>
+                            <th class="text-right px-4 py-3 font-semibold text-foreground">Acción</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($schedules as $schedule)
+                        @foreach($paralelos as $paralelo)
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                                <td class="px-4 py-3 font-medium text-foreground">{{ $schedule->dia }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $schedule->hora_inicio->format('H:i') }} - {{ $schedule->hora_fin->format('H:i') }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $schedule->course->nombre ?? '-' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $schedule->subject->nombre ?? '-' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $schedule->teacher->nombres }} {{ $schedule->teacher->apellidos ?? '-' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $schedule->aula ?? '-' }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        </div>
+                                        <div class="font-medium text-foreground">{{ $paralelo->nombre }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $paralelo->schedules_count > 0 ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning' }}">
+                                        {{ $paralelo->schedules_count }} {{ $paralelo->schedules_count == 1 ? 'clase' : 'clases' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-end">
+                                        <a href="{{ route('schedules.show', $paralelo) }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3.5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            Ver horario
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-            <div class="px-4 py-3 border-t border-border bg-muted/30">
-                {{ $schedules->links() }}
             </div>
         </div>
     @endif
@@ -75,34 +88,37 @@
                 </div>
                 <form method="POST" action="{{ route('schedules.store') }}" style="padding:1.5rem;">
                     @csrf
-                    
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
-                            <select name="curso_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($courses as $course)
-                                    <option value="{{ $course->id }}">{{ $course->nombre }}</option>
+                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->nombre }}</option>
                                 @endforeach
                             </select>
+                            @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                            <select name="materia_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}">{{ $subject->nombre }}</option>
+                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
                                 @endforeach
                             </select>
+                            @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente <span class="text-error">*</span></label>
-                            <select name="docente_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="teacher_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}">{{ $teacher->nombres }} {{ $teacher->apellidos }}</option>
+                                    <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>{{ $teacher->nombres }} {{ $teacher->apellidos }}</option>
                                 @endforeach
                             </select>
+                            @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Día <span class="text-error">*</span></label>
@@ -115,20 +131,35 @@
                                 <option value="VIERNES">Viernes</option>
                                 <option value="SABADO">Sábado</option>
                             </select>
+                            @error('dia') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hora Inicio <span class="text-error">*</span></label>
                             <input type="time" name="hora_inicio" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            @error('hora_inicio') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hora Fin <span class="text-error">*</span></label>
                             <input type="time" name="hora_fin" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            @error('hora_fin') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Aula</label>
-                            <input type="text" name="aula" maxlength="50" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Ej: Aula 101">
+                            <input type="text" name="aula" maxlength="50" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Ej: Aula 101" value="{{ old('aula') }}">
+                            @error('aula') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
+
+                    @if($errors->any())
+                        <div class="bg-error/10 border border-error/20 rounded-xl p-4 mt-4">
+                            <p class="text-sm font-medium text-error mb-2">Por favor, corrige los siguientes errores:</p>
+                            <ul class="text-sm text-error list-disc list-inside">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border); margin-top:1rem;">
                         <button type="button" onclick="closeModal('modal-create')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>

@@ -38,6 +38,6 @@ class Course extends Model
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Schedule::class, 'curso_id');
+        return $this->hasMany(Schedule::class, 'course_id');
     }
 }

@@ -158,6 +158,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(fun
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
+    Route::get('/{course}', [ScheduleController::class, 'show'])->name('schedules.show');
 });
 
 // HU-20: Documentación administrativa solo Administrador
@@ -178,9 +179,9 @@ Route::middleware('auth')->get('sistema/estado', function () {
 
 // HU-18: Registrar matrículas
 Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
-    Route::get('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matriculacionForm'])
+    Route::get('/{estudiante}/matricular', [StudentController::class, 'matriculacionForm'])
         ->name('estudiantes.matriculacion');
-    Route::post('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
+    Route::post('/{estudiante}/matricular', [StudentController::class, 'matricular'])
         ->name('estudiantes.matricular');
 
     // HU-19: Pagos de mensualidades por estudiante

@@ -73,6 +73,42 @@ class TeacherSeeder extends Seeder
                 'numero_documento' => '9012345', 'complemento' => 'SC',
                 'telefono' => '70123456', 'correo' => 'rene.salazar@gmail.com', 'estado' => 'ACTIVO',
             ],
+            [
+                'nombres' => 'Sara', 'apellidos' => 'Choque Flores',
+                'especialidad' => 'Matemáticas', 'tipo_documento' => 'CI',
+                'numero_documento' => '1011121', 'complemento' => 'LP',
+                'telefono' => '71112233', 'correo' => 'sara.choque@gmail.com', 'estado' => 'ACTIVO',
+            ],
+            [
+                'nombres' => 'David', 'apellidos' => 'Mamani Vargas',
+                'especialidad' => 'Matemáticas', 'tipo_documento' => 'CI',
+                'numero_documento' => '1213141', 'complemento' => 'CB',
+                'telefono' => '72233445', 'correo' => 'david.mamani@gmail.com', 'estado' => 'ACTIVO',
+            ],
+            [
+                'nombres' => 'Rosa', 'apellidos' => 'Huanca Pérez',
+                'especialidad' => 'Lenguaje y Literatura', 'tipo_documento' => 'CI',
+                'numero_documento' => '1415161', 'complemento' => 'SC',
+                'telefono' => '73344556', 'correo' => 'rosa.huanca@gmail.com', 'estado' => 'ACTIVO',
+            ],
+            [
+                'nombres' => 'Mario', 'apellidos' => 'Condori Quispe',
+                'especialidad' => 'Lenguaje y Literatura', 'tipo_documento' => 'CI',
+                'numero_documento' => '1617181', 'complemento' => 'LP',
+                'telefono' => '74455667', 'correo' => 'mario.condori@gmail.com', 'estado' => 'ACTIVO',
+            ],
+            [
+                'nombres' => 'Lucía', 'apellidos' => 'Ferrufino Ramos',
+                'especialidad' => 'Ciencias Naturales', 'tipo_documento' => 'CI',
+                'numero_documento' => '1819201', 'complemento' => 'CB',
+                'telefono' => '75566778', 'correo' => 'lucia.ferrufino@gmail.com', 'estado' => 'ACTIVO',
+            ],
+            [
+                'nombres' => 'Fernando', 'apellidos' => 'Ríos Vargas',
+                'especialidad' => 'Historia', 'tipo_documento' => 'CI',
+                'numero_documento' => '2021221', 'complemento' => 'SC',
+                'telefono' => '76677889', 'correo' => 'fernando.rios@gmail.com', 'estado' => 'ACTIVO',
+            ],
         ];
 
         foreach ($docentes as $docente) {

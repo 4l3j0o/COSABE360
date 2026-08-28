@@ -35,11 +35,6 @@ class Subject extends Model
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Schedule::class, 'materia_id');
-    }
-
-    public function schedulesEn(): HasMany
-    {
         return $this->hasMany(Schedule::class, 'subject_id');
     }
 }

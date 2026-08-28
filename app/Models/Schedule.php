@@ -8,9 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Schedule extends Model
 {
     protected $fillable = [
-        'curso_id',
-        'materia_id',
-        'docente_id',
         'course_id',
         'subject_id',
         'teacher_id',
@@ -27,30 +24,15 @@ class Schedule extends Model
 
     public function course(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'curso_id');
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     public function subject(): BelongsTo
     {
-        return $this->belongsTo(Subject::class, 'materia_id');
-    }
-
-    public function teacher(): BelongsTo
-    {
-        return $this->belongsTo(Teacher::class, 'docente_id');
-    }
-
-    public function courseEn(): BelongsTo
-    {
-        return $this->belongsTo(Course::class, 'course_id');
-    }
-
-    public function subjectEn(): BelongsTo
-    {
         return $this->belongsTo(Subject::class, 'subject_id');
     }
 
-    public function teacherEn(): BelongsTo
+    public function teacher(): BelongsTo
     {
         return $this->belongsTo(Teacher::class, 'teacher_id');
     }

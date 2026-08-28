@@ -18,7 +18,7 @@ class CourseSubjectSeeder extends Seeder
     public function run(): void
     {
         $teachers = Teacher::where('estado', 'ACTIVO')->get();
-        $courses  = Course::where('estado', 'ACTIVO')->get();
+        $courses = Course::where('estado', 'ACTIVO')->get();
 
         foreach ($courses as $course) {
             $grade = $course->grade ?? Grade::find($course->grade_id);
@@ -28,8 +28,11 @@ class CourseSubjectSeeder extends Seeder
 
             $subjects = Subject::where('level_id', $grade->level_id)->get();
 
+            // Limpiar asignaciones previas del curso para evitar duplicados al rotar docentes
+            CourseSubject::where('course_id', $course->id)->delete();
+
             foreach ($subjects as $subject) {
-                $teacher = $this->docenteParaMateria($subject->nombre, $teachers);
+                $teacher = $this->docenteParaMateria($subject->nombre, $teachers, $course->id);
 
                 if (! $teacher) {
                     continue;
@@ -38,7 +41,7 @@ class CourseSubjectSeeder extends Seeder
                 CourseSubject::updateOrCreate(
                     [
                         'subject_id' => $subject->id,
-                        'course_id'  => $course->id,
+                        'course_id' => $course->id,
                         'teacher_id' => $teacher->id,
                     ]
                 );
@@ -48,36 +51,45 @@ class CourseSubjectSeeder extends Seeder
         $this->command->info('Materias asignadas a los cursos con sus docentes.');
     }
 
-    private function docenteParaMateria(string $materia, $teachers): ?Teacher
+    private function docenteParaMateria(string $materia, $teachers, int $courseId): ?Teacher
     {
         $mapaEspecialidad = [
-            'Matemáticas'            => 'Matemáticas',
+            'Matemáticas' => 'Matemáticas',
             'Pensamiento Matemático' => 'Matemáticas',
-            'Lenguaje'               => 'Lenguaje y Literatura',
+            'Lenguaje' => 'Lenguaje y Literatura',
             'Lenguaje y Comunicación' => 'Lenguaje y Literatura',
-            'Lenguaje y Literatura'  => 'Lenguaje y Literatura',
-            'Ciencias Naturales'     => 'Ciencias Naturales',
-            'Ciencias de la Vida'    => 'Ciencias Naturales',
-            'Ciencias Sociales'      => 'Historia',
-            'Historia'               => 'Historia',
-            'Física'                 => 'Física',
-            'Química'                => 'Química',
-            'Biología'               => 'Ciencias Naturales',
-            'Inglés'                 => 'Inglés',
-            'Educación Física'       => 'Educación Física',
-            'Filosofía'              => 'Filosofía',
-            'Psicología'             => 'Filosofía',
-            'Informática'            => 'Informática',
-            'Expresión Artística'    => 'Inglés',
-            'Música y Ritmo'         => 'Inglés',
-            'Artes Plásticas'        => 'Inglés',
-            'Religión o Ética'       => 'Filosofía',
+            'Lenguaje y Literatura' => 'Lenguaje y Literatura',
+            'Ciencias Naturales' => 'Ciencias Naturales',
+            'Ciencias de la Vida' => 'Ciencias Naturales',
+            'Ciencias Sociales' => 'Historia',
+            'Historia' => 'Historia',
+            'Física' => 'Física',
+            'Química' => 'Química',
+            'Biología' => 'Ciencias Naturales',
+            'Inglés' => 'Inglés',
+            'Educación Física' => 'Educación Física',
+            'Filosofía' => 'Filosofía',
+            'Psicología' => 'Filosofía',
+            'Informática' => 'Informática',
+            'Expresión Artística' => 'Inglés',
+            'Música y Ritmo' => 'Inglés',
+            'Artes Plásticas' => 'Inglés',
+            'Religión o Ética' => 'Filosofía',
         ];
 
         $especialidad = $mapaEspecialidad[$materia] ?? null;
+        $candidatos = $teachers->filter(fn ($t) => $t->estado === 'ACTIVO' &&
+            str_contains($t->especialidad, $especialidad ?? 'xx'));
 
-        $teacher = $teachers->first(fn ($t) => str_contains($t->especialidad, $especialidad ?? ''));
+        if ($candidatos->isEmpty()) {
+            $candidatos = $teachers->filter(fn ($t) => $t->estado === 'ACTIVO');
+        }
 
-        return $teacher ?? $teachers->first();
+        // Alternar entre los docentes de la especialidad según el curso:
+        // docente A al paralelo A, docente B al paralelo B, etc. (misma materia,
+        // distintos docentes según paralelo).
+        $lista = $candidatos->values();
+
+        return $lista->get($courseId % $lista->count()) ?: $lista->first();
     }
 }

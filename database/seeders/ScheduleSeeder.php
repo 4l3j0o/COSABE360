@@ -9,52 +9,102 @@ use Illuminate\Database\Seeder;
 class ScheduleSeeder extends Seeder
 {
     /**
-     * Genera el horario semanal de cada curso a partir de su asignación de materias.
-     * Distribuye las clases en horarios fijos evitando solapamientos dentro de un curso.
+     * Genera el horario semanal de cada paralelo a partir de su asignación de materias.
+     *
+     * - Días de clase: LUNES a VIERNES con bloques de 45 min y recreo (según entrevista).
+     * - Cada materia se reparte en la semana según sus horas_semanales, distribuidas
+     *   entre distintos días (ej. Matemáticas 6h → Lun 2, Mar 2, Mié 2).
+     * - Usa el docente ya asignado al paralelo (misma materia puede tener distintos
+     *   docentes según el paralelo: docente A en paralelo A, docente B en paralelo B).
+     * - Cada paralelo tiene un aula fija (su salón), por lo que nunca hay cruces de aula.
+     * - Evita cruces de horario para el mismo docente (CA-28-02) y solapamientos
+     *   dentro del paralelo.
      */
     public function run(): void
     {
-        // Franjas horarias disponibles (LUN-VIE, 6 franjas de 50 min aprox.)
-        $franjas = [
-            ['LUNES',    '08:00', '08:50'],
-            ['LUNES',    '09:00', '09:50'],
-            ['MARTES',   '08:00', '08:50'],
-            ['MARTES',   '09:00', '09:50'],
-            ['MIERCOLES', '08:00', '08:50'],
-            ['MIERCOLES', '09:00', '09:50'],
-            ['JUEVES',   '08:00', '08:50'],
-            ['JUEVES',   '09:00', '09:50'],
-            ['VIERNES',  '08:00', '08:50'],
-            ['VIERNES',  '09:00', '09:50'],
+        $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
+
+        // Bloques de 45 min con recreo de 10:15 a 10:30
+        $bloques = [
+            ['08:00', '08:45'],
+            ['08:45', '09:30'],
+            ['09:30', '10:15'],
+            ['10:30', '11:15'],
+            ['11:15', '12:00'],
         ];
+        $totalBloques = count($bloques);
+        $totalDias = count($dias);
 
-        $courseSubjects = CourseSubject::with(['course', 'subject', 'teacher'])->get();
+        $cursoMaterias = CourseSubject::with(['subject', 'teacher'])
+            ->whereHas('teacher')
+            ->get()
+            ->groupBy('course_id');
 
-        // Agrupo por curso para distribuir las franjas sin solape
-        $porCurso = $courseSubjects->groupBy('course_id');
+        // Reserva global docente|dia|bloque para que un docente no esté en dos
+        // paralelos a la misma hora (equivalente a CA-28-02).
+        $ocupadoDocente = [];
 
-        foreach ($porCurso as $courseId => $items) {
-            $course = $items->first()->course;
+        Schedule::query()->delete();
 
-            foreach ($items->values() as $i => $cs) {
-                $franja = $franjas[$i % count($franjas)];
+        $idxCurso = 0;
+        foreach ($cursoMaterias as $courseId => $items) {
+            $ocupadoCurso = []; // dia|bloque ya usados en este paralelo
+            $aula = 'Aula '.($idxCurso + 1);
+            $idxCurso++;
 
-                Schedule::updateOrCreate(
-                    [
-                        'course_id'   => $course->id,
-                        'subject_id'  => $cs->subject_id,
-                        'teacher_id'  => $cs->teacher_id,
-                        'dia'         => $franja[0],
-                        'hora_inicio' => $franja[1],
-                    ],
-                    [
-                        'hora_fin' => $franja[2],
-                        'aula'     => 'Aula ' . ($i + 1),
-                    ]
-                );
+            // Prioridad: materias con más horas semanales primero
+            $items = $items->sortByDesc(fn ($cs) => (int) ($cs->subject->horas_semanales ?? 1))->values();
+
+            $indiceMateria = 0;
+            foreach ($items as $cs) {
+                $subject = $cs->subject;
+                $teacher = $cs->teacher;
+
+                $capacidad = $totalDias * $totalBloques;
+                $horas = max(1, min((int) ($subject->horas_semanales ?? 1), $capacidad));
+
+                // Día inicial rotado por materia para repartir el arranque de cada una
+                $diaInicio = $indiceMateria % $totalDias;
+                $indiceMateria++;
+
+                $asignadas = 0;
+                $i = 0;
+                while ($asignadas < $horas && $i < ($capacidad * 2)) {
+                    // Reparte las horas de la materia entre días distintos
+                    $dia = $dias[($diaInicio + intdiv($i * $totalDias, $horas)) % $totalDias];
+                    $bloque = $bloques[$i % $totalBloques];
+                    $indiceBloque = $i % $totalBloques;
+                    $i++;
+
+                    if (isset($ocupadoCurso[$dia.'|'.$indiceBloque])) {
+                        continue;
+                    }
+                    if (isset($ocupadoDocente[$teacher->id.'|'.$dia.'|'.$indiceBloque])) {
+                        continue;
+                    }
+
+                    $ocupadoCurso[$dia.'|'.$indiceBloque] = true;
+                    $ocupadoDocente[$teacher->id.'|'.$dia.'|'.$indiceBloque] = true;
+
+                    Schedule::updateOrCreate(
+                        [
+                            'course_id' => $courseId,
+                            'subject_id' => $subject->id,
+                            'teacher_id' => $teacher->id,
+                            'dia' => $dia,
+                            'hora_inicio' => $bloque[0],
+                        ],
+                        [
+                            'hora_fin' => $bloque[1],
+                            'aula' => $aula,
+                        ]
+                    );
+
+                    $asignadas++;
+                }
             }
         }
 
-        $this->command->info('Horarios semanales generados para los cursos.');
+        $this->command->info('Horarios semanales generados para los paralelos.');
     }
 }

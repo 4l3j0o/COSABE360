@@ -12,16 +12,45 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = Schedule::with(['course', 'subject', 'teacher'])
-            ->orderBy('dia')
-            ->orderBy('hora_inicio')
-            ->paginate(15);
+        $paralelos = Course::withCount(['schedules' => function ($query) {
+            $query->whereHas('subject')->whereHas('teacher');
+        }])
+            ->whereHas('schedules')
+            ->orderBy('nombre')
+            ->get();
 
         $courses = Course::all();
         $subjects = Subject::all();
         $teachers = Teacher::all();
 
-        return view('schedules.index', compact('schedules', 'courses', 'subjects', 'teachers'));
+        return view('schedules.index', compact('paralelos', 'courses', 'subjects', 'teachers'));
+    }
+
+    public function show(Course $course)
+    {
+        $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+        $schedules = Schedule::with(['subject', 'teacher'])
+            ->where('course_id', $course->id)
+            ->orderBy('hora_inicio')
+            ->orderByRaw("FIELD(dia, 'LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO')")
+            ->get();
+
+        $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+            ->values()
+            ->sortBy(fn ($s) => $s->hora_inicio)
+            ->values();
+
+        $tabla = [];
+        foreach ($dias as $dia) {
+            $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
+        }
+
+        $courses = Course::all();
+        $subjects = Subject::all();
+        $teachers = Teacher::all();
+
+        return view('schedules.show', compact('course', 'dias', 'horas', 'tabla', 'courses', 'subjects', 'teachers', 'schedules'));
     }
 
     public function create()
@@ -36,16 +65,16 @@ class ScheduleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'curso_id' => 'required|exists:courses,id',
-            'materia_id' => 'required|exists:subjects,id',
-            'docente_id' => 'required|exists:teachers,id',
+            'course_id' => 'required|exists:courses,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'teacher_id' => 'required|exists:teachers,id',
             'dia' => 'required|in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'aula' => 'nullable|string|max:50',
         ]);
 
-        $errorDocente = $this->validarCruceDocente($validated['docente_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
+        $errorDocente = $this->validarCruceDocente($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
         if ($errorDocente) {
             return back()->withInput()->withErrors(['cruce' => $errorDocente]);
         }
@@ -62,18 +91,18 @@ class ScheduleController extends Controller
 
     private function validarCruceDocente($docenteId, $dia, $horaInicio, $horaFin)
     {
-        $cruce = Schedule::where('docente_id', $docenteId)
+        $cruce = Schedule::where('teacher_id', $docenteId)
             ->where('dia', $dia)
             ->where(function ($query) use ($horaInicio, $horaFin) {
-                $query->where(function ($q) use ($horaInicio, $horaFin) {
+                $query->where(function ($q) use ($horaInicio) {
                     $q->where('hora_inicio', '<=', $horaInicio)
-                      ->where('hora_fin', '>', $horaInicio);
-                })->orWhere(function ($q) use ($horaInicio, $horaFin) {
+                        ->where('hora_fin', '>', $horaInicio);
+                })->orWhere(function ($q) use ($horaFin) {
                     $q->where('hora_inicio', '<', $horaFin)
-                      ->where('hora_fin', '>=', $horaFin);
+                        ->where('hora_fin', '>=', $horaFin);
                 })->orWhere(function ($q) use ($horaInicio, $horaFin) {
                     $q->where('hora_inicio', '>=', $horaInicio)
-                      ->where('hora_fin', '<=', $horaFin);
+                        ->where('hora_fin', '<=', $horaFin);
                 });
             })
             ->exists();
@@ -94,15 +123,15 @@ class ScheduleController extends Controller
         $cruce = Schedule::where('aula', $aula)
             ->where('dia', $dia)
             ->where(function ($query) use ($horaInicio, $horaFin) {
-                $query->where(function ($q) use ($horaInicio, $horaFin) {
+                $query->where(function ($q) use ($horaInicio) {
                     $q->where('hora_inicio', '<=', $horaInicio)
-                      ->where('hora_fin', '>', $horaInicio);
-                })->orWhere(function ($q) use ($horaInicio, $horaFin) {
+                        ->where('hora_fin', '>', $horaInicio);
+                })->orWhere(function ($q) use ($horaFin) {
                     $q->where('hora_inicio', '<', $horaFin)
-                      ->where('hora_fin', '>=', $horaFin);
+                        ->where('hora_fin', '>=', $horaFin);
                 })->orWhere(function ($q) use ($horaInicio, $horaFin) {
                     $q->where('hora_inicio', '>=', $horaInicio)
-                      ->where('hora_fin', '<=', $horaFin);
+                        ->where('hora_fin', '<=', $horaFin);
                 });
             })
             ->exists();
@@ -112,11 +141,6 @@ class ScheduleController extends Controller
         }
 
         return null;
-    }
-
-    public function show(Schedule $schedule)
-    {
-        //
     }
 
     public function edit(Schedule $schedule)
