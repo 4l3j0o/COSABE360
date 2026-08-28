@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('estudiante_id')->nullable()->constrained('students')->cascadeOnDelete();
+            $table->foreignId('gestion_id')->nullable()->constrained('academic_years')->restrictOnDelete();
+            $table->date('fecha')->nullable();
+            $table->enum('estado', ['PENDIENTE', 'COMPLETADA', 'ANULADA'])->default('PENDIENTE');
+            $table->text('observaciones')->nullable();
             $table->timestamps();
+
+            $table->index(['gestion_id', 'estado']);
         });
     }
 

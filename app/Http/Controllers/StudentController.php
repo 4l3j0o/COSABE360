@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\AcademicYear;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\MonthlyPayment;
 use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\ParentGuardian;
@@ -33,9 +37,63 @@ class StudentController extends Controller
             $query->where('estado', $request->estado);
         }
 
+        // Filtrar solo estudiantes matriculados en el período activo (Ver Matriculados)
+        if ($request->filled('matriculados')) {
+            $periodoActivo = AcademicYear::where('estado', 'ACTIVA')->first();
+            if ($periodoActivo) {
+                $query->whereHas('enrollments', function ($q) use ($periodoActivo) {
+                    $q->where('gestion_id', $periodoActivo->id)
+                        ->whereHas('registration', function ($r) {
+                            $r->where('estado', 'ACTIVA');
+                        });
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
+
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
         $eliminadosCount = Student::onlyTrashed()->count();
-        return view('students.index', compact('students', 'eliminadosCount'));
+
+        $estadosAcademicos = $this->estadosAcademicos($students->pluck('id'));
+
+        return view('students.index', compact('students', 'eliminadosCount', 'estadosAcademicos'));
+    }
+
+    protected function estadosAcademicos($studentIds): array
+    {
+        $estados = [];
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        if (! $periodo || $studentIds->isEmpty()) {
+            return $estados;
+        }
+
+        $enrollments = Enrollment::whereIn('estudiante_id', $studentIds)
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo->id)
+            ->with('registration')
+            ->get();
+
+        $matriculadosPorPeriodo = Enrollment::whereIn('estudiante_id', $studentIds)
+            ->where('gestion_id', $periodo->id)
+            ->whereHas('registration', function ($q) {
+                $q->where('estado', 'ACTIVA');
+            })
+            ->pluck('estudiante_id')
+            ->unique();
+
+        foreach ($studentIds as $id) {
+            if ($matriculadosPorPeriodo->contains($id)) {
+                $estados[$id] = 'MATRICULADO';
+            } elseif ($enrollments->firstWhere('estudiante_id', $id)) {
+                $estados[$id] = 'INSCRITO';
+            } else {
+                $estados[$id] = 'SIN_INSCRIBIR';
+            }
+        }
+
+        return $estados;
     }
 
     public function create()
@@ -251,6 +309,159 @@ class StudentController extends Controller
         $student->restore();
         $student->update(['estado' => 'ACTIVO']);
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
+    }
+
+    public function matriculacionForm(Student $estudiante)
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        $inscripcion = $estudiante->enrollments()
+            ->with('gestion')
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo?->id)
+            ->latest('fecha')
+            ->first();
+
+        $cursos = collect();
+        if ($periodo) {
+            $cursos = Course::with(['grade', 'section'])
+                ->where('gestion_id', $periodo->id)
+                ->where('estado', 'ACTIVO')
+                ->orderBy('nombre')
+                ->get();
+        }
+
+        $matricula = $inscripcion?->registration;
+
+        $montoMensual = (float) (\App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0);
+
+        return view('registrations.create', compact('estudiante', 'periodo', 'inscripcion', 'cursos', 'matricula', 'montoMensual'));
+    }
+
+    public function matricular(Request $request, Student $estudiante)
+    {
+        // CA-18-01 y CA-18-02: curso/paralelo y costo de matrícula
+        $validated = $request->validate([
+            'course_id'          => 'required|exists:courses,id',
+            'fecha'              => 'required|date',
+            'matriculation_cost' => 'required|numeric|min:0',
+            'observaciones'      => 'nullable|string|max:500',
+        ]);
+
+        // HU-19 / CA-19-01: mensualidad global definida en configuración (700 para todos)
+        $montoMensual = (float) \App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0;
+
+        // CA-18-03: Solo se puede matricular un estudiante que tenga inscripción completada
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        $inscripcion = $estudiante->enrollments()
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo?->id)
+            ->latest('fecha')
+            ->first();
+
+        if (! $inscripcion) {
+            return back()->withErrors([
+                'general' => 'No se puede matricular. El estudiante debe tener una inscripción completada en el período académico activo.',
+            ])->withInput();
+        }
+
+        // CA-18-01: el curso (grado + paralelo) debe pertenecer al período activo
+        $curso = Course::where('id', $validated['course_id'])
+            ->where('gestion_id', $periodo->id)
+            ->where('estado', 'ACTIVO')
+            ->first();
+
+        if (! $curso) {
+            return back()->withErrors([
+                'course_id' => 'El curso seleccionado no es válido para el período académico activo.',
+            ])->withInput();
+        }
+
+        // Evitar duplicar matrícula activa del estudiante en el mismo período
+        $yaMatriculado = $estudiante->registrations()
+            ->where('registrations.estado', 'ACTIVA')
+            ->where(function ($q) use ($periodo) {
+                $q->whereHas('enrollment', function ($enr) use ($periodo) {
+                    $enr->where('gestion_id', $periodo->id);
+                });
+            })
+            ->exists();
+
+        if ($yaMatriculado) {
+            return back()->withErrors([
+                'general' => 'El estudiante ya se encuentra matriculado en el período académico activo.',
+            ])->withInput();
+        }
+
+        try {
+            $inscripcion->registration()->create([
+                'course_id'          => $curso->id,
+                'fecha'              => $validated['fecha'],
+                'matriculation_cost' => $validated['matriculation_cost'],
+                'monto_mensual'      => $montoMensual,
+                'observaciones'      => $validated['observaciones'] ?? null,
+                'estado'             => 'ACTIVA',
+            ]);
+
+            // HU-19 / CA-19-03: generar las 10 mensualidades (cuotas) pendientes
+            // (febrero = 2 hasta noviembre = 11) usando la mensualidad global
+            if ($montoMensual > 0) {
+                $cuotas = [];
+                for ($mes = 2; $mes <= 11; $mes++) {
+                    $cuotas[] = [
+                        'enrollment_id' => $inscripcion->id,
+                        'mes'           => $mes,
+                        'monto'         => $montoMensual,
+                        'fecha'         => null,
+                        'metodo_pago'   => null,
+                        'estado'        => 'PENDIENTE',
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ];
+                }
+                MonthlyPayment::insert($cuotas);
+            }
+
+            return redirect()->route('students.show', $estudiante)
+                ->with('mensaje', 'Matrícula registrada correctamente para el estudiante.');
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'general' => 'Error al registrar matrícula: ' . $e->getMessage(),
+            ])->withInput();
+        }
+    }
+
+    private function obtenerOCrearPadre(Request $request, string $prefijo, array $datos, string $tipoRelacion): ?ParentGuardian
+    {
+        $idExistente = $request->input("{$prefijo}_id_existente");
+
+        if ($idExistente) {
+            return ParentGuardian::find($idExistente);
+        }
+
+        $nombres = $request->input("{$prefijo}_nombres");
+        $numDoc = $request->input("{$prefijo}_num_doc");
+
+        if (empty($nombres) || empty($numDoc)) {
+            return null;
+        }
+
+        $complemento = $request->input("{$prefijo}_complemento") ?? '';
+
+        return ParentGuardian::firstOrCreate(
+            ['numero_documento' => $numDoc, 'complemento' => $complemento],
+            [
+                'nombres'        => $nombres,
+                'apellidos'      => $request->input("{$prefijo}_apellidos") ?? '',
+                'tipo_documento' => $request->input("{$prefijo}_tipo_doc") ?? 'CI',
+                'telefono'       => $request->input("{$prefijo}_telefono"),
+                'correo'         => $request->input("{$prefijo}_correo") ?? null,
+                'direccion'      => $request->input("{$prefijo}_direccion") ?? null,
+                'ocupacion'      => $request->input("{$prefijo}_ocupacion") ?? null,
+                'estado'         => 'ACTIVO',
+            ]
+        );
     }
 
     private function validarFamiliares(Request $request): void
