@@ -139,7 +139,7 @@ class GradeTest extends TestCase
         ]);
 
         \DB::table('sections')->insert([
-            'grado_id' => $grade->id,
+            'grade_id' => $grade->id,
             'nombre' => 'A',
             'estado' => 'ACTIVO',
             'created_at' => now(),
@@ -164,7 +164,7 @@ class GradeTest extends TestCase
         ]);
 
         $sectionId = \DB::table('sections')->insertGetId([
-            'grado_id' => $grade->id,
+            'grade_id' => $grade->id,
             'nombre' => 'A',
             'estado' => 'ACTIVO',
             'created_at' => now(),
@@ -181,8 +181,8 @@ class GradeTest extends TestCase
         ]);
 
         $cursoId = \DB::table('courses')->insertGetId([
-            'grado_id' => $grade->id,
-            'paralelo_id' => $sectionId,
+            'grade_id' => $grade->id,
+            'section_id' => $sectionId,
             'gestion_id' => $gestionId,
             'nombre' => '4to Primaria A',
             'estado' => 'ACTIVO',
@@ -191,7 +191,7 @@ class GradeTest extends TestCase
         ]);
 
         \DB::table('registrations')->insert([
-            'curso_id' => $cursoId,
+            'course_id' => $cursoId,
             'estado' => 'ACTIVA',
             'created_at' => now(),
             'updated_at' => now(),
@@ -207,7 +207,7 @@ class GradeTest extends TestCase
     public function test_permite_eliminar_grado_cuya_matricula_fue_cancelada(): void
     {
         $this->markTestSkipped(
-            'La FK restrict de courses.grado_id impide borrar un grado que posee cursos, aunque su matrícula sea CANCELADA. Requiere decidir el ciclo de vida del curso al cancelarse una matrícula.'
+            'La FK restrict de courses.grade_id impide borrar un grado que posee cursos, aunque su matrícula sea CANCELADA. Requiere decidir el ciclo de vida del curso al cancelarse una matrícula.'
         );
 
         $this->loginAsAdmin();

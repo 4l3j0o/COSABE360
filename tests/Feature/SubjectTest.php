@@ -267,8 +267,8 @@ class SubjectTest extends TestCase
     public function test_no_elimina_materia_con_evaluaciones_o_calificaciones(): void
     {
         // CA-14-03: no se debe permitir eliminar una materia con evaluaciones o calificaciones
-        if (!Schema::hasColumn('assessments', 'materia_id')) {
-            $this->markTestSkipped('assessments.materia_id no existe — migración stub (HU-21 no implementada)');
+        if (!Schema::hasColumn('assessments', 'subject_id')) {
+            $this->markTestSkipped('assessments.subject_id no existe — migración stub (HU-21 no implementada)');
         }
 
         $this->loginAsAdmin();
@@ -285,7 +285,7 @@ class SubjectTest extends TestCase
         DB::table('assessments')->insert([
             'nombre'     => 'Examen Trimestral',
             'tipo'       => 'Examen',
-            'materia_id' => $subjectId,
+            'subject_id' => $subjectId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -347,14 +347,14 @@ class SubjectTest extends TestCase
 
         // Verificar que course_subject(s) existe
         $tabla = null;
-        if (Schema::hasTable('course_subject') && Schema::hasColumn('course_subject', 'materia_id')) {
+        if (Schema::hasTable('course_subject') && Schema::hasColumn('course_subject', 'subject_id')) {
             $tabla = 'course_subject';
-        } elseif (Schema::hasTable('course_subjects') && Schema::hasColumn('course_subjects', 'materia_id')) {
+        } elseif (Schema::hasTable('course_subjects') && Schema::hasColumn('course_subjects', 'subject_id')) {
             $tabla = 'course_subjects';
         }
 
         if ($tabla === null) {
-            $this->markTestSkipped('course_subject(s).materia_id no existe — migración stub');
+            $this->markTestSkipped('course_subject(s).subject_id no existe — migración stub');
         }
 
         // Necesitamos un curso y docente para la FK
@@ -365,7 +365,7 @@ class SubjectTest extends TestCase
         $docenteId = 1;
 
         // Intentar crear curso mínimo si tabla tiene columnas
-        if (Schema::hasColumn('courses', 'grado_id')) {
+        if (Schema::hasColumn('courses', 'grade_id')) {
             // Verificar que academic_years, grades, sections existan
             try {
                 if (DB::table('academic_years')->count() === 0) {
@@ -386,14 +386,14 @@ class SubjectTest extends TestCase
                 if (DB::table('grades')->count() > 0) {
                     $gradoId = DB::table('grades')->first()->id;
                 }
-                if (Schema::hasColumn('sections', 'grado_id') && DB::table('sections')->count() === 0) {
-                    DB::table('sections')->insert(['grado_id' => $gradoId, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
+                if (Schema::hasColumn('sections', 'grade_id') && DB::table('sections')->count() === 0) {
+                    DB::table('sections')->insert(['grade_id' => $gradoId, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
                 }
                 if (DB::table('sections')->count() > 0) {
                     $paraleloId = DB::table('sections')->first()->id;
                 }
-                if (Schema::hasTable('courses') && Schema::hasColumn('courses', 'grado_id')) {
-                    DB::table('courses')->insert(['grado_id' => $gradoId, 'paralelo_id' => $paraleloId, 'gestion_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
+                if (Schema::hasTable('courses') && Schema::hasColumn('courses', 'grade_id')) {
+                    DB::table('courses')->insert(['grade_id' => $gradoId, 'section_id' => $paraleloId, 'gestion_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
                     $cursoId = DB::table('courses')->orderByDesc('id')->first()->id;
                 } else {
                     $this->markTestSkipped('courses sin columnas necesarias');
@@ -404,12 +404,12 @@ class SubjectTest extends TestCase
                 if (DB::table('teachers')->count() > 0) {
                     $docenteId = DB::table('teachers')->first()->id;
                 }
-                DB::table($tabla)->insert(['materia_id' => $subjectId, 'curso_id' => $cursoId, 'docente_id' => $docenteId, 'created_at' => now()]);
+                DB::table($tabla)->insert(['subject_id' => $subjectId, 'course_id' => $cursoId, 'teacher_id' => $docenteId, 'created_at' => now()]);
             } catch (\Throwable $e) {
                 $this->markTestSkipped('No se pudo crear datos de curso para el test: '.$e->getMessage());
             }
         } else {
-            $this->markTestSkipped('courses.grado_id no existe');
+            $this->markTestSkipped('courses.grade_id no existe');
         }
 
         $response = $this->deleteJson("/materias/{$subjectId}");

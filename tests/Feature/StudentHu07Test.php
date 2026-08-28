@@ -19,7 +19,7 @@ class StudentHu07Test extends TestCase
     {
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
-            'rol_id' => $rol->id,
+            'role_id' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -248,7 +248,7 @@ class StudentHu07Test extends TestCase
         $registro = OperationHistory::where('modelo_id', $est->id)->latest()->first();
         $this->assertNotNull($registro);
         $this->assertStringContainsString('Juan Carlos', $registro->detalle);
-        $this->assertEquals($admin->id, $registro->usuario_id);
+        $this->assertEquals($admin->id, $registro->user_id);
     }
 
     public function test_vista_detalle_muestra_historial_de_cambios(): void

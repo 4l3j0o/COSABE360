@@ -96,7 +96,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grado_id }}, '{{ $section->nombre }}', {{ $section->responsable_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grade_id }}, '{{ $section->nombre }}', {{ $section->responsable_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         <form method="POST" action="{{ route('sections.destroy', $section) }}" onsubmit="return confirm('¿Estás seguro de eliminar este paralelo?')" class="inline">
@@ -137,13 +137,13 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grado_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar grado...</option>
                                     @foreach($grados as $grado)
                                         <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('grado_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('grade_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo <span class="text-error">*</span></label>
@@ -193,7 +193,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grado_id" id="edit-grado_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="grade_id" id="edit-grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($grados as $grado)
                                         <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
                                     @endforeach
@@ -245,7 +245,7 @@
         }
         function editarParalelo(id, gradoId, nombre, responsableId, capacidad, estado) {
             document.getElementById('form-edit').action = '/paralelos/' + id;
-            document.getElementById('edit-grado_id').value = gradoId;
+            document.getElementById('edit-grade_id').value = gradoId;
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-capacidad').value = capacidad;
             document.getElementById('edit-responsable_id').value = responsableId || '';

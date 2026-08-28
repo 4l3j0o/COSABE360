@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('student_parent', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
+            $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('parent_guardian_id')->constrained('parent_guardians')->cascadeOnDelete();
             $table->string('tipo_relacion', 50)->nullable();
             $table->boolean('es_principal')->default(false);

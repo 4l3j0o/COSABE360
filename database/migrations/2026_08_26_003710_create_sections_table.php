@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('grado_id')->constrained('grades')->restrictOnDelete();
+            $table->foreignId('grade_id')->constrained()->restrictOnDelete();
             $table->string('nombre', 10)->nullable(false);
             $table->foreignId('responsable_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->unsignedTinyInteger('capacidad')->default(40);
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
-
-            $table->unique(['grado_id', 'nombre'], 'uk_grado_paralelo');
-            $table->index('responsable_id');
+            $table->unique(['grade_id', 'nombre'], 'uk_grado_paralelo');
+            $table->index('grade_id', 'idx_grado');
+            $table->index('responsable_id', 'idx_responsable');
         });
     }
 
