@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('apellido', 100);
             $table->string('email', 150)->unique();
             $table->string('password');
-            $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
+            $table->foreignId('role_id')->constrained()->restrictOnDelete();
             $table->string('telefono', 20)->nullable();
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->unsignedTinyInteger('intentos_fallidos')->default(0);

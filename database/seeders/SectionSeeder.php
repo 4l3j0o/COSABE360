@@ -32,7 +32,7 @@ class SectionSeeder extends Seeder
 
             foreach ($paralelos as $nombre) {
                 Section::updateOrCreate(
-                    ['grado_id' => $grado->id, 'nombre' => $nombre],
+                    ['grade_id' => $grado->id, 'nombre' => $nombre],
                     [
                         'responsable_id' => null,
                         'capacidad'      => 40,

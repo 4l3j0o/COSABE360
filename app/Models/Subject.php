@@ -31,12 +31,17 @@ class Subject extends Model
 
     public function courseSubjects(): HasMany
     {
-        return $this->hasMany(CourseSubject::class);
+        return $this->hasMany(CourseSubject::class, 'subject_id');
     }
 
     public function courses(): HasMany
     {
         return $this->hasManyThrough(Course::class, CourseSubject::class);
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class, 'subject_id');
     }
 
     public function estaActivo(): bool

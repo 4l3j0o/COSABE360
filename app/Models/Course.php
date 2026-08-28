@@ -22,7 +22,12 @@ class Course extends Model
 
     public function courseSubjects(): HasMany
     {
-        return $this->hasMany(CourseSubject::class);
+        return $this->hasMany(CourseSubject::class, 'course_id');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class, 'course_id');
     }
 
     public function students(): HasMany

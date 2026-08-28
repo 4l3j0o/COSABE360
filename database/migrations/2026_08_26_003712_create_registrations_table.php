@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('registrations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inscripcion_id')->nullable()->constrained('enrollments')->nullOnDelete();
-            $table->foreignId('curso_id')->constrained('courses')->restrictOnDelete();
+            $table->foreignId('enrollment_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('course_id')->constrained('courses')->restrictOnDelete();
             $table->date('fecha')->nullable();
             $table->decimal('monto_mensual', 10, 2)->nullable();
             $table->enum('estado', ['ACTIVA', 'INACTIVA', 'CANCELADA'])->default('ACTIVA');
             $table->timestamps();
 
-            $table->index('inscripcion_id');
-            $table->index('curso_id');
+            $table->index('enrollment_id');
+            $table->index('course_id');
             $table->index('estado');
         });
     }
