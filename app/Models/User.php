@@ -59,8 +59,7 @@ class User extends Authenticatable
     {
         return $this->bloqueado_hasta !== null && $this->bloqueado_hasta->isFuture();
     }
-
-    // HU05 compat: helpers de permisos
+// HU05 compat: helpers de permisos
     public function hasRole(string $role): bool
     {
         return $this->rol && $this->rol->nombre === $role;
