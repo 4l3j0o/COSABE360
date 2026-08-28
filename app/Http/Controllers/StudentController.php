@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\AcademicYear;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\OperationHistory;
 use App\Models\Student;
 use App\Models\ParentGuardian;
@@ -37,7 +38,46 @@ class StudentController extends Controller
 
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
         $eliminadosCount = Student::onlyTrashed()->count();
-        return view('students.index', compact('students', 'eliminadosCount'));
+
+        $estadosAcademicos = $this->estadosAcademicos($students->pluck('id'));
+
+        return view('students.index', compact('students', 'eliminadosCount', 'estadosAcademicos'));
+    }
+
+    protected function estadosAcademicos($studentIds): array
+    {
+        $estados = [];
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        if (! $periodo || $studentIds->isEmpty()) {
+            return $estados;
+        }
+
+        $enrollments = Enrollment::whereIn('estudiante_id', $studentIds)
+            ->where('estado', 'COMPLETADA')
+            ->where('gestion_id', $periodo->id)
+            ->with('registration')
+            ->get();
+
+        $matriculadosPorPeriodo = Enrollment::whereIn('estudiante_id', $studentIds)
+            ->where('gestion_id', $periodo->id)
+            ->whereHas('registration', function ($q) {
+                $q->where('estado', 'ACTIVA');
+            })
+            ->pluck('estudiante_id')
+            ->unique();
+
+        foreach ($studentIds as $id) {
+            if ($matriculadosPorPeriodo->contains($id)) {
+                $estados[$id] = 'MATRICULADO';
+            } elseif ($enrollments->firstWhere('estudiante_id', $id)) {
+                $estados[$id] = 'INSCRITO';
+            } else {
+                $estados[$id] = 'SIN_INSCRIBIR';
+            }
+        }
+
+        return $estados;
     }
 
     public function create()

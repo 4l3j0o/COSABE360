@@ -11,10 +11,16 @@
             <h1 class="text-xl font-bold text-foreground">Estudiantes</h1>
             <p class="text-sm text-muted-foreground">Gestión de estudiantes del colegio</p>
         </div>
-        <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nuevo Estudiante
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('enrollments.index') }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Ver inscritos
+            </a>
+            <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nuevo Estudiante
+            </button>
+        </div>
     </div>
 
     <div class="bg-card border border-border rounded-xl mb-6">
@@ -47,6 +53,7 @@
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Documento</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Sexo</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Estado</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Estado académico</th>
                             <th class="text-right px-4 py-3 font-semibold text-foreground">Acciones</th>
                         </tr>
                     </thead>
@@ -71,6 +78,19 @@
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$student->estado] ?? 'bg-muted text-muted-foreground' }}">
                                         {{ $student->estado }}
                                     </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $acad = $estadosAcademicos[$student->id] ?? 'SIN_INSCRIBIR';
+                                        $chip = [
+                                            'MATRICULADO'  => ['bg-success/10 text-success', 'Matriculado', route('students.show', $student)],
+                                            'INSCRITO'     => ['bg-info/10 text-info', 'Inscrito', route('estudiantes.matriculacion', $student)],
+                                            'SIN_INSCRIBIR' => ['bg-muted text-muted-foreground', 'Sin inscribir', route('enrollments.index')],
+                                        ][$acad];
+                                    @endphp
+                                    <a href="{{ $chip[2] }}" title="{{ $acad === 'SIN_INSCRIBIR' ? 'Ir a inscripciones' : 'Ver / matricular' }}" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $chip[0] }} hover:opacity-80 transition-opacity">
+                                        {{ $chip[1] }}
+                                    </a>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
