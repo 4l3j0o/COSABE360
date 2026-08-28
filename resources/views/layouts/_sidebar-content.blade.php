@@ -3,7 +3,7 @@
     <p class="text-xs text-white/70 mt-0.5">Sistema de Gestión Escolar</p>
 </div>
 
-<nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+<nav class="flex-1 p-4 space-y-1 overflow-y-auto" style="scrollbar-width:none; -ms-overflow-style:none;">
     @yield('sidebar')
 </nav>
 

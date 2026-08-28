@@ -338,6 +338,15 @@
         border-radius: 20px;
         opacity: 0.5;
     }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
 
 body {
@@ -375,6 +384,10 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+}
+
+.app-sidebar nav::-webkit-scrollbar {
+    display: none;
 }
 
 #sidebar-mobile-wrap {

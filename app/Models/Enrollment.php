@@ -7,24 +7,58 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Enrollment extends Model
 {
-    protected $fillable = ['student_id', 'course_id', 'gestion', 'fecha_inscripcion', 'estado'];
+    protected $fillable = [
+        'estudiante_id',
+        'gestion_id',
+        'fecha',
+        'estado',
+        'observaciones',
+        'student_id',
+        'grade_id',
+        'parallel_id',
+        'academic_year_id',
+        'status',
+        'matriculation_cost',
+        'monthly_fee',
+    ];
 
     protected $casts = [
-        'fecha_inscripcion' => 'date',
+        'fecha' => 'date',
+        'academic_year_id' => 'integer',
+        'matriculation_cost' => 'decimal:2',
+        'monthly_fee' => 'decimal:2',
+        'status' => 'string',
     ];
+
+    public const ESTADOS = ['PENDIENTE', 'COMPLETADA', 'ANULADA'];
+
+    public function estudiante(): BelongsTo
+    {
+        return $this->belongsTo(Student::class, 'estudiante_id');
+    }
+
+    public function gestion(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'gestion_id');
+    }
 
     public function student(): BelongsTo
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function course(): BelongsTo
+    public function grade(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Grade::class, 'grade_id');
     }
 
-    public function estaActivo(): bool
+    public function parallel(): BelongsTo
     {
-        return $this->estado === 'ACTIVO';
+        return $this->belongsTo(Section::class, 'parallel_id');
+    }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 }
