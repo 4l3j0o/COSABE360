@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
             $table->unique(['grade_id', 'section_id', 'gestion_id'], 'uk_grado_section_gestion');
             $table->index('gestion_id', 'idx_gestion');
-            $table->index('estado', 'idx_estado');
+            $table->index('estado', 'idx_courses_estado');
         });
     }
 
