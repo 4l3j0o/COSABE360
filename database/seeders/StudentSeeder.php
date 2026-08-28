@@ -141,7 +141,7 @@ class StudentSeeder extends Seeder
                 'discapacidad' => null,
                 'quien_es_tutor' => 'PADRE',
                 'padre_indices' => [0, 1],
-                'relaciones' => ['MADRE', 'PADRE'],
+                'relaciones' => ['PADRE', 'MADRE'],
                 'principal' => 0,
             ],
             [
@@ -373,7 +373,5 @@ class StudentSeeder extends Seeder
                 ]);
             }
         }
-
-        $this->command->info('10 estudiantes completos con padres/tutores creados exitosamente.');
     }
 }
