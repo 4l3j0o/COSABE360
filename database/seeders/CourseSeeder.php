@@ -18,14 +18,14 @@ class CourseSeeder extends Seeder
                 foreach ($sections->take(2) as $section) {
                     $exists = DB::table('courses')->where([
                         'grade_id' => $grade->id,
-                        'paralelo_id' => $section->id,
+                        'section_id' => $section->id,
                         'gestion_id' => $year->id,
                     ])->exists();
 
                     if (!$exists) {
                         DB::table('courses')->insert([
                             'grade_id' => $grade->id,
-                            'paralelo_id' => $section->id,
+                            'section_id' => $section->id,
                             'gestion_id' => $year->id,
                             'nombre' => $grade->nombre . ' "' . $section->nombre . '" - ' . $year->nombre,
                             'estado' => 'ACTIVO',

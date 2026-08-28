@@ -22,6 +22,6 @@ class Section extends Model
 
     public function courses(): HasMany
     {
-        return $this->hasMany(Course::class, 'paralelo_id');
+        return $this->hasMany(Course::class, 'section_id');
     }
 }

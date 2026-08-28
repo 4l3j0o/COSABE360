@@ -393,7 +393,7 @@ class SubjectTest extends TestCase
                     $paraleloId = DB::table('sections')->first()->id;
                 }
                 if (Schema::hasTable('courses') && Schema::hasColumn('courses', 'grade_id')) {
-                    DB::table('courses')->insert(['grade_id' => $gradoId, 'paralelo_id' => $paraleloId, 'gestion_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
+                    DB::table('courses')->insert(['grade_id' => $gradoId, 'section_id' => $paraleloId, 'gestion_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
                     $cursoId = DB::table('courses')->orderByDesc('id')->first()->id;
                 } else {
                     $this->markTestSkipped('courses sin columnas necesarias');

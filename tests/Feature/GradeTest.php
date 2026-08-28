@@ -182,7 +182,7 @@ class GradeTest extends TestCase
 
         $cursoId = \DB::table('courses')->insertGetId([
             'grade_id' => $grade->id,
-            'paralelo_id' => $sectionId,
+            'section_id' => $sectionId,
             'gestion_id' => $gestionId,
             'nombre' => '4to Primaria A',
             'estado' => 'ACTIVO',

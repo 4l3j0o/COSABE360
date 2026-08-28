@@ -36,7 +36,7 @@ class AsignacionTestDataSeeder extends Seeder
         );
 
         $course = Course::firstOrCreate(
-            ['grade_id' => $grade->id, 'paralelo_id' => $section->id, 'gestion_id' => $year->id],
+            ['grade_id' => $grade->id, 'section_id' => $section->id, 'gestion_id' => $year->id],
             ['nombre' => '1ro A - 2026', 'estado' => 'ACTIVO']
         );
 

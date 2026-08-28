@@ -95,10 +95,10 @@ class SectionController extends Controller
     {
         $tieneMatriculados = false;
 
-        if (Schema::hasColumn('courses', 'paralelo_id') && Schema::hasColumn('registrations', 'course_id')) {
+        if (Schema::hasColumn('courses', 'section_id') && Schema::hasColumn('registrations', 'course_id')) {
             $tieneMatriculados = DB::table('registrations')
                 ->join('courses', 'registrations.course_id', '=', 'courses.id')
-                ->where('courses.paralelo_id', $section->id)
+                ->where('courses.section_id', $section->id)
                 ->where('registrations.estado', '!=', 'CANCELADA')
                 ->exists();
         }
@@ -114,8 +114,8 @@ class SectionController extends Controller
         }
 
         DB::transaction(function () use ($section) {
-            if (Schema::hasColumn('courses', 'paralelo_id')) {
-                $cursoIds = DB::table('courses')->where('paralelo_id', $section->id)->pluck('id');
+            if (Schema::hasColumn('courses', 'section_id')) {
+                $cursoIds = DB::table('courses')->where('section_id', $section->id)->pluck('id');
 
                 if ($cursoIds->isNotEmpty() && Schema::hasColumn('registrations', 'course_id')) {
                     DB::table('registrations')->whereIn('course_id', $cursoIds)->delete();
