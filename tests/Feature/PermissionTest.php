@@ -24,7 +24,7 @@ class PermissionTest extends TestCase
             'apellido' => 'User',
             'email' => strtolower(str_replace('/', '', $rol)) . '@test.com',
             'password' => 'password123',
-            'rol_id' => $role->id,
+            'role_id' => $role->id,
             'estado' => 'ACTIVO',
         ]);
     }

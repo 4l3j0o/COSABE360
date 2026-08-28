@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicYear extends Model
 {
+<<<<<<< HEAD
+=======
+    public const ESTADOS = ['PROXIMA', 'ACTIVA', 'CERRADA'];
+
+>>>>>>> develop
     protected $fillable = [
         'nombre',
         'fecha_inicio',

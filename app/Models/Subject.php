@@ -26,4 +26,14 @@ class Subject extends Model
     {
         return $this->belongsTo(Level::class, 'level_id');
     }
+
+    public function courseSubjects()
+    {
+        return $this->hasMany(CourseSubject::class, 'subject_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'subject_id');
+    }
 }

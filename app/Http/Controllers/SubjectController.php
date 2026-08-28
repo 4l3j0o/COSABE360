@@ -88,21 +88,21 @@ class SubjectController extends Controller
     {
         $bloqueadoPor = [];
 
-        // course_subject.materia_id RESTRICT — no borrar si está asignada a curso
-        if (Schema::hasColumn('course_subject', 'materia_id') || Schema::hasColumn('course_subjects', 'materia_id')) {
-            $tabla = Schema::hasColumn('course_subject', 'materia_id') ? 'course_subject' : 'course_subjects';
-            if (DB::table($tabla)->where('materia_id', $subject->id)->exists()) {
+        // course_subject.subject_id RESTRICT — no borrar si está asignada a curso
+        if (Schema::hasColumn('course_subject', 'subject_id') || Schema::hasColumn('course_subjects', 'subject_id')) {
+            $tabla = Schema::hasColumn('course_subject', 'subject_id') ? 'course_subject' : 'course_subjects';
+            if (DB::table($tabla)->where('subject_id', $subject->id)->exists()) {
                 $bloqueadoPor[] = 'cursos asignados';
             }
         }
 
-        // schedules.materia_id RESTRICT
-        if (Schema::hasColumn('schedules', 'materia_id') && DB::table('schedules')->where('materia_id', $subject->id)->exists()) {
+        // schedules.subject_id RESTRICT
+        if (Schema::hasColumn('schedules', 'subject_id') && DB::table('schedules')->where('subject_id', $subject->id)->exists()) {
             $bloqueadoPor[] = 'horarios asignados';
         }
 
-        // CA-14-03: assessments.materia_id — no borrar si tiene evaluaciones (y por tanto calificaciones registradas)
-        if (Schema::hasColumn('assessments', 'materia_id') && DB::table('assessments')->where('materia_id', $subject->id)->exists()) {
+        // CA-14-03: assessments.subject_id — no borrar si tiene evaluaciones (y por tanto calificaciones registradas)
+        if (Schema::hasColumn('assessments', 'subject_id') && DB::table('assessments')->where('subject_id', $subject->id)->exists()) {
             $bloqueadoPor[] = 'evaluaciones o calificaciones registradas';
         }
 
