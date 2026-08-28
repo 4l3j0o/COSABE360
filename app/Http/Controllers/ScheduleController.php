@@ -55,6 +55,124 @@ class ScheduleController extends Controller
         return view('schedules.show', compact('course', 'dias', 'horas', 'tabla', 'courses', 'subjects', 'teachers', 'schedules'));
     }
 
+    /**
+     * Lista los estudiantes matriculados (Registration ACTIVA) de un paralelo.
+     */
+    public function estudiantes(Course $course)
+    {
+        $course->load(['grade', 'section', 'gestion']);
+
+        $estudiantes = $course->students()
+            ->with(['user'])
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        return view('schedules.estudiantes', compact('course', 'estudiantes'));
+    }
+
+    /**
+     * HU-29: Muestra el horario de quien consulta según su rol.
+     * Estudiante -> el horario de su curso matriculado activo.
+     * Docente -> los horarios de sus cursos asignados.
+     */
+    public function miHorario()
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('Estudiante')) {
+            $student = $user->student;
+
+            if (! $student) {
+                abort(403, 'No se encontró un perfil de estudiante para esta cuenta.');
+            }
+
+            $course = $student->activeCourse();
+
+            if (! $course) {
+                $course = null;
+                return view('schedules.mi-horario-estudiante', [
+                    'sinCurso' => true,
+                    'course' => null,
+                    'dias' => [],
+                    'horas' => collect(),
+                    'tabla' => [],
+                ]);
+            }
+
+            return $this->renderHorarioCurso(
+                'schedules.mi-horario-estudiante',
+                $course,
+                compact('student')
+            );
+        }
+
+        if ($user->hasRole('Docente')) {
+            $teacher = $user->teacher;
+
+            if (! $teacher) {
+                abort(403, 'No se encontró un perfil de docente para esta cuenta.');
+            }
+
+            // Horarios del docente agrupados por curso (puede dar en varios paralelos)
+            $courses = $teacher->schedules()
+                ->with(['course', 'subject', 'teacher'])
+                ->get()
+                ->groupBy('course_id');
+
+            $porCurso = [];
+            foreach ($courses as $courseId => $schedules) {
+                $porCurso[] = [
+                    'course' => $schedules->first()->course,
+                    'dias' => ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'],
+                    'horas' => $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+                        ->values()
+                        ->sortBy(fn ($s) => $s->hora_inicio)
+                        ->values(),
+                    'tabla' => $this->tablaSemanal($schedules),
+                ];
+            }
+
+            return view('schedules.mi-horario-docente', compact('teacher', 'porCurso'));
+        }
+
+        abort(403);
+    }
+
+    private function renderHorarioCurso(string $vista, Course $course, array $extra = [])
+    {
+        $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+        $schedules = Schedule::with(['subject', 'teacher'])
+            ->where('course_id', $course->id)
+            ->orderBy('hora_inicio')
+            ->orderByRaw("FIELD(dia, 'LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO')")
+            ->get();
+
+        $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+            ->values()
+            ->sortBy(fn ($s) => $s->hora_inicio)
+            ->values();
+
+        $tabla = $this->tablaSemanal($schedules);
+
+        $course->load(['grade.level', 'section', 'gestion']);
+
+        return view($vista, array_merge($extra, compact('course', 'dias', 'horas', 'tabla', 'schedules')));
+    }
+
+    private function tablaSemanal($schedules): array
+    {
+        $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+        $tabla = [];
+        foreach ($dias as $dia) {
+            $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
+        }
+
+        return $tabla;
+    }
+
     public function create()
     {
         $courses = Course::all();

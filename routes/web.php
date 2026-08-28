@@ -158,8 +158,13 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(fun
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
+    Route::get('/{course}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
     Route::get('/{course}', [ScheduleController::class, 'show'])->name('schedules.show');
 });
+
+// HU-29: Consultar horario - Estudiante y Docente
+Route::middleware('auth')->get('/mi-horario', [ScheduleController::class, 'miHorario'])
+    ->name('schedules.mi-horario');
 
 // HU-20: Documentación administrativa solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('documentos-estudiantes')->group(function () {

@@ -41,4 +41,24 @@ class Course extends Model
     {
         return $this->hasMany(Schedule::class, 'course_id');
     }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(Registration::class, 'course_id');
+    }
+
+    /**
+     * Estudiantes matriculados (Registration ACTIVA) en este paralelo.
+     * Cadena: Student -> Enrollment (COMPLETADA) -> Registration (ACTIVA, course_id).
+     */
+    public function students()
+    {
+        return Student::whereHas('enrollments', function ($q) {
+            $q->where('enrollments.estado', 'COMPLETADA')
+                ->whereHas('registration', function ($r) {
+                    $r->where('course_id', $this->id)
+                        ->where('registrations.estado', 'ACTIVA');
+                });
+        });
+    }
 }

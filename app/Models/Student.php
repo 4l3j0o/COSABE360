@@ -75,6 +75,30 @@ class Student extends Model
         return $this->hasManyThrough(Registration::class, Enrollment::class, 'estudiante_id', 'enrollment_id');
     }
 
+    public function activeRegistration(): ?Registration
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        if (! $periodo) {
+            return null;
+        }
+
+        return $this->registrations()
+            ->whereHas('enrollment', function ($q) use ($periodo) {
+                $q->where('gestion_id', $periodo->id)
+                    ->where('enrollments.estado', 'COMPLETADA');
+            })
+            ->where('registrations.estado', 'ACTIVA')
+            ->with('course')
+            ->latest('id')
+            ->first();
+    }
+
+    public function activeCourse(): ?Course
+    {
+        return $this->activeRegistration()?->course;
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(StudentDocument::class, 'estudiante_id');

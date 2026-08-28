@@ -44,7 +44,20 @@ class EnrollmentRegistrationSeeder extends Seeder
 
         $students = Student::orderBy('id')->get();
 
-        foreach ($students as $student) {
+        foreach ($students as $index => $student) {
+            // Dejamos al primer estudiante solo como "INSCRITO" (sin matricular) para pruebas
+            if ($index === 0) {
+                $enrollment = Enrollment::firstOrNew([
+                    'estudiante_id' => $student->id,
+                    'gestion_id'    => $gestion->id,
+                ]);
+                $enrollment->fecha        = $gestion->fecha_inicio;
+                $enrollment->estado       = 'COMPLETADA';
+                $enrollment->observaciones = 'Dejado sin matricular para pruebas de flujo';
+                $enrollment->save();
+                continue;
+            }
+
             $anio = (int) substr($student->fecha_nacimiento, 0, 4);
             $gradoNombre = $gradoPorAnio[$anio] ?? '1ro Secundaria';
 
