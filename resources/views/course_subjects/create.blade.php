@@ -25,39 +25,39 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente <span class="text-error">*</span></label>
-                            <select name="docente_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="teacher_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" {{ old('docente_id') == $teacher->id ? 'selected' : '' }}>
+                                    <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
                                         {{ $teacher->nombres }} {{ $teacher->apellidos }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('docente_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                            <select name="materia_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}" {{ old('materia_id') == $subject->id ? 'selected' : '' }}>
+                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
                                         {{ $subject->nombre }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('materia_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
-                            <select name="curso_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
                                 @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('curso_id') == $course->id ? 'selected' : '' }}>
+                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
                                         {{ $course->nombre }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('curso_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>

@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('course_subjects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('materia_id')->constrained('subjects')->restrictOnDelete();
-            $table->foreignId('curso_id')->constrained('courses')->cascadeOnDelete();
-            $table->foreignId('docente_id')->constrained('teachers')->restrictOnDelete();
+            $table->foreignId('subject_id')->constrained()->restrictOnDelete();
+            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('teacher_id')->constrained()->restrictOnDelete();
             $table->timestamps();
-            $table->unique(['materia_id', 'curso_id', 'docente_id'], 'uk_course_subject_docente');
-            $table->index('curso_id', 'idx_curso');
-            $table->index('docente_id', 'idx_docente');
+            $table->unique(['subject_id', 'course_id', 'teacher_id'], 'uk_course_subject_docente');
+            $table->index('course_id', 'idx_curso');
+            $table->index('teacher_id', 'idx_docente');
         });
     }
 

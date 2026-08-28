@@ -29,11 +29,11 @@ class Subject extends Model
 
     public function courseSubjects()
     {
-        return $this->hasMany(CourseSubject::class, 'materia_id');
+        return $this->hasMany(CourseSubject::class, 'subject_id');
     }
 
     public function schedules()
     {
-        return $this->hasMany(Schedule::class, 'materia_id');
+        return $this->hasMany(Schedule::class, 'subject_id');
     }
 }

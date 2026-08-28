@@ -59,7 +59,7 @@ class AdminUserSeeder extends Seeder
                     'nombre' => $datos['nombre'],
                     'apellido' => $datos['apellido'],
                     'password' => $password,
-                    'rol_id' => Role::where('nombre', $datos['rol'])->value('id'),
+                    'role_id' => Role::where('nombre', $datos['rol'])->value('id'),
                     'estado' => 'ACTIVO',
                 ]
             );

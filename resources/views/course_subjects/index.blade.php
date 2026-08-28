@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Asignaciones Docente-Materia-Curso')
+@section('titulo', 'Asignaciones Docente Materia Curso')
 
 @section('sidebar')
     @include('dashboard.partials._sidebar-admin')
@@ -8,7 +8,7 @@
 @section('contenido')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Asignaciones Docente-Materia-Curso</h1>
+            <h1 class="text-xl font-bold text-foreground">Asignaciones Docente Materia Curso</h1>
             <p class="text-sm text-muted-foreground">Gestión de asignaciones de docentes a materias y cursos</p>
         </div>
         <a href="{{ route('course_subjects.create') }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">

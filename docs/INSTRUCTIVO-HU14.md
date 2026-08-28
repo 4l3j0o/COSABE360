@@ -25,7 +25,7 @@
 **Controller** `SubjectController`
 - `index`: `with('level')`, filtros `?level_id` / `?estado`, orden `level_id, nombre`.
 - `store`: `estado=ACTIVO`, `201`.
-- `destroy`: `409` si `course_subject(s).materia_id` o `schedules.materia_id` existe (FK RESTRICT del Anexo A). Usa `Schema::hasColumn` para no romper en SQLite stub + maneja ambos nombres `course_subject` (SRS) / `course_subjects` (migración develop).
+- `destroy`: `409` si `course_subject(s).subject_id` o `schedules.subject_id` existe (FK RESTRICT del Anexo A). Usa `Schema::hasColumn` para no romper en SQLite stub + maneja ambos nombres `course_subject` (SRS) / `course_subjects` (migración develop).
 
 **Rutas** `routes/api.php` `apiResource('subjects')` + `bootstrap/app.php` `api: __DIR__/../routes/api.php`.
 

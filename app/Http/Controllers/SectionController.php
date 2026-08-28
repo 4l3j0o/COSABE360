@@ -32,9 +32,9 @@ class SectionController extends Controller
             ->when($request->query('level_id'), function ($q, $v) {
                 $q->whereHas('grade', fn ($g) => $g->where('level_id', $v));
             })
-            ->when($request->query('grado_id'), fn ($q, $v) => $q->where('grado_id', $v))
+            ->when($request->query('grade_id'), fn ($q, $v) => $q->where('grade_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->orderBy('grado_id')
+            ->orderBy('grade_id')
             ->orderBy('nombre')
             ->paginate(10)
             ->withQueryString();
@@ -50,11 +50,11 @@ class SectionController extends Controller
             $sections->whereHas('grade', fn ($q) => $q->where('level_id', $request->input('level_id')));
         }
 
-        if ($request->filled('grado_id')) {
-            $sections->where('grado_id', $request->grado_id);
+        if ($request->filled('grade_id')) {
+            $sections->where('grade_id', $request->grade_id);
         }
 
-        $sections->orderBy('grado_id')->orderBy('nombre');
+        $sections->orderBy('grade_id')->orderBy('nombre');
 
         return SectionResource::collection($sections->get());
     }
@@ -95,9 +95,9 @@ class SectionController extends Controller
     {
         $tieneMatriculados = false;
 
-        if (Schema::hasColumn('courses', 'paralelo_id') && Schema::hasColumn('registrations', 'curso_id')) {
+        if (Schema::hasColumn('courses', 'paralelo_id') && Schema::hasColumn('registrations', 'course_id')) {
             $tieneMatriculados = DB::table('registrations')
-                ->join('courses', 'registrations.curso_id', '=', 'courses.id')
+                ->join('courses', 'registrations.course_id', '=', 'courses.id')
                 ->where('courses.paralelo_id', $section->id)
                 ->where('registrations.estado', '!=', 'CANCELADA')
                 ->exists();
@@ -117,8 +117,8 @@ class SectionController extends Controller
             if (Schema::hasColumn('courses', 'paralelo_id')) {
                 $cursoIds = DB::table('courses')->where('paralelo_id', $section->id)->pluck('id');
 
-                if ($cursoIds->isNotEmpty() && Schema::hasColumn('registrations', 'curso_id')) {
-                    DB::table('registrations')->whereIn('curso_id', $cursoIds)->delete();
+                if ($cursoIds->isNotEmpty() && Schema::hasColumn('registrations', 'course_id')) {
+                    DB::table('registrations')->whereIn('course_id', $cursoIds)->delete();
                 }
 
                 DB::table('courses')->whereIn('id', $cursoIds)->delete();

@@ -11,7 +11,7 @@ use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Database\Seeder;
 
-class HU16TestDataSeeder extends Seeder
+class AsignacionTestDataSeeder extends Seeder
 {
     public function run(): void
     {
@@ -31,23 +31,23 @@ class HU16TestDataSeeder extends Seeder
         );
 
         $section = Section::firstOrCreate(
-            ['grado_id' => $grade->id, 'nombre' => 'A'],
+            ['grade_id' => $grade->id, 'nombre' => 'A'],
             ['capacidad' => 40, 'estado' => 'ACTIVO']
         );
 
         $course = Course::firstOrCreate(
-            ['grado_id' => $grade->id, 'paralelo_id' => $section->id, 'gestion_id' => $year->id],
+            ['grade_id' => $grade->id, 'paralelo_id' => $section->id, 'gestion_id' => $year->id],
             ['nombre' => '1ro A - 2026', 'estado' => 'ACTIVO']
         );
 
         Subject::firstOrCreate(
             ['nombre' => 'Matemáticas'],
-            ['descripcion' => 'Materia de matemáticas', 'nivel_id' => $level->id, 'horas_semanales' => 5, 'estado' => 'ACTIVO']
+            ['descripcion' => 'Materia de matemáticas', 'level_id' => $level->id, 'horas_semanales' => 5, 'estado' => 'ACTIVO']
         );
 
         Subject::firstOrCreate(
             ['nombre' => 'Lenguaje'],
-            ['descripcion' => 'Materia de lenguaje', 'nivel_id' => $level->id, 'horas_semanales' => 4, 'estado' => 'ACTIVO']
+            ['descripcion' => 'Materia de lenguaje', 'level_id' => $level->id, 'horas_semanales' => 4, 'estado' => 'ACTIVO']
         );
 
         Teacher::firstOrCreate(

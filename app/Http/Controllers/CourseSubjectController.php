@@ -33,9 +33,9 @@ class CourseSubjectController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'docente_id' => 'required|exists:teachers,id',
-            'materia_id' => 'required|exists:subjects,id',
-            'curso_id' => 'required|exists:courses,id',
+            'teacher_id' => 'required|exists:teachers,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'course_id' => 'required|exists:courses,id',
             'dia' => 'required|in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
@@ -46,17 +46,17 @@ class CourseSubjectController extends Controller
 
         try {
             $courseSubject = CourseSubject::create([
-                'docente_id' => $validated['docente_id'],
-                'materia_id' => $validated['materia_id'],
-                'curso_id' => $validated['curso_id'],
+                'teacher_id' => $validated['teacher_id'],
+                'subject_id' => $validated['subject_id'],
+                'course_id' => $validated['course_id'],
             ]);
 
-            $this->validarCruceHorario($validated['docente_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
+            $this->validarCruceHorario($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
 
             Schedule::create([
-                'curso_id' => $validated['curso_id'],
-                'materia_id' => $validated['materia_id'],
-                'docente_id' => $validated['docente_id'],
+                'course_id' => $validated['course_id'],
+                'subject_id' => $validated['subject_id'],
+                'teacher_id' => $validated['teacher_id'],
                 'dia' => $validated['dia'],
                 'hora_inicio' => $validated['hora_inicio'],
                 'hora_fin' => $validated['hora_fin'],
@@ -75,7 +75,7 @@ class CourseSubjectController extends Controller
 
     private function validarCruceHorario($docenteId, $dia, $horaInicio, $horaFin)
     {
-        $cruce = Schedule::where('docente_id', $docenteId)
+        $cruce = Schedule::where('teacher_id', $docenteId)
             ->where('dia', $dia)
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio, $horaFin) {

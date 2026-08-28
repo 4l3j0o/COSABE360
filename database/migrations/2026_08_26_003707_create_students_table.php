@@ -33,7 +33,6 @@ return new class extends Migration
             $table->enum('quien_es_tutor', ['PADRE', 'MADRE', 'TUTOR'])->default('PADRE');
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO'])->default('ACTIVO');
             $table->timestamps();
-            $table->softDeletes();
             $table->unique(['numero_documento', 'complemento']);
             $table->index('codigo');
             $table->index(['nombres', 'apellidos']);

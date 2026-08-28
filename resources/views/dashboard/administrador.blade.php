@@ -45,7 +45,7 @@
                 </span>
                 <div>
                     <span class="text-foreground font-medium">Estudiantes</span>
-                    <p class="text-muted-foreground text-xs">CRUD completo</p>
+                    <p class="text-muted-foreground text-xs">Lista Estudiantes</p>
                 </div>
             </a>
             <a href="{{ route('users.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
@@ -54,7 +54,7 @@
                 </span>
                 <div>
                     <span class="text-foreground font-medium">Usuarios</span>
-                    <p class="text-muted-foreground text-xs">Gestión completa HU02</p>
+                    <p class="text-muted-foreground text-xs">Lista Usuarios</p>
                 </div>
             </a>
             <a href="{{ route('teachers.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">
@@ -63,7 +63,7 @@
                 </span>
                 <div>
                     <span class="text-foreground font-medium">Docentes</span>
-                    <p class="text-muted-foreground text-xs">HU10 código único</p>
+                    <p class="text-muted-foreground text-xs">Lista Docentes</p>
                 </div>
             </a>
             <a href="{{ route('tax-configuration.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-sm">

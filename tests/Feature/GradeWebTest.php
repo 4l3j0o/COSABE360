@@ -114,7 +114,7 @@ class GradeWebTest extends TestCase
         $user = User::create([
             'nombre' => 'Test', 'apellido' => 'Secretaria',
             'email' => 'test.secretaria.web@test.com', 'password' => 'password123',
-            'rol_id' => $role->id, 'estado' => 'ACTIVO',
+            'role_id' => $role->id, 'estado' => 'ACTIVO',
         ]);
         $this->actingAs($user);
         $this->get('/grados')->assertRedirect(route('acceso.denegado'));

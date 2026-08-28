@@ -12,7 +12,7 @@ class Teacher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'usuario_id',
+        'user_id',
         'codigo',
         'nombres',
         'apellidos',
@@ -39,17 +39,17 @@ class Teacher extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function courseSubjects()
     {
-        return $this->hasMany(CourseSubject::class, 'docente_id');
+        return $this->hasMany(CourseSubject::class, 'teacher_id');
     }
 
     public function schedules()
     {
-        return $this->hasMany(Schedule::class, 'docente_id');
+        return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
     public function estaActivo(): bool
