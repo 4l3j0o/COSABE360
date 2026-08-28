@@ -27,7 +27,7 @@ class MedicalRecordSeeder extends Seeder
             $contactoParent = $tutorParent ? ($student->quien_es_tutor ?: 'PADRE') : 'PADRE';
 
             MedicalRecord::updateOrCreate(
-                ['estudiante_id' => $student->id],
+                ['student_id' => $student->id],
                 [
                     'grupo_sanguineo'              => $groups[($student->id - 1) % count($groups)],
                     'alergias'                     => $student->id % 4 === 0 ? 'Polen, Penicilina' : null,

@@ -18,8 +18,8 @@ class EnrollmentController extends Controller
             $query->where('estado', $request->estado);
         }
 
-        if ($request->filled('gestion_id')) {
-            $query->where('gestion_id', $request->gestion_id);
+        if ($request->filled('academic_year_id')) {
+            $query->where('academic_year_id', $request->academic_year_id);
         }
 
         if ($request->filled('buscar')) {
@@ -41,21 +41,21 @@ class EnrollmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'estudiante_id' => ['required', 'exists:students,id'],
-            'gestion_id' => ['required', 'exists:academic_years,id'],
+            'student_id' => ['required', 'exists:students,id'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
             'fecha' => ['required', 'date'],
             'estado' => ['required', Rule::in(Enrollment::ESTADOS)],
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $existe = Enrollment::where('estudiante_id', $validated['estudiante_id'])
-            ->where('gestion_id', $validated['gestion_id'])
+        $existe = Enrollment::where('student_id', $validated['student_id'])
+            ->where('academic_year_id', $validated['academic_year_id'])
             ->where('estado', '!=', 'ANULADA')
             ->exists();
 
         if ($existe) {
             return back()->withErrors([
-                'estudiante_id' => 'El estudiante ya tiene una inscripción activa en este período.',
+                'student_id' => 'El estudiante ya tiene una inscripción activa en este período.',
             ])->withInput();
         }
 
@@ -67,22 +67,22 @@ class EnrollmentController extends Controller
     public function update(Request $request, Enrollment $enrollment)
     {
         $validated = $request->validate([
-            'estudiante_id' => ['required', 'exists:students,id'],
-            'gestion_id' => ['required', 'exists:academic_years,id'],
+            'student_id' => ['required', 'exists:students,id'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
             'fecha' => ['required', 'date'],
             'estado' => ['required', Rule::in(Enrollment::ESTADOS)],
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $existe = Enrollment::where('estudiante_id', $validated['estudiante_id'])
-            ->where('gestion_id', $validated['gestion_id'])
+        $existe = Enrollment::where('student_id', $validated['student_id'])
+            ->where('academic_year_id', $validated['academic_year_id'])
             ->where('estado', '!=', 'ANULADA')
             ->where('id', '!=', $enrollment->id)
             ->exists();
 
         if ($existe) {
             return back()->withErrors([
-                'estudiante_id' => 'El estudiante ya tiene una inscripción activa en este período.',
+                'student_id' => 'El estudiante ya tiene una inscripción activa en este período.',
             ])->withInput();
         }
 

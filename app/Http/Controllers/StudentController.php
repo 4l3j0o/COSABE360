@@ -42,7 +42,7 @@ class StudentController extends Controller
             $periodoActivo = AcademicYear::where('estado', 'ACTIVA')->first();
             if ($periodoActivo) {
                 $query->whereHas('enrollments', function ($q) use ($periodoActivo) {
-                    $q->where('gestion_id', $periodoActivo->id)
+                    $q->where('academic_year_id', $periodoActivo->id)
                         ->whereHas('registration', function ($r) {
                             $r->where('estado', 'ACTIVA');
                         });
@@ -69,24 +69,24 @@ class StudentController extends Controller
             return $estados;
         }
 
-        $enrollments = Enrollment::whereIn('estudiante_id', $studentIds)
+        $enrollments = Enrollment::whereIn('student_id', $studentIds)
             ->where('estado', 'COMPLETADA')
-            ->where('gestion_id', $periodo->id)
+            ->where('academic_year_id', $periodo->id)
             ->with('registration')
             ->get();
 
-        $matriculadosPorPeriodo = Enrollment::whereIn('estudiante_id', $studentIds)
-            ->where('gestion_id', $periodo->id)
+        $matriculadosPorPeriodo = Enrollment::whereIn('student_id', $studentIds)
+            ->where('academic_year_id', $periodo->id)
             ->whereHas('registration', function ($q) {
                 $q->where('estado', 'ACTIVA');
             })
-            ->pluck('estudiante_id')
+            ->pluck('student_id')
             ->unique();
 
         foreach ($studentIds as $id) {
             if ($matriculadosPorPeriodo->contains($id)) {
                 $estados[$id] = 'MATRICULADO';
-            } elseif ($enrollments->firstWhere('estudiante_id', $id)) {
+            } elseif ($enrollments->firstWhere('student_id', $id)) {
                 $estados[$id] = 'INSCRITO';
             } else {
                 $estados[$id] = 'SIN_INSCRIBIR';
@@ -208,16 +208,16 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $relations = ['user', 'parentGuardians'];
-        if (\Illuminate\Support\Facades\Schema::hasTable('student_rude_records') && \Illuminate\Support\Facades\Schema::hasColumn('student_rude_records', 'estudiante_id')) {
+        if (\Illuminate\Support\Facades\Schema::hasTable('student_rude_records') && \Illuminate\Support\Facades\Schema::hasColumn('student_rude_records', 'student_id')) {
             $relations[] = 'rudeRecord';
         }
-        if (\Illuminate\Support\Facades\Schema::hasTable('medical_records') && \Illuminate\Support\Facades\Schema::hasColumn('medical_records', 'estudiante_id')) {
+        if (\Illuminate\Support\Facades\Schema::hasTable('medical_records') && \Illuminate\Support\Facades\Schema::hasColumn('medical_records', 'student_id')) {
             $relations[] = 'medicalRecord';
         }
-        if (\Illuminate\Support\Facades\Schema::hasTable('enrollments') && \Illuminate\Support\Facades\Schema::hasColumn('enrollments', 'estudiante_id')) {
+        if (\Illuminate\Support\Facades\Schema::hasTable('enrollments') && \Illuminate\Support\Facades\Schema::hasColumn('enrollments', 'student_id')) {
             $relations[] = 'enrollments';
         }
-        if (\Illuminate\Support\Facades\Schema::hasTable('student_documents') && \Illuminate\Support\Facades\Schema::hasColumn('student_documents', 'estudiante_id')) {
+        if (\Illuminate\Support\Facades\Schema::hasTable('student_documents') && \Illuminate\Support\Facades\Schema::hasColumn('student_documents', 'student_id')) {
             $relations[] = 'documents';
         }
         $student->load($relations);
@@ -230,7 +230,7 @@ class StudentController extends Controller
             ->get();
 
         $documentos = \Illuminate\Support\Facades\Schema::hasTable('student_documents')
-            ? \App\Models\StudentDocument::where('estudiante_id', $student->id)
+            ? \App\Models\StudentDocument::where('student_id', $student->id)
                 ->orderBy('created_at', 'desc')
                 ->get()
             : collect();
@@ -327,14 +327,14 @@ class StudentController extends Controller
         $inscripcion = $estudiante->enrollments()
             ->with('gestion')
             ->where('estado', 'COMPLETADA')
-            ->where('gestion_id', $periodo?->id)
+            ->where('academic_year_id', $periodo?->id)
             ->latest('fecha')
             ->first();
 
         $cursos = collect();
         if ($periodo) {
             $cursos = Course::with(['grade', 'section'])
-                ->where('gestion_id', $periodo->id)
+                ->where('academic_year_id', $periodo->id)
                 ->where('estado', 'ACTIVO')
                 ->orderBy('nombre')
                 ->get();
@@ -353,7 +353,6 @@ class StudentController extends Controller
         $validated = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'fecha'              => 'required|date',
-            'matriculation_cost' => 'required|numeric|min:0',
             'observaciones'      => 'nullable|string|max:500',
         ]);
 
@@ -365,7 +364,7 @@ class StudentController extends Controller
 
         $inscripcion = $estudiante->enrollments()
             ->where('estado', 'COMPLETADA')
-            ->where('gestion_id', $periodo?->id)
+            ->where('academic_year_id', $periodo?->id)
             ->latest('fecha')
             ->first();
 
@@ -377,7 +376,7 @@ class StudentController extends Controller
 
         // CA-18-01: el curso (grado + paralelo) debe pertenecer al período activo
         $curso = Course::where('id', $validated['course_id'])
-            ->where('gestion_id', $periodo->id)
+            ->where('academic_year_id', $periodo->id)
             ->where('estado', 'ACTIVO')
             ->first();
 
@@ -392,7 +391,7 @@ class StudentController extends Controller
             ->where('registrations.estado', 'ACTIVA')
             ->where(function ($q) use ($periodo) {
                 $q->whereHas('enrollment', function ($enr) use ($periodo) {
-                    $enr->where('gestion_id', $periodo->id);
+                    $enr->where('academic_year_id', $periodo->id);
                 });
             })
             ->exists();
@@ -407,7 +406,6 @@ class StudentController extends Controller
             $inscripcion->registration()->create([
                 'course_id'          => $curso->id,
                 'fecha'              => $validated['fecha'],
-                'matriculation_cost' => $validated['matriculation_cost'],
                 'monto_mensual'      => $montoMensual,
                 'observaciones'      => $validated['observaciones'] ?? null,
                 'estado'             => 'ACTIVA',

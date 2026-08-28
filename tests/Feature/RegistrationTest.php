@@ -61,7 +61,7 @@ class RegistrationTest extends TestCase
         return Course::create([
             'grade_id' => $grado->id,
             'section_id' => $paralelo->id,
-            'gestion_id' => $periodo->id,
+            'academic_year_id' => $periodo->id,
             'nombre' => $grado->nombre.' - A',
             'estado' => 'ACTIVO',
         ]);
@@ -70,8 +70,8 @@ class RegistrationTest extends TestCase
     private function crearInscripcion(Student $estudiante, AcademicYear $periodo, string $estado = 'COMPLETADA'): Enrollment
     {
         return Enrollment::create([
-            'estudiante_id' => $estudiante->id,
-            'gestion_id' => $periodo->id,
+            'student_id' => $estudiante->id,
+            'academic_year_id' => $periodo->id,
             'fecha' => '2026-03-01',
             'estado' => $estado,
         ]);
@@ -88,7 +88,6 @@ class RegistrationTest extends TestCase
         $this->post(route('estudiantes.matricular', $est), [
             'course_id' => $curso->id,
             'fecha' => '2026-03-05',
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
             'observaciones' => 'Matrícula 2026',
         ])->assertRedirect(route('students.show', $est));
@@ -98,7 +97,6 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('registrations', [
             'enrollment_id' => $inscripcion->id,
             'course_id' => $curso->id,
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
             'estado' => 'ACTIVA',
         ]);
@@ -117,7 +115,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('estudiantes.matricular', $est), [
             'course_id' => $curso->id,
             'fecha' => '2026-03-05',
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
         ]);
 
@@ -136,7 +133,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('estudiantes.matricular', $est), [
             'course_id' => $curso->id,
             'fecha' => '2026-03-05',
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
         ]);
 
@@ -156,7 +152,6 @@ class RegistrationTest extends TestCase
             'enrollment_id' => $inscripcion->id,
             'course_id' => $curso->id,
             'fecha' => '2026-03-05',
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
             'estado' => 'ACTIVA',
         ]);
@@ -164,7 +159,6 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('estudiantes.matricular', $est), [
             'course_id' => $curso->id,
             'fecha' => '2026-03-06',
-            'matriculation_cost' => 150.00,
             'monto_mensual' => 350.00,
         ]);
 

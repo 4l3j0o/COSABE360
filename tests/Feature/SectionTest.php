@@ -176,7 +176,7 @@ class SectionTest extends TestCase
         $cursoId = DB::table('courses')->insertGetId([
             'grade_id'    => $grado->id,
             'section_id' => $sec->id,
-            'gestion_id'  => $gestionId,
+            'academic_year_id'  => $gestionId,
             'nombre'      => '1ro A 2026',
             'estado'      => 'ACTIVO',
             'created_at'  => now(),
@@ -216,7 +216,7 @@ class SectionTest extends TestCase
         $cursoId = DB::table('courses')->insertGetId([
             'grade_id'    => $grado->id,
             'section_id' => $sec->id,
-            'gestion_id'  => $gestionId,
+            'academic_year_id'  => $gestionId,
             'nombre'      => '1ro A 2026',
             'estado'      => 'ACTIVO',
             'created_at'  => now(),

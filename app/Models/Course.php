@@ -11,7 +11,7 @@ class Course extends Model
     protected $fillable = [
         'grade_id',
         'section_id',
-        'gestion_id',
+        'academic_year_id',
         'nombre',
         'aula',
         'estado',
@@ -29,7 +29,7 @@ class Course extends Model
 
     public function gestion(): BelongsTo
     {
-        return $this->belongsTo(AcademicYear::class, 'gestion_id');
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     public function courseSubjects(): HasMany

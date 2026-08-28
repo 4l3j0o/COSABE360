@@ -48,8 +48,8 @@ class EnrollmentRegistrationSeeder extends Seeder
             // Dejamos al primer estudiante solo como "INSCRITO" (sin matricular) para pruebas
             if ($index === 0) {
                 $enrollment = Enrollment::firstOrNew([
-                    'estudiante_id' => $student->id,
-                    'gestion_id'    => $gestion->id,
+                    'student_id' => $student->id,
+                    'academic_year_id'    => $gestion->id,
                 ]);
                 $enrollment->fecha        = $gestion->fecha_inicio;
                 $enrollment->estado       = 'COMPLETADA';
@@ -62,7 +62,7 @@ class EnrollmentRegistrationSeeder extends Seeder
             $gradoNombre = $gradoPorAnio[$anio] ?? '1ro Secundaria';
 
             $course = Course::whereHas('grade', fn ($q) => $q->where('nombre', $gradoNombre))
-                ->where('gestion_id', $gestion->id)
+                ->where('academic_year_id', $gestion->id)
                 ->orderBy('id')
                 ->first();
 
@@ -73,8 +73,8 @@ class EnrollmentRegistrationSeeder extends Seeder
 
             // 1) Inscripción (enrollment)
             $enrollment = Enrollment::firstOrNew([
-                'estudiante_id' => $student->id,
-                'gestion_id'    => $gestion->id,
+                'student_id' => $student->id,
+                'academic_year_id'    => $gestion->id,
             ]);
             $enrollment->fecha        = $gestion->fecha_inicio;
             $enrollment->estado       = 'COMPLETADA';
@@ -87,7 +87,6 @@ class EnrollmentRegistrationSeeder extends Seeder
                 [
                     'course_id'          => $course->id,
                     'fecha'              => $gestion->fecha_inicio,
-                    'matriculation_cost' => $matriculationCost,
                     'monto_mensual'      => $montoMensual,
                     'observaciones'      => null,
                     'estado'             => 'ACTIVA',

@@ -13,7 +13,6 @@ class Registration extends Model
         'enrollment_id',
         'course_id',
         'fecha',
-        'matriculation_cost',
         'monto_mensual',
         'observaciones',
         'estado',
@@ -21,7 +20,6 @@ class Registration extends Model
 
     protected $casts = [
         'fecha' => 'date',
-        'matriculation_cost' => 'decimal:2',
         'monto_mensual' => 'decimal:2',
     ];
 

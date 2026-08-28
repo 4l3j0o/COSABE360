@@ -36,7 +36,7 @@ class TestDataSeeder extends Seeder
         );
 
         Course::firstOrCreate(
-            ['grado_id' => $grade->id, 'paralelo_id' => $section->id, 'gestion_id' => $year->id],
+            ['grado_id' => $grade->id, 'paralelo_id' => $section->id, 'academic_year_id' => $year->id],
             ['nombre' => '1ro A - 2026', 'estado' => 'ACTIVO']
         );
 

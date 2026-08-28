@@ -10,24 +10,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Enrollment extends Model
 {
     protected $fillable = [
-        'estudiante_id',
-        'gestion_id',
+        'student_id',
+        'academic_year_id',
         'fecha',
         'estado',
         'observaciones',
-        'student_id',
         'grade_id',
         'parallel_id',
-        'academic_year_id',
         'status',
-        'matriculation_cost',
         'monthly_fee',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'academic_year_id' => 'integer',
-        'matriculation_cost' => 'decimal:2',
         'monthly_fee' => 'decimal:2',
         'status' => 'string',
     ];
@@ -36,17 +32,12 @@ class Enrollment extends Model
 
     public function estudiante(): BelongsTo
     {
-        return $this->belongsTo(Student::class, 'estudiante_id');
+        return $this->belongsTo(Student::class, 'student_id');
     }
 
     public function gestion(): BelongsTo
     {
-        return $this->belongsTo(AcademicYear::class, 'gestion_id');
-    }
-
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     public function grade(): BelongsTo

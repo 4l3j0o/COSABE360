@@ -54,16 +54,16 @@ class EnrollmentTest extends TestCase
         $gestion = $this->crearGestion();
 
         $this->post(route('enrollments.store'), [
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'PENDIENTE',
             'observaciones' => 'Inscripción inicial',
         ])->assertRedirect(route('enrollments.index'));
 
         $this->assertDatabaseHas('enrollments', [
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'estado' => 'PENDIENTE',
         ]);
     }
@@ -76,8 +76,8 @@ class EnrollmentTest extends TestCase
 
         foreach (Enrollment::ESTADOS as $estado) {
             $e = Enrollment::create([
-                'estudiante_id' => $this->crearEstudiante()->id,
-                'gestion_id' => $this->crearGestion()->id,
+                'student_id' => $this->crearEstudiante()->id,
+                'academic_year_id' => $this->crearGestion()->id,
                 'fecha' => '2026-03-01',
                 'estado' => $estado,
             ]);
@@ -85,15 +85,15 @@ class EnrollmentTest extends TestCase
         }
 
         $enrollment = Enrollment::create([
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'PENDIENTE',
         ]);
 
         $this->put(route('enrollments.update', $enrollment), [
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-02',
             'estado' => 'COMPLETADA',
             'observaciones' => 'Pagado',
@@ -109,32 +109,32 @@ class EnrollmentTest extends TestCase
         $gestion = $this->crearGestion();
 
         Enrollment::create([
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'PENDIENTE',
         ]);
 
         $this->post(route('enrollments.store'), [
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-02',
             'estado' => 'PENDIENTE',
-        ])->assertSessionHasErrors('estudiante_id');
+        ])->assertSessionHasErrors('student_id');
 
         $this->assertDatabaseCount('enrollments', 1);
 
         $enrollmentAnulada = Enrollment::create([
-            'estudiante_id' => $this->crearEstudiante()->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $this->crearEstudiante()->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'ANULADA',
         ]);
 
         // Anulada no bloquea nueva inscripción
         $this->post(route('enrollments.store'), [
-            'estudiante_id' => $enrollmentAnulada->estudiante_id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $enrollmentAnulada->student_id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-02',
             'estado' => 'PENDIENTE',
         ])->assertRedirect(route('enrollments.index'));
@@ -149,15 +149,15 @@ class EnrollmentTest extends TestCase
         $gestion = $this->crearGestion();
 
         Enrollment::create([
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'ANULADA',
         ]);
 
         $this->post(route('enrollments.store'), [
-            'estudiante_id' => $est->id,
-            'gestion_id' => $gestion->id,
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-03',
             'estado' => 'COMPLETADA',
         ])->assertRedirect(route('enrollments.index'));

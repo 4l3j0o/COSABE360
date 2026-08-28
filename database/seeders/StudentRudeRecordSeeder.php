@@ -18,7 +18,7 @@ class StudentRudeRecordSeeder extends Seeder
 
         foreach ($students as $student) {
             StudentRudeRecord::updateOrCreate(
-                ['estudiante_id' => $student->id],
+                ['student_id' => $student->id],
                 [
                     'codigo_rude'        => $this->codigoRude($student->id),
                     'codigo_sie_ue'      => 'SIE-0001',

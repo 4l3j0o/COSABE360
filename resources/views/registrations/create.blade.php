@@ -73,11 +73,7 @@
                         <input type="date" name="fecha" value="{{ old('fecha', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         @error('fecha') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Costo de matrícula (Bs) <span class="text-error">*</span></label>
-                        <input type="number" name="matriculation_cost" value="{{ old('matriculation_cost') }}" step="0.01" min="0" required placeholder="0.00" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        @error('matriculation_cost') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
+                
                 </div>
 
                 <div class="bg-muted/40 border border-border rounded-lg px-4 py-3 text-sm">

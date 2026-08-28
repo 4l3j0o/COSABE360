@@ -26,10 +26,10 @@
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('enrollments.index') }}" class="p-4 flex flex-col lg:flex-row gap-3">
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar estudiante..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-            <select name="gestion_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="academic_year_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los períodos</option>
                 @foreach($gestiones as $g)
-                    <option value="{{ $g->id }}" {{ request('gestion_id') == $g->id ? 'selected' : '' }}>{{ $g->nombre }}</option>
+                    <option value="{{ $g->id }}" {{ request('academic_year_id') == $g->id ? 'selected' : '' }}>{{ $g->nombre }}</option>
                 @endforeach
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
@@ -114,23 +114,23 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estudiante <span class="text-error">*</span></label>
-                        <select name="estudiante_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <select name="student_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             <option value="">Seleccionar estudiante...</option>
                             @foreach($estudiantes as $est)
-                                <option value="{{ $est->id }}" {{ old('estudiante_id') == $est->id ? 'selected' : '' }}>{{ $est->codigo }} — {{ $est->apellidos }} {{ $est->nombres }}</option>
+                                <option value="{{ $est->id }}" {{ old('student_id') == $est->id ? 'selected' : '' }}>{{ $est->codigo }} — {{ $est->apellidos }} {{ $est->nombres }}</option>
                             @endforeach
                         </select>
-                        @error('estudiante_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        @error('student_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Período académico <span class="text-error">*</span></label>
-                        <select name="gestion_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <select name="academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             <option value="">Seleccionar período...</option>
                             @foreach($gestiones as $g)
-                                <option value="{{ $g->id }}" {{ old('gestion_id') == $g->id ? 'selected' : '' }}>{{ $g->nombre }} — {{ $g->estado }}</option>
+                                <option value="{{ $g->id }}" {{ old('academic_year_id') == $g->id ? 'selected' : '' }}>{{ $g->nombre }} — {{ $g->estado }}</option>
                             @endforeach
                         </select>
-                        @error('gestion_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        @error('academic_year_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -173,7 +173,7 @@
                     @csrf @method('PUT')
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estudiante <span class="text-error">*</span></label>
-                        <select name="estudiante_id" id="e-estudiante_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <select name="student_id" id="e-student_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             @foreach($estudiantes as $est)
                                 <option value="{{ $est->id }}">{{ $est->codigo }} — {{ $est->apellidos }} {{ $est->nombres }}</option>
                             @endforeach
@@ -181,7 +181,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Período <span class="text-error">*</span></label>
-                        <select name="gestion_id" id="e-gestion_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <select name="academic_year_id" id="e-academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             @foreach($gestiones as $g)
                                 <option value="{{ $g->id }}">{{ $g->nombre }}</option>
                             @endforeach
@@ -220,8 +220,8 @@
 function editarInscripcion(id) {
     const btn = document.querySelector(`button[onclick="editarInscripcion(${id})"]`);
     const data = JSON.parse(btn.getAttribute('data-enrollment'));
-    document.getElementById('e-estudiante_id').value = data.estudiante_id;
-    document.getElementById('e-gestion_id').value = data.gestion_id;
+    document.getElementById('e-student_id').value = data.student_id;
+    document.getElementById('e-academic_year_id').value = data.academic_year_id;
     document.getElementById('e-fecha').value = data.fecha ? data.fecha.substring(0,10) : '';
     document.getElementById('e-estado').value = data.estado;
     document.getElementById('e-observaciones').value = data.observaciones || '';

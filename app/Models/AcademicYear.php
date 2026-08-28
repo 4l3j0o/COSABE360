@@ -22,6 +22,6 @@ class AcademicYear extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class, 'gestion_id');
+        return $this->hasMany(Enrollment::class, 'academic_year_id');
     }
 }

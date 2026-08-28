@@ -50,12 +50,12 @@ class Student extends Model
 
     public function rudeRecord(): HasOne
     {
-        return $this->hasOne(StudentRudeRecord::class, 'estudiante_id');
+        return $this->hasOne(StudentRudeRecord::class, 'student_id');
     }
 
     public function medicalRecord(): HasOne
     {
-        return $this->hasOne(MedicalRecord::class, 'estudiante_id');
+        return $this->hasOne(MedicalRecord::class, 'student_id');
     }
 
     public function parentGuardians(): BelongsToMany
@@ -67,12 +67,12 @@ class Student extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class, 'estudiante_id');
+        return $this->hasMany(Enrollment::class, 'student_id');
     }
 
     public function registrations(): HasManyThrough
     {
-        return $this->hasManyThrough(Registration::class, Enrollment::class, 'estudiante_id', 'enrollment_id');
+        return $this->hasManyThrough(Registration::class, Enrollment::class, 'student_id', 'enrollment_id');
     }
 
     public function activeRegistration(): ?Registration
@@ -85,7 +85,7 @@ class Student extends Model
 
         return $this->registrations()
             ->whereHas('enrollment', function ($q) use ($periodo) {
-                $q->where('gestion_id', $periodo->id)
+                $q->where('academic_year_id', $periodo->id)
                     ->where('enrollments.estado', 'COMPLETADA');
             })
             ->where('registrations.estado', 'ACTIVA')
@@ -101,7 +101,7 @@ class Student extends Model
 
     public function documents(): HasMany
     {
-        return $this->hasMany(StudentDocument::class, 'estudiante_id');
+        return $this->hasMany(StudentDocument::class, 'student_id');
     }
 
     public function gradeScores(): HasMany

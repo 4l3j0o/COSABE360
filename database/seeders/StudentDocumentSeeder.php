@@ -31,7 +31,7 @@ class StudentDocumentSeeder extends Seeder
 
                 StudentDocument::updateOrCreate(
                     [
-                        'estudiante_id'  => $student->id,
+                        'student_id'  => $student->id,
                         'tipo_documento' => $tipo,
                     ],
                     [
