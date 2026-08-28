@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\GradeController;
@@ -129,4 +130,13 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
     Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');
+});
+
+// HU-15: Configurar períodos académicos solo Administrador
+Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(function () {
+    Route::get('/', [AcademicYearController::class, 'index'])->name('periodos.index');
+    Route::post('/', [AcademicYearController::class, 'store'])->name('periodos.store');
+    Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
+    Route::patch('/{academicYear}/cerrar', [AcademicYearController::class, 'cerrar'])->name('periodos.cerrar');
+    Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
 });
