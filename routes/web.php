@@ -6,6 +6,7 @@ use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
@@ -167,4 +168,11 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
         ->name('estudiantes.matriculacion');
     Route::post('/{estudiante}/matricular', [App\Http\Controllers\StudentController::class, 'matricular'])
         ->name('estudiantes.matricular');
+});
+
+// HU-19: Registrar pagos de mensualidades
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('pagos')->group(function () {
+    Route::get('/', [MonthlyPaymentController::class, 'index'])->name('monthly-payments.index');
+    Route::get('/crear', [MonthlyPaymentController::class, 'create'])->name('monthly-payments.create');
+    Route::post('/', [MonthlyPaymentController::class, 'store'])->name('monthly-payments.store');
 });
