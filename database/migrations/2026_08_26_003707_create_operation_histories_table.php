@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('operation_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('usuario_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('accion', 50);
             $table->string('modulo', 50);
             $table->string('modelo', 100)->nullable();
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('user_agent', 255)->nullable();
             $table->timestamps();
 
-            $table->index('usuario_id');
+            $table->index('user_id');
             $table->index('modulo');
             $table->index('created_at');
             $table->index(['modelo', 'modelo_id']);
