@@ -277,8 +277,8 @@ class AttendanceTest extends TestCase
 
         $response = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01');
         $response->assertStatus(200);
-        $response->assertSee('value="FALTA" selected', false);
-        $response->assertDontSee('value="PRESENTE" selected', false);
+        $response->assertSee('value="FALTA" checked', false);
+        $response->assertDontSee('value="PRESENTE" checked', false);
     }
 
     public function test_al_reingresar_muestra_solo_lectura_hasta_pulsar_editar(): void
@@ -304,15 +304,15 @@ class AttendanceTest extends TestCase
         $respuesta->assertSee('PRESENTE');
         $respuesta->assertSee('FALTA');
         $respuesta->assertSee('Sin justificante');
-        $respuesta->assertDontSee('value="FALTA" selected', false);
+        $respuesta->assertDontSee('value="FALTA" checked', false);
         $respuesta->assertDontSee('Guardar Cambios');
 
         // Al pulsar el icono de editar se muestra el formulario con lo guardado
         $editar = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01&editar=1');
         $editar->assertStatus(200);
         $editar->assertSee('Guardar Cambios');
-        $editar->assertSee('value="PRESENTE" selected', false);
-        $editar->assertSee('value="FALTA" selected', false);
+        $editar->assertSee('value="PRESENTE" checked', false);
+        $editar->assertSee('value="FALTA" checked', false);
     }
 
     public function test_al_editar_conserva_los_demas_estudiantes(): void

@@ -22,6 +22,14 @@
             'PERMISO' => 'bg-blue-500/10 text-blue-600 border-blue-500/30',
             'JUSTIFICADO' => 'bg-purple-500/10 text-purple-600 border-purple-500/30',
         ];
+        $estados = ['P' => 'PRESENTE', 'F' => 'FALTA', 'A' => 'ATRASO', 'PE' => 'PERMISO', 'J' => 'JUSTIFICADO'];
+        $chip = [
+            'PRESENTE' => 'peer-checked:bg-success/10 peer-checked:text-success peer-checked:border-success/40',
+            'FALTA' => 'peer-checked:bg-error/10 peer-checked:text-error peer-checked:border-error/40',
+            'ATRASO' => 'peer-checked:bg-warning/10 peer-checked:text-warning peer-checked:border-warning/40',
+            'PERMISO' => 'peer-checked:bg-blue-500/10 peer-checked:text-blue-600 peer-checked:border-blue-500/40',
+            'JUSTIFICADO' => 'peer-checked:bg-purple-500/10 peer-checked:text-purple-600 peer-checked:border-purple-500/40',
+        ];
     @endphp
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -83,7 +91,7 @@
                                 <td class="px-4 py-3 text-muted-foreground text-xs">{{ $est->codigo }}</td>
                                 <td class="px-4 py-3">
                                     @if($existente)
-                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $badges[$existente->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $existente->estado }}</span>
+                                        <span title="{{ $existente->estado }}" class="flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold {{ $badges[$existente->estado] ?? 'bg-muted text-muted-foreground' }}">{{ array_flip($estados)[$existente->estado] ?? $existente->estado }}</span>
                                     @else
                                         <span class="text-muted-foreground text-xs">—</span>
                                     @endif
@@ -125,13 +133,14 @@
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $est->apellidos }} {{ $est->nombres }}</td>
                                 <td class="px-4 py-3 text-muted-foreground text-xs">{{ $est->codigo }}</td>
                                 <td class="px-4 py-3">
-                                    <select name="asistencias[{{ $est->id }}][estado]" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-full">
-                                        <option value="PRESENTE" {{ $estadoActual === 'PRESENTE' ? 'selected' : '' }}>PRESENTE</option>
-                                        <option value="FALTA" {{ $estadoActual === 'FALTA' ? 'selected' : '' }}>FALTA</option>
-                                        <option value="ATRASO" {{ $estadoActual === 'ATRASO' ? 'selected' : '' }}>ATRASO</option>
-                                        <option value="PERMISO" {{ $estadoActual === 'PERMISO' ? 'selected' : '' }}>PERMISO</option>
-                                        <option value="JUSTIFICADO" {{ $estadoActual === 'JUSTIFICADO' ? 'selected' : '' }}>JUSTIFICADO</option>
-                                    </select>
+                                    <div class="flex items-center gap-1.5">
+                                        @foreach($estados as $letra => $estado)
+                                            <label title="{{ $estado }}" class="relative cursor-pointer">
+                                                <input type="radio" name="asistencias[{{ $est->id }}][estado]" value="{{ $estado }}" {{ $estadoActual === $estado ? 'checked' : '' }} class="peer sr-only">
+                                                <span class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground text-xs font-semibold hover:bg-accent transition-colors {{ $chip[$estado] }}">{{ $letra }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
                                     @error("asistencias.{$est->id}.estado")
                                         <p class="text-xs text-error mt-1">{{ $message }}</p>
                                     @enderror
