@@ -6,6 +6,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
+use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteExportController;
@@ -318,4 +319,10 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
     Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');
     Route::get('/administrativo/pagos', [ReporteExportController::class, 'administrativoPagos'])->name('reportes.export.administrativo.pagos');
     Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
+});
+
+// HU-35: Historial de auditoría - solo Administrador, no editable/eliminable
+Route::middleware(['auth', 'role:Administrador'])->prefix('auditoria')->group(function () {
+    Route::get('/', [OperationHistoryController::class, 'index'])->name('auditoria.index');
+    Route::get('/{operationHistory}', [OperationHistoryController::class, 'show'])->name('auditoria.show');
 });
