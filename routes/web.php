@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\CourseSubjectController;
@@ -229,4 +230,16 @@ Route::middleware(['auth'])->group(function () {
 // HU-25: Historial académico - Estudiante/Padre/Director
 Route::middleware(['auth'])->group(function () {
     Route::get('/historial-academico', [HistorialAcademicoController::class, 'index'])->name('historial.index');
+});
+
+// HU-26: Registrar asistencia - solo Docente del curso (5 estados)
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/asistencias', [AttendanceController::class, 'index'])->name('asistencias.index');
+    Route::get('/asistencias/crear', [AttendanceController::class, 'create'])->name('asistencias.create');
+    Route::post('/asistencias', [AttendanceController::class, 'store'])->name('asistencias.store');
+});
+
+// HU-27: Consultar historial de asistencia - todos los roles con filtros
+Route::middleware(['auth'])->group(function () {
+    Route::get('/asistencias/historial', [AttendanceController::class, 'historial'])->name('asistencias.historial');
 });
