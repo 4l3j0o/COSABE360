@@ -49,7 +49,7 @@ class SectionTest extends TestCase
             'numero_documento' => '100000'.$sufijo,
             'complemento'      => '',
             'telefono'         => '1234567',
-            'correo'           => 'docente'.$sufijo.'@test.com',
+            'email'           => 'docente'.$sufijo.'@test.com',
             'estado'           => 'ACTIVO',
         ]);
     }
@@ -257,10 +257,10 @@ class SectionTest extends TestCase
         $this->post('/paralelos', [
             'grade_id'       => $grado->id,
             'nombre'         => 'A',
-            'responsable_id' => $docente->id,
+            'teacher_id' => $docente->id,
         ]);
 
-        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'responsable_id' => $docente->id]);
+        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'teacher_id' => $docente->id]);
     }
 
     public function test_crea_paralelo_sin_docente_responsable(): void
@@ -270,7 +270,7 @@ class SectionTest extends TestCase
 
         $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
 
-        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'responsable_id' => null]);
+        $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'teacher_id' => null]);
     }
 
     public function test_no_admin_redirigido_a_acceso_denegado(): void

@@ -96,7 +96,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grade_id }}, '{{ $section->nombre }}', {{ $section->responsable_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grade_id }}, '{{ $section->nombre }}', {{ $section->teacher_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         <form method="POST" action="{{ route('sections.destroy', $section) }}" onsubmit="return confirm('¿Estás seguro de eliminar este paralelo?')" class="inline">
@@ -157,13 +157,13 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="responsable_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="teacher_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">— Sin asignar —</option>
                                     @foreach($docentes as $docente)
                                         <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
                                     @endforeach
                                 </select>
-                                @error('responsable_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
@@ -209,7 +209,7 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="responsable_id" id="edit-responsable_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="teacher_id" id="edit-teacher_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">— Sin asignar —</option>
                                     @foreach($docentes as $docente)
                                         <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
@@ -248,7 +248,7 @@
             document.getElementById('edit-grade_id').value = gradoId;
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-capacidad').value = capacidad;
-            document.getElementById('edit-responsable_id').value = responsableId || '';
+            document.getElementById('edit-teacher_id').value = responsableId || '';
             document.getElementById('edit-estado').value = estado;
             openModal('modal-edit');
         }

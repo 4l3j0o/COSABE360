@@ -28,7 +28,7 @@ class ParentGuardianController extends Controller
                     $w->where('nombres', 'like', "%{$buscable}%")
                       ->orWhere('apellidos', 'like', "%{$buscable}%")
                       ->orWhere('numero_documento', 'like', "%{$buscable}%")
-                      ->orWhere('correo', 'like', "%{$buscable}%")
+                      ->orWhere('email', 'like', "%{$buscable}%")
                 );
             })
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
@@ -65,12 +65,12 @@ class ParentGuardianController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
-            'correo'     => [
+            'email'     => [
                 $hayTutor ? 'required' : 'nullable',
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('parent_guardians', 'correo'),
+                Rule::unique('parent_guardians', 'email'),
             ],
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],
@@ -113,13 +113,13 @@ class ParentGuardianController extends Controller
             'numero_documento' => ['sometimes', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
-            'correo'     => [
+            'email'     => [
                 $hayTutor ? 'required' : 'nullable',
                 'sometimes',
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('parent_guardians', 'correo')->ignore($parentGuardian->id),
+                Rule::unique('parent_guardians', 'email')->ignore($parentGuardian->id),
             ],
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],

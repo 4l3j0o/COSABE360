@@ -95,7 +95,7 @@
                     </div>
                     <div>
                         <dt class="text-muted-foreground">Correo</dt>
-                        <dd class="text-foreground">{{ $student->correo ?: '—' }}</dd>
+                        <dd class="text-foreground">{{ $student->email ?: '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-muted-foreground">Idioma</dt>
@@ -160,7 +160,7 @@
                             <li class="p-3 rounded-lg border {{ $esTutor ? 'border-primary/30 bg-primary/5' : 'border-border' }}">
                                 <div class="text-xs font-semibold uppercase tracking-wider {{ $esTutor ? 'text-primary' : 'text-muted-foreground' }}">{{ $etiqueta }}{{ $esTutor ? ' · Tutor' : '' }}</div>
                                 <div class="text-foreground font-medium">{{ $persona->nombres }} {{ $persona->apellidos }}</div>
-                                <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $esTutor && $persona->correo ? ' · ' . $persona->correo : '' }}</div>
+                                <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $esTutor && $persona->email ? ' · ' . $persona->email : '' }}</div>
                             </li>
                         @endforeach
                     </ul>

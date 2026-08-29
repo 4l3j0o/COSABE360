@@ -28,7 +28,7 @@ class Student extends Model
         'complemento',
         'direccion',
         'telefono',
-        'correo',
+        'email',
         'fotografia',
         'idioma',
         'cultura',

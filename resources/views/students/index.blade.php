@@ -242,9 +242,9 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico del Estudiante</label>
-                                <input type="email" name="correo_estudiante" value="{{ old('correo_estudiante') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <input type="email" name="email_estudiante" value="{{ old('email_estudiante') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <p class="text-xs text-muted-foreground mt-1">Si se deja vacío, se generará: nombre.apellido@sanber.edu.bo</p>
-                                @error('correo_estudiante') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('email_estudiante') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
@@ -259,7 +259,7 @@
                         </div>
                         <div id="lista-familiares" style="display:none;"></div>
                         @error('familiares') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
-                        @error('tutor_correo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
+                        @error('tutor_email') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
                     </div>
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
@@ -315,7 +315,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Dirección</span><span class="text-foreground" id="v-direccion"></span></div>
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Teléfono</span><span class="text-foreground" id="v-telefono"></span></div>
-                            <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Correo</span><span class="text-foreground" id="v-correo"></span></div>
+                            <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Correo</span><span class="text-foreground" id="v-email"></span></div>
                         </div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
@@ -428,7 +428,7 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del Estudiante</label>
-                                <input type="email" name="correo_estudiante" id="e-correo_estudiante" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <input type="email" name="email_estudiante" id="e-email_estudiante" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <p class="text-xs text-muted-foreground mt-1">Dejar vacío para mantener el actual.</p>
                             </div>
                         </div>
@@ -551,9 +551,9 @@
                       '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Relación</label><select data-field="relacion" name="familiares[' + idx + '][relacion]" class="f-relacion" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' + opciones + '</select></div>' +
                       '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">¿Es tutor?</label><label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" data-field="es_tutor" name="familiares[' + idx + '][es_tutor]" class="f-es_tutor" value="1" ' + (esTutor ? 'checked' : '') + ' onchange="marcarTutor(this)"> Es el tutor</label></div>' +
                   '</div>' +
-                  '<div class="campo-correo-tutor" style="' + (esTutor ? '' : 'display:none;') + 'margin-top:0.75rem;">' +
+                  '<div class="campo-email-tutor" style="' + (esTutor ? '' : 'display:none;') + 'margin-top:0.75rem;">' +
                       '<label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del tutor (para acceso al sistema) <span class="text-error">*</span></label>' +
-                      '<input type="email" data-field="correo" name="familiares[' + idx + '][correo]" class="f-correo" value="' + (p.correo || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
+                      '<input type="email" data-field="email" name="familiares[' + idx + '][email]" class="f-email" value="' + (p.email || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
                       '<p class="text-xs text-muted-foreground mt-1">El tutor es quien recibe el acceso al sistema.</p>' +
                   '</div>' +
               '</div>';
@@ -645,11 +645,11 @@
             fila.querySelector('.f-tipo_doc').value = p.tipo_documento || 'CI';
             fila.querySelector('.f-complemento').value = p.complemento || '';
             fila.querySelector('.f-telefono').value = p.telefono || '';
-            fila.querySelector('.f-correo').value = p.correo || '';
+            fila.querySelector('.f-email').value = p.email || '';
             fila.querySelector('.f-direccion').value = p.direccion || '';
             fila.querySelector('.f-ocupacion').value = p.ocupacion || '';
             fila.querySelector('.f-es_tutor').checked = true;
-            var campoCorreo = fila.querySelector('.campo-correo-tutor');
+            var campoCorreo = fila.querySelector('.campo-email-tutor');
             if (campoCorreo) campoCorreo.style.display = 'block';
             marcarTutor(fila.querySelector('.f-es_tutor'));
             fila.querySelector('.buscador-familiar').value = '';
@@ -662,9 +662,9 @@
             var cont = fila.parentNode;
             var hermanos = cont.querySelectorAll('.f-es_tutor');
             hermanos.forEach(function(h) { if (h !== cb) h.checked = false; });
-            cont.querySelectorAll('.campo-correo-tutor').forEach(function(c) { c.style.display = 'none'; });
+            cont.querySelectorAll('.campo-email-tutor').forEach(function(c) { c.style.display = 'none'; });
             if (cb.checked) {
-                var cc = fila.querySelector('.campo-correo-tutor');
+                var cc = fila.querySelector('.campo-email-tutor');
                 if (cc) cc.style.display = 'block';
             }
         }
@@ -694,7 +694,7 @@
             document.getElementById('v-complemento').textContent = s.complemento || '—';
             document.getElementById('v-direccion').textContent = s.direccion || '—';
             document.getElementById('v-telefono').textContent = s.telefono || '—';
-            document.getElementById('v-correo').textContent = s.correo || '—';
+            document.getElementById('v-email').textContent = s.email || '—';
             document.getElementById('v-idioma').textContent = s.idioma || '—';
             document.getElementById('v-cultura').textContent = s.cultura || '—';
             document.getElementById('v-discapacidad').textContent = s.discapacidad || '—';
@@ -708,7 +708,7 @@
                 famHtml += '<div id="' + idTutor + '" style="border:1px solid ' + (esTutor ? 'rgba(124,58,237,0.35)' : 'var(--border)') + '; border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem;' + (esTutor ? ' background-color:rgba(124,58,237,0.06)' : '') + '">' +
                     '<div class="text-xs font-semibold uppercase tracking-wider ' + (esTutor ? 'text-primary' : 'text-muted-foreground') + '">' + etiqueta + (esTutor ? ' · Tutor' : '') + '</div>' +
                     '<div class="font-medium text-foreground">' + (p.nombres || '') + ' ' + (p.apellidos || '') + '</div>' +
-                    '<div class="text-xs text-muted-foreground">' + (p.numero_documento ? 'CI ' + p.numero_documento : '') + (esTutor && p.correo ? ' · ' + p.correo : '') + '</div>' +
+                    '<div class="text-xs text-muted-foreground">' + (p.numero_documento ? 'CI ' + p.numero_documento : '') + (esTutor && p.email ? ' · ' + p.email : '') + '</div>' +
                     '</div>';
             });
             if (!famHtml) famHtml = '<span class="text-muted-foreground">Sin datos familiares registrados</span>';
@@ -746,7 +746,7 @@
             document.getElementById('e-complemento').value = s.complemento || '';
             document.getElementById('e-direccion').value = s.direccion || '';
             document.getElementById('e-telefono').value = s.telefono || '';
-            document.getElementById('e-correo_estudiante').value = s.correo || '';
+            document.getElementById('e-email_estudiante').value = s.email || '';
             document.getElementById('e-idioma').value = s.idioma || '';
             document.getElementById('e-cultura').value = s.cultura || '';
             document.getElementById('e-discapacidad').value = s.discapacidad || '';

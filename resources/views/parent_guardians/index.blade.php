@@ -35,7 +35,7 @@
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('tutores.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, documento o correo" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, documento o email" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
@@ -103,7 +103,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">
-                                    <div>{{ $padre->correo ?? '—' }}</div>
+                                    <div>{{ $padre->email ?? '—' }}</div>
                                     @if($padre->telefono)
                                         <div class="text-xs">{{ $padre->telefono }}</div>
                                     @endif
@@ -186,10 +186,10 @@
                                 <input type="text" name="telefono" maxlength="20" value="{{ old('telefono') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-correo-create" class="text-error hidden">*</span></label>
-                                <input type="email" name="correo" id="correo-create" maxlength="150" value="{{ old('correo') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
-                                <p class="text-[11px] text-muted-foreground mt-1">El correo es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
-                                @error('correo') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-email-create" class="text-error hidden">*</span></label>
+                                <input type="email" name="email" id="email-create" maxlength="150" value="{{ old('email') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
+                                <p class="text-[11px] text-muted-foreground mt-1">El email es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
+                                @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
@@ -206,7 +206,7 @@
                                 Agregar estudiante
                             </button>
                         </div>
-                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere correo).</p>
+                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere email).</p>
                         <div id="filas-estudiantes-create"></div>
                     </div>
 
@@ -275,9 +275,9 @@
                                 <input type="text" name="telefono" id="edit-telefono" maxlength="20" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-correo-edit" class="text-error hidden">*</span></label>
-                                <input type="email" name="correo" id="correo-edit" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
-                                <p class="text-[11px] text-muted-foreground mt-1">El correo es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-email-edit" class="text-error hidden">*</span></label>
+                                <input type="email" name="email" id="email-edit" maxlength="150" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Obligatorio si es tutor">
+                                <p class="text-[11px] text-muted-foreground mt-1">El email es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
@@ -294,7 +294,7 @@
                                 Agregar estudiante
                             </button>
                         </div>
-                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere correo).</p>
+                        <p class="text-[11px] text-muted-foreground mb-3">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere email).</p>
                         <div id="filas-estudiantes-edit"></div>
                     </div>
 
@@ -377,8 +377,8 @@
         function actualizarCorreoRequerido() {
             const hayTutor = tieneTutorSeleccionado();
             ['create', 'edit'].forEach(function (modo) {
-                const input = document.getElementById('correo-' + modo);
-                const lbl = document.getElementById('lbl-correo-' + modo);
+                const input = document.getElementById('email-' + modo);
+                const lbl = document.getElementById('lbl-email-' + modo);
                 if (input) input.required = hayTutor;
                 if (lbl) lbl.classList.toggle('hidden', !hayTutor);
             });
@@ -392,7 +392,7 @@
             document.getElementById('edit-numero_documento').value = datos.numero_documento ?? '';
             document.getElementById('edit-complemento').value = datos.complemento ?? '';
             document.getElementById('edit-telefono').value = datos.telefono ?? '';
-            document.getElementById('correo-edit').value = datos.correo ?? '';
+            document.getElementById('email-edit').value = datos.email ?? '';
             document.getElementById('edit-direccion').value = datos.direccion ?? '';
             document.getElementById('edit-estado').value = datos.estado || 'ACTIVO';
             document.getElementById('filas-estudiantes-edit').innerHTML = '';

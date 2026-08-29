@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('numero_documento', 20);
             $table->string('complemento', 5)->default('');
             $table->string('telefono', 20)->nullable();
-            $table->string('correo', 150)->nullable()->unique();
+            $table->string('email', 150)->nullable()->unique();
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->softDeletes();

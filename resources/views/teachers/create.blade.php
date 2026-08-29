@@ -71,10 +71,10 @@
                     @error('telefono') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="correo" class="block text-sm font-medium text-foreground mb-1.5">Correo</label>
-                    <input id="correo" name="correo" type="email" value="{{ old('correo') }}"
+                    <label for="email" class="block text-sm font-medium text-foreground mb-1.5">Correo</label>
+                    <input id="email" name="email" type="email" value="{{ old('email') }}"
                            class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
-                    @error('correo') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
+                    @error('email') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
                 </div>
             </div>
 

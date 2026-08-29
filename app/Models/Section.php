@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Section extends Model
 {
-    protected $fillable = ['grade_id', 'nombre', 'responsable_id', 'capacidad', 'estado'];
+    protected $fillable = ['grade_id', 'nombre', 'teacher_id', 'capacidad', 'estado'];
 
     public function grade(): BelongsTo
     {
@@ -17,7 +17,7 @@ class Section extends Model
 
     public function responsable(): BelongsTo
     {
-        return $this->belongsTo(Teacher::class, 'responsable_id');
+        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
     public function courses(): HasMany

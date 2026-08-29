@@ -43,8 +43,8 @@ class StudentHu07Test extends TestCase
         if (!isset($overrides['codigo'])) {
             $base['codigo'] = 'EST-2026-'.str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
         }
-        if (!isset($overrides['correo'])) {
-            $base['correo'] = strtolower($base['nombres'].'.'.$base['apellidos'].rand(100,999).'@test.bo');
+        if (!isset($overrides['email'])) {
+            $base['email'] = strtolower($base['nombres'].'.'.$base['apellidos'].rand(100,999).'@test.bo');
         }
 
         return Student::create($base);

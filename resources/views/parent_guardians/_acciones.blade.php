@@ -1,7 +1,7 @@
 @php
     $datosEditar = $padre->only([
         'id', 'nombres', 'apellidos', 'tipo_documento', 'numero_documento',
-        'complemento', 'telefono', 'correo', 'direccion', 'estado',
+        'complemento', 'telefono', 'email', 'direccion', 'estado',
     ]) + [
         'students' => $padre->students
             ->map(fn($e) => ['id' => $e->id, 'tipo' => $e->pivot->tipo_relacion])

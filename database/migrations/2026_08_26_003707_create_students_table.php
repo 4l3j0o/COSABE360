@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('complemento', 5)->default('');
             $table->string('direccion', 255)->nullable();
             $table->string('telefono', 20)->nullable();
-            $table->string('correo', 150)->nullable()->unique();
+            $table->string('email', 150)->nullable()->unique();
             $table->string('fotografia', 500)->nullable();
             $table->string('idioma', 50)->default('Castellano');
             $table->string('cultura', 50)->nullable();

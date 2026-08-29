@@ -50,7 +50,7 @@ class TeacherController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento' => ['nullable', 'string', 'max:5'],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'correo' => ['nullable', 'email', 'max:150', 'unique:teachers,correo'],
+            'email' => ['nullable', 'email', 'max:150', 'unique:teachers,email'],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
@@ -64,14 +64,14 @@ class TeacherController extends Controller
         DB::transaction(function () use ($validated) {
             $teacher = Teacher::create($validated);
 
-            if (! empty($validated['correo'])) {
-                $user = User::where('email', $validated['correo'])->first();
+            if (! empty($validated['email'])) {
+                $user = User::where('email', $validated['email'])->first();
 
                 if (! $user) {
                     $user = User::create([
                         'nombre' => $validated['nombres'],
                         'apellido' => $validated['apellidos'],
-                        'email' => $validated['correo'],
+                        'email' => $validated['email'],
                         'password' => Hash::make('password123'),
                         'role_id' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',
@@ -82,7 +82,7 @@ class TeacherController extends Controller
             }
         });
 
-        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Código: ' . $validated['codigo'] . ' | Usuario creado con correo y contraseña por defecto: password123');
+        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Código: ' . $validated['codigo'] . ' | Usuario creado con email y contraseña por defecto: password123');
     }
 
     public function edit(Teacher $teacher)
@@ -100,7 +100,7 @@ class TeacherController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento' => ['nullable', 'string', 'max:5'],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'correo' => ['nullable', 'email', 'max:150', Rule::unique('teachers', 'correo')->ignore($teacher->id)],
+            'email' => ['nullable', 'email', 'max:150', Rule::unique('teachers', 'email')->ignore($teacher->id)],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
@@ -115,24 +115,24 @@ class TeacherController extends Controller
 
         $teacher->update($validated);
 
-        // Sincronizar usuario con el nuevo correo si existe
-        if (! empty($validated['correo'])) {
+        // Sincronizar usuario con el nuevo email si existe
+        if (! empty($validated['email'])) {
             if ($teacher->user_id) {
                 $user = User::find($teacher->user_id);
                 if ($user) {
                     $user->update([
-                        'email' => $validated['correo'],
+                        'email' => $validated['email'],
                         'nombre' => $validated['nombres'],
                         'apellido' => $validated['apellidos'],
                     ]);
                 }
             } else {
-                $user = User::where('email', $validated['correo'])->first();
+                $user = User::where('email', $validated['email'])->first();
                 if (! $user) {
                     $user = User::create([
                         'nombre' => $validated['nombres'],
                         'apellido' => $validated['apellidos'],
-                        'email' => $validated['correo'],
+                        'email' => $validated['email'],
                         'password' => Hash::make('password123'),
                         'role_id' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',

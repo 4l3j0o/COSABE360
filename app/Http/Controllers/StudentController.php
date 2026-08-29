@@ -115,7 +115,7 @@ class StudentController extends Controller
             })
             ->where('estado', 'ACTIVO')
             ->limit(10)
-            ->get(['id', 'nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'complemento', 'telefono', 'correo', 'direccion', 'ocupacion']);
+            ->get(['id', 'nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'complemento', 'telefono', 'email', 'direccion', 'ocupacion']);
         return response()->json($personas);
     }
 
@@ -132,13 +132,13 @@ class StudentController extends Controller
             'complemento'        => 'nullable|string|max:5',
             'direccion'          => 'nullable|string|max:255',
             'telefono'           => 'nullable|string|max:20',
-            'correo'             => 'nullable|email|max:150|unique:students,correo',
+            'email'             => 'nullable|email|max:150|unique:students,email',
             'fotografia'         => 'nullable|image|max:2048',
             'idioma'             => 'nullable|string|max:50',
             'cultura'            => 'nullable|string|max:50',
             'discapacidad'       => 'nullable|string|max:100',
             'estado'             => 'nullable|in:ACTIVO,INACTIVO,EGRESADO,TRASLADADO',
-            'correo_estudiante'  => 'nullable|email|max:150',
+            'email_estudiante'  => 'nullable|email|max:150',
             'familiares'         => 'nullable|array|max:10',
             'familiares.*.id_existente' => 'nullable|integer|exists:parent_guardians,id',
             'familiares.*.nombres'      => 'nullable|string|max:150',
@@ -147,7 +147,7 @@ class StudentController extends Controller
             'familiares.*.num_doc'      => 'nullable|string|max:20',
             'familiares.*.complemento'  => 'nullable|string|max:5',
             'familiares.*.telefono'     => 'nullable|string|max:20',
-            'familiares.*.correo'       => 'nullable|email|max:150',
+            'familiares.*.email'       => 'nullable|email|max:150',
             'familiares.*.direccion'    => 'nullable|string|max:255',
             'familiares.*.ocupacion'    => 'nullable|string|max:100',
             'familiares.*.relacion'     => 'required|in:PADRE,MADRE,TIO,TIA,ABUELO,ABUELA,HERMANO,HERMANA,OTRO,TUTOR',
@@ -172,19 +172,19 @@ class StudentController extends Controller
             $datos['complemento'] = $complemento;
             $datos['estado'] = $datos['estado'] ?? 'ACTIVO';
 
-            if (!empty($datos['correo_estudiante'])) {
-                $datos['correo'] = $datos['correo_estudiante'];
+            if (!empty($datos['email_estudiante'])) {
+                $datos['email'] = $datos['email_estudiante'];
             } else {
                 $base = Str::ascii(strtolower($datos['nombres'] . '.' . $datos['apellidos']));
                 $email = $base . '@sanber.edu.bo';
                 $i = 1;
-                while (Student::where('correo', $email)->exists()) {
+                while (Student::where('email', $email)->exists()) {
                     $email = $base . $i . '@sanber.edu.bo';
                     $i++;
                 }
-                $datos['correo'] = $email;
+                $datos['email'] = $email;
             }
-            unset($datos['correo_estudiante']);
+            unset($datos['email_estudiante']);
 
             if ($request->hasFile('fotografia')) {
                 $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
@@ -264,10 +264,10 @@ class StudentController extends Controller
         try {
             $datos['complemento'] = $complemento;
 
-            if (!empty($datos['correo_estudiante'])) {
-                $datos['correo'] = $datos['correo_estudiante'];
+            if (!empty($datos['email_estudiante'])) {
+                $datos['email'] = $datos['email_estudiante'];
             }
-            unset($datos['correo_estudiante']);
+            unset($datos['email_estudiante']);
 
             if ($request->hasFile('fotografia')) {
                 if ($student->fotografia) {
@@ -463,7 +463,7 @@ class StudentController extends Controller
                 'apellidos'      => $request->input("{$prefijo}_apellidos") ?? '',
                 'tipo_documento' => $request->input("{$prefijo}_tipo_doc") ?? 'CI',
                 'telefono'       => $request->input("{$prefijo}_telefono"),
-                'correo'         => $request->input("{$prefijo}_correo") ?? null,
+                'email'         => $request->input("{$prefijo}_email") ?? null,
                 'direccion'      => $request->input("{$prefijo}_direccion") ?? null,
                 'ocupacion'      => $request->input("{$prefijo}_ocupacion") ?? null,
                 'estado'         => 'ACTIVO',
@@ -501,9 +501,9 @@ class StudentController extends Controller
         }
 
         $tutor = $completos->first(fn ($f) => ! empty($f['es_tutor']) && (int) $f['es_tutor'] === 1);
-        if ($tutor && empty($tutor['correo'])) {
+        if ($tutor && empty($tutor['email'])) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'familiares' => 'El tutor debe tener un correo, ya que es quien recibe el acceso al sistema.',
+                'familiares' => 'El tutor debe tener un email, ya que es quien recibe el acceso al sistema.',
             ]);
         }
     }
@@ -534,8 +534,8 @@ class StudentController extends Controller
 
             if (! empty($f['id_existente'])) {
                 $pg = ParentGuardian::find($f['id_existente']);
-                if ($pg && $esTutor && ! empty($f['correo'])) {
-                    $pg->update(['correo' => $f['correo']]);
+                if ($pg && $esTutor && ! empty($f['email'])) {
+                    $pg->update(['email' => $f['email']]);
                 }
             } else {
                 $pg = ParentGuardian::firstOrCreate(
@@ -545,7 +545,7 @@ class StudentController extends Controller
                         'apellidos'      => $f['apellidos'] ?? '',
                         'tipo_documento' => $f['tipo_doc'] ?? 'CI',
                         'telefono'       => $f['telefono'] ?? null,
-                        'correo'         => ($esTutor && ! empty($f['correo'])) ? $f['correo'] : ($f['correo'] ?? null),
+                        'email'         => ($esTutor && ! empty($f['email'])) ? $f['email'] : ($f['email'] ?? null),
                         'direccion'      => $f['direccion'] ?? null,
                         'ocupacion'      => $f['ocupacion'] ?? null,
                         'estado'         => 'ACTIVO',
@@ -579,7 +579,7 @@ class StudentController extends Controller
 
     private function crearCuentaUsuarioSiNoExiste(ParentGuardian $tutor): void
     {
-        if ($tutor->user_id || empty($tutor->correo)) {
+        if ($tutor->user_id || empty($tutor->email)) {
             return;
         }
 
@@ -592,7 +592,7 @@ class StudentController extends Controller
         $usuario = User::create([
             'nombre'   => $tutor->nombres,
             'apellido' => $tutor->apellidos,
-            'email'    => $tutor->correo,
+            'email'    => $tutor->email,
             'password' => $password,
             'role_id'   => $rolPadre->id,
             'telefono' => $tutor->telefono,

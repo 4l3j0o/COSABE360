@@ -36,7 +36,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => (string) rand(1000000, 9999999),
             'complemento'      => '',
-            'correo'           => 'est'.rand(100, 999).'@test.bo',
+            'email'           => 'est'.rand(100, 999).'@test.bo',
             'estado'           => 'ACTIVO',
             'quien_es_tutor'   => 'PADRE',
         ], $overrides);
@@ -44,7 +44,7 @@ class ParentGuardianHu08Test extends TestCase
         return Student::create($base);
     }
 
-    // CA-08-01: registrar padres/tutores con nombres, apellidos, documento, teléfono, correo, dirección
+    // CA-08-01: registrar padres/tutores con nombres, apellidos, documento, teléfono, email, dirección
     public function test_registra_padre_tutor_con_todos_los_datos(): void
     {
         $this->loginAsAdmin();
@@ -56,7 +56,7 @@ class ParentGuardianHu08Test extends TestCase
             'numero_documento' => '1234567',
             'complemento'      => '',
             'telefono'         => '70012345',
-            'correo'           => 'maria.gomez@example.com',
+            'email'           => 'maria.gomez@example.com',
             'direccion'        => 'Av. La Paz, Tarija',
         ]);
 
@@ -66,7 +66,7 @@ class ParentGuardianHu08Test extends TestCase
             'apellidos'        => 'Gómez Ramírez',
             'numero_documento' => '1234567',
             'telefono'         => '70012345',
-            'correo'           => 'maria.gomez@example.com',
+            'email'           => 'maria.gomez@example.com',
             'direccion'        => 'Av. La Paz, Tarija',
         ]);
         $this->assertDatabaseCount('parent_guardians', 1);
@@ -84,7 +84,7 @@ class ParentGuardianHu08Test extends TestCase
             'numero_documento' => '7654321',
             'complemento'      => '',
             'telefono'         => '71234567',
-            'correo'           => 'juan.perez@example.com',
+            'email'           => 'juan.perez@example.com',
             'direccion'        => 'Calle BolA-var',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
@@ -121,7 +121,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '9990002',
             'complemento'      => '',
-            'correo'           => 'pedro.rojas@example.com',
+            'email'           => 'pedro.rojas@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
@@ -162,7 +162,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '9988776',
             'complemento'      => '',
-            'correo'           => 'carlos.perez@example.com',
+            'email'           => 'carlos.perez@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
             ],
@@ -188,7 +188,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '5566778',
             'complemento'      => '',
-            'correo'           => 'ana.flores@example.com',
+            'email'           => 'ana.flores@example.com',
             'students'         => [
                 ['id' => $hijo1->id, 'tipo_relacion' => 'TUTOR'],
                 ['id' => $hijo2->id, 'tipo_relacion' => 'TUTOR'],
@@ -200,7 +200,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->assertTrue($tutor->students()->wherePivot('tipo_relacion', 'TUTOR')->count() === 2);
     }
 
-    public function test_correo_es_obligatorio_si_es_tutor(): void
+    public function test_email_es_obligatorio_si_es_tutor(): void
     {
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
@@ -217,11 +217,11 @@ class ParentGuardianHu08Test extends TestCase
                 ],
             ]);
 
-        $response->assertSessionHasErrors('correo');
+        $response->assertSessionHasErrors('email');
         $this->assertDatabaseMissing('parent_guardians', ['numero_documento' => '3344556']);
     }
 
-    public function test_correo_no_es_obligatorio_si_no_es_tutor(): void
+    public function test_email_no_es_obligatorio_si_no_es_tutor(): void
     {
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
@@ -239,7 +239,7 @@ class ParentGuardianHu08Test extends TestCase
 
         $this->assertDatabaseHas('parent_guardians', [
             'numero_documento' => '1122334',
-            'correo'           => null,
+            'email'           => null,
         ]);
     }
 
@@ -253,7 +253,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '6677889',
             'complemento'      => '',
-            'correo'           => 'marta.torres@example.com',
+            'email'           => 'marta.torres@example.com',
             'estado'           => 'ACTIVO',
         ]);
 
@@ -263,7 +263,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '6677889',
             'complemento'      => '',
-            'correo'           => 'marta.torres@example.com',
+            'email'           => 'marta.torres@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],

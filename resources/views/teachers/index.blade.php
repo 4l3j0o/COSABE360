@@ -62,7 +62,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $teacher->especialidad ?? '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $teacher->tipo_documento }} {{ $teacher->numero_documento }}{{ $teacher->complemento ? '-' . $teacher->complemento : '' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $teacher->correo ?? '—' }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $teacher->email ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $teacher->estaActivo() ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning' }}">
                                         {{ $teacher->estado }}
@@ -167,7 +167,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico</label>
-                                <input type="email" name="correo" value="{{ old('correo') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <input type="email" name="email" value="{{ old('email') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                         </div>
                     </div>
@@ -253,7 +253,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico</label>
-                                <input type="email" name="correo" id="e-correo" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <input type="email" name="email" id="e-email" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                         </div>
                     </div>
@@ -293,7 +293,7 @@
             document.getElementById('e-numero_documento').value = t.numero_documento || '';
             document.getElementById('e-complemento').value = t.complemento || '';
             document.getElementById('e-telefono').value = t.telefono || '';
-            document.getElementById('e-correo').value = t.correo || '';
+            document.getElementById('e-email').value = t.email || '';
 
             openModal('modal-edit-teacher');
         }
