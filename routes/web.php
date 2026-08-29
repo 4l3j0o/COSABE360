@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
@@ -270,4 +271,16 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::get('/rude/{student}/form', [RudeController::class, 'form'])->name('rude.form');
     Route::put('/rude/{student}', [RudeController::class, 'update'])->name('rude.update');
     Route::get('/rude/{student}/export', [RudeController::class, 'export'])->name('rude.export');
+});
+
+// HU-30: Crear y publicar comunicados - solo Administrador y Director
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados')->group(function () {
+    Route::get('/', [AnnouncementController::class, 'index'])->name('comunicados.index');
+    Route::get('/crear', [AnnouncementController::class, 'create'])->name('comunicados.create');
+    Route::post('/', [AnnouncementController::class, 'store'])->name('comunicados.store');
+    Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('comunicados.show');
+    Route::get('/{announcement}/editar', [AnnouncementController::class, 'edit'])->name('comunicados.edit');
+    Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('comunicados.update');
+    Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('comunicados.destroy');
+    Route::patch('/{announcement}/publicar', [AnnouncementController::class, 'publicar'])->name('comunicados.publicar');
 });
