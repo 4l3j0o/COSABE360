@@ -71,9 +71,9 @@ class CourseSubjectSeeder extends Seeder
             'Filosofía' => 'Filosofía',
             'Psicología' => 'Filosofía',
             'Informática' => 'Informática',
-            'Expresión Artística' => 'Inglés',
-            'Música y Ritmo' => 'Inglés',
-            'Artes Plásticas' => 'Inglés',
+            'Expresión Artística' => 'Artes Plásticas',
+            'Música y Ritmo' => 'Artes Plásticas',
+            'Artes Plásticas' => 'Artes Plásticas',
             'Religión o Ética' => 'Filosofía',
         ];
 

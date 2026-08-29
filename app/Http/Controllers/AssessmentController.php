@@ -25,13 +25,25 @@ class AssessmentController extends Controller
     ];
     public function index(Request $request): View
     {
-        $assessments = Assessment::with(['subject', 'academicYear'])
+        $teacher = $request->user()->teacher;
+
+        $assessments = Assessment::with(['subject', 'academicYear', 'courseSubject.course'])
+            ->where(function ($q) use ($teacher) {
+                if ($teacher) {
+                    $q->whereHas('courseSubject', fn ($cq) => $cq->where('teacher_id', $teacher->id));
+                } else {
+                    $q->whereRaw('0 = 1');
+                }
+            })
             ->when($request->query('subject_id'), fn ($q, $v) => $q->where('subject_id', $v))
             ->when($request->query('academic_year_id'), fn ($q, $v) => $q->where('academic_year_id', $v))
             ->orderByDesc('fecha')
             ->get();
 
-        $subjects = Subject::orderBy('nombre')->get();
+        $subjects = Subject::orderBy('nombre')
+            ->when($teacher, fn ($q) => $q->whereIn('id', CourseSubject::where('teacher_id', $teacher->id)->pluck('subject_id')))
+            ->get();
+
         $academicYears = AcademicYear::orderByDesc('nombre')->get();
 
         return view('assessments.index', compact('assessments', 'subjects', 'academicYears'));
@@ -60,13 +72,24 @@ class AssessmentController extends Controller
             'estado' => ['nullable', 'in:ACTIVO,INACTIVO'],
         ]);
 
+        if (empty($validated['course_subject_id'])) {
+            $teacher = $request->user()->teacher;
+            $validated['course_subject_id'] = $teacher
+                ? CourseSubject::where('teacher_id', $teacher->id)
+                    ->where('subject_id', $validated['subject_id'])
+                    ->value('id')
+                : null;
+        }
+
         Assessment::create($validated);
 
         return redirect()->route('evaluaciones.index')->with('success', 'Evaluación registrada correctamente.');
     }
 
-    public function edit(Assessment $assessment): View
+    public function edit(Request $request, Assessment $assessment): View
     {
+        $this->autorizarEvaluacion($request, $assessment);
+
         $subjects = Subject::orderBy('nombre')->get();
         $academicYears = AcademicYear::orderByDesc('nombre')->get();
 
@@ -75,6 +98,8 @@ class AssessmentController extends Controller
 
     public function update(Request $request, Assessment $assessment): RedirectResponse
     {
+        $this->autorizarEvaluacion($request, $assessment);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:150'],
             'tipo' => ['required', 'string', 'max:50'],
@@ -93,8 +118,10 @@ class AssessmentController extends Controller
         return redirect()->route('evaluaciones.index')->with('success', 'Evaluación actualizada correctamente.');
     }
 
-    public function destroy(Assessment $assessment): RedirectResponse
+    public function destroy(Request $request, Assessment $assessment): RedirectResponse
     {
+        $this->autorizarEvaluacion($request, $assessment);
+
         if ($assessment->gradeScores()->exists()) {
             return redirect()->route('evaluaciones.index')->with('error', 'No se puede eliminar la evaluación porque tiene calificaciones registradas.');
         }
@@ -178,6 +205,19 @@ class AssessmentController extends Controller
         return redirect()
             ->route('docente.evaluaciones', $courseSubject)
             ->with('success', 'Evaluación registrada para '.$courseSubject->course->nombre.'.');
+    }
+
+    private function autorizarEvaluacion(Request $request, Assessment $assessment): void
+    {
+        // Las evaluaciones genéricas (por materia, sin curso) se mantienen editables;
+        // las ligadas a un paralelo solo para el docente titular de ese curso-materia.
+        if ($assessment->course_subject_id === null) {
+            return;
+        }
+
+        $teacher = $request->user()->teacher;
+
+        abort_if(! $teacher || $assessment->courseSubject?->teacher_id !== $teacher->id, 403);
     }
 
     private function autorizarCurso(Request $request, CourseSubject $courseSubject): void

@@ -4,8 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\Assessment;
+use App\Models\Course;
+use App\Models\CourseSubject;
+use App\Models\Grade;
 use App\Models\Level;
+use App\Models\Section;
 use App\Models\Subject;
+use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -154,5 +159,86 @@ class AssessmentTest extends TestCase
         $admin = User::where('email', 'admin@sanber.edu.bo')->first();
         $this->actingAs($admin);
         $this->get('/evaluaciones')->assertRedirect(route('acceso.denegado'));
+    }
+
+    public function test_docente_only_sees_evaluaciones_de_sus_cursos(): void
+    {
+        $base = $this->crearDatosBase();
+
+        $docente = User::where('email', 'docente@sanber.edu.bo')->first();
+        $teacher = Teacher::create([
+            'user_id' => $docente->id,
+            'nombres' => 'Pedro',
+            'apellidos' => 'García',
+            'numero_documento' => '9990001',
+            'especialidad' => 'Matemáticas',
+            'estado' => 'ACTIVO',
+        ]);
+
+        $otroUser = User::create([
+            'nombre' => 'Otro',
+            'apellido' => 'Docente',
+            'email' => 'otro@sanber.edu.bo',
+            'password' => bcrypt('password123'),
+            'role_id' => $docente->role_id,
+            'estado' => 'ACTIVO',
+        ]);
+        $otroTeacher = Teacher::create([
+            'user_id' => $otroUser->id,
+            'nombres' => 'Otro',
+            'apellidos' => 'Docente',
+            'numero_documento' => '9990002',
+            'especialidad' => 'Matemáticas',
+            'estado' => 'ACTIVO',
+        ]);
+
+        $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
+        $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Tercero', 'orden' => 3, 'estado' => 'ACTIVO']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $curso = Course::create([
+            'grade_id' => $grado->id,
+            'section_id' => $seccion->id,
+            'academic_year_id' => $base['year']->id,
+            'nombre' => 'Curso Test',
+            'aula' => '1',
+            'estado' => 'ACTIVO',
+        ]);
+
+        $miCs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $base['subject']->id, 'teacher_id' => $teacher->id]);
+        $suCs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $base['subject']->id, 'teacher_id' => $otroTeacher->id]);
+
+        Assessment::create([
+            'course_subject_id' => $miCs->id,
+            'subject_id' => $miCs->subject_id,
+            'academic_year_id' => $miCs->course->academic_year_id,
+            'nombre' => 'Examen Mio',
+            'tipo' => 'Examen',
+            'bimestre' => 1,
+            'peso' => 0.30,
+            'estado' => 'ACTIVO',
+        ]);
+
+        Assessment::create([
+            'course_subject_id' => $suCs->id,
+            'subject_id' => $suCs->subject_id,
+            'academic_year_id' => $suCs->course->academic_year_id,
+            'nombre' => 'Examen De Otro',
+            'tipo' => 'Examen',
+            'bimestre' => 1,
+            'peso' => 0.30,
+            'estado' => 'ACTIVO',
+        ]);
+
+        $this->actingAs($docente)
+            ->get('/evaluaciones')
+            ->assertSee('Examen Mio')
+            ->assertDontSee('Examen De Otro');
+
+        // No puede editar ni eliminar la evaluación del otro docente
+        $ajena = Assessment::where('nombre', 'Examen De Otro')->first();
+        $this->put("/evaluaciones/{$ajena->id}", ['nombre' => 'Examen De Otro', 'tipo' => 'Examen', 'subject_id' => $ajena->subject_id, 'academic_year_id' => $ajena->academic_year_id, 'peso' => '0.30'])
+            ->assertForbidden();
+        $this->delete("/evaluaciones/{$ajena->id}")->assertForbidden();
+        $this->assertDatabaseHas('assessments', ['id' => $ajena->id]);
     }
 }

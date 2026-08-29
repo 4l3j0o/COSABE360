@@ -61,6 +61,7 @@
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Nombre</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Tipo</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Peso</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Curso</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Fecha</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Gestión</th>
                             <th class="text-right px-4 py-3 font-semibold text-foreground">Acciones</th>
@@ -74,7 +75,8 @@
                                 </td>
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $assessment->nombre }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $assessment->tipo }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $assessment->peso }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $assessment->peso * 100 }}%</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $assessment->courseSubject?->course?->nombre ?? '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $assessment->fecha?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $assessment->academicYear?->nombre }}</td>
                                 <td class="px-4 py-3">

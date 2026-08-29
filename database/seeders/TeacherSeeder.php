@@ -20,6 +20,12 @@ class TeacherSeeder extends Seeder
                 'telefono' => '71234567', 'email' => 'maria.quispe@gmail.com', 'estado' => 'ACTIVO',
             ],
             [
+                'nombres' => 'Pedro', 'apellidos' => 'García Rojas',
+                'especialidad' => 'Matemáticas', 'tipo_documento' => 'CI',
+                'numero_documento' => '1111110', 'complemento' => 'TJ',
+                'telefono' => '70001111', 'email' => 'docente@sanber.edu.bo', 'estado' => 'ACTIVO',
+            ],
+            [
                 'nombres' => 'Carlos', 'apellidos' => 'García Choque',
                 'especialidad' => 'Lenguaje y Literatura', 'tipo_documento' => 'CI',
                 'numero_documento' => '2345678', 'complemento' => 'CB',
@@ -109,7 +115,47 @@ class TeacherSeeder extends Seeder
                 'numero_documento' => '2021221', 'complemento' => 'SC',
                 'telefono' => '76677889', 'email' => 'fernando.rios@gmail.com', 'estado' => 'ACTIVO',
             ],
+            [
+                'nombres' => 'Sonia', 'apellidos' => 'Rojas Villanueva',
+                'especialidad' => 'Artes Plásticas', 'tipo_documento' => 'CI',
+                'numero_documento' => '2223330', 'complemento' => 'LP',
+                'telefono' => '71118899', 'email' => 'sonia.rojas@gmail.com', 'estado' => 'ACTIVO',
+            ],
         ];
+
+        // Docentes adicionales para que ninguna especialidad quede sobrecargada y
+        // el ScheduleSeeder pueda generar el horario sin cruces (un docente por hora).
+        $especialidadesExtra = [
+            'Matemáticas'           => 2,
+            'Lenguaje y Literatura' => 2,
+            'Ciencias Naturales'    => 2,
+            'Historia'              => 2,
+            'Educación Física'      => 2,
+            'Inglés'                => 2,
+            'Artes Plásticas'       => 2,
+            'Filosofía'             => 1,
+        ];
+
+        $nombresPool = ['Walter', 'Nancy', 'Hugo', 'Ruth', 'Oscar', 'Liliana', 'Román', 'Estela', 'Ivan', 'Carola'];
+        $apellidosPool = ['Aguilar Flores', 'Cáceres López', 'Montaño Ríos', 'Barrientos Cruz', 'Delgado Puma', 'Guzmán Arce', 'Sandoval Quiroga', 'Campos Salinas', 'Vega Villca', 'Alarcón Meneses'];
+
+        $contador = 0;
+        foreach ($especialidadesExtra as $especialidad => $cantidad) {
+            for ($i = 0; $i < $cantidad; $i++) {
+                $docentes[] = [
+                    'nombres'          => $nombresPool[($contador + $i) % count($nombresPool)],
+                    'apellidos'        => $apellidosPool[($contador + $i) % count($apellidosPool)],
+                    'especialidad'     => $especialidad,
+                    'tipo_documento'   => 'CI',
+                    'numero_documento' => (string) (3000000 + $contador),
+                    'complemento'      => 'TJ',
+                    'telefono'         => '76' . str_pad((string) (100000 + $contador), 6, '0', STR_PAD_LEFT),
+                    'email'            => 'adicional' . ($contador + 1) . '@sanber.edu.bo',
+                    'estado'           => 'ACTIVO',
+                ];
+                $contador++;
+            }
+        }
 
         foreach ($docentes as $docente) {
             $teacher = Teacher::updateOrCreate(

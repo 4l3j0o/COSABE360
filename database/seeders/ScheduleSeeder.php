@@ -69,18 +69,16 @@ class ScheduleSeeder extends Seeder
                 $capacidad = $totalDias * $totalBloques;
                 $horas = max(1, min((int) ($subject->horas_semanales ?? 1), $capacidad));
 
-                // Día inicial rotado por materia para repartir el arranque de cada una
-                $diaInicio = $indiceMateria % $totalDias;
+                // Barrido de todos los bloques en orden rotativo: garantiza que una
+                // materia use cualquier hueco libre (día/bloque) que tenga su docente.
+                $desfase = ($courseId * 3 + $indiceMateria * 5) % $capacidad;
                 $indiceMateria++;
 
                 $asignadas = 0;
-                $i = 0;
-                while ($asignadas < $horas && $i < ($capacidad * 2)) {
-                    // Reparte las horas de la materia entre días distintos
-                    $dia = $dias[($diaInicio + intdiv($i * $totalDias, $horas)) % $totalDias];
-                    $bloque = $bloques[$i % $totalBloques];
-                    $indiceBloque = $i % $totalBloques;
-                    $i++;
+                for ($k = 0; $k < $capacidad && $asignadas < $horas; $k++) {
+                    $idx = ($desfase + $k) % $capacidad;
+                    $dia = $dias[intdiv($idx, $totalBloques)];
+                    $indiceBloque = $idx % $totalBloques;
 
                     if (isset($ocupadoCurso[$dia.'|'.$indiceBloque])) {
                         continue;
@@ -98,10 +96,10 @@ class ScheduleSeeder extends Seeder
                             'subject_id' => $subject->id,
                             'teacher_id' => $teacher->id,
                             'dia' => $dia,
-                            'hora_inicio' => $bloque[0],
+                            'hora_inicio' => $bloques[$indiceBloque][0],
                         ],
                         [
-                            'hora_fin' => $bloque[1],
+                            'hora_fin' => $bloques[$indiceBloque][1],
                             'aula' => $aula,
                         ]
                     );

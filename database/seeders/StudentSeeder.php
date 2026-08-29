@@ -89,6 +89,24 @@ class StudentSeeder extends Seeder
                 'direccion' => 'Calle Bolivar Nro 345',
                 'ocupacion' => 'Diseñadora',
             ],
+            [
+                'nombres' => 'Jorge',
+                'apellidos' => 'Flores Rivera',
+                'numero_documento' => '3334440',
+                'telefono' => '78001122',
+                'email' => 'padre@sanber.edu.bo',
+                'direccion' => 'Av. España Nro 234, Tarija',
+                'ocupacion' => 'Contador Público',
+            ],
+            [
+                'nombres' => 'María Fernanda',
+                'apellidos' => 'Ríos Aguilar',
+                'numero_documento' => '4445550',
+                'telefono' => '78112233',
+                'email' => 'maria.rios@gmail.com',
+                'direccion' => 'Av. España Nro 234, Tarija',
+                'ocupacion' => 'Profesora',
+            ],
         ];
 
         $padresGuardians = [];
@@ -323,6 +341,26 @@ class StudentSeeder extends Seeder
                 'padre_indices' => [4, 6],
                 'relaciones' => ['PADRE', 'TUTOR'],
                 'principal' => 0,
+            ],
+            [
+                'codigo' => 'EST-2026-011',
+                'nombres' => 'Lucia Alejandra',
+                'apellidos' => 'Torres Flores',
+                'fecha_nacimiento' => '2015-09-14',
+                'lugar_nacimiento' => 'Tarija',
+                'sexo' => 'F',
+                'numero_documento' => '5556660',
+                'complemento' => 'TJ',
+                'direccion' => 'Av. España Nro 234, Tarija',
+                'telefono' => '78001122',
+                'email' => 'estudiante@sanber.edu.bo',
+                'idioma' => 'Castellano',
+                'cultura' => null,
+                'discapacidad' => null,
+                'quien_es_tutor' => 'PADRE',
+                'padre_indices' => [8, 9],
+                'relaciones' => ['PADRE', 'MADRE'],
+                'principal' => 8,
             ],
         ];
 
