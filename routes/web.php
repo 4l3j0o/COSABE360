@@ -6,6 +6,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
+use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
@@ -290,4 +291,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mis-comunicados', [AnnouncementController::class, 'bandeja'])->name('comunicados.bandeja');
     Route::get('/mis-comunicados/{announcement}', [AnnouncementController::class, 'showBandeja'])->name('comunicados.bandeja.show');
     Route::patch('/mis-comunicados/{announcement}/leido', [AnnouncementController::class, 'marcarLeido'])->name('comunicados.bandeja.leido');
+});
+
+// HU-32: Reportes académicos - Director/Administrador/Secretaría
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/academicos')->group(function () {
+    Route::get('/', [ReporteAcademicoController::class, 'index'])->name('reportes.academicos.index');
+    Route::get('/calificaciones', [ReporteAcademicoController::class, 'calificaciones'])->name('reportes.academicos.calificaciones');
+    Route::get('/promedios', [ReporteAcademicoController::class, 'promedios'])->name('reportes.academicos.promedios');
 });
