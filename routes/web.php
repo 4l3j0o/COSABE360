@@ -284,3 +284,10 @@ Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados'
     Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('comunicados.destroy');
     Route::patch('/{announcement}/publicar', [AnnouncementController::class, 'publicar'])->name('comunicados.publicar');
 });
+
+// HU-31: Consultar comunicados - todos los usuarios autenticados
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mis-comunicados', [AnnouncementController::class, 'bandeja'])->name('comunicados.bandeja');
+    Route::get('/mis-comunicados/{announcement}', [AnnouncementController::class, 'showBandeja'])->name('comunicados.bandeja.show');
+    Route::patch('/mis-comunicados/{announcement}/leido', [AnnouncementController::class, 'marcarLeido'])->name('comunicados.bandeja.leido');
+});
