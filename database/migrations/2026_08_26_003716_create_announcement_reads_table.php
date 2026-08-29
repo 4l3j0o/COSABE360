@@ -13,7 +13,15 @@ return new class extends Migration
     {
         Schema::create('announcement_reads', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('announcement_id')->constrained('announcements')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->boolean('leido')->default(false);
+            $table->timestamp('fecha_lectura')->nullable();
             $table->timestamps();
+
+            $table->unique(['announcement_id', 'user_id'], 'uk_announcement_user');
+            $table->index('user_id');
+            $table->index('leido');
         });
     }
 

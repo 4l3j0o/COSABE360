@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('announcement_recipients', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('announcement_id')->constrained('announcements')->cascadeOnDelete();
+            $table->enum('tipo_destinatario', ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO']);
+            $table->foreignId('course_id')->nullable()->constrained('courses')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->timestamps();
+
+            $table->index('announcement_id');
+            $table->index('tipo_destinatario');
+            $table->index('course_id');
+            $table->index('user_id');
         });
     }
 

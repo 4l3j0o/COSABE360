@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
@@ -196,4 +197,15 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
         ->name('monthly-payments.crear-estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
         ->name('monthly-payments.store-estudiante');
+});
+
+// HU-30: Crear y publicar comunicados - solo Administrador y Director
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados')->group(function () {
+    Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    Route::patch('/{announcement}/publicar', [AnnouncementController::class, 'publicar'])->name('announcements.publicar');
+    Route::patch('/{announcement}/archivar', [AnnouncementController::class, 'archivar'])->name('announcements.archivar');
 });

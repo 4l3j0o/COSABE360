@@ -8,15 +8,20 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserHasRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (! auth()->check()) {
             return redirect()->route('login');
         }
 
-        $roles = array_map('trim', explode(',', $role));
+        // Soporta tanto "role:Administrador,Director" (uno con comas) como "role:Administrador" "role:Director" separados
+        $all = collect($roles)
+            ->flatMap(fn ($r) => explode(',', $r))
+            ->map(fn ($r) => trim($r))
+            ->filter()
+            ->toArray();
 
-        if (! in_array(auth()->user()->rol->nombre, $roles, true)) {
+        if (! in_array(auth()->user()->rol->nombre, $all, true)) {
             return redirect()->route('acceso.denegado');
         }
 
