@@ -141,4 +141,115 @@ class AnnouncementController extends Controller
         }
         return redirect()->route('comunicados.index')->with('success', 'Comunicado publicado correctamente.');
     }
+
+    public function bandeja(Request $request)
+    {
+        $user = $request->user();
+        $rol = $user->rol?->nombre;
+
+        $mapRolATipo = [
+            'Administrador' => null,
+            'Director' => null,
+            'Secretaría' => null,
+            'Docente' => 'DOCENTES',
+            'Padre/Tutor' => 'PADRES',
+            'Estudiante' => 'ESTUDIANTES',
+        ];
+
+        $tipo = $mapRolATipo[$rol] ?? null;
+        $courseIds = $this->courseIdsForUser($user);
+
+        if (in_array($rol, ['Administrador', 'Director', 'Secretaría'], true)) {
+            $query = Announcement::with(['author.rol', 'recipients'])->where('estado', 'PUBLICADO');
+        } else {
+            $query = Announcement::with(['author.rol', 'recipients'])
+                ->where('estado', 'PUBLICADO')
+                ->where(function ($q) use ($tipo, $courseIds, $user) {
+                    $q->whereHas('recipients', function ($rq) use ($tipo, $courseIds, $user) {
+                        $rq->where('tipo_destinatario', 'TODOS');
+                        if ($tipo) {
+                            $rq->orWhere('tipo_destinatario', $tipo);
+                        }
+                        if ($courseIds->isNotEmpty()) {
+                            $rq->orWhere(function ($cq) use ($courseIds) {
+                                $cq->where('tipo_destinatario', 'CURSO_ESPECIFICO')->whereIn('course_id', $courseIds);
+                            });
+                        }
+                        $rq->orWhere(function ($uq) use ($user) {
+                            $uq->whereNotNull('user_id')->where('user_id', $user->id);
+                        });
+                    });
+                });
+        }
+        $query = $query
+            ->orderByDesc('fecha_publicacion')
+            ->orderByDesc('id');
+
+        $announcements = $query->paginate(15);
+
+        $reads = $user->id ? \App\Models\AnnouncementRead::where('user_id', $user->id)->whereIn('announcement_id', $announcements->pluck('id'))->get()->keyBy('announcement_id') : collect();
+
+        $announcements->getCollection()->transform(function ($a) use ($reads) {
+            $read = $reads->get($a->id);
+            $a->leido = $read?->leido ?? false;
+            $a->es_nuevo = ! $read || ! $read->leido;
+            return $a;
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $announcements]);
+        }
+
+        return view('announcements.bandeja', compact('announcements'));
+    }
+
+    public function showBandeja(Request $request, Announcement $announcement)
+    {
+        abort_unless($announcement->estado === 'PUBLICADO', 404);
+        $announcement->load(['author.rol', 'recipients.course']);
+        $this->marcarLeidoInterno($request->user(), $announcement);
+
+        $leido = \App\Models\AnnouncementRead::where('announcement_id', $announcement->id)->where('user_id', $request->user()->id)->value('leido') ?? false;
+
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $announcement->fresh()->load(['author.rol', 'recipients']), 'leido' => (bool) $leido]);
+        }
+
+        return view('announcements.show-bandeja', compact('announcement', 'leido'));
+    }
+
+    public function marcarLeido(Request $request, Announcement $announcement)
+    {
+        $this->marcarLeidoInterno($request->user(), $announcement);
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Marcado como leído']);
+        }
+        return back()->with('success', 'Marcado como leído');
+    }
+
+    private function marcarLeidoInterno($user, Announcement $announcement): void
+    {
+        \App\Models\AnnouncementRead::updateOrCreate(
+            ['announcement_id' => $announcement->id, 'user_id' => $user->id],
+            ['leido' => true, 'fecha_lectura' => now(), 'created_at' => now()]
+        );
+    }
+
+    private function courseIdsForUser($user)
+    {
+        if ($user->teacher) {
+            return \App\Models\CourseSubject::where('teacher_id', $user->teacher->id)->pluck('course_id')->merge(
+                \App\Models\Section::where('teacher_id', $user->teacher->id)->pluck('id')->map(fn ($sid) => \App\Models\Course::where('section_id', $sid)->pluck('id'))->flatten()
+            )->unique()->filter();
+        }
+        if ($user->student) {
+            return \App\Models\Registration::whereHas('enrollment', fn ($q) => $q->where('student_id', $user->student->id))->pluck('course_id')->unique();
+        }
+        $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
+        if ($parent) {
+            $studentIds = \App\Models\StudentParent::where('parent_guardian_id', $parent->id)->pluck('student_id');
+            return \App\Models\Registration::whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $studentIds))->pluck('course_id')->unique();
+        }
+        return collect();
+    }
 }
