@@ -3,7 +3,11 @@
 @section('titulo', 'Historial de Asistencia')
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @if(auth()->user()->hasAnyRole('Estudiante,Padre/Tutor'))
+        @include('dashboard.partials._sidebar-estudiante')
+    @else
+        @include('dashboard.partials._sidebar-admin')
+    @endif
 @endsection
 
 @section('contenido')
