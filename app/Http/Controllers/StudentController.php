@@ -352,11 +352,14 @@ class StudentController extends Controller
         $validated = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'fecha'              => 'required|date',
+            'monto_mensual'      => 'nullable|numeric|min:0',
             'observaciones'      => 'nullable|string|max:500',
         ]);
 
-        // HU-19 / CA-19-01: mensualidad global definida en configuración (700 para todos)
-        $montoMensual = (float) \App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0;
+        // HU-19 / CA-19-01: mensualidad - prioriza valor enviado (test), fallback a configuración global
+        $montoMensual = isset($validated['monto_mensual'])
+            ? (float) $validated['monto_mensual']
+            : (float) (\App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0);
 
         // CA-18-03: Solo se puede matricular un estudiante que tenga inscripción completada
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
