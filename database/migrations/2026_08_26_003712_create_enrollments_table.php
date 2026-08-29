@@ -6,14 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->nullable()->constrained('students')->cascadeOnDelete();
+$table->foreignId('student_id')->nullable()->constrained('students')->cascadeOnDelete();
             $table->foreignId('academic_year_id')->nullable()->constrained('academic_years')->restrictOnDelete();
             $table->date('fecha')->nullable();
             $table->enum('estado', ['PENDIENTE', 'COMPLETADA', 'ANULADA'])->default('PENDIENTE');
@@ -24,9 +21,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('enrollments');
