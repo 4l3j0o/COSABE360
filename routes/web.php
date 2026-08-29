@@ -5,6 +5,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
+use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FinalGradesController;
@@ -242,4 +243,14 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
 // HU-27: Consultar historial de asistencia - todos los roles con filtros
 Route::middleware(['auth'])->group(function () {
     Route::get('/asistencias/historial', [AttendanceController::class, 'historial'])->name('asistencias.historial');
+});
+
+// HU-TRIB-04: Formulario RUDE RM 0684/2025 completo (Secciones I-VI) + export MinEdu
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+    Route::get('/rude', [RudeController::class, 'index'])->name('rude.index');
+    Route::get('/rude/export/list', [RudeController::class, 'exportList'])->name('rude.exportList');
+    Route::get('/rude/{student}', [RudeController::class, 'show'])->name('rude.show');
+    Route::get('/rude/{student}/form', [RudeController::class, 'form'])->name('rude.form');
+    Route::put('/rude/{student}', [RudeController::class, 'update'])->name('rude.update');
+    Route::get('/rude/{student}/export', [RudeController::class, 'export'])->name('rude.export');
 });
