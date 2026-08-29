@@ -140,6 +140,9 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
     Route::get('/{courseSubject}/evaluaciones/crear', [AssessmentController::class, 'crearCurso'])->name('docente.evaluaciones.create');
     Route::post('/{courseSubject}/evaluaciones', [AssessmentController::class, 'guardarCurso'])->name('docente.evaluaciones.store');
 
+    // Asistencia del curso: historial por año / bimestre
+    Route::get('/{courseSubject}/asistencias', [AttendanceController::class, 'porCurso'])->name('docente.asistencias');
+
     // Registrar calificaciones de una evaluación de ese curso
     Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', [GradeScoreController::class, 'porCurso'])->name('docente.calificaciones');
 });

@@ -37,16 +37,18 @@
                         @endif
                     </div>
 
-                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-2 gap-2">
-                        <a href="{{ route('docente.evaluaciones', $curso) }}"
-                            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-3 gap-2">
+                        <a href="{{ route('docente.evaluaciones', $curso) }}" title="Evaluaciones"
+                            class="inline-flex items-center justify-center p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                            Evaluaciones
                         </a>
-                        <a href="{{ route('asistencias.create', ['course_id' => $curso->course_id, 'fecha' => now()->toDateString()]) }}"
-                            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">
+                        <a href="{{ route('asistencias.create', ['course_id' => $curso->course_id, 'fecha' => now()->toDateString()]) }}" title="Registrar Asistencia"
+                            class="inline-flex items-center justify-center p-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3 3L22 4m-6 0H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V12"/></svg>
-                            Asistencia
+                        </a>
+                        <a href="{{ route('docente.asistencias', $curso) }}" title="Historial de Asistencia"
+                            class="inline-flex items-center justify-center p-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </a>
                     </div>
                 </div>

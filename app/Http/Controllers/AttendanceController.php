@@ -6,9 +6,11 @@ use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\Student;
+use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -38,7 +40,9 @@ class AttendanceController extends Controller
             $cursos = Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
         }
 
-        return view('attendances.index', compact('cursos'));
+        $materiasPorCurso = $cursos->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
+
+        return view('attendances.index', compact('cursos', 'materiasPorCurso'));
     }
 
     /**
@@ -48,21 +52,33 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
-            'fecha' => ['required', 'date'],
+            'subject_id' => ['nullable', 'integer'],
+            'fecha' => ['nullable', 'date'],
         ]);
 
         $course = Course::with(['grade', 'section', 'gestion'])->findOrFail($request->query('course_id'));
-        $fecha = $request->query('fecha', now()->toDateString());
+
+        // El docente solo registra la asistencia del día actual; las demás fechas son para roles administrativos.
+        $user = auth()->user();
+        $fecha = $user->hasRole('Docente')
+            ? now()->toDateString()
+            : ($request->query('fecha') ? Carbon::parse($request->query('fecha'))->toDateString() : now()->toDateString());
 
         $this->authorizeDocenteDelCurso($course);
 
+        $materias = $this->materiasDeCurso($course);
+        $subjectId = $this->resolverMateriaOLaPrimera($request, $materias);
+
         $estudiantes = $this->estudiantesDelCurso($course);
         $asistenciasExistentes = Attendance::where('course_id', $course->id)
-            ->where('fecha', $fecha)
+            ->whereDate('fecha', $fecha)
+            ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId), fn ($q) => $q->whereNull('subject_id'))
             ->get()
             ->keyBy('student_id');
 
-        return view('attendances.create', compact('course', 'fecha', 'estudiantes', 'asistenciasExistentes'));
+        $editar = $request->boolean('editar');
+
+        return view('attendances.create', compact('course', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId'));
     }
 
     /**
@@ -72,6 +88,7 @@ class AttendanceController extends Controller
     {
         $validated = $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
+            'subject_id' => ['nullable', 'integer'],
             'fecha' => ['required', 'date'],
             'asistencias' => ['required', 'array'],
             'asistencias.*.estado' => ['required', 'in:PRESENTE,FALTA,ATRASO,PERMISO,JUSTIFICADO'],
@@ -83,7 +100,14 @@ class AttendanceController extends Controller
 
         $estudiantes = $this->estudiantesDelCurso($course)->pluck('id')->toArray();
 
-        $fechaNormalizada = \Carbon\Carbon::parse($validated['fecha'])->toDateString();
+        // El docente solo puede guardar la asistencia del día actual.
+        $user = auth()->user();
+        $fechaNormalizada = $user->hasRole('Docente')
+            ? now()->toDateString()
+            : \Carbon\Carbon::parse($validated['fecha'])->toDateString();
+
+        $materias = $this->materiasDeCurso($course);
+        $subjectId = $this->resolverMateriaOLaPrimera($request, $materias);
 
         foreach ($validated['asistencias'] as $studentId => $data) {
             if (!in_array((int) $studentId, $estudiantes, true)) {
@@ -93,6 +117,7 @@ class AttendanceController extends Controller
             $existente = Attendance::where('student_id', $studentId)
                 ->where('course_id', $course->id)
                 ->whereDate('fecha', $fechaNormalizada)
+                ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId), fn ($q) => $q->whereNull('subject_id'))
                 ->first();
 
             if ($existente) {
@@ -105,6 +130,7 @@ class AttendanceController extends Controller
                 Attendance::create([
                     'student_id' => $studentId,
                     'course_id' => $course->id,
+                    'subject_id' => $subjectId,
                     'fecha' => $fechaNormalizada,
                     'estado' => $data['estado'],
                     'justificacion' => $data['justificacion'] ?? null,
@@ -113,7 +139,7 @@ class AttendanceController extends Controller
             }
         }
 
-        return redirect()->route('asistencias.index')->with('success', 'Asistencia registrada correctamente para ' . $validated['fecha']);
+        return redirect()->route('asistencias.index')->with('success', 'Asistencia registrada correctamente para ' . $fechaNormalizada);
     }
 
     /**
@@ -123,10 +149,11 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
         $courseId = $request->query('course_id');
+        $subjectId = $request->query('subject_id');
         $fechaDesde = $request->query('desde');
         $fechaHasta = $request->query('hasta');
 
-        $query = Attendance::with(['student', 'course.grade', 'course.section', 'registeredBy'])
+        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject', 'registeredBy'])
             ->orderByDesc('fecha');
 
         // Filtrado por rol
@@ -150,6 +177,9 @@ class AttendanceController extends Controller
         if ($courseId) {
             $query->where('course_id', $courseId);
         }
+        if ($subjectId) {
+            $query->where('subject_id', $subjectId);
+        }
         if ($fechaDesde) {
             $query->where('fecha', '>=', $fechaDesde);
         }
@@ -160,13 +190,100 @@ class AttendanceController extends Controller
         $asistencias = $query->paginate(30)->withQueryString();
         $cursos = Course::with(['grade', 'section'])->orderBy('nombre')->get();
 
+        $materias = $courseId
+            ? Subject::whereIn('id', CourseSubject::where('course_id', $courseId)->pluck('subject_id'))->orderBy('nombre')->get()
+            : collect();
+
         // Estadísticas
         $estadisticas = Attendance::selectRaw("estado, COUNT(*) as total")
             ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
-        return view('attendances.historial', compact('asistencias', 'cursos', 'estadisticas', 'courseId', 'fechaDesde', 'fechaHasta'));
+        return view('attendances.historial', compact('asistencias', 'cursos', 'materias', 'estadisticas', 'courseId', 'subjectId', 'fechaDesde', 'fechaHasta'));
+    }
+
+/**
+     * Asistencia de un curso del docente: vista por mes de cada estudiante,
+     * ordenada por nombre (por defecto el mes actual).
+     */
+    public function porCurso(Request $request, CourseSubject $courseSubject): View
+    {
+        $teacher = $request->user()->teacher;
+        abort_if (! $teacher || $teacher->id !== $courseSubject->teacher_id, 403);
+
+        $courseSubject->load(['subject', 'course.grade', 'course.section', 'course.gestion', 'schedules']);
+
+        $course = $courseSubject->course;
+
+        $anio = $course->gestion?->fecha_inicio?->year ?? now()->year;
+        $mesIni = $course->gestion?->fecha_inicio?->month ?? 2;
+        $mesFin = $course->gestion?->fecha_fin?->month ?? 11;
+        $mesIni = max((int) $mesIni, 2);
+        $mesFin = min((int) $mesFin, 11);
+        $mesesDisponibles = $mesIni <= $mesFin ? range($mesIni, $mesFin) : range(2, 11);
+
+        $mesPorDefecto = in_array((int) now()->month, $mesesDisponibles, true)
+            ? (int) now()->month
+            : $mesesDisponibles[0];
+
+        $mesStr = (string) $request->input('mes', $anio . '-' . str_pad((string) $mesPorDefecto, 2, '0', STR_PAD_LEFT));
+        $mesStr = preg_match('/^(\d{4})-(\d{2})$/', $mesStr, $coincide) && in_array((int) $coincide[2], $mesesDisponibles, true)
+            ? $mesStr
+            : $anio . '-' . str_pad((string) $mesPorDefecto, 2, '0', STR_PAD_LEFT);
+        $inicioMes = Carbon::createFromFormat('Y-m-d', $mesStr . '-15');
+        $anio = (int) $inicioMes->year;
+        $mes = (int) $inicioMes->month;
+
+        $students = $course->students()
+            ->where('students.estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $asistencias = Attendance::where('course_id', $course->id)
+            ->where('subject_id', $courseSubject->subject_id)
+            ->whereYear('fecha', $anio)
+            ->whereMonth('fecha', $mes)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
+
+        $fechas = $asistencias
+            ->map(fn (Attendance $a) => $a->fecha->toDateString())
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn (string $d) => Carbon::parse($d));
+
+        $porEstudiante = $asistencias->groupBy('student_id')->map(function ($regs) {
+            return $regs->keyBy(fn (Attendance $r) => $r->fecha->toDateString());
+        });
+
+        $filas = $students->map(fn (Student $s) => [
+            'student' => $s,
+            'asistencias' => $porEstudiante->get($s->id, collect()),
+        ])->values();
+
+        $dias = $courseSubject->schedules
+            ->pluck('dia')
+            ->unique()
+            ->values();
+
+        return view('attendances.por-curso', compact(
+            'courseSubject',
+            'course',
+            'students',
+            'filas',
+            'fechas',
+            'mesStr',
+            'anio',
+            'mes',
+            'mesesDisponibles',
+            'dias'
+        ));
     }
 
     private function estudiantesDelCurso(Course $course)
@@ -178,6 +295,44 @@ class AttendanceController extends Controller
             ->orderBy('apellidos')
             ->orderBy('nombres')
             ->get();
+    }
+
+    /**
+     * Materias disponibles de un curso según el rol: para el docente solo las que él imparte;
+     * para roles administrativos todas las materias del curso.
+     */
+    private function materiasDeCurso(Course $course)
+    {
+        $user = auth()->user();
+        $materias = CourseSubject::where('course_id', $course->id);
+
+        if ($user->hasRole('Docente')) {
+            $teacher = Teacher::where('user_id', $user->id)->first();
+            if (!$teacher) {
+                return collect();
+            }
+            $materias->where('teacher_id', $teacher->id);
+        }
+
+        $ids = $materias->pluck('subject_id')->unique()->values();
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return Subject::whereIn('id', $ids)->orderBy('nombre')->get();
+    }
+
+    /**
+     * Devuelve el subject_id pedido si pertenece a las materias del curso, si no la primera.
+     */
+    private function resolverMateriaOLaPrimera(Request $request, $materias): ?int
+    {
+        $subjectId = $request->integer('subject_id') ?: null;
+        if ($subjectId && !$materias->contains('id', $subjectId)) {
+            $subjectId = null;
+        }
+
+        return $subjectId ?? $materias->first()?->id;
     }
 
     private function authorizeDocenteDelCurso(Course $course): void

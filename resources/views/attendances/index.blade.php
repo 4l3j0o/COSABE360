@@ -14,11 +14,8 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Registrar Asistencia</h1>
-            <p class="text-sm text-muted-foreground mt-1">Seleccione el curso y la fecha para registrar la asistencia diaria</p>
+            <p class="text-sm text-muted-foreground mt-1">{{ auth()->user()->hasRole('Docente') ? 'Solo puede registrar la asistencia del día de hoy.' : 'Seleccione el curso y la fecha para registrar la asistencia diaria' }}</p>
         </div>
-        <a href="{{ route('asistencias.historial') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">
-            Ver Historial
-        </a>
     </div>
 
     @if(session('success'))
@@ -47,7 +44,21 @@
                                 <td class="px-4 py-3 text-right">
                                     <form method="GET" action="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2">
                                         <input type="hidden" name="course_id" value="{{ $curso->id }}">
-                                        <input type="date" name="fecha" value="{{ now()->toDateString() }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                        @php $materias = $materiasPorCurso[$curso->id] ?? collect(); @endphp
+                                        @if($materias->isNotEmpty())
+                                            <select name="subject_id" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                                @foreach($materias as $m)
+                                                    <option value="{{ $m->id }}" {{ $loop->first ? 'selected' : '' }}>{{ $m->nombre }}</option>
+                                                @endforeach
+                                            </select>
+                                        @else
+                                            <input type="hidden" name="subject_id" value="">
+                                        @endif
+                                        @if(auth()->user()->hasRole('Docente'))
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium">Hoy · {{ now()->format('d/m/Y') }}</span>
+                                        @else
+                                            <input type="date" name="fecha" value="{{ now()->toDateString() }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                        @endif
                                         <button type="submit" class="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-xs hover:bg-primary/90 transition-colors">Registrar</button>
                                     </form>
                                 </td>
