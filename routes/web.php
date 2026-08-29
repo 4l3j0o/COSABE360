@@ -7,6 +7,7 @@ use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\GradeScoreController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
@@ -115,6 +116,15 @@ Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(funct
     Route::get('/{assessment}/editar', [AssessmentController::class, 'edit'])->name('evaluaciones.edit');
     Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('evaluaciones.update');
     Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('evaluaciones.destroy');
+});
+
+// HU22: Registrar calificaciones - Docente registra, Estudiante/Padre consulta (HU23)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/calificaciones', [GradeScoreController::class, 'index'])->name('calificaciones.index');
+});
+Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(function () {
+    Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
+    Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
 });
 
 // HU-13: Administrar paralelos solo Administrador

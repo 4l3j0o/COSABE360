@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             TeacherSeeder::class,
 
             // Cursos y asignación curricular
+            CourseSeeder::class,
             CourseSubjectSeeder::class,
             ScheduleSeeder::class,
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AcademicYear extends Model
 {
     public const ESTADOS = ['PROXIMA', 'ACTIVA', 'CERRADA'];
+
     protected $fillable = [
         'nombre',
         'fecha_inicio',
@@ -26,6 +27,11 @@ class AcademicYear extends Model
     }
 
     public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class, 'gestion_id');
+    }
+
+    public function enrollmentsByAcademicYearId(): HasMany
     {
         return $this->hasMany(Enrollment::class, 'academic_year_id');
     }
