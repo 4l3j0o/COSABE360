@@ -114,26 +114,30 @@ class ScheduleController extends Controller
                 abort(403, 'No se encontró un perfil de docente para esta cuenta.');
             }
 
-            // Horarios del docente agrupados por curso (puede dar en varios paralelos)
-            $courses = $teacher->schedules()
-                ->with(['course', 'subject', 'teacher'])
-                ->get()
-                ->groupBy('course_id');
+            // Horario semanal consolidado del docente (todas sus clases en una sola tabla)
+            $schedules = $teacher->schedules()
+                ->with(['course.grade', 'course.section', 'course.gestion', 'subject'])
+                ->orderBy('hora_inicio')
+                ->get();
 
-            $porCurso = [];
-            foreach ($courses as $courseId => $schedules) {
-                $porCurso[] = [
-                    'course' => $schedules->first()->course,
-                    'dias' => ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'],
-                    'horas' => $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
-                        ->values()
-                        ->sortBy(fn ($s) => $s->hora_inicio)
-                        ->values(),
-                    'tabla' => $this->tablaSemanal($schedules),
-                ];
+            $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+            $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+                ->values()
+                ->sortBy(fn ($s) => $s->hora_inicio)
+                ->values();
+
+            $tabla = [];
+            foreach ($dias as $dia) {
+                $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
             }
 
-            return view('schedules.mi-horario-docente', compact('teacher', 'porCurso'));
+            $gestiones = $schedules->map(fn ($s) => $s->course?->gestion?->nombre)
+                ->filter()
+                ->unique()
+                ->values();
+
+            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones'));
         }
 
         abort(403);
