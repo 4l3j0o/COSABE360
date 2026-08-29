@@ -24,4 +24,9 @@ class Section extends Model
     {
         return $this->hasMany(Course::class, 'section_id');
     }
+
+    public function estaActivo(): bool
+    {
+        return $this->estado === 'ACTIVO';
+    }
 }
