@@ -37,8 +37,6 @@
                     <thead class="bg-muted/50 border-b border-border">
                         <tr>
                             <th class="text-left px-4 py-3 font-medium text-muted-foreground">Curso</th>
-                            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Paralelo</th>
-                            <th class="text-left px-4 py-3 font-medium text-muted-foreground">Gestión</th>
                             <th class="text-right px-4 py-3 font-medium text-muted-foreground">Acción</th>
                         </tr>
                     </thead>
@@ -46,8 +44,6 @@
                         @foreach($cursos as $curso)
                             <tr class="hover:bg-muted/20">
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $curso->nombre }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->grade->nombre ?? '' }} - {{ $curso->section->nombre ?? '' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->gestion->nombre ?? $curso->academicYear->nombre ?? '' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <form method="GET" action="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2">
                                         <input type="hidden" name="course_id" value="{{ $curso->id }}">

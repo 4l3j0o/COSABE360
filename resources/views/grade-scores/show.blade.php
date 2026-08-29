@@ -8,9 +8,9 @@
 @section('contenido')
     <div class="max-w-4xl">
         <div class="mb-6">
-            <a href="{{ route('calificaciones.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="{{ $volver ?? route('calificaciones.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                Volver a calificaciones
+                {{ isset($volver) ? 'Volver a las evaluaciones del curso' : 'Volver a calificaciones' }}
             </a>
             <h1 class="text-xl font-bold text-foreground mt-2">Registrar Calificaciones</h1>
             <div class="mt-2 flex flex-wrap gap-2 text-sm">
@@ -23,6 +23,9 @@
         <form method="POST" action="{{ route('calificaciones.update', $assessment) }}" class="bg-card border border-border rounded-xl overflow-hidden">
             @csrf
             @method('PUT')
+            @if(isset($volverCurso))
+                <input type="hidden" name="volver_curso" value="{{ $volverCurso }}">
+            @endif
 
             @if($students->isEmpty())
                 <div class="p-12 text-center">

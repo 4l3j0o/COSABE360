@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assessment;
+use App\Models\CourseSubject;
 use App\Models\GradeScore;
 use App\Models\ParentGuardian;
 use App\Models\Student;
@@ -94,6 +95,30 @@ class GradeScoreController extends Controller
         return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes'));
     }
 
+    public function porCurso(Request $request, CourseSubject $courseSubject, Assessment $assessment): View
+    {
+        $teacher = $request->user()->teacher;
+
+        abort_if(! $teacher || $teacher->id !== $courseSubject->teacher_id, 403);
+        abort_if($assessment->course_subject_id !== $courseSubject->id, 404);
+
+        $assessment->load(['subject', 'academicYear', 'courseSubject.subject', 'courseSubject.course']);
+
+        $students = $courseSubject->course->students()
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $notasExistentes = GradeScore::where('assessment_id', $assessment->id)
+            ->get()
+            ->keyBy('student_id');
+
+        $volver = route('docente.evaluaciones', $courseSubject);
+        $volverCurso = $courseSubject->id;
+
+        return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes', 'volver', 'volverCurso'));
+    }
+
     public function update(Request $request, Assessment $assessment): RedirectResponse
     {
         $request->validate([
@@ -119,6 +144,15 @@ class GradeScoreController extends Controller
                     'registrado_en' => now(),
                 ]
             );
+        }
+
+        if ($request->filled('volver_curso')) {
+            $courseSubject = CourseSubject::find($request->input('volver_curso'));
+
+            if ($courseSubject) {
+                return redirect()->route('docente.evaluaciones', $courseSubject)
+                    ->with('success', 'Calificaciones registradas correctamente.');
+            }
         }
 
         return redirect()->route('calificaciones.show', $assessment)

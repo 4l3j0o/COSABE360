@@ -21,7 +21,7 @@
             <select name="course_id" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <option value="">Todos los cursos</option>
                 @foreach($cursos as $c)
-                    <option value="{{ $c->id }}" {{ (string)$courseId === (string)$c->id ? 'selected' : '' }}>{{ $c->nombre }} - {{ $c->section->nombre ?? '' }}</option>
+                    <option value="{{ $c->id }}" {{ (string)$courseId === (string)$c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
                 @endforeach
             </select>
         </div>

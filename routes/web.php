@@ -134,6 +134,14 @@ Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(fun
 // Mis Cursos del docente - evaluaciones por curso/paralelo (course_subject)
 Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
     Route::get('/', [TeacherCourseController::class, 'index'])->name('docente.cursos');
+
+    // Evaluaciones de un curso + materia específicos
+    Route::get('/{courseSubject}/evaluaciones', [AssessmentController::class, 'porCurso'])->name('docente.evaluaciones');
+    Route::get('/{courseSubject}/evaluaciones/crear', [AssessmentController::class, 'crearCurso'])->name('docente.evaluaciones.create');
+    Route::post('/{courseSubject}/evaluaciones', [AssessmentController::class, 'guardarCurso'])->name('docente.evaluaciones.store');
+
+    // Registrar calificaciones de una evaluación de ese curso
+    Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', [GradeScoreController::class, 'porCurso'])->name('docente.calificaciones');
 });
 
 // HU-13: Administrar paralelos solo Administrador

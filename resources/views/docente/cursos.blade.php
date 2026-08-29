@@ -26,24 +26,28 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach($cursos as $curso)
                 <div class="bg-card border border-border rounded-xl p-5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
-                    <div class="flex items-start justify-between gap-3">
+<div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-xs font-semibold uppercase tracking-wider text-primary">{{ $curso->subject->nombre }}</p>
                             <h3 class="text-base font-bold text-foreground mt-1 truncate">{{ $curso->course->nombre }}</h3>
-                            <p class="text-sm text-muted-foreground">Gestión {{ $curso->course->gestion->nombre ?? '' }}</p>
+                            <p class="text-xs text-muted-foreground mt-1">{{ $curso->assessments_count }} evaluación(es)</p>
                         </div>
                         @if($curso->course->aula)
                             <span class="shrink-0 inline-flex items-center px-2 py-1 rounded-lg bg-muted text-xs font-medium text-muted-foreground">Aula {{ $curso->course->aula }}</span>
                         @endif
                     </div>
 
-                    <div class="mt-4 flex flex-wrap gap-2 text-xs">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{{ $curso->course->grade->nombre ?? '—' }}</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary/35 text-secondary-foreground font-medium">Paralelo {{ $curso->course->section->nombre ?? '—' }}</span>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">{{ $curso->assessments_count }} evaluaciones</span>
+                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-2 gap-2">
+                        <a href="{{ route('docente.evaluaciones', $curso) }}"
+                            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            Evaluaciones
+                        </a>
+                        <a href="{{ route('asistencias.create', ['course_id' => $curso->course_id, 'fecha' => now()->toDateString()]) }}"
+                            class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3 3L22 4m-6 0H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V12"/></svg>
+                            Asistencia
+                        </a>
                     </div>
                 </div>
             @endforeach

@@ -14,7 +14,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Registrar Asistencia</h1>
-            <p class="text-sm text-muted-foreground mt-1">{{ $course->nombre }} — {{ $course->grade->nombre ?? '' }} {{ $course->section->nombre ?? '' }} — {{ $fecha }}</p>
+            <p class="text-sm text-muted-foreground mt-1">{{ $course->nombre }} — {{ $fecha }}</p>
         </div>
         <a href="{{ route('asistencias.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">Volver</a>
     </div>
