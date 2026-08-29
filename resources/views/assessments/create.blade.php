@@ -40,24 +40,24 @@
 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                    <select name="materia_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                    <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         <option value="">Seleccionar materia...</option>
                         @foreach($subjects as $subject)
-                            <option value="{{ $subject->id }}" {{ old('materia_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
+                            <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
                         @endforeach
                     </select>
-                    @error('materia_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Período académico <span class="text-error">*</span></label>
-                    <select name="gestion_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                    <select name="academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         <option value="">Seleccionar período...</option>
                         @foreach($academicYears as $year)
-                            <option value="{{ $year->id }}" {{ old('gestion_id') == $year->id ? 'selected' : '' }}>{{ $year->nombre }}</option>
+                            <option value="{{ $year->id }}" {{ old('academic_year_id') == $year->id ? 'selected' : '' }}>{{ $year->nombre }}</option>
                         @endforeach
                     </select>
-                    @error('gestion_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    @error('academic_year_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>

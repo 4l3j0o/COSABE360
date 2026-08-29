@@ -99,7 +99,7 @@ class AttendanceController extends Controller
                 $existente->update([
                     'estado' => $data['estado'],
                     'justificacion' => $data['justificacion'] ?? null,
-                    'registrado_por' => auth()->id(),
+                    'registered_by_user_id' => auth()->id(),
                 ]);
             } else {
                 Attendance::create([
@@ -108,7 +108,7 @@ class AttendanceController extends Controller
                     'fecha' => $fechaNormalizada,
                     'estado' => $data['estado'],
                     'justificacion' => $data['justificacion'] ?? null,
-                    'registrado_por' => auth()->id(),
+                    'registered_by_user_id' => auth()->id(),
                 ]);
             }
         }
@@ -126,7 +126,7 @@ class AttendanceController extends Controller
         $fechaDesde = $request->query('desde');
         $fechaHasta = $request->query('hasta');
 
-        $query = Attendance::with(['student', 'course.grade', 'course.section', 'registradoPor'])
+        $query = Attendance::with(['student', 'course.grade', 'course.section', 'registeredBy'])
             ->orderByDesc('fecha');
 
         // Filtrado por rol

@@ -15,7 +15,7 @@ class Attendance extends Model
         'fecha',
         'estado',
         'justificacion',
-        'registrado_por',
+        'registered_by_user_id',
     ];
 
     protected function casts(): array
@@ -35,9 +35,9 @@ class Attendance extends Model
         return $this->belongsTo(Course::class, 'course_id');
     }
 
-    public function registradoPor(): BelongsTo
+    public function registeredBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'registrado_por');
+        return $this->belongsTo(User::class, 'registered_by_user_id');
     }
 
     public function scopeDelCurso($query, int $courseId)

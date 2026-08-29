@@ -68,8 +68,8 @@ class AssessmentTest extends TestCase
         $response = $this->post('/evaluaciones', [
             'nombre' => 'Examen Primer Bimestre',
             'tipo' => 'Examen',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
             'peso' => '0.30',
             'fecha' => '2026-04-10',
         ]);
@@ -78,8 +78,8 @@ class AssessmentTest extends TestCase
         $this->assertDatabaseHas('assessments', [
             'nombre' => 'Examen Primer Bimestre',
             'tipo' => 'Examen',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
         ]);
     }
 
@@ -91,16 +91,16 @@ class AssessmentTest extends TestCase
         $assessment = Assessment::create([
             'nombre' => 'Tarea 1',
             'tipo' => 'Tarea',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
             'peso' => 0.10,
         ]);
 
         $response = $this->put("/evaluaciones/{$assessment->id}", [
             'nombre' => 'Tarea 1 (actualizada)',
             'tipo' => 'Tarea',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
             'peso' => '0.20',
         ]);
 
@@ -116,8 +116,8 @@ class AssessmentTest extends TestCase
         $assessment = Assessment::create([
             'nombre' => 'Proyecto Final',
             'tipo' => 'Proyecto',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
             'peso' => 0.30,
         ]);
 
@@ -130,7 +130,7 @@ class AssessmentTest extends TestCase
     {
         $this->loginAsDocente();
         $response = $this->post('/evaluaciones', []);
-        $response->assertSessionHasErrors(['nombre', 'tipo', 'materia_id', 'gestion_id', 'peso']);
+        $response->assertSessionHasErrors(['nombre', 'tipo', 'subject_id', 'academic_year_id', 'peso']);
     }
 
     public function test_assessment_validation_rejects_peso_out_of_range(): void
@@ -141,8 +141,8 @@ class AssessmentTest extends TestCase
         $response = $this->post('/evaluaciones', [
             'nombre' => 'Examen',
             'tipo' => 'Examen',
-            'materia_id' => $datos['subject']->id,
-            'gestion_id' => $datos['year']->id,
+            'subject_id' => $datos['subject']->id,
+            'academic_year_id' => $datos['year']->id,
             'peso' => '2',
         ]);
 

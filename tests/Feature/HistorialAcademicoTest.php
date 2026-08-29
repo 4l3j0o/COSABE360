@@ -40,13 +40,13 @@ class HistorialAcademicoTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
 
-        $eval1 = Assessment::create(['nombre' => 'Examen 1', 'tipo' => 'Examen', 'materia_id' => $subject1->id, 'gestion_id' => $gestion2025->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
-        $eval2 = Assessment::create(['nombre' => 'Examen 2', 'tipo' => 'Examen', 'materia_id' => $subject1->id, 'gestion_id' => $gestion2026->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
-        $eval3 = Assessment::create(['nombre' => 'Tarea Lenguaje', 'tipo' => 'Tarea', 'materia_id' => $subject2->id, 'gestion_id' => $gestion2026->id, 'bimestre' => 2, 'peso' => 1, 'estado' => 'ACTIVO']);
+        $eval1 = Assessment::create(['nombre' => 'Examen 1', 'tipo' => 'Examen', 'subject_id' => $subject1->id, 'academic_year_id' => $gestion2025->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
+        $eval2 = Assessment::create(['nombre' => 'Examen 2', 'tipo' => 'Examen', 'subject_id' => $subject1->id, 'academic_year_id' => $gestion2026->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
+        $eval3 = Assessment::create(['nombre' => 'Tarea Lenguaje', 'tipo' => 'Tarea', 'subject_id' => $subject2->id, 'academic_year_id' => $gestion2026->id, 'bimestre' => 2, 'peso' => 1, 'estado' => 'ACTIVO']);
 
-        GradeScore::create(['evaluacion_id' => $eval1->id, 'assessment_id' => $eval1->id, 'estudiante_id' => $student->id, 'student_id' => $student->id, 'nota' => 80]);
-        GradeScore::create(['evaluacion_id' => $eval2->id, 'assessment_id' => $eval2->id, 'estudiante_id' => $student->id, 'student_id' => $student->id, 'nota' => 90]);
-        GradeScore::create(['evaluacion_id' => $eval3->id, 'assessment_id' => $eval3->id, 'estudiante_id' => $student->id, 'student_id' => $student->id, 'nota' => 85]);
+        GradeScore::create(['assessment_id' => $eval1->id, 'student_id' => $student->id, 'nota' => 80]);
+        GradeScore::create(['assessment_id' => $eval2->id, 'student_id' => $student->id, 'nota' => 90]);
+        GradeScore::create(['assessment_id' => $eval3->id, 'student_id' => $student->id, 'nota' => 85]);
 
         return compact('student', 'gestion2025', 'gestion2026', 'subject1', 'subject2');
     }
@@ -98,7 +98,7 @@ class HistorialAcademicoTest extends TestCase
         $student->update(['user_id' => $user->id]);
 
         $this->actingAs($user);
-        $response = $this->get('/historial-academico?gestion_id=' . $datos['gestion2025']->id);
+        $response = $this->get('/historial-academico?academic_year_id=' . $datos['gestion2025']->id);
         $response->assertStatus(200);
         $response->assertSee('Gestión 2025');
     }

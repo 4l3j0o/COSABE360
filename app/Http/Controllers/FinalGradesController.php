@@ -20,7 +20,7 @@ class FinalGradesController extends Controller
         }
 
         if ($user->hasAnyRole('Administrador,Padre/Tutor')) {
-            $parentGuardian = ParentGuardian::where('usuario_id', $user->id)->first();
+            $parentGuardian = ParentGuardian::where('user_id', $user->id)->first();
             if (!$parentGuardian) {
                 return view('notas-finales.index', ['student' => null, 'notasFinales' => collect(), 'bimestre' => $bimestre]);
             }

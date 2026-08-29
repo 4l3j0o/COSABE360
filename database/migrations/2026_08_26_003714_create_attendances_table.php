@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('fecha');
             $table->enum('estado', ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO']);
             $table->text('justificacion')->nullable();
-            $table->foreignId('registrado_por')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('registered_by_user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(['student_id', 'fecha', 'course_id'], 'uk_estudiante_fecha_curso');

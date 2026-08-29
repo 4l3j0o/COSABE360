@@ -9,8 +9,8 @@ class Assessment extends Model
 {
     protected $fillable = [
         'course_subject_id',
-        'materia_id',
-        'gestion_id',
+        'subject_id',
+        'academic_year_id',
         'nombre',
         'tipo',
         'bimestre',
@@ -31,12 +31,12 @@ class Assessment extends Model
 
     public function subject(): BelongsTo
     {
-        return $this->belongsTo(Subject::class, 'materia_id');
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
     public function academicYear(): BelongsTo
     {
-        return $this->belongsTo(AcademicYear::class, 'gestion_id');
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     public function courseSubject(): BelongsTo
@@ -45,11 +45,6 @@ class Assessment extends Model
     }
 
     public function gradeScores(): HasMany
-    {
-        return $this->hasMany(GradeScore::class, 'evaluacion_id');
-    }
-
-    public function gradeScoresAlt(): HasMany
     {
         return $this->hasMany(GradeScore::class, 'assessment_id');
     }

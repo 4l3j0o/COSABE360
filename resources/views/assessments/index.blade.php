@@ -26,16 +26,16 @@
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('evaluaciones.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            <select name="materia_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="subject_id" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todas las materias</option>
                 @foreach($subjects as $subject)
-                    <option value="{{ $subject->id }}" {{ request('materia_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
+                    <option value="{{ $subject->id }}" {{ request('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
                 @endforeach
             </select>
-            <select name="gestion_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="academic_year_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todas las gestiones</option>
                 @foreach($academicYears as $year)
-                    <option value="{{ $year->id }}" {{ request('gestion_id') == $year->id ? 'selected' : '' }}>{{ $year->nombre }}</option>
+                    <option value="{{ $year->id }}" {{ request('academic_year_id') == $year->id ? 'selected' : '' }}>{{ $year->nombre }}</option>
                 @endforeach
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>

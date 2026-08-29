@@ -49,9 +49,9 @@ class HistorialAsistenciaTest extends TestCase
         Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         // Crear asistencias variadas
-        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-01', 'estado' => 'PRESENTE', 'registrado_por' => $userDocente->id]);
-        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-02', 'estado' => 'FALTA', 'justificacion' => 'Enfermo', 'registrado_por' => $userDocente->id]);
-        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-03', 'estado' => 'ATRASO', 'registrado_por' => $userDocente->id]);
+        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-01', 'estado' => 'PRESENTE', 'registered_by_user_id' => $userDocente->id]);
+        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-02', 'estado' => 'FALTA', 'justificacion' => 'Enfermo', 'registered_by_user_id' => $userDocente->id]);
+        Attendance::create(['student_id' => $estudiante->id, 'course_id' => $curso->id, 'fecha' => '2026-04-03', 'estado' => 'ATRASO', 'registered_by_user_id' => $userDocente->id]);
 
         return compact('curso', 'teacher', 'userDocente', 'estudiante', 'gestion');
     }

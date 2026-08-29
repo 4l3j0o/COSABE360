@@ -29,8 +29,8 @@
         <div class="flex items-center gap-3 flex-wrap">
             @if(!empty($estudiantes) && $estudiantes->count() > 1)
                 <form method="GET" class="flex items-center gap-2">
-                    @if($gestion_id)
-                        <input type="hidden" name="gestion_id" value="{{ $gestion_id }}">
+                    @if($academic_year_id)
+                        <input type="hidden" name="academic_year_id" value="{{ $academic_year_id }}">
                     @endif
                     <select name="student_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                         @foreach($estudiantes as $est)
@@ -45,16 +45,16 @@
                     @if($student)
                         <input type="hidden" name="student_id" value="{{ $student->id }}">
                     @endif
-                    <select name="gestion_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                        <option value="">Todas las gestiones</option>
-                        @foreach($gestiones as $g)
-                            <option value="{{ $g->id }}" {{ (string)$gestion_id === (string)$g->id ? 'selected' : '' }}>{{ $g->nombre }} ({{ $g->estado }})</option>
+<select name="academic_year_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                            <option value="">Todas las gestiones</option>
+                            @foreach($gestiones as $g)
+                            <option value="{{ $g->id }}" {{ (string)$academic_year_id === (string)$g->id ? 'selected' : '' }}>{{ $g->nombre }} ({{ $g->estado }})</option>
                         @endforeach
                     </select>
                 </form>
             @endif
 
-            <a href="{{ route('historial.index', array_filter(['student_id' => $student?->id, 'gestion_id' => $gestion_id])) }}&export=pdf" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors hidden">
+            <a href="{{ route('historial.index', array_filter(['student_id' => $student?->id, 'academic_year_id' => $academic_year_id])) }}&export=pdf" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors hidden">
                 Exportar PDF
             </a>
         </div>

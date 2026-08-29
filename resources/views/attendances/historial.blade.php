@@ -80,7 +80,7 @@
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $badge }}">{{ $att->estado }}</span>
                             </td>
                             <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->justificacion ?? '-' }}</td>
-                            <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->registradoPor->nombre ?? '' }} {{ $att->registradoPor->apellido ?? '' }}</td>
+                            <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->registeredBy->nombre ?? '' }} {{ $att->registeredBy->apellido ?? '' }}</td>
                         </tr>
                     @empty
                         <tr>

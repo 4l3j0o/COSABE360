@@ -48,8 +48,8 @@ class GradeScoreTest extends TestCase
         $assessment = Assessment::create([
             'nombre' => 'Examen Primer Bimestre',
             'tipo' => 'Examen',
-            'materia_id' => $subject->id,
-            'gestion_id' => $year->id,
+            'subject_id' => $subject->id,
+            'academic_year_id' => $year->id,
             'peso' => 0.30,
         ]);
 
@@ -91,12 +91,12 @@ class GradeScoreTest extends TestCase
 
         $response->assertRedirect(route('calificaciones.show', $datos['assessment']));
         $this->assertDatabaseHas('grade_scores', [
-            'evaluacion_id' => $datos['assessment']->id,
-            'estudiante_id' => $datos['student']->id,
+            'assessment_id' => $datos['assessment']->id,
+            'student_id' => $datos['student']->id,
             'observaciones' => 'Muy buen trabajo',
         ]);
 
-        $score = GradeScore::where('evaluacion_id', $datos['assessment']->id)->first();
+        $score = GradeScore::where('assessment_id', $datos['assessment']->id)->first();
         $this->assertNotNull($score);
         $this->assertEquals(85.0, $score->nota);
     }
@@ -115,13 +115,13 @@ class GradeScoreTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('grade_scores', [
-            'evaluacion_id' => $datos['assessment']->id,
-            'estudiante_id' => $datos['student']->id,
+            'assessment_id' => $datos['assessment']->id,
+            'student_id' => $datos['student']->id,
             'observaciones' => null,
         ]);
-        $this->assertSame(1, GradeScore::where('evaluacion_id', $datos['assessment']->id)->count());
+        $this->assertSame(1, GradeScore::where('assessment_id', $datos['assessment']->id)->count());
 
-        $score = GradeScore::where('evaluacion_id', $datos['assessment']->id)->first();
+        $score = GradeScore::where('assessment_id', $datos['assessment']->id)->first();
         $this->assertEquals(95.0, $score->nota);
     }
 
@@ -156,8 +156,8 @@ class GradeScoreTest extends TestCase
         $datos = $this->crearDatosBase();
 
         GradeScore::create([
-            'evaluacion_id' => $datos['assessment']->id,
-            'estudiante_id' => $datos['student']->id,
+            'assessment_id' => $datos['assessment']->id,
+            'student_id' => $datos['student']->id,
             'nota' => 80,
         ]);
 

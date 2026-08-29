@@ -34,7 +34,7 @@ class GradeScoreController extends Controller
         }
 
         if ($user->hasAnyRole('Administrador,Padre/Tutor') || $user->hasRole('Padre/Tutor')) {
-            $parentGuardian = ParentGuardian::where('usuario_id', $user->id)->first();
+            $parentGuardian = ParentGuardian::where('user_id', $user->id)->first();
 
             if (! $parentGuardian) {
                 if ($user->hasRole('Administrador')) {
@@ -87,10 +87,9 @@ class GradeScoreController extends Controller
             ->orderBy('nombres')
             ->get();
 
-        $notasExistentes = GradeScore::where('evaluacion_id', $assessment->id)
-            ->orWhere('assessment_id', $assessment->id)
+        $notasExistentes = GradeScore::where('assessment_id', $assessment->id)
             ->get()
-            ->keyBy(fn ($s) => $s->estudiante_id ?? $s->student_id);
+            ->keyBy('student_id');
 
         return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes'));
     }
@@ -112,13 +111,11 @@ class GradeScoreController extends Controller
             }
 
             GradeScore::updateOrCreate(
-                ['evaluacion_id' => $assessment->id, 'estudiante_id' => $estudianteId],
+                ['assessment_id' => $assessment->id, 'student_id' => $estudianteId],
                 [
-                    'assessment_id' => $assessment->id,
-                    'student_id' => $estudianteId,
                     'nota' => $nota,
                     'observaciones' => $observaciones[$estudianteId] ?? null,
-                    'registrado_por' => auth()->id(),
+                    'registered_by_user_id' => auth()->id(),
                     'registrado_en' => now(),
                 ]
             );
@@ -130,19 +127,14 @@ class GradeScoreController extends Controller
 
     private function verCalificaciones(Student $student, ?string $bimestre, $hijos = null): View
     {
-        $query = GradeScore::where(function ($q) use ($student) {
-            $q->where('student_id', $student->id)
-                ->orWhere('estudiante_id', $student->id);
-        })->with([
+        $query = GradeScore::where('student_id', $student->id)->with([
             'assessment.courseSubject.subject',
             'assessment.courseSubject.course.section.grade',
-            'evaluacion.courseSubject.subject',
-            'evaluacion.subject',
+            'assessment.subject',
         ]);
 
         if ($bimestre) {
-            $query->whereHas('assessment', fn ($q) => $q->where('bimestre', $bimestre))
-                ->orWhereHas('evaluacion', fn ($q) => $q->where('bimestre', $bimestre));
+            $query->whereHas('assessment', fn ($q) => $q->where('bimestre', $bimestre));
         }
 
         $scores = $query->get();
@@ -150,29 +142,27 @@ class GradeScoreController extends Controller
         $calificacionesPorMateria = $scores
             ->groupBy(function ($s) {
                 return $s->assessment?->courseSubject?->subject?->nombre
-                    ?? $s->evaluacion?->courseSubject?->subject?->nombre
                     ?? $s->assessment?->subject?->nombre
-                    ?? $s->evaluacion?->subject?->nombre
                     ?? 'Sin materia';
             })
             ->map(function ($group, $materia) {
                 $notas = $group->pluck('nota');
-                $assessments = $group->map(fn ($s) => $s->assessment ?? $s->evaluacion);
+                $assessments = $group->map(fn ($s) => $s->assessment);
                 $sumPesos = $assessments->sum('peso');
                 $promedio = $sumPesos > 0
-                    ? round($group->sum(fn ($s) => $s->nota * (($s->assessment ?? $s->evaluacion)->peso / $sumPesos)), 2)
+                    ? round($group->sum(fn ($s) => $s->nota * ($s->assessment->peso / $sumPesos)), 2)
                     : round($notas->avg(), 2);
 
                 return [
                     'materia' => $materia,
                     'notas' => $group->map(fn ($s) => [
                         'id' => $s->id,
-                        'nombre' => ($s->assessment ?? $s->evaluacion)->nombre,
-                        'tipo' => ($s->assessment ?? $s->evaluacion)->tipo,
+                        'nombre' => $s->assessment->nombre,
+                        'tipo' => $s->assessment->tipo,
                         'nota' => $s->nota,
-                        'peso' => ($s->assessment ?? $s->evaluacion)->peso,
-                        'bimestre' => ($s->assessment ?? $s->evaluacion)->bimestre,
-                        'fecha' => ($s->assessment ?? $s->evaluacion)->fecha?->format('d/m/Y'),
+                        'peso' => $s->assessment->peso,
+                        'bimestre' => $s->assessment->bimestre,
+                        'fecha' => $s->assessment->fecha?->format('d/m/Y'),
                         'observaciones' => $s->observaciones,
                     ]),
                     'promedio' => $promedio,
