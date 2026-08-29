@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
+use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
@@ -308,4 +309,13 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
     Route::get('/matriculas', [ReporteAdministrativoController::class, 'matriculas'])->name('reportes.administrativos.matriculas');
     Route::get('/pagos', [ReporteAdministrativoController::class, 'pagos'])->name('reportes.administrativos.pagos');
     Route::get('/documentacion', [ReporteAdministrativoController::class, 'documentacion'])->name('reportes.administrativos.documentacion');
+});
+
+// HU-34: Exportar reportes a PDF/Excel con encabezado
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
+    Route::get('/academico/calificaciones', [ReporteExportController::class, 'academicoCalificaciones'])->name('reportes.export.academico.calificaciones');
+    Route::get('/academico/promedios', [ReporteExportController::class, 'academicoPromedios'])->name('reportes.export.academico.promedios');
+    Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');
+    Route::get('/administrativo/pagos', [ReporteExportController::class, 'administrativoPagos'])->name('reportes.export.administrativo.pagos');
+    Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
 });
