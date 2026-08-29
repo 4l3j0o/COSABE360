@@ -21,6 +21,7 @@ use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\TeacherCourseController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -128,6 +129,11 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(function () {
     Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
     Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
+});
+
+// Mis Cursos del docente - evaluaciones por curso/paralelo (course_subject)
+Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
+    Route::get('/', [TeacherCourseController::class, 'index'])->name('docente.cursos');
 });
 
 // HU-13: Administrar paralelos solo Administrador
