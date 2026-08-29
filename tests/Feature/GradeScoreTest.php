@@ -34,7 +34,7 @@ class GradeScoreTest extends TestCase
 
         $subject = Subject::create([
             'nombre' => 'Matemáticas',
-            'nivel_id' => $nivel->id,
+            'level_id' => $nivel->id,
             'estado' => 'ACTIVO',
         ]);
 
