@@ -7,6 +7,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\ReporteAcademicoController;
+use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
@@ -298,4 +299,13 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
     Route::get('/', [ReporteAcademicoController::class, 'index'])->name('reportes.academicos.index');
     Route::get('/calificaciones', [ReporteAcademicoController::class, 'calificaciones'])->name('reportes.academicos.calificaciones');
     Route::get('/promedios', [ReporteAcademicoController::class, 'promedios'])->name('reportes.academicos.promedios');
+});
+
+// HU-33: Reportes administrativos - Director/Administrador/Secretaría
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/administrativos')->group(function () {
+    Route::get('/', [ReporteAdministrativoController::class, 'index'])->name('reportes.administrativos.index');
+    Route::get('/inscripciones', [ReporteAdministrativoController::class, 'inscripciones'])->name('reportes.administrativos.inscripciones');
+    Route::get('/matriculas', [ReporteAdministrativoController::class, 'matriculas'])->name('reportes.administrativos.matriculas');
+    Route::get('/pagos', [ReporteAdministrativoController::class, 'pagos'])->name('reportes.administrativos.pagos');
+    Route::get('/documentacion', [ReporteAdministrativoController::class, 'documentacion'])->name('reportes.administrativos.documentacion');
 });
