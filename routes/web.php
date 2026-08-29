@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FinalGradesController;
@@ -223,4 +224,9 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 // HU24: Notas finales por materia - Estudiante y Padre/Tutor
 Route::middleware(['auth'])->group(function () {
     Route::get('/notas-finales', [FinalGradesController::class, 'index'])->name('notas-finales.index');
+});
+
+// HU-25: Historial académico - Estudiante/Padre/Director
+Route::middleware(['auth'])->group(function () {
+    Route::get('/historial-academico', [HistorialAcademicoController::class, 'index'])->name('historial.index');
 });
