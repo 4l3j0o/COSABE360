@@ -97,7 +97,7 @@ class EnrollmentRegistrationSeeder extends Seeder
             $cuotas = [];
             foreach (range(2, 11) as $mes) {
                 $cuotas[$mes] = [
-                    'enrollment_id' => $enrollment->id,
+                    'registration_id' => $registration->id,
                     'mes'           => $mes,
                     'monto'         => $montoMensual,
                     'fecha'         => null,
@@ -112,7 +112,7 @@ class EnrollmentRegistrationSeeder extends Seeder
             $cuotas[3]['metodo_pago'] = $this->metodoPara($student->id);
             $cuotas[3]['estado']     = 'PAGADA';
 
-            $this->syncCuotas($enrollment->id, $cuotas);
+            $this->syncCuotas($registration->id, $cuotas);
         }
 
         $this->command->info('Inscripciones, matrículas y cuotas generadas para todos los estudiantes.');
@@ -124,9 +124,9 @@ class EnrollmentRegistrationSeeder extends Seeder
         return $metodos[($id - 1) % count($metodos)];
     }
 
-    private function syncCuotas(int $enrollmentId, array $cuotas): void
+    private function syncCuotas(int $registrationId, array $cuotas): void
     {
-        MonthlyPayment::where('enrollment_id', $enrollmentId)->delete();
+        MonthlyPayment::where('registration_id', $registrationId)->delete();
         MonthlyPayment::insert(array_values($cuotas));
     }
 }

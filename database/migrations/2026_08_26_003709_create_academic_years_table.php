@@ -15,6 +15,7 @@ return new class extends Migration
             $table->date('fecha_fin');
             $table->enum('estado', ['ACTIVA', 'CERRADA', 'PROXIMA'])->default('PROXIMA');
             $table->timestamps();
+            $table->index('estado');
         });
     }
 

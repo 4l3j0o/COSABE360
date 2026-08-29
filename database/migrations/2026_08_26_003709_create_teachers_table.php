@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('email', 150)->nullable()->unique();
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
-            $table->softDeletes();
             $table->unique(['numero_documento', 'complemento'], 'uk_documento');
             $table->index('codigo', 'idx_codigo');
             $table->index(['nombres', 'apellidos'], 'idx_nombre');

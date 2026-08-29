@@ -197,7 +197,7 @@ class StudentHu07Test extends TestCase
         Storage::disk('public')->assertExists($est->fotografia);
     }
 
-    public function test_elimina_logico_con_softdelete_y_restaura(): void
+    public function test_elimina_logico_con_estado_eliminado_y_restaura(): void
     {
         $admin = $this->adminUser();
         $est = $this->crearEstudiante(['numero_documento' => '9999999', 'codigo' => 'EST-2026-0004']);
@@ -205,8 +205,8 @@ class StudentHu07Test extends TestCase
         // Eliminar
         $response = $this->actingAs($admin)->delete(route('students.destroy', $est));
         $response->assertRedirect(route('students.index'));
-        $this->assertSoftDeleted('students', ['id' => $est->id]);
-        $this->assertDatabaseMissing('students', ['id' => $est->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('students', ['id' => $est->id, 'estado' => 'ELIMINADO']);
+        $this->assertDatabaseMissing('students', ['id' => $est->id, 'estado' => 'ACTIVO']);
 
         // No aparece en index
         $response = $this->actingAs($admin)->get(route('students.index'));
@@ -219,7 +219,7 @@ class StudentHu07Test extends TestCase
         // Restaurar
         $response = $this->actingAs($admin)->patch(route('students.restaurar', $est->id));
         $response->assertRedirect(route('students.eliminados'));
-        $this->assertDatabaseHas('students', ['id' => $est->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('students', ['id' => $est->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_registra_historial_al_editar_estudiante(): void

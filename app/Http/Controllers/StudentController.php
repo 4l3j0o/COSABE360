@@ -21,7 +21,7 @@ class StudentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user']);
+        $query = Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user'])->where('estado', '!=', 'ELIMINADO');
 
         if ($request->filled('buscar')) {
             $buscar = addcslashes($request->buscar, '%_');
@@ -53,7 +53,7 @@ class StudentController extends Controller
         }
 
         $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
-        $eliminadosCount = Student::onlyTrashed()->count();
+        $eliminadosCount = Student::where('estado', 'ELIMINADO')->count();
 
         $estadosAcademicos = $this->estadosAcademicos($students->pluck('id'));
 
@@ -299,13 +299,13 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
-        $student->delete();
+        $student->update(['estado' => 'ELIMINADO']);
         return redirect()->route('students.index')->with('mensaje', 'Estudiante eliminado correctamente.');
     }
 
     public function eliminados()
     {
-        $students = Student::onlyTrashed()
+        $students = Student::where('estado', 'ELIMINADO')
             ->orderBy('apellidos')
             ->paginate(15);
 
@@ -314,8 +314,7 @@ class StudentController extends Controller
 
     public function restaurar($id)
     {
-        $student = Student::onlyTrashed()->findOrFail($id);
-        $student->restore();
+        $student = Student::where('estado', 'ELIMINADO')->findOrFail($id);
         $student->update(['estado' => 'ACTIVO']);
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
     }
@@ -403,7 +402,7 @@ class StudentController extends Controller
         }
 
         try {
-            $inscripcion->registration()->create([
+            $registration = $inscripcion->registration()->create([
                 'course_id'          => $curso->id,
                 'fecha'              => $validated['fecha'],
                 'monto_mensual'      => $montoMensual,
@@ -417,7 +416,7 @@ class StudentController extends Controller
                 $cuotas = [];
                 for ($mes = 2; $mes <= 11; $mes++) {
                     $cuotas[] = [
-                        'enrollment_id' => $inscripcion->id,
+                        'registration_id' => $registration->id,
                         'mes'           => $mes,
                         'monto'         => $montoMensual,
                         'fecha'         => null,

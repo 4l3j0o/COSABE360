@@ -15,7 +15,7 @@ class MonthlyPaymentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MonthlyPayment::with(['enrollment.estudiante'])->latest();
+        $query = MonthlyPayment::with(['registration.enrollment.estudiante'])->latest();
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
@@ -23,7 +23,7 @@ class MonthlyPaymentController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
-            $query->whereHas('enrollment.estudiante', function ($q) use ($buscar) {
+            $query->whereHas('registration.enrollment.estudiante', function ($q) use ($buscar) {
                 $q->where('nombres', 'like', "%{$buscar}%")
                     ->orWhere('apellidos', 'like', "%{$buscar}%")
                     ->orWhere('codigo', 'like', "%{$buscar}%");
@@ -55,8 +55,9 @@ class MonthlyPaymentController extends Controller
         $mesesPendientes = 0;
         $mesesPagados = 0;
 
-        if ($inscripcion) {
-            $pagos = MonthlyPayment::where('enrollment_id', $inscripcion->id)
+        $matricula = $inscripcion?->registration;
+        if ($matricula) {
+            $pagos = $matricula->monthlyPayments()
                 ->orderBy('mes')
                 ->get();
 
@@ -120,7 +121,7 @@ class MonthlyPaymentController extends Controller
             ])->withInput();
         }
 
-        $cuota = MonthlyPayment::where('enrollment_id', $inscripcion->id)
+        $cuota = $inscripcion->registration->monthlyPayments()
             ->where('mes', $validated['mes'])
             ->first();
 

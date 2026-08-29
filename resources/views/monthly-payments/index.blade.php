@@ -87,8 +87,8 @@
                         @foreach($pagos as $pago)
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3">
-                                    <div class="font-medium text-foreground">{{ $pago->enrollment?->estudiante?->apellidos }} {{ $pago->enrollment?->estudiante?->nombres }}</div>
-                                    <div class="text-xs text-muted-foreground font-mono">{{ $pago->enrollment?->estudiante?->codigo }}</div>
+                                    <div class="font-medium text-foreground">{{ $pago->registration?->enrollment?->estudiante?->apellidos }} {{ $pago->registration?->enrollment?->estudiante?->nombres }}</div>
+                                    <div class="text-xs text-muted-foreground font-mono">{{ $pago->registration?->enrollment?->estudiante?->codigo }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $meses[$pago->mes] ?? $pago->mes }}</td>
                                 <td class="px-4 py-3 text-foreground font-medium">Bs {{ number_format($pago->monto, 2) }}</td>

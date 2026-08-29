@@ -12,7 +12,7 @@ class MonthlyPayment extends Model
     public const METODOS_PAGO = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'OTRO'];
 
     protected $fillable = [
-        'enrollment_id',
+        'registration_id',
         'mes',
         'monto',
         'fecha',
@@ -26,8 +26,8 @@ class MonthlyPayment extends Model
         'fecha' => 'date',
     ];
 
-    public function enrollment(): BelongsTo
+    public function registration(): BelongsTo
     {
-        return $this->belongsTo(Enrollment::class, 'enrollment_id');
+        return $this->belongsTo(Registration::class, 'registration_id');
     }
 }

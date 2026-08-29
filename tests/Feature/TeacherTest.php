@@ -19,6 +19,7 @@ class TeacherTest extends TestCase
 
     private function adminUser(): User
     {
+        Role::firstOrCreate(['nombre' => 'Docente'], ['descripcion' => 'Docente']);
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
             'role_id' => $rol->id,
