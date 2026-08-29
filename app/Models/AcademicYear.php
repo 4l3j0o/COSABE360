@@ -20,6 +20,11 @@ class AcademicYear extends Model
         'fecha_fin' => 'date',
     ];
 
+    public function assessments(): HasMany
+    {
+        return $this->hasMany(Assessment::class, 'gestion_id');
+    }
+
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class, 'academic_year_id');

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\EnrollmentController;
@@ -104,6 +105,16 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
     Route::post('/', [GradeController::class, 'store'])->name('grados.store');
     Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
     Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
+});
+
+// HU21: Registrar evaluaciones - solo Docente
+Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(function () {
+    Route::get('/', [AssessmentController::class, 'index'])->name('evaluaciones.index');
+    Route::get('/crear', [AssessmentController::class, 'create'])->name('evaluaciones.create');
+    Route::post('/', [AssessmentController::class, 'store'])->name('evaluaciones.store');
+    Route::get('/{assessment}/editar', [AssessmentController::class, 'edit'])->name('evaluaciones.edit');
+    Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('evaluaciones.update');
+    Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('evaluaciones.destroy');
 });
 
 // HU-13: Administrar paralelos solo Administrador
