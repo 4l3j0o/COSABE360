@@ -1,5 +1,7 @@
 <script>
     const ESTUDIANTES = @json($estudiantes);
+    const ESTUDIANTES_CON_TUTOR = @json(array_map('strval', $estudiantesConTutor ?? []));
+    const CON_TUTOR_SET = new Set(ESTUDIANTES_CON_TUTOR);
 
     function openModal(id) { document.getElementById(id).style.display = 'block'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -57,18 +59,61 @@
             dd.innerHTML = '<div style="padding:0.625rem 0.75rem; font-size:0.875rem; color:var(--muted-foreground);">' +
                 (q ? 'Sin coincidencias con estudiantes activos.' : 'No hay estudiantes activos registrados todavía.') +
                 '</div>';
+            dd.style.height = '';
+            dd._data = items;
+            dd.style.display = 'block';
+            return;
         } else {
+            // Mostramos los primeros 3 resultados; el resto se revela al hacer scroll.
+            var EST_TOPE = 3;
             var html = '';
-            for (var j = 0; j < items.length; j++) {
+            var visible = Math.min(EST_TOPE, items.length);
+            for (var j = 0; j < visible; j++) {
                 var it = items[j];
+                var yaTutor = CON_TUTOR_SET.has(String(it.id));
                 html += '<div class="px-3 py-2 cursor-pointer text-sm border-b border-border last:border-0 hover:bg-muted transition-colors" onmousedown="seleccionarEstudiante(this); return false;" data-index="' + j + '">' +
-                    '<div class="font-semibold text-foreground">' + (it.apellidos || '') + ' ' + (it.nombres || '') + '</div>' +
+                    '<div class="font-semibold text-foreground">' + (it.apellidos || '') + ' ' + (it.nombres || '') + (yaTutor ? ' <span style="color:var(--warning); font-size:0.6875rem; font-weight:600;">• con tutor</span>' : '') + '</div>' +
                     '<div class="text-xs text-muted-foreground">' + (it.codigo || '') + '</div>' +
                 '</div>';
             }
+            if (items.length > EST_TOPE) {
+                // Deja espacio para que el scroll sea visible y se pueda bajar para ver el resto.
+                html += '<div class="scroll-more" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:' + (3 * 50) + 'px; color:var(--muted-foreground); font-size:0.8125rem; text-align:center;">▼ Desplácese para ver más (' + (items.length - EST_TOPE) + ' más)</div>';
+            }
             dd.innerHTML = html;
+            // Fijamos una altura de 220px cuando hay más de 3 para garantizar el scroll.
+            if (items.length > EST_TOPE) {
+                dd.style.height = '220px';
+            } else {
+                dd.style.height = '';
+            }
+            dd._data = items;
+            dd._topeEst = visible;
+            if (!dd._scrollEst) {
+                dd._scrollEst = true;
+                dd.addEventListener('scroll', function () {
+                    if (dd.scrollTop + dd.clientHeight >= dd.scrollHeight - 10 && dd._topeEst < dd._data.length) {
+                        var nuevoTope = Math.min(dd._topeEst + 10, dd._data.length);
+                        var extraHtml = '';
+                        for (var x = dd._topeEst; x < nuevoTope; x++) {
+                            var ix = dd._data[x];
+                            var yaT2 = CON_TUTOR_SET.has(String(ix.id));
+                            extraHtml += '<div class="px-3 py-2 cursor-pointer text-sm border-b border-border last:border-0 hover:bg-muted transition-colors" onmousedown="seleccionarEstudiante(this); return false;" data-index="' + x + '">' +
+                                '<div class="font-semibold text-foreground">' + (ix.apellidos || '') + ' ' + (ix.nombres || '') + (yaT2 ? ' <span style="color:var(--warning); font-size:0.6875rem; font-weight:600;">• con tutor</span>' : '') + '</div>' +
+                                '<div class="text-xs text-muted-foreground">' + (ix.codigo || '') + '</div>' +
+                            '</div>';
+                        }
+                        var sc = dd.querySelector('.scroll-more');
+                        if (sc) sc.remove();
+                        dd.insertAdjacentHTML('beforeend', extraHtml);
+                        dd._topeEst = nuevoTope;
+                        if (dd._topeEst < dd._data.length) {
+                            dd.insertAdjacentHTML('beforeend', '<div class="scroll-more" style="padding:0.625rem 0.75rem; color:var(--muted-foreground); font-size:0.8125rem; text-align:center;">▼ Desplácese para ver más (' + (dd._data.length - dd._topeEst) + ' más)</div>');
+                        }
+                    }
+                });
+            }
         }
-        dd._data = items;
         dd.style.display = 'block';
     }
 
@@ -78,6 +123,7 @@
         var e = (dd._data || [])[el.getAttribute('data-index')] || {};
         if (!e.id) return;
         fila.querySelector('.f-est-id').value = e.id;
+        fila._estYaTutor = CON_TUTOR_SET.has(String(e.id));
         var info = fila.querySelector('.es-info');
         if (info) info.innerHTML = '<strong>' + (e.apellidos || '') + ' ' + (e.nombres || '') + '</strong>' + (e.codigo ? ' — ' + e.codigo : '');
         var resumen = fila.querySelector('.estudiante-seleccionado');
@@ -85,6 +131,10 @@
         fila.querySelector('.buscador-estudiante').value = '';
         dd.style.display = 'none';
         dd._data = [];
+        var aviso = fila.querySelector('.f-aviso-tutor');
+        if (aviso) { aviso.style.display = (fila._estYaTutor) ? 'block' : 'none'; aviso.textContent = 'Este estudiante ya cuenta con un tutor. Puede registrarlo como padre/madre únicamente.'; }
+        var tipo = fila.querySelector('select[name$="[tipo_relacion]"]');
+        if (tipo && fila._estYaTutor && (tipo.value === 'TUTOR')) { tipo.value = ''; }
         actualizarCorreoRequerido();
     }
 
@@ -93,8 +143,23 @@
         fila.querySelector('.f-est-id').value = '';
         var resumen = fila.querySelector('.estudiante-seleccionado');
         if (resumen) resumen.style.display = 'none';
+        var aviso = fila.querySelector('.f-aviso-tutor');
+        if (aviso) aviso.style.display = 'none';
+        fila._estYaTutor = false;
         var input = fila.querySelector('.buscador-estudiante');
         if (input) input.focus();
+        actualizarCorreoRequerido();
+    }
+
+    function validarTipoRelacion(sel) {
+        var fila = sel.closest('.fila-estudiante');
+        var aviso = fila.querySelector('.f-aviso-tutor');
+        if (sel.value === 'TUTOR' && fila._estYaTutor) {
+            if (aviso) { aviso.style.display = 'block'; aviso.textContent = 'Este estudiante ya cuenta con un tutor. Solo puede registrarlo como padre o madre.'; }
+            sel.value = '';
+        } else if (aviso && !fila._estYaTutor) {
+            aviso.style.display = 'none';
+        }
         actualizarCorreoRequerido();
     }
 
@@ -133,7 +198,8 @@
                     '</div>' +
                 '</div>' +
                 '<div class="w-full sm:w-40">' +
-                    '<select name="students[' + idx + '][tipo_relacion]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesTipo(datos.tipo, modo) + '</select>' +
+                    '<select name="students[' + idx + '][tipo_relacion]" onchange="validarTipoRelacion(this)" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesTipo(datos.tipo, modo) + '</select>' +
+                    '<p class="f-aviso-tutor" style="display:none; margin-top:0.375rem; font-size:0.6875rem; color:var(--warning);"></p>' +
                 '</div>' +
                 '<div class="shrink-0">' +
                     '<button type="button" onclick="quitarFilaEstudiante(this, \'' + modo + '\')" class="px-3 py-2.5 rounded-lg border border-error/20 text-error hover:bg-error/10 transition-colors cursor-pointer" title="Quitar">' +
@@ -142,6 +208,14 @@
                 '</div>' +
             '</div>';
         contenedor.appendChild(fila);
+        fila._estYaTutor = datos.id ? CON_TUTOR_SET.has(String(datos.id)) : false;
+        var aviso = fila.querySelector('.f-aviso-tutor');
+        if (aviso && fila._estYaTutor) {
+            aviso.style.display = 'block';
+            aviso.textContent = 'Este estudiante ya cuenta con un tutor. Puede registrarlo como padre/madre únicamente.';
+            var sel = fila.querySelector('select[name$="[tipo_relacion]"]');
+            if (sel && (sel.value === 'TUTOR')) sel.value = '';
+        }
     }
 
     function quitarFilaEstudiante(btn, modo) {

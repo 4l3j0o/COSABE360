@@ -16,9 +16,9 @@
                 <p class="text-sm text-muted-foreground">Horario semanal de clases</p>
             </div>
         </div>
-        <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+        <button onclick="abrirModalAgregarClase()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nuevo Horario
+            Agregar Clase
         </button>
     </div>
 
@@ -38,7 +38,7 @@
         <div class="bg-card border border-border rounded-xl p-12 text-center">
             <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
             <p class="text-muted-foreground text-sm">Este paralelo aún no tiene horario asignado.</p>
-            <button onclick="openModal('modal-create')" class="mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+            <button onclick="abrirModalAgregarClase()" class="mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Asignar clases
             </button>
@@ -112,43 +112,38 @@
         <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
             <div style="width:100%; max-width:48rem; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
-                    <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Nuevo Horario</h2>
+                    <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Agregar Clase al Horario</h2>
                     <button onclick="closeModal('modal-create')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <form method="POST" action="{{ route('schedules.store') }}" style="padding:1.5rem;">
                     @csrf
+                    <input type="hidden" name="course_id" value="{{ $course->id }}">
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
-                            <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="{{ $course->id }}" selected>{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</option>
-                                @foreach($courses ?? [] as $courseOpt)
-                                    @if($courseOpt->id != $course->id)
-                                        <option value="{{ $courseOpt->id }}">{{ $courseOpt->nombre }} - {{ $courseOpt->aula ?? 's/a' }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="subject"
+                                name="subject_id"
+                                label="Materia"
+                                required
+                                :items="$subjects ?? []"
+                                placeholder="Buscar materia..."
+                                searchHint="Escriba para buscar por nombre de materia."
+                            />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                            <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($subjects ?? [] as $subject)
-                                    <option value="{{ $subject->id }}">{{ $subject->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente <span class="text-error">*</span></label>
-                            <select name="teacher_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($teachers ?? [] as $teacher)
-                                    <option value="{{ $teacher->id }}">{{ $teacher->nombres }} {{ $teacher->apellidos }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="teacher"
+                                name="teacher_id"
+                                label="Docente"
+                                required
+                                :items="$teachers ?? []"
+                                placeholder="Buscar docente..."
+                                searchHint="Escriba para buscar por nombre o especialidad."
+                                especialidad
+                            />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Día <span class="text-error">*</span></label>
@@ -179,7 +174,7 @@
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border); margin-top:1rem;">
                         <button type="button" onclick="closeModal('modal-create')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>
-                        <button type="submit" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Crear Horario</button>
+                        <button type="submit" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Agregar Clase</button>
                     </div>
                 </form>
             </div>
@@ -189,15 +184,44 @@
 
 @push('scripts')
     <script>
-        function openModal(id) {
-            var el = document.getElementById(id);
-            el.style.display = 'block';
-            document.body.style.overflow = 'hidden';
+        function pickNormalizar(s) { return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+        function fragmentosEspecialidad(dataEsp) {
+            return (dataEsp || '').split(/[y,/\-;]+|\s+/).map(function (f) { return f.trim(); }).filter(Boolean);
         }
-        function closeModal(id) {
-            var el = document.getElementById(id);
-            el.style.display = 'none';
-            document.body.style.overflow = '';
+        function materiaCoincideConEspecialidad(nombreMateria, dataEsp) {
+            if (!dataEsp) return true;
+            var matLin = pickNormalizar(nombreMateria);
+            return fragmentosEspecialidad(dataEsp).some(function (frag) {
+                return matLin.indexOf(pickNormalizar(frag)) !== -1;
+            });
+        }
+
+        function materiaSeleccionada() {
+            return document.getElementById('pick-subject-value').value || '';
+        }
+
+        window.pickFiltroExtra = function (id, item) {
+            if (id === 'teacher') {
+                var materia = document.getElementById('pick-subject-input').value;
+                if (materia && item.getAttribute('data-especialidad')) {
+                    return materiaCoincideConEspecialidad(materia, item.getAttribute('data-especialidad'));
+                }
+                return true;
+            }
+            if (id === 'subject') {
+                var teachEl = document.getElementById('pick-teacher-lista').querySelector('.pick-item[data-value="' + document.getElementById('pick-teacher-value').value + '"]');
+                var esp = teachEl ? teachEl.getAttribute('data-especialidad') : '';
+                if (esp) {
+                    return materiaCoincideConEspecialidad(item.getAttribute('data-label'), esp);
+                }
+                return true;
+            }
+            return true;
+        };
+
+        function abrirModalAgregarClase() {
+            if (typeof resetaPickers === 'function') resetaPickers();
+            openModal('modal-create');
         }
     </script>
 @endpush

@@ -184,6 +184,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(fu
 // HU-14: Administrar materias solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('subjects.index');
+    Route::get('/{subject}', [SubjectController::class, 'show'])->name('subjects.show');
     Route::post('/', [SubjectController::class, 'store'])->name('subjects.store');
     Route::put('/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
     Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');

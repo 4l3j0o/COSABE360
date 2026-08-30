@@ -136,13 +136,15 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Paralelo</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">Seleccionar grado...</option>
-                                    @foreach($grados as $grado)
-                                        <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="grade-create"
+                                    name="grade_id"
+                                    label="Grado"
+                                    required
+                                    placeholder="Buscar grado..."
+                                    searchHint="Escriba para buscar por nivel o grado."
+                                    :items="$grados->map(fn($g) => ['value' => $g->id, 'label' => $g->level->nombre . ' · ' . $g->nombre])"
+                                />
                                 @error('grade_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -156,13 +158,15 @@
                                 @error('capacidad') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="teacher_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">— Sin asignar —</option>
-                                    @foreach($docentes as $docente)
-                                        <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="teacher-create"
+                                    name="teacher_id"
+                                    label="Docente Responsable"
+                                    placeholder="Buscar docente..."
+                                    searchHint="Opcional. Escriba para buscar por nombre o especialidad."
+                                    especialidad
+                                    :items="$docentes->map(fn($d) => ['value' => $d->id, 'label' => $d->apellidos . ' ' . $d->nombres, 'subtitulo' => $d->especialidad ?? ''])"
+                                />
                                 @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -192,12 +196,14 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Paralelo</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grade_id" id="edit-grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    @foreach($grados as $grado)
-                                        <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="grade-edit"
+                                    name="grade_id"
+                                    label="Grado"
+                                    required
+                                    placeholder="Buscar grado..."
+                                    :items="$grados->map(fn($g) => ['value' => $g->id, 'label' => $g->level->nombre . ' · ' . $g->nombre])"
+                                />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo <span class="text-error">*</span></label>
@@ -208,13 +214,15 @@
                                 <input type="number" name="capacidad" id="edit-capacidad" min="1" max="255" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="teacher_id" id="edit-teacher_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">— Sin asignar —</option>
-                                    @foreach($docentes as $docente)
-                                        <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="teacher-edit"
+                                    name="teacher_id"
+                                    label="Docente Responsable"
+                                    placeholder="Buscar docente..."
+                                    especialidad
+                                    :items="$docentes->map(fn($d) => ['value' => $d->id, 'label' => $d->apellidos . ' ' . $d->nombres, 'subtitulo' => $d->especialidad ?? ''])"
+                                />
+                                <button type="button" onclick="limpiarDocenteEdit()" class="text-xs text-muted-foreground underline mt-1 cursor-pointer">Quitar asignación</button>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado</label>
@@ -243,12 +251,15 @@
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
+        function limpiarDocenteEdit() {
+            setPickerValor('teacher-edit', '');
+        }
         function editarParalelo(id, gradoId, nombre, responsableId, capacidad, estado) {
             document.getElementById('form-edit').action = '/paralelos/' + id;
-            document.getElementById('edit-grade_id').value = gradoId;
+            setPickerValor('grade-edit', gradoId);
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-capacidad').value = capacidad;
-            document.getElementById('edit-teacher_id').value = responsableId || '';
+            setPickerValor('teacher-edit', responsableId || '');
             document.getElementById('edit-estado').value = estado;
             openModal('modal-edit');
         }

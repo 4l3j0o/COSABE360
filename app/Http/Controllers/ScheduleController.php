@@ -210,6 +210,15 @@ class ScheduleController extends Controller
 
         Schedule::create($validated);
 
+        $schedulesUrl = null;
+        if (isset($validated['course_id'])) {
+            $schedulesUrl = route('schedules.show', $validated['course_id']);
+        }
+
+        if ($schedulesUrl) {
+            return redirect($schedulesUrl)->with('mensaje', 'Clase agregada correctamente al horario.');
+        }
+
         return redirect()->route('schedules.index')->with('mensaje', 'Horario creado correctamente.');
     }
 

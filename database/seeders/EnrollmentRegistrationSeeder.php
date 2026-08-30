@@ -198,19 +198,53 @@ class EnrollmentRegistrationSeeder extends Seeder
             ]
         );
 
-        $padres = ParentGuardian::orderBy('id')->get();
-        if ($padres->isNotEmpty()) {
-            $padre = $padres->get($semilla % $padres->count());
+        // Tutores con acceso al sistema y rol de tutor. Solo ellos pueden ser
+        // el padre/tutor principal (es_principal) de un estudiante.
+        $rolTutor = Role::where('nombre', 'Padre/Tutor')->value('id');
+        $padresTutores = ParentGuardian::whereHas('user', function ($q) use ($rolTutor) {
+            $q->where('role_id', $rolTutor)->where('estado', 'ACTIVO');
+        })->orderBy('id')->get();
+
+        // 1) Tutor principal: debe tener acceso al sistema y rol de tutor.
+        if ($padresTutores->isNotEmpty()) {
+            $tutor = $padresTutores->get($semilla % $padresTutores->count());
             $student->parentGuardians()->syncWithoutDetaching([
-                $padre->id => [
-                    'tipo_relacion' => 'PADRE',
+                $tutor->id => [
+                    'tipo_relacion' => 'TUTOR',
                     'es_principal'  => true,
                     'convive'       => true,
                 ],
             ]);
         }
 
+        // 2) Familiar adicional (opcional), coherente con el género del padre:
+        //    una mujer nunca figura como PADRE ni un hombre como MADRE.
+        $padres = ParentGuardian::orderBy('id')->get();
+        if ($padres->isNotEmpty() && (($semilla + 3) % 3 === 0)) {
+            $padre = $padres->get(($semilla + 3) % $padres->count());
+            $tipo = $this->padreEsHombre($padre->nombres) ? 'PADRE' : 'MADRE';
+            $student->parentGuardians()->syncWithoutDetaching([
+                $padre->id => [
+                    'tipo_relacion' => $tipo,
+                    'es_principal'  => false,
+                    'convive'       => true,
+                ],
+            ]);
+        }
+
         return $student;
+    }
+
+    private function padreEsHombre(string $nombres): bool
+    {
+        $primer = strtolower(trim(preg_split('/\s+/', trim($nombres))[0] ?? ''));
+        // Nombres femeninos que no terminan en 'a' (p. ej. Carmen).
+        if (in_array($primer, ['carmen', 'esther', 'rut', 'noel', 'dayana', 'sol', 'michelle', 'yolanda'], true)) {
+            return false;
+        }
+        // Los demás nombres femeninos del pool terminan en 'a'
+        // (Rosa, María, Ana, Claudia, Silvia, Patricia, Carmen, Lucía, ...).
+        return $primer !== '' && ! str_ends_with($primer, 'a');
     }
 
     private function metodoPara(int $id): string

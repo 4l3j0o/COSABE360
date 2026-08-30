@@ -7,7 +7,11 @@
 
 @section('contenido')
     <div class="mb-6">
-        <a href="{{ route('students.index') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al listado</a>
+        @php
+            $volver = request('volver') ? urldecode(request('volver')) : route('students.index');
+            $volverTexto = request('volver') ? '← Volver a Estudiantes del Paralelo' : '← Volver al listado';
+        @endphp
+        <a href="{{ $volver }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">{{ $volverTexto }}</a>
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $student->apellidos }}, {{ $student->nombres }}</h1>
             <div class="flex items-center gap-2">
@@ -745,11 +749,12 @@
             if (!input || !lista || !lista.style) return;
             var q = input.value.trim().toLowerCase();
             var items = lista.querySelectorAll('[data-curso-id]');
-            var visibles = 0;
+            var vistos = 0;
             items.forEach(function (it) {
                 var coincide = !q || it.getAttribute('data-curso-busqueda').indexOf(q) !== -1;
-                it.style.display = coincide ? '' : 'none';
-                if (coincide) visibles++;
+                if (!q) it.style.display = vistos < 5 ? '' : 'none';
+                else it.style.display = coincide ? '' : 'none';
+                if (coincide) vistos++;
             });
             lista.style.display = 'block';
         }

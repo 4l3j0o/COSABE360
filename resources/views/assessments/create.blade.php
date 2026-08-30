@@ -39,13 +39,16 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                    <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        <option value="">Seleccionar materia...</option>
-                        @foreach($subjects as $subject)
-                            <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
-                        @endforeach
-                    </select>
+                    <x-forms.picker
+                        id="subject"
+                        name="subject_id"
+                        label="Materia"
+                        required
+                        placeholder="Buscar materia..."
+                        searchHint="Escriba para buscar por nombre de materia."
+                        value="{{ old('subject_id') }}"
+                        :items="$subjects->map(fn($s) => ['value' => $s->id, 'label' => $s->nombre])"
+                    />
                     @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 

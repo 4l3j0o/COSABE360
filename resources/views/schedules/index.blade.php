@@ -54,11 +54,11 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('schedules.estudiantes', $paralelo) }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ route('schedules.estudiantes', $paralelo) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver estudiantes">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                         </a>
-                                        <a href="{{ route('schedules.show', $paralelo) }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3.5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                                        <a href="{{ route('schedules.show', $paralelo) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver horario">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </a>
                                     </div>
@@ -93,33 +93,43 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
-                            <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="course"
+                                name="course_id"
+                                label="Curso"
+                                required
+                                placeholder="Buscar curso..."
+                                searchHint="Escriba para buscar por nombre de curso."
+                                value="{{ old('course_id') }}"
+                                :items="$courses->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre . ' - ' . ($c->aula ?? 's/a'), 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                            />
                             @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                            <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="subject"
+                                name="subject_id"
+                                label="Materia"
+                                required
+                                placeholder="Buscar materia..."
+                                searchHint="Escriba para buscar por nombre de materia."
+                                value="{{ old('subject_id') }}"
+                                :items="$subjects->map(fn($s) => ['value' => $s->id, 'label' => $s->nombre])"
+                            />
                             @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente <span class="text-error">*</span></label>
-                            <select name="teacher_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>{{ $teacher->nombres }} {{ $teacher->apellidos }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="teacher"
+                                name="teacher_id"
+                                label="Docente"
+                                required
+                                placeholder="Buscar docente..."
+                                searchHint="Escriba para buscar por nombre o especialidad."
+                                especialidad
+                                value="{{ old('teacher_id') }}"
+                                :items="$teachers->map(fn($t) => ['value' => $t->id, 'label' => trim($t->nombres.' '.$t->apellidos), 'especialidad' => $t->especialidad ?? ''])"
+                            />
                             @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>

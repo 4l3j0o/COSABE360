@@ -9,7 +9,9 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ParentGuardianController extends Controller
@@ -20,9 +22,20 @@ class ParentGuardianController extends Controller
             return $this->apiIndex($request);
         }
 
+        $tipo = $request->query('tipo', 'tutores');
+
         $padres = ParentGuardian::with(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos'])
-            ->whereHas('students', function ($q) {
-                $q->where('student_parent.es_principal', true);
+            ->when($tipo === 'tutores', function ($q) {
+                $q->whereHas('students', function ($c) {
+                    $c->where('student_parent.es_principal', true);
+                });
+            })
+            ->when($tipo === 'no_tutores', function ($q) {
+                $q
+                    ->whereHas('students')
+                    ->whereDoesntHave('students', function ($c) {
+                        $c->where('student_parent.es_principal', true);
+                    });
             })
             ->when($request->query('buscar'), function ($q, $b) {
                 $buscable = addcslashes($b, '%_');
@@ -43,7 +56,9 @@ class ParentGuardianController extends Controller
             ->orderBy('nombres')
             ->get(['id', 'nombres', 'apellidos', 'codigo']);
 
-        return view('parent_guardians.index', compact('padres', 'estudiantes'));
+        return view('parent_guardians.index', compact('padres', 'estudiantes') + [
+            'estudiantesConTutor' => $this->estudiantesConTutorIds(),
+        ]);
     }
 
     private function apiIndex(Request $request): JsonResponse
@@ -68,6 +83,7 @@ class ParentGuardianController extends Controller
         return view('parent_guardians.show', [
             'parentGuardian' => $parentGuardian,
             'estudiantes' => $estudiantes,
+            'estudiantesConTutor' => $this->estudiantesConTutorIds($parentGuardian->id),
         ]);
     }
 
@@ -98,6 +114,8 @@ class ParentGuardianController extends Controller
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
+
+        $this->validarTutoresUnicos($request);
 
         try {
             $padre = ParentGuardian::create($validated + ['estado' => 'ACTIVO']);
@@ -152,6 +170,8 @@ class ParentGuardianController extends Controller
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
+        $this->validarTutoresUnicos($request, $parentGuardian);
+
         $parentGuardian->update($validated);
 
         $this->sincronizarEstudiantes($parentGuardian, $request->input('students', []));
@@ -176,6 +196,58 @@ class ParentGuardianController extends Controller
         }
 
         return collect($students)->contains(fn ($s) => ($s['tipo_relacion'] ?? '') === 'TUTOR');
+    }
+
+    private function estudiantesConTutorIds(?int $excluirParentId = null): array
+    {
+        $q = DB::table('student_parent')->where('es_principal', true);
+        if ($excluirParentId) {
+            $q->where('parent_guardian_id', '!=', $excluirParentId);
+        }
+
+        return $q->pluck('student_id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    private function validarTutoresUnicos(Request $request, ?ParentGuardian $excepto = null): void
+    {
+        $students = $request->input('students', []);
+        if (! is_array($students)) {
+            return;
+        }
+
+        $idsConTutor = [];
+        foreach ($students as $v) {
+            if (($v['tipo_relacion'] ?? '') === 'TUTOR' && ! empty($v['id'])) {
+                $idsConTutor[] = (int) $v['id'];
+            }
+        }
+
+        $idsConTutor = array_unique($idsConTutor);
+        if (empty($idsConTutor)) {
+            return;
+        }
+
+        $query = DB::table('student_parent')
+            ->whereIn('student_id', $idsConTutor)
+            ->where('es_principal', true);
+
+        if ($excepto) {
+            $query->where('parent_guardian_id', '!=', $excepto->id);
+        }
+
+        $conflictos = $query->pluck('student_id')->map(fn ($id) => (int) $id)->all();
+        if (empty($conflictos)) {
+            return;
+        }
+
+        $nombres = Student::whereIn('id', $conflictos)
+            ->get(['id', 'nombres', 'apellidos'])
+            ->map(fn ($s) => trim($s->nombres . ' ' . $s->apellidos))
+            ->implode(', ');
+
+        throw ValidationException::withMessages([
+            'students' => 'No se puede asignar como tutor: el/los estudiante(s) ' . $nombres . ' ya cuenta(n) con un tutor.',
+        ]);
     }
 
     private function sincronizarEstudiantes(ParentGuardian $padre, array $students): void

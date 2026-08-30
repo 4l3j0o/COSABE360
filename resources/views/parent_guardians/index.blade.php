@@ -36,6 +36,11 @@
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('tutores.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, documento o email" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="tipo" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <option value="tutores" {{ request('tipo', 'tutores') === 'tutores' ? 'selected' : '' }}>Solo tutores</option>
+                <option value="no_tutores" {{ request('tipo') === 'no_tutores' ? 'selected' : '' }}>Solo no-tutores</option>
+                <option value="todos" {{ request('tipo') === 'todos' ? 'selected' : '' }}>Todos (tutores y no-tutores)</option>
+            </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
@@ -61,7 +66,7 @@
                     <thead>
                         <tr class="border-b border-border bg-muted/50">
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Tutor</th>
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Estudiantes a cargo</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Estudiantes vinculados</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Contacto</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Estado</th>
                             <th class="text-right px-4 py-3 font-semibold text-foreground">Acciones</th>
@@ -82,6 +87,17 @@
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-foreground">{{ $padre->apellidos }} {{ $padre->nombres }}</div>
                                     <div class="text-xs font-mono text-muted-foreground">{{ $padre->tipo_documento }} {{ $padre->numero_documento }}{{ $padre->complemento ? '-' . $padre->complemento : '' }}</div>
+                                    @if($tutorizados->isNotEmpty())
+                                        <span class="inline-flex mt-1 items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            Tutor
+                                        </span>
+                                    @else
+                                        <span class="inline-flex mt-1 items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-neutral-100 text-neutral-600">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            No tutor
+                                        </span>
+                                    @endif
                                     @if($padre->user)
                                         <span class="inline-flex mt-1 items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -90,9 +106,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    @if($tutorizados->isEmpty())
-                                        <span class="text-muted-foreground">—</span>
-                                    @else
+                                    @if($tutorizados->isNotEmpty())
                                         <div class="flex flex-col gap-1">
                                             @foreach($tutorizados as $est)
                                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg border border-muted bg-muted/40 text-xs text-foreground">
@@ -100,6 +114,19 @@
                                                 </span>
                                             @endforeach
                                         </div>
+                                    @elseif($padre->students->isNotEmpty())
+                                        <div class="flex flex-col gap-1">
+                                            @foreach($padre->students as $est)
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg border border-muted bg-muted/40 text-xs text-foreground">
+                                                    {{ $est->nombres }} {{ $est->apellidos }}
+                                                    @if($est->pivot && $est->pivot->tipo_relacion)
+                                                        <span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-500">{{ ucfirst(mb_strtolower($est->pivot->tipo_relacion)) }}</span>
+                                                    @endif
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-muted-foreground">—</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">
