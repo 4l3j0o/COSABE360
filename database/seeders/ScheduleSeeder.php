@@ -25,12 +25,18 @@ class ScheduleSeeder extends Seeder
     {
         $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
 
-        // Bloques de 45 min con recreo de 10:15 a 10:30
+        // Franja horaria institucional (entrevista):
+        //   Entrada/Preparación 07:30-07:45 (no es clase)
+        //   Periodo 1: 07:45-08:30 | Periodo 2: 08:30-09:15
+        //   Receso 1: 09:15-09:30 (no es clase)
+        //   Periodo 3: 09:30-10:15 | Periodo 4: 10:15-11:00
+        //   Receso 2: 11:00-11:15 (no es clase)
+        //   Periodo 5: 11:15-12:00
         $bloques = [
-            ['08:00', '08:45'],
-            ['08:45', '09:30'],
+            ['07:45', '08:30'],
+            ['08:30', '09:15'],
             ['09:30', '10:15'],
-            ['10:30', '11:15'],
+            ['10:15', '11:00'],
             ['11:15', '12:00'],
         ];
         $totalBloques = count($bloques);

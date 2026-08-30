@@ -225,6 +225,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(fun
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
+    Route::post('/iniciar', [ScheduleController::class, 'iniciar'])->name('schedules.iniciar');
+    Route::delete('/clases/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+    Route::get('/docente/{teacher}', [ScheduleController::class, 'horarioDocente'])->name('schedules.docente');
     Route::get('/{course}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
     Route::get('/{course}', [ScheduleController::class, 'show'])->name('schedules.show');
 });

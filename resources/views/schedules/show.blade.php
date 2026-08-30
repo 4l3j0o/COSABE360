@@ -63,36 +63,61 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($horas as $hora)
+                        @foreach($bloquesDia as $bloque)
                             @php
-                                $clave = $claveFranja($hora);
+                                $clave = $bloque['inicio'] . '-' . $bloque['fin'];
                             @endphp
-                            <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
-                                <td class="px-4 py-2 alignment-middle whitespace-nowrap bg-muted/40 align-middle">
-                                    <div class="text-sm font-bold text-foreground">{{ $hora->hora_inicio->format('H:i') }}</div>
-                                    <div class="text-[11px] text-muted-foreground">{{ $hora->hora_fin->format('H:i') }}</div>
-                                </td>
-                                @foreach($dias as $dia)
-                                    @php
-                                        $celda = ($tabla[$dia][$clave] ?? collect())->first();
-                                    @endphp
-                                    <td class="p-2 align-top border-l border-border/60">
-                                        @if($celda)
-                                            <div class="h-full rounded-lg bg-card border border-border/70 px-2.5 py-2 shadow-sm">
-                                                <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject->nombre ?? '—' }}</div>
-                                                @if($celda->teacher)
-                                                    <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->teacher->nombres }} {{ $celda->teacher->apellidos }}</div>
-                                                @endif
-                                                @if($celda->aula)
-                                                    <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->aula }}</div>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <div class="h-full min-h-[3.5rem] rounded-lg bg-muted/20"></div>
-                                        @endif
+                            @if(($bloque['tipo'] ?? 'clase') === 'receso')
+                                <tr class="border-b border-border">
+                                    <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
+                                        <div class="text-sm font-bold text-foreground">{{ $bloque['inicio'] }}</div>
+                                        <div class="text-[11px] text-muted-foreground">{{ $bloque['fin'] }}</div>
                                     </td>
-                                @endforeach
-                            </tr>
+                                    <td colspan="{{ count($dias) - 1 }}" class="p-2 align-top border-l border-border/60">
+                                        <div class="h-full rounded-lg bg-warning/10 border border-dashed border-warning/40 px-3 py-2 text-center">
+                                            <span class="text-[13px] font-bold text-warning">Receso</span>
+                                            <span class="text-[11px] text-muted-foreground ml-1">{{ $bloque['nombre'] ?? '' }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @else
+                                <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
+                                    <td class="px-4 py-2 alignment-middle whitespace-nowrap bg-muted/40 align-middle">
+                                        <div class="text-sm font-bold text-foreground">{{ $bloque['inicio'] }}</div>
+                                        <div class="text-[11px] text-muted-foreground">{{ $bloque['fin'] }}</div>
+                                    </td>
+                                    @foreach($dias as $dia)
+                                        @php
+                                            $celda = ($tabla[$dia][$clave] ?? collect())->first();
+                                        @endphp
+                                        <td class="p-2 align-top border-l border-border/60">
+                                            @if($celda)
+                                                <div class="relative h-full rounded-lg bg-card border border-border/70 px-2 pt-1 pb-4 shadow-sm">
+                                                    <form action="{{ route('schedules.destroy', $celda) }}" method="POST"
+                                                          onsubmit="return confirm('¿Eliminar esta clase del horario? Podrás asignar otra en este día y hora.')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" title="Eliminar clase"
+                                                                style="position:absolute; bottom:0.375rem; right:0.375rem; width:1.25rem; height:1.25rem; display:flex; align-items:center; justify-content:center; border-radius:0.25rem; color:var(--muted-foreground); background:transparent; border:none; cursor:pointer; padding:0;"
+                                                                onmouseover="this.style.color='var(--error)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                        </button>
+                                                    </form>
+                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject->nombre ?? '—' }}</div>
+                                                    @if($celda->teacher)
+                                                        <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->teacher->nombres }} {{ $celda->teacher->apellidos }}</div>
+                                                    @endif
+                                                    @if($celda->aula)
+                                                        <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->aula }}</div>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <div class="h-full min-h-[3.5rem] rounded-lg bg-muted/20"></div>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -147,23 +172,27 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Día <span class="text-error">*</span></label>
-                            <select name="dia" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="dia" id="dia-clase" onchange="poblarHorasClase()" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar...</option>
-                                <option value="LUNES">Lunes</option>
-                                <option value="MARTES">Martes</option>
-                                <option value="MIERCOLES">Miércoles</option>
-                                <option value="JUEVES">Jueves</option>
-                                <option value="VIERNES">Viernes</option>
-                                <option value="SABADO">Sábado</option>
+                                @foreach($diasDisponibles as $dia)
+                                    <option value="{{ $dia }}">{{ \App\Models\Schedule::$DIAS_LABEL[$dia] ?? $dia }}</option>
+                                @endforeach
                             </select>
+                            @if(empty($diasDisponibles))
+                                <p class="text-xs text-error mt-1">No quedan franjas libres para este paralelo.</p>
+                            @endif
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hora Inicio <span class="text-error">*</span></label>
-                            <input type="time" name="hora_inicio" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="hora_inicio" id="hora-inicio-clase" onchange="sincronizarFin()" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <option value="">Primero elige día</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hora Fin <span class="text-error">*</span></label>
-                            <input type="time" name="hora_fin" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <select name="hora_fin" id="hora-fin-clase" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <option value="">Primero elige día</option>
+                            </select>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Aula</label>
@@ -221,7 +250,74 @@
 
         function abrirModalAgregarClase() {
             if (typeof resetaPickers === 'function') resetaPickers();
+            bloquearDocente(false);
             openModal('modal-create');
+        }
+
+        // Docente fijo por materia (la misma materia la dicta siempre el mismo docente).
+        var materiasDocentes = @json($materiasDocentes);
+
+        function bloquearDocente(bloquear) {
+            var input = document.getElementById('pick-teacher-input');
+            if (!input) return;
+            input.disabled = !!bloquear;
+            input.style.cursor = bloquear ? 'not-allowed' : '';
+            input.style.background = bloquear ? 'var(--muted)' : 'var(--background)';
+        }
+
+        window.pickExtraSeleccionar = function (id) {
+            if (id === 'subject') {
+                var subjId = document.getElementById('pick-subject-value').value;
+                var teacherId = (materiasDocentes || {})[subjId];
+                if (teacherId && typeof setPickerValor === 'function') {
+                    setPickerValor('teacher', String(teacherId));
+                    bloquearDocente(true);
+                } else {
+                    bloquearDocente(false);
+                }
+            }
+        };
+
+        // Franjas de clase libres por día (solo las disponibles) para "Agregar Clase"
+        var franjasLibresPorDia = @json($franjasLibresPorDia);
+
+        function poblarHorasClase() {
+            var diaSel = document.getElementById('dia-clase');
+            var inicioSel = document.getElementById('hora-inicio-clase');
+            var finSel = document.getElementById('hora-fin-clase');
+            if (!diaSel || !inicioSel || !finSel) return;
+            var franjas = (franjasLibresPorDia || {})[diaSel.value] || [];
+
+            inicioSel.innerHTML = '';
+            finSel.innerHTML = '';
+            if (franjas.length === 0) {
+                inicioSel.innerHTML = '<option value="">Sin franjas libres</option>';
+                finSel.innerHTML = '<option value="">Sin franjas libres</option>';
+                return;
+            }
+            franjas.forEach(function (f) {
+                var optIni = document.createElement('option');
+                optIni.value = f.inicio;
+                optIni.textContent = f.inicio;
+                optIni.setAttribute('data-fin', f.fin);
+                inicioSel.appendChild(optIni);
+
+                var optFin = document.createElement('option');
+                optFin.value = f.fin;
+                optFin.textContent = f.fin;
+                finSel.appendChild(optFin);
+            });
+            sincronizarFin();
+        }
+
+        function sincronizarFin() {
+            var inicioSel = document.getElementById('hora-inicio-clase');
+            var finSel = document.getElementById('hora-fin-clase');
+            if (!inicioSel || !finSel) return;
+            var opt = inicioSel.options[inicioSel.selectedIndex];
+            if (opt && opt.getAttribute('data-fin')) {
+                finSel.value = opt.getAttribute('data-fin');
+            }
         }
     </script>
 @endpush

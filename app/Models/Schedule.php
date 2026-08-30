@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schedule extends Model
 {
+    public const DIAS_LABEL = [
+        'LUNES' => 'Lunes',
+        'MARTES' => 'Martes',
+        'MIERCOLES' => 'Miércoles',
+        'JUEVES' => 'Jueves',
+        'VIERNES' => 'Viernes',
+        'SABADO' => 'Sábado',
+    ];
+
     protected $fillable = [
         'course_id',
         'subject_id',
@@ -15,12 +24,18 @@ class Schedule extends Model
         'hora_inicio',
         'hora_fin',
         'aula',
+        'estado',
     ];
 
     protected $casts = [
         'hora_inicio' => 'datetime:H:i:s',
         'hora_fin' => 'datetime:H:i:s',
     ];
+
+    public function scopeActivos($query)
+    {
+        return $query->where('estado', 'ACTIVO');
+    }
 
     public function course(): BelongsTo
     {

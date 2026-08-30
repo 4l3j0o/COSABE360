@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\CourseSubject;
 use App\Models\Schedule;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -13,17 +14,35 @@ class ScheduleController extends Controller
     public function index()
     {
         $paralelos = Course::withCount(['schedules' => function ($query) {
-            $query->whereHas('subject')->whereHas('teacher');
+            $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
-            ->whereHas('schedules')
             ->orderBy('nombre')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
-        $courses = Course::all();
-        $subjects = Subject::all();
-        $teachers = Teacher::all();
+        $cursosSinHorario = Course::withCount(['schedules' => function ($query) {
+            $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
+        }])
+            ->get()
+            ->filter(fn ($c) => $c->schedules_count === 0)
+            ->values();
 
-        return view('schedules.index', compact('paralelos', 'courses', 'subjects', 'teachers'));
+        return view('schedules.index', compact('paralelos', 'cursosSinHorario'));
+    }
+
+    /**
+     * Inicia el horario de un paralelo que aún no tiene clases y lo lleva
+     * a su pantalla para asignar las clases.
+     */
+    public function iniciar(Request $request)
+    {
+        $validated = $request->validate([
+            'course_id' => ['required', 'exists:courses,id'],
+        ]);
+
+        return redirect()
+            ->route('schedules.show', $validated['course_id'])
+            ->with('mensaje', 'Horario iniciado. Ahora asigna las clases del paralelo.');
     }
 
     public function show(Course $course)
@@ -34,6 +53,7 @@ class ScheduleController extends Controller
 
         $schedules = Schedule::with(['subject', 'teacher'])
             ->where('course_id', $course->id)
+            ->where('estado', 'ACTIVO')
             ->orderBy('hora_inicio')
             ->orderByRaw("FIELD(dia, 'LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO')")
             ->get();
@@ -48,11 +68,57 @@ class ScheduleController extends Controller
             $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
         }
 
+        $bloquesDia = $this->bloquesDia();
+
         $courses = Course::all();
-        $subjects = Subject::all();
+
+        // Materiales del nivel del curso (ej. 1ro Primaria no ve Informática, que es de Secundaria)
+        $levelId = $course->grade?->level_id;
+        $subjects = Subject::where('level_id', $levelId)->get();
         $teachers = Teacher::all();
 
-        return view('schedules.show', compact('course', 'dias', 'horas', 'tabla', 'courses', 'subjects', 'teachers', 'schedules'));
+        // Docente fijo por materia: la misma materia debe dictarla siempre el mismo
+        // docente dentro del paralelo (la fuente de verdad es course_subjects; si la
+        // materia ya figura en el horario, se respeta ese docente).
+        $materiasDocentes = [];
+        foreach ($schedules->groupBy('subject_id') as $subjId => $grupo) {
+            $materiasDocentes[$subjId] = $grupo->first()->teacher_id;
+        }
+        foreach (CourseSubject::where('course_id', $course->id)->pluck('teacher_id', 'subject_id') as $subjId => $teacherId) {
+            if (! isset($materiasDocentes[$subjId])) {
+                $materiasDocentes[$subjId] = $teacherId;
+            }
+        }
+        $docentesLabel = [];
+        foreach ($teachers as $t) {
+            $docentesLabel[$t->id] = trim($t->nombres.' '.$t->apellidos);
+        }
+
+        // Franjas de clase libres por día para "Agregar Clase"
+        $franjasClase = collect($this->bloquesDia()->where('tipo', 'clase'))->map(fn ($b) => [$b['inicio'], $b['fin']]);
+
+        $ocupados = Schedule::where('course_id', $course->id)
+            ->get(['dia', 'hora_inicio', 'hora_fin'])
+            ->map(fn ($s) => $s->dia.'|'.$s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+            ->toBase();
+
+        $franjasLibresPorDia = [];
+        $diasDisponibles = [];
+        foreach ($dias as $dia) {
+            $libres = [];
+            foreach ($franjasClase as $franja) {
+                [$ini, $fin] = $franja;
+                if (! $ocupados->contains($dia.'|'.$ini.'-'.$fin)) {
+                    $libres[] = ['inicio' => $ini, 'fin' => $fin];
+                }
+            }
+            $franjasLibresPorDia[$dia] = $libres;
+            if (count($libres) > 0) {
+                $diasDisponibles[] = $dia;
+            }
+        }
+
+        return view('schedules.show', compact('course', 'dias', 'horas', 'tabla', 'courses', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
     }
 
     /**
@@ -117,6 +183,7 @@ class ScheduleController extends Controller
             // Horario semanal consolidado del docente (todas sus clases en una sola tabla)
             $schedules = $teacher->schedules()
                 ->with(['course.grade', 'course.section', 'course.gestion', 'subject'])
+                ->where('estado', 'ACTIVO')
                 ->orderBy('hora_inicio')
                 ->get();
 
@@ -137,10 +204,45 @@ class ScheduleController extends Controller
                 ->unique()
                 ->values();
 
-            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones'));
+            $bloquesDia = $this->bloquesDia();
+
+            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones', 'bloquesDia'));
         }
 
         abort(403);
+    }
+
+    /**
+     * Muestra el horario semanal de un docente concreto (vista admin).
+     */
+    public function horarioDocente(Teacher $teacher)
+    {
+        $schedules = $teacher->schedules()
+            ->with(['course.grade', 'course.section', 'course.gestion', 'subject'])
+            ->where('estado', 'ACTIVO')
+            ->orderBy('hora_inicio')
+            ->get();
+
+        $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+        $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
+            ->values()
+            ->sortBy(fn ($s) => $s->hora_inicio)
+            ->values();
+
+        $tabla = [];
+        foreach ($dias as $dia) {
+            $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
+        }
+
+        $gestiones = $schedules->map(fn ($s) => $s->course?->gestion?->nombre)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $bloquesDia = $this->bloquesDia();
+
+        return view('schedules.docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones', 'bloquesDia'));
     }
 
     private function renderHorarioCurso(string $vista, Course $course, array $extra = [])
@@ -149,6 +251,7 @@ class ScheduleController extends Controller
 
         $schedules = Schedule::with(['subject', 'teacher'])
             ->where('course_id', $course->id)
+            ->where('estado', 'ACTIVO')
             ->orderBy('hora_inicio')
             ->orderByRaw("FIELD(dia, 'LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO')")
             ->get();
@@ -160,9 +263,11 @@ class ScheduleController extends Controller
 
         $tabla = $this->tablaSemanal($schedules);
 
+        $bloquesDia = $this->bloquesDia();
+
         $course->load(['grade.level', 'section', 'gestion']);
 
-        return view($vista, array_merge($extra, compact('course', 'dias', 'horas', 'tabla', 'schedules')));
+        return view($vista, array_merge($extra, compact('course', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia')));
     }
 
     private function tablaSemanal($schedules): array
@@ -175,6 +280,23 @@ class ScheduleController extends Controller
         }
 
         return $tabla;
+    }
+
+    /**
+     * Secuencia fija de bloques del día (incluye los recesos).
+     * Los recesos se muestran de LUNES a VIERNES (y se omiten los sábados).
+     */
+    private function bloquesDia()
+    {
+        return collect([
+            ['inicio' => '07:45', 'fin' => '08:30', 'tipo' => 'clase'],
+            ['inicio' => '08:30', 'fin' => '09:15', 'tipo' => 'clase'],
+            ['inicio' => '09:15', 'fin' => '09:30', 'tipo' => 'receso', 'nombre' => 'Receso 1'],
+            ['inicio' => '09:30', 'fin' => '10:15', 'tipo' => 'clase'],
+            ['inicio' => '10:15', 'fin' => '11:00', 'tipo' => 'clase'],
+            ['inicio' => '11:00', 'fin' => '11:15', 'tipo' => 'receso', 'nombre' => 'Receso 2'],
+            ['inicio' => '11:15', 'fin' => '12:00', 'tipo' => 'clase'],
+        ]);
     }
 
     public function create()
@@ -197,6 +319,20 @@ class ScheduleController extends Controller
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'aula' => 'nullable|string|max:50',
         ]);
+
+        // La misma materia en un paralelo la dicta siempre el mismo docente.
+        // Se respeta el docente asignado en course_subjects (o el ya existente en el horario).
+        $docenteReal = CourseSubject::where('course_id', $validated['course_id'])
+            ->where('subject_id', $validated['subject_id'])
+            ->value('teacher_id');
+        if (! $docenteReal) {
+            $docenteReal = Schedule::where('course_id', $validated['course_id'])
+                ->where('subject_id', $validated['subject_id'])
+                ->value('teacher_id');
+        }
+        if ($docenteReal) {
+            $validated['teacher_id'] = $docenteReal;
+        }
 
         $errorDocente = $this->validarCruceDocente($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
         if ($errorDocente) {
@@ -225,6 +361,7 @@ class ScheduleController extends Controller
     private function validarCruceDocente($docenteId, $dia, $horaInicio, $horaFin)
     {
         $cruce = Schedule::where('teacher_id', $docenteId)
+            ->where('estado', 'ACTIVO')
             ->where('dia', $dia)
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio) {
@@ -254,6 +391,7 @@ class ScheduleController extends Controller
         }
 
         $cruce = Schedule::where('aula', $aula)
+            ->where('estado', 'ACTIVO')
             ->where('dia', $dia)
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio) {
@@ -288,6 +426,11 @@ class ScheduleController extends Controller
 
     public function destroy(Schedule $schedule)
     {
-        //
+        // Borrado lógico: se marca ELIMINADO para que el día/hora queden libres
+        // para reasignar otra clase, sin perderse el registro.
+        $schedule->update(['estado' => 'ELIMINADO']);
+
+        return redirect()->route('schedules.show', $schedule->course_id)
+            ->with('mensaje', 'Clase eliminada del horario. Puedes asignar otra en ese día y hora.');
     }
 }

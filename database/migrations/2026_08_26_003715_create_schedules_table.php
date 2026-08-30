@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('hora_inicio');
             $table->time('hora_fin');
             $table->string('aula', 50)->nullable();
+            $table->enum('estado', ['ACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
         });
     }
