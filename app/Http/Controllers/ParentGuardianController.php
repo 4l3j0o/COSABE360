@@ -20,7 +20,7 @@ class ParentGuardianController extends Controller
             return $this->apiIndex($request);
         }
 
-        $padres = ParentGuardian::with(['user:id,nombre,apellido,email', 'students:id,nombres,apellidos'])
+        $padres = ParentGuardian::with(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos'])
             ->whereHas('students', function ($q) {
                 $q->where('student_parent.es_principal', true);
             })
@@ -54,6 +54,21 @@ class ParentGuardianController extends Controller
             ->get();
 
         return response()->json(['data' => $padres]);
+    }
+
+    public function show(ParentGuardian $parentGuardian): View
+    {
+        $parentGuardian->load(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos']);
+
+        $estudiantes = Student::where('estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos', 'codigo']);
+
+        return view('parent_guardians.show', [
+            'parentGuardian' => $parentGuardian,
+            'estudiantes' => $estudiantes,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -150,7 +165,7 @@ class ParentGuardianController extends Controller
             ? 'Padre/tutor actualizado correctamente. Usuario con acceso de tutor verificado (contraseña por defecto: password123).'
             : 'Padre/tutor actualizado correctamente.';
 
-        return redirect()->route('tutores.index')->with('success', $mensaje);
+        return redirect()->route('tutores.show', $parentGuardian)->with('success', $mensaje);
     }
 
     private function tieneTutor(Request $request): bool

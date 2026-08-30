@@ -267,7 +267,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('tutores.index'));
+        ])->assertRedirect(route('tutores.show', $padre));
 
         $this->assertDatabaseHas('student_parent', [
             'parent_guardian_id' => $padre->id,
@@ -330,7 +330,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('tutores.index'));
+        ])->assertRedirect(route('tutores.show', $padre));
 
         $this->assertDatabaseHas('users', [
             'email'  => 'marta.torres@example.com',
@@ -390,7 +390,7 @@ class ParentGuardianHu08Test extends TestCase
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('tutores.index'));
+        ])->assertRedirect(route('tutores.show', $tutor));
 
         $this->assertDatabaseHas('users', [
             'email'    => 'rosa.nuevo@example.com',

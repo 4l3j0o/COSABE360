@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
@@ -62,6 +63,16 @@ class UserController extends Controller
         ]);
     }
 
+    public function show(User $user): View
+    {
+        $user->load('rol');
+
+        return view('users.show', [
+            'user' => $user,
+            'roles' => Role::orderBy('id')->get(),
+        ]);
+    }
+
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -86,7 +97,7 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('users.show', $user)->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function toggle(User $user)

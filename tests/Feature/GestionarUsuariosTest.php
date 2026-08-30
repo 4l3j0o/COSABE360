@@ -88,7 +88,7 @@ class GestionarUsuariosTest extends TestCase
             'email' => $user->email,
             'role_id' => $rolDirector->id,
             'telefono' => '70098765',
-        ])->assertRedirect(route('users.index'));
+        ])->assertRedirect(route('users.show', $user));
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,

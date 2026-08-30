@@ -218,8 +218,8 @@ class AttendanceTest extends TestCase
         $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id);
         $response->assertStatus(200);
         $response->assertSee('Historial de Asistencia');
-        $response->assertSee('PRESENTE');
-        $response->assertSee('FALTA');
+        $response->assertSee('presente');
+        $response->assertSee('falta');
     }
 
     public function test_docente_ve_asistencia_de_su_curso(): void
@@ -301,8 +301,8 @@ class AttendanceTest extends TestCase
         $respuesta->assertSee('Ya registrada');
         $respuesta->assertSee('solo lectura');
         $respuesta->assertSee($datos['estudiantes'][0]->apellidos);
-        $respuesta->assertSee('PRESENTE');
-        $respuesta->assertSee('FALTA');
+        $respuesta->assertSee('presente');
+        $respuesta->assertSee('falta');
         $respuesta->assertSee('Sin justificante');
         $respuesta->assertDontSee('value="FALTA" checked', false);
         $respuesta->assertDontSee('Guardar Cambios');
@@ -442,7 +442,7 @@ class AttendanceTest extends TestCase
         $vista->assertSee('Matemáticas');
         $vista->assertSee('Ya registrada');
         $vista->assertSee($datos['estudiantes'][1]->apellidos);
-        $vista->assertSee('FALTA');
+        $vista->assertSee('falta');
 
         // Edita y cambia el estado a JUSTIFICADO
         $this->post('/asistencias', [

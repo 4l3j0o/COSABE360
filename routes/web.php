@@ -77,6 +77,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/usuarios/crear', [UserController::class, 'create'])->name('users.create');
     Route::post('/usuarios', [UserController::class, 'store'])->name('users.store');
     Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])->name('users.edit');
+    Route::get('/usuarios/{user}', [UserController::class, 'show'])->name('users.show');
     Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('users.update');
     Route::patch('/usuarios/{user}/alternar', [UserController::class, 'toggle'])->name('users.toggle');
     Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -185,6 +186,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('asignaciones-docentes
 // HU-08: Registrar padres/tutores solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(function () {
     Route::get('/', [ParentGuardianController::class, 'index'])->name('tutores.index');
+    Route::get('/{parentGuardian}', [ParentGuardianController::class, 'show'])->name('tutores.show');
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
     Route::put('/{parentGuardian}', [ParentGuardianController::class, 'update'])->name('tutores.update');
     Route::delete('/{parentGuardian}', [ParentGuardianController::class, 'destroy'])->name('tutores.destroy');

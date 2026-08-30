@@ -67,8 +67,8 @@ class HistorialAsistenciaTest extends TestCase
         $response = $this->get('/asistencias/historial');
         $response->assertStatus(200);
         $response->assertSee('Historial de Asistencia');
-        $response->assertSee('PRESENTE');
-        $response->assertSee('FALTA');
+        $response->assertSee('presente');
+        $response->assertSee('falta');
     }
 
     public function test_padre_puede_ver_historial_de_hijos(): void
@@ -92,8 +92,8 @@ class HistorialAsistenciaTest extends TestCase
 
         $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id . '&desde=2026-04-02&hasta=2026-04-03');
         $response->assertStatus(200);
-        $response->assertSee('FALTA');
-        $response->assertSee('ATRASO');
+        $response->assertSee('falta');
+        $response->assertSee('atraso');
     }
 
     public function test_historial_muestra_estadisticas(): void
@@ -103,9 +103,9 @@ class HistorialAsistenciaTest extends TestCase
         $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id);
         $response->assertStatus(200);
         // Estadísticas: PRESENTE 1, FALTA 1, ATRASO 1
-        $response->assertSee('PRESENTE');
-        $response->assertSee('FALTA');
-        $response->assertSee('ATRASO');
+        $response->assertSee('presente');
+        $response->assertSee('falta');
+        $response->assertSee('atraso');
     }
 
     public function test_director_puede_ver_historial(): void
