@@ -21,7 +21,7 @@ class Teacher extends Model
         'numero_documento',
         'complemento',
         'telefono',
-        'correo',
+        'email',
         'estado',
     ];
 
@@ -34,7 +34,7 @@ class Teacher extends Model
 
     public function sections(): HasMany
     {
-        return $this->hasMany(Section::class, 'responsable_id');
+        return $this->hasMany(Section::class, 'teacher_id');
     }
 
     public function schedules(): HasMany
@@ -42,7 +42,7 @@ class Teacher extends Model
         return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
-    public function usuario(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('tipo_documento', 50);
             $table->string('archivo', 500);
             $table->enum('estado', ['PENDIENTE', 'ENTREGADO', 'VERIFICADO'])->default('PENDIENTE');
+            $table->timestamp('fecha_entrega')->nullable();
             $table->text('observaciones')->nullable();
             $table->timestamps();
             $table->index('student_id', 'idx_estudiante');

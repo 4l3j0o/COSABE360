@@ -24,39 +24,43 @@
                     <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Selección de Docente, Materia y Curso</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente <span class="text-error">*</span></label>
-                            <select name="teacher_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
-                                        {{ $teacher->nombres }} {{ $teacher->apellidos }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="teacher"
+                                name="teacher_id"
+                                label="Docente"
+                                required
+                                placeholder="Buscar docente..."
+                                searchHint="Escriba para buscar por nombre o especialidad."
+                                especialidad
+                                value="{{ old('teacher_id') }}"
+                                :items="$teachers->map(fn($t) => ['value' => $t->id, 'label' => trim($t->nombres.' '.$t->apellidos), 'especialidad' => $t->especialidad ?? ''])"
+                            />
                             @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia <span class="text-error">*</span></label>
-                            <select name="subject_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
-                                        {{ $subject->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="subject"
+                                name="subject_id"
+                                label="Materia"
+                                required
+                                placeholder="Buscar materia..."
+                                searchHint="Escriba para buscar por nombre de materia."
+                                value="{{ old('subject_id') }}"
+                                :items="$subjects->map(fn($s) => ['value' => $s->id, 'label' => $s->nombre])"
+                            />
                             @error('subject_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso <span class="text-error">*</span></label>
-                            <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="">Seleccionar...</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                                        {{ $course->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-forms.picker
+                                id="course"
+                                name="course_id"
+                                label="Curso"
+                                required
+                                placeholder="Buscar curso..."
+                                searchHint="Escriba para buscar por nombre de curso."
+                                value="{{ old('course_id') }}"
+                                :items="$courses->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre, 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                            />
                             @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>

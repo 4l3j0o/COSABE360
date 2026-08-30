@@ -55,15 +55,16 @@
             <form method="POST" action="{{ route('estudiantes.matricular', $estudiante) }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso (grado y paralelo) <span class="text-error">*</span></label>
-                    <select name="course_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        <option value="">Seleccionar curso...</option>
-                        @foreach($cursos as $curso)
-                            <option value="{{ $curso->id }}" {{ old('course_id') == $curso->id ? 'selected' : '' }}>
-                                {{ $curso->grade->nombre }} — Paralelo {{ $curso->section->nombre }} ({{ $curso->nombre }})
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-forms.picker
+                        id="course"
+                        name="course_id"
+                        label="Curso (grado y paralelo)"
+                        required
+                        placeholder="Buscar curso..."
+                        searchHint="Escriba para buscar por grado, paralelo o nombre de curso."
+                        value="{{ old('course_id') }}"
+                        :items="$cursos->map(fn($c) => ['value' => $c->id, 'label' => $c->grade->nombre . ' — Paralelo ' . $c->section->nombre . ' (' . $c->nombre . ')', 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->grade->nombre . ' paralelo ' . $c->section->nombre . ' ' . $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                    />
                     @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 

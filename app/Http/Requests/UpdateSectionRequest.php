@@ -24,7 +24,7 @@ class UpdateSectionRequest extends FormRequest
                     ->where('grade_id', $section->grade_id)
                     ->ignore($section->id),
             ],
-            'responsable_id' => 'nullable|exists:teachers,id',
+            'teacher_id' => 'nullable|exists:teachers,id',
             'capacidad'      => 'sometimes|integer|min:1|max:255',
             'estado'         => ['sometimes', Rule::in(['ACTIVO', 'INACTIVO'])],
         ];

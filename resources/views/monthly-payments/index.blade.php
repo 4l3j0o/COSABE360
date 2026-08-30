@@ -11,9 +11,8 @@
             <h1 class="text-xl font-bold text-foreground">Pagos de mensualidades</h1>
             <p class="text-sm text-muted-foreground">Registro de pagos por estudiante</p>
         </div>
-        <a href="{{ route('monthly-payments.create') }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <a href="{{ route('monthly-payments.create') }}" title="Registrar Pago" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Registrar Pago
         </a>
     </div>
 
@@ -22,8 +21,8 @@
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar estudiante..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
-                <option value="PAGADA" {{ request('estado') === 'PAGADA' ? 'selected' : '' }}>Pagada</option>
+                <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>pendiente</option>
+                <option value="PAGADA" {{ request('estado') === 'PAGADA' ? 'selected' : '' }}>pagada</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
         </form>
@@ -87,8 +86,8 @@
                         @foreach($pagos as $pago)
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3">
-                                    <div class="font-medium text-foreground">{{ $pago->enrollment?->estudiante?->apellidos }} {{ $pago->enrollment?->estudiante?->nombres }}</div>
-                                    <div class="text-xs text-muted-foreground font-mono">{{ $pago->enrollment?->estudiante?->codigo }}</div>
+                                    <div class="font-medium text-foreground">{{ $pago->registration?->enrollment?->estudiante?->apellidos }} {{ $pago->registration?->enrollment?->estudiante?->nombres }}</div>
+                                    <div class="text-xs text-muted-foreground font-mono">{{ $pago->registration?->enrollment?->estudiante?->codigo }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $meses[$pago->mes] ?? $pago->mes }}</td>
                                 <td class="px-4 py-3 text-foreground font-medium">Bs {{ number_format($pago->monto, 2) }}</td>
@@ -96,7 +95,7 @@
                                 <td class="px-4 py-3 text-muted-foreground">{{ $pago->metodo_pago ? ucfirst(strtolower($pago->metodo_pago)) : '—' }}</td>
                                 <td class="px-4 py-3">
                                     @php $colores = ['PENDIENTE'=>'bg-warning/10 text-warning','PAGADA'=>'bg-success/10 text-success']; @endphp
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$pago->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $pago->estado }}</span>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$pago->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($pago->estado) }}</span>
                                 </td>
                             </tr>
                         @endforeach

@@ -33,6 +33,11 @@ class DatabaseSeeder extends Seeder
             // Académico: inscripción y matrícula + cuotas
             EnrollmentRegistrationSeeder::class,
 
+            // Académico: evaluaciones por curso, notas y asistencia
+            AssessmentSeeder::class,
+            GradeScoreSeeder::class,
+            AttendanceSeeder::class,
+
             // Expediente del estudiante
             StudentRudeRecordSeeder::class,
             MedicalRecordSeeder::class,

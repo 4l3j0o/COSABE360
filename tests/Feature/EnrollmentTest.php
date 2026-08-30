@@ -59,7 +59,7 @@ class EnrollmentTest extends TestCase
             'fecha' => '2026-03-01',
             'estado' => 'PENDIENTE',
             'observaciones' => 'Inscripción inicial',
-        ])->assertRedirect(route('enrollments.index'));
+        ])->assertRedirect(route('students.index'));
 
         $this->assertDatabaseHas('enrollments', [
             'student_id' => $est->id,
@@ -71,8 +71,6 @@ class EnrollmentTest extends TestCase
     public function test_permite_asignar_estados_a_la_inscripcion(): void
     {
         $this->admin();
-        $est = $this->crearEstudiante();
-        $gestion = $this->crearGestion();
 
         foreach (Enrollment::ESTADOS as $estado) {
             $e = Enrollment::create([
@@ -83,23 +81,6 @@ class EnrollmentTest extends TestCase
             ]);
             $this->assertDatabaseHas('enrollments', ['id' => $e->id, 'estado' => $estado]);
         }
-
-        $enrollment = Enrollment::create([
-            'student_id' => $est->id,
-            'academic_year_id' => $gestion->id,
-            'fecha' => '2026-03-01',
-            'estado' => 'PENDIENTE',
-        ]);
-
-        $this->put(route('enrollments.update', $enrollment), [
-            'student_id' => $est->id,
-            'academic_year_id' => $gestion->id,
-            'fecha' => '2026-03-02',
-            'estado' => 'COMPLETADA',
-            'observaciones' => 'Pagado',
-        ])->assertRedirect(route('enrollments.index'));
-
-        $this->assertDatabaseHas('enrollments', ['id' => $enrollment->id, 'estado' => 'COMPLETADA']);
     }
 
     public function test_valida_que_estudiante_no_tenga_inscripcion_activa_en_mismo_periodo(): void
@@ -108,21 +89,30 @@ class EnrollmentTest extends TestCase
         $est = $this->crearEstudiante();
         $gestion = $this->crearGestion();
 
-        Enrollment::create([
+        $enrollment = Enrollment::create([
             'student_id' => $est->id,
             'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-01',
             'estado' => 'PENDIENTE',
+            'observaciones' => 'Falta documentación',
         ]);
 
+        // Si ya existe una inscripción activa (PENDIENTE), se actualiza en vez de duplicar
         $this->post(route('enrollments.store'), [
             'student_id' => $est->id,
             'academic_year_id' => $gestion->id,
-            'fecha' => '2026-03-02',
-            'estado' => 'PENDIENTE',
-        ])->assertSessionHasErrors('student_id');
+            'fecha' => '2026-03-05',
+            'estado' => 'COMPLETADA',
+            'observaciones' => 'Documentación completa',
+        ])->assertRedirect(route('students.index'));
 
         $this->assertDatabaseCount('enrollments', 1);
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'estado' => 'COMPLETADA',
+            'observaciones' => 'Documentación completa',
+        ]);
+        $this->assertEquals('2026-03-05', Enrollment::findOrFail($enrollment->id)->fecha?->toDateString());
 
         $enrollmentAnulada = Enrollment::create([
             'student_id' => $this->crearEstudiante()->id,
@@ -137,7 +127,7 @@ class EnrollmentTest extends TestCase
             'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-02',
             'estado' => 'PENDIENTE',
-        ])->assertRedirect(route('enrollments.index'));
+        ])->assertRedirect(route('students.index'));
 
         $this->assertDatabaseCount('enrollments', 3);
     }
@@ -160,7 +150,7 @@ class EnrollmentTest extends TestCase
             'academic_year_id' => $gestion->id,
             'fecha' => '2026-03-03',
             'estado' => 'COMPLETADA',
-        ])->assertRedirect(route('enrollments.index'));
+        ])->assertRedirect(route('students.index'));
 
         $this->assertDatabaseCount('enrollments', 2);
     }

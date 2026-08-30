@@ -57,9 +57,20 @@ class SubjectController extends Controller
         return redirect()->route('subjects.index')->with('success', 'Materia creada correctamente.');
     }
 
-    public function show(Subject $subject): SubjectResource
+    public function show(Subject $subject): SubjectResource|View
     {
-        return new SubjectResource($subject->load('level'));
+        $subject->load('level');
+
+        if (request()->expectsJson()) {
+            return new SubjectResource($subject);
+        }
+
+        $levels = Level::orderBy('orden')->get();
+
+        return view('subjects.show', [
+            'subject' => $subject,
+            'levels'  => $levels,
+        ]);
     }
 
     public function update(UpdateSubjectRequest $request, Subject $subject): SubjectResource|JsonResponse|RedirectResponse

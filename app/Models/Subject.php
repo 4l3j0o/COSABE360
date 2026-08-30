@@ -28,6 +28,11 @@ class Subject extends Model
         return $this->belongsTo(Level::class, 'level_id');
     }
 
+    public function assessments(): HasMany
+    {
+        return $this->hasMany(Assessment::class, 'subject_id');
+    }
+
     public function courseSubjects(): HasMany
     {
         return $this->hasMany(CourseSubject::class, 'subject_id');

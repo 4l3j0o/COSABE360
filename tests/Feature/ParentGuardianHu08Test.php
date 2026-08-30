@@ -36,7 +36,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => (string) rand(1000000, 9999999),
             'complemento'      => '',
-            'correo'           => 'est'.rand(100, 999).'@test.bo',
+            'email'           => 'est'.rand(100, 999).'@test.bo',
             'estado'           => 'ACTIVO',
             'quien_es_tutor'   => 'PADRE',
         ], $overrides);
@@ -44,7 +44,7 @@ class ParentGuardianHu08Test extends TestCase
         return Student::create($base);
     }
 
-    // CA-08-01: registrar padres/tutores con nombres, apellidos, documento, teléfono, correo, dirección
+    // CA-08-01: registrar padres/tutores con nombres, apellidos, documento, teléfono, email, dirección
     public function test_registra_padre_tutor_con_todos_los_datos(): void
     {
         $this->loginAsAdmin();
@@ -56,7 +56,7 @@ class ParentGuardianHu08Test extends TestCase
             'numero_documento' => '1234567',
             'complemento'      => '',
             'telefono'         => '70012345',
-            'correo'           => 'maria.gomez@example.com',
+            'email'           => 'maria.gomez@example.com',
             'direccion'        => 'Av. La Paz, Tarija',
         ]);
 
@@ -66,7 +66,7 @@ class ParentGuardianHu08Test extends TestCase
             'apellidos'        => 'Gómez Ramírez',
             'numero_documento' => '1234567',
             'telefono'         => '70012345',
-            'correo'           => 'maria.gomez@example.com',
+            'email'           => 'maria.gomez@example.com',
             'direccion'        => 'Av. La Paz, Tarija',
         ]);
         $this->assertDatabaseCount('parent_guardians', 1);
@@ -84,7 +84,7 @@ class ParentGuardianHu08Test extends TestCase
             'numero_documento' => '7654321',
             'complemento'      => '',
             'telefono'         => '71234567',
-            'correo'           => 'juan.perez@example.com',
+            'email'           => 'juan.perez@example.com',
             'direccion'        => 'Calle BolA-var',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
@@ -121,7 +121,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '9990002',
             'complemento'      => '',
-            'correo'           => 'pedro.rojas@example.com',
+            'email'           => 'pedro.rojas@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
@@ -162,7 +162,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '9988776',
             'complemento'      => '',
-            'correo'           => 'carlos.perez@example.com',
+            'email'           => 'carlos.perez@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
             ],
@@ -188,7 +188,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '5566778',
             'complemento'      => '',
-            'correo'           => 'ana.flores@example.com',
+            'email'           => 'ana.flores@example.com',
             'students'         => [
                 ['id' => $hijo1->id, 'tipo_relacion' => 'TUTOR'],
                 ['id' => $hijo2->id, 'tipo_relacion' => 'TUTOR'],
@@ -200,7 +200,7 @@ class ParentGuardianHu08Test extends TestCase
         $this->assertTrue($tutor->students()->wherePivot('tipo_relacion', 'TUTOR')->count() === 2);
     }
 
-    public function test_correo_es_obligatorio_si_es_tutor(): void
+    public function test_email_es_obligatorio_si_es_tutor(): void
     {
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
@@ -217,11 +217,11 @@ class ParentGuardianHu08Test extends TestCase
                 ],
             ]);
 
-        $response->assertSessionHasErrors('correo');
+        $response->assertSessionHasErrors('email');
         $this->assertDatabaseMissing('parent_guardians', ['numero_documento' => '3344556']);
     }
 
-    public function test_correo_no_es_obligatorio_si_no_es_tutor(): void
+    public function test_email_no_es_obligatorio_si_no_es_tutor(): void
     {
         $this->loginAsAdmin();
         $estudiante = $this->crearEstudiante();
@@ -239,7 +239,7 @@ class ParentGuardianHu08Test extends TestCase
 
         $this->assertDatabaseHas('parent_guardians', [
             'numero_documento' => '1122334',
-            'correo'           => null,
+            'email'           => null,
         ]);
     }
 
@@ -253,7 +253,7 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '6677889',
             'complemento'      => '',
-            'correo'           => 'marta.torres@example.com',
+            'email'           => 'marta.torres@example.com',
             'estado'           => 'ACTIVO',
         ]);
 
@@ -263,17 +263,140 @@ class ParentGuardianHu08Test extends TestCase
             'tipo_documento'   => 'CI',
             'numero_documento' => '6677889',
             'complemento'      => '',
-            'correo'           => 'marta.torres@example.com',
+            'email'           => 'marta.torres@example.com',
             'students'         => [
                 ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
             ],
-        ])->assertRedirect(route('tutores.index'));
+        ])->assertRedirect(route('tutores.show', $padre));
 
         $this->assertDatabaseHas('student_parent', [
             'parent_guardian_id' => $padre->id,
             'student_id'         => $estudiante->id,
             'tipo_relacion'      => 'TUTOR',
             'es_principal'       => true,
+        ]);
+    }
+
+    public function test_crea_usuario_del_sistema_cuando_es_tutor_de_un_estudiante(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Rosa',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email'    => 'rosa.mamani@example.com',
+            'nombre'   => 'Rosa',
+            'apellido' => 'Mamani',
+            'role_id'  => Role::where('nombre', 'Padre/Tutor')->value('id'),
+            'estado'   => 'ACTIVO',
+        ]);
+
+        $tutor = ParentGuardian::where('numero_documento', '4455667')->firstOrFail();
+        $this->assertNotNull($tutor->user_id);
+    }
+
+    public function test_crea_usuario_en_update_cuando_la_persona_pasa_a_ser_tutor(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+        $padre = ParentGuardian::create([
+            'nombres'          => 'Marta',
+            'apellidos'        => 'Torres',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '6677889',
+            'complemento'      => '',
+            'email'           => 'marta.torres@example.com',
+            'estado'           => 'ACTIVO',
+        ]);
+
+        $this->put(route('tutores.update', $padre), [
+            'nombres'          => 'Marta',
+            'apellidos'        => 'Torres',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '6677889',
+            'complemento'      => '',
+            'email'           => 'marta.torres@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.show', $padre));
+
+        $this->assertDatabaseHas('users', [
+            'email'  => 'marta.torres@example.com',
+            'role_id' => Role::where('nombre', 'Padre/Tutor')->value('id'),
+        ]);
+
+        $this->assertNotNull($padre->fresh()->user_id);
+    }
+
+    public function test_no_crea_usuario_si_la_persona_no_es_tutor(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Pedro',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '1122334',
+            'complemento'      => '',
+            'email'           => 'pedro.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseMissing('users', ['email' => 'pedro.mamani@example.com']);
+    }
+
+    public function test_sincroniza_datos_del_usuario_tutor_al_actualizar(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Rosa',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ]);
+
+        $tutor = ParentGuardian::where('numero_documento', '4455667')->firstOrFail();
+
+        $this->put(route('tutores.update', $tutor), [
+            'nombres'          => 'Rosa María',
+            'apellidos'        => 'Mamani Cruz',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.nuevo@example.com',
+            'telefono'         => '79998888',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.show', $tutor));
+
+        $this->assertDatabaseHas('users', [
+            'email'    => 'rosa.nuevo@example.com',
+            'nombre'   => 'Rosa María',
+            'apellido' => 'Mamani Cruz',
+            'telefono' => '79998888',
         ]);
     }
 }

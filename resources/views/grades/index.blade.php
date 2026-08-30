@@ -11,9 +11,8 @@
             <h1 class="text-xl font-bold text-foreground">Grados</h1>
             <p class="text-sm text-muted-foreground">Gestión de grados por nivel educativo</p>
         </div>
-        <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+        <button onclick="openModal('modal-create')" title="Nuevo Grado" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nuevo Grado
         </button>
     </div>
 
@@ -34,8 +33,8 @@
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
         </form>
@@ -79,7 +78,7 @@
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$grade->estado] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $grade->estado }}
+{{ mb_strtolower($grade->estado) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
@@ -124,13 +123,16 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Grado</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">Seleccionar nivel...</option>
-                                    @foreach($levels as $level)
-                                        <option value="{{ $level->id }}">{{ $level->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="level-create"
+                                    name="level_id"
+                                    label="Nivel Educativo"
+                                    required
+                                    placeholder="Buscar nivel..."
+                                    searchHint="Escriba para buscar por nombre del nivel."
+                                    value="{{ old('level_id') }}"
+                                    :items="$levels->map(fn($l) => ['value' => $l->id, 'label' => $l->nombre])"
+                                />
                                 @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -170,12 +172,14 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Grado</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel Educativo <span class="text-error">*</span></label>
-                                <select name="level_id" id="edit-level_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    @foreach($levels as $level)
-                                        <option value="{{ $level->id }}">{{ $level->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="level-edit"
+                                    name="level_id"
+                                    label="Nivel Educativo"
+                                    required
+                                    placeholder="Buscar nivel..."
+                                    :items="$levels->map(fn($l) => ['value' => $l->id, 'label' => $l->nombre])"
+                                />
                                 @error('level_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -217,7 +221,7 @@
         }
         function editarGrado(id, nivelId, nombre, orden, estado) {
             document.getElementById('form-edit').action = '/grados/' + id;
-            document.getElementById('edit-level_id').value = nivelId;
+            setPickerValor('level-edit', nivelId);
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-orden').value = orden;
             document.getElementById('edit-estado').value = estado;

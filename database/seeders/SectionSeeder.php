@@ -34,7 +34,7 @@ class SectionSeeder extends Seeder
                 Section::updateOrCreate(
                     ['grade_id' => $grado->id, 'nombre' => $nombre],
                     [
-                        'responsable_id' => null,
+                        'teacher_id' => null,
                         'capacidad'      => 40,
                         'estado'         => 'ACTIVO',
                     ]

@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParentGuardian;
+use App\Models\Role;
 use App\Models\Student;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ParentGuardianController extends Controller
@@ -18,9 +22,20 @@ class ParentGuardianController extends Controller
             return $this->apiIndex($request);
         }
 
-        $padres = ParentGuardian::with(['user:id,nombre,apellido,email', 'students:id,nombres,apellidos'])
-            ->whereHas('students', function ($q) {
-                $q->where('student_parent.es_principal', true);
+        $tipo = $request->query('tipo', 'tutores');
+
+        $padres = ParentGuardian::with(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos'])
+            ->when($tipo === 'tutores', function ($q) {
+                $q->whereHas('students', function ($c) {
+                    $c->where('student_parent.es_principal', true);
+                });
+            })
+            ->when($tipo === 'no_tutores', function ($q) {
+                $q
+                    ->whereHas('students')
+                    ->whereDoesntHave('students', function ($c) {
+                        $c->where('student_parent.es_principal', true);
+                    });
             })
             ->when($request->query('buscar'), function ($q, $b) {
                 $buscable = addcslashes($b, '%_');
@@ -28,7 +43,7 @@ class ParentGuardianController extends Controller
                     $w->where('nombres', 'like', "%{$buscable}%")
                       ->orWhere('apellidos', 'like', "%{$buscable}%")
                       ->orWhere('numero_documento', 'like', "%{$buscable}%")
-                      ->orWhere('correo', 'like', "%{$buscable}%")
+                      ->orWhere('email', 'like', "%{$buscable}%")
                 );
             })
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
@@ -41,7 +56,9 @@ class ParentGuardianController extends Controller
             ->orderBy('nombres')
             ->get(['id', 'nombres', 'apellidos', 'codigo']);
 
-        return view('parent_guardians.index', compact('padres', 'estudiantes'));
+        return view('parent_guardians.index', compact('padres', 'estudiantes') + [
+            'estudiantesConTutor' => $this->estudiantesConTutorIds(),
+        ]);
     }
 
     private function apiIndex(Request $request): JsonResponse
@@ -52,6 +69,22 @@ class ParentGuardianController extends Controller
             ->get();
 
         return response()->json(['data' => $padres]);
+    }
+
+    public function show(ParentGuardian $parentGuardian): View
+    {
+        $parentGuardian->load(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos']);
+
+        $estudiantes = Student::where('estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos', 'codigo']);
+
+        return view('parent_guardians.show', [
+            'parentGuardian' => $parentGuardian,
+            'estudiantes' => $estudiantes,
+            'estudiantesConTutor' => $this->estudiantesConTutorIds($parentGuardian->id),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -65,12 +98,12 @@ class ParentGuardianController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
-            'correo'     => [
+            'email'     => [
                 $hayTutor ? 'required' : 'nullable',
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('parent_guardians', 'correo'),
+                Rule::unique('parent_guardians', 'email'),
             ],
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],
@@ -81,6 +114,8 @@ class ParentGuardianController extends Controller
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
+
+        $this->validarTutoresUnicos($request);
 
         try {
             $padre = ParentGuardian::create($validated + ['estado' => 'ACTIVO']);
@@ -94,12 +129,17 @@ class ParentGuardianController extends Controller
         }
 
         $this->sincronizarEstudiantes($padre, $request->input('students', []));
+        $this->sincronizarUsuarioTutor($padre, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $padre->loadCount('students')], 201);
         }
 
-        return redirect()->route('tutores.index')->with('success', 'Padre/tutor registrado correctamente.');
+        $mensaje = $hayTutor
+            ? 'Padre/tutor registrado correctamente. Se creó su usuario con email y contraseña por defecto: password123'
+            : 'Padre/tutor registrado correctamente.';
+
+        return redirect()->route('tutores.index')->with('success', $mensaje);
     }
 
     public function update(Request $request, ParentGuardian $parentGuardian): RedirectResponse|JsonResponse
@@ -113,13 +153,13 @@ class ParentGuardianController extends Controller
             'numero_documento' => ['sometimes', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
             'telefono'   => ['nullable', 'string', 'max:20'],
-            'correo'     => [
+            'email'     => [
                 $hayTutor ? 'required' : 'nullable',
                 'sometimes',
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('parent_guardians', 'correo')->ignore($parentGuardian->id),
+                Rule::unique('parent_guardians', 'email')->ignore($parentGuardian->id),
             ],
             'direccion'  => ['nullable', 'string', 'max:255'],
             'ocupacion'  => ['nullable', 'string', 'max:100'],
@@ -130,15 +170,22 @@ class ParentGuardianController extends Controller
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
+        $this->validarTutoresUnicos($request, $parentGuardian);
+
         $parentGuardian->update($validated);
 
         $this->sincronizarEstudiantes($parentGuardian, $request->input('students', []));
+        $this->sincronizarUsuarioTutor($parentGuardian, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $parentGuardian->fresh()->loadCount('students')]);
         }
 
-        return redirect()->route('tutores.index')->with('success', 'Padre/tutor actualizado correctamente.');
+        $mensaje = $hayTutor
+            ? 'Padre/tutor actualizado correctamente. Usuario con acceso de tutor verificado (contraseña por defecto: password123).'
+            : 'Padre/tutor actualizado correctamente.';
+
+        return redirect()->route('tutores.show', $parentGuardian)->with('success', $mensaje);
     }
 
     private function tieneTutor(Request $request): bool
@@ -149,6 +196,58 @@ class ParentGuardianController extends Controller
         }
 
         return collect($students)->contains(fn ($s) => ($s['tipo_relacion'] ?? '') === 'TUTOR');
+    }
+
+    private function estudiantesConTutorIds(?int $excluirParentId = null): array
+    {
+        $q = DB::table('student_parent')->where('es_principal', true);
+        if ($excluirParentId) {
+            $q->where('parent_guardian_id', '!=', $excluirParentId);
+        }
+
+        return $q->pluck('student_id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    private function validarTutoresUnicos(Request $request, ?ParentGuardian $excepto = null): void
+    {
+        $students = $request->input('students', []);
+        if (! is_array($students)) {
+            return;
+        }
+
+        $idsConTutor = [];
+        foreach ($students as $v) {
+            if (($v['tipo_relacion'] ?? '') === 'TUTOR' && ! empty($v['id'])) {
+                $idsConTutor[] = (int) $v['id'];
+            }
+        }
+
+        $idsConTutor = array_unique($idsConTutor);
+        if (empty($idsConTutor)) {
+            return;
+        }
+
+        $query = DB::table('student_parent')
+            ->whereIn('student_id', $idsConTutor)
+            ->where('es_principal', true);
+
+        if ($excepto) {
+            $query->where('parent_guardian_id', '!=', $excepto->id);
+        }
+
+        $conflictos = $query->pluck('student_id')->map(fn ($id) => (int) $id)->all();
+        if (empty($conflictos)) {
+            return;
+        }
+
+        $nombres = Student::whereIn('id', $conflictos)
+            ->get(['id', 'nombres', 'apellidos'])
+            ->map(fn ($s) => trim($s->nombres . ' ' . $s->apellidos))
+            ->implode(', ');
+
+        throw ValidationException::withMessages([
+            'students' => 'No se puede asignar como tutor: el/los estudiante(s) ' . $nombres . ' ya cuenta(n) con un tutor.',
+        ]);
     }
 
     private function sincronizarEstudiantes(ParentGuardian $padre, array $students): void
@@ -167,6 +266,47 @@ class ParentGuardianController extends Controller
         }
 
         $padre->students()->sync($vinculos);
+    }
+
+    private function sincronizarUsuarioTutor(ParentGuardian $padre, bool $esTutor): void
+    {
+        if (! $esTutor || empty($padre->email)) {
+            return;
+        }
+
+        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
+        if (! $rolPadre) {
+            return;
+        }
+
+        if ($padre->user_id) {
+            $usuario = User::find($padre->user_id);
+            if ($usuario) {
+                $usuario->update([
+                    'nombre'   => $padre->nombres,
+                    'apellido' => $padre->apellidos,
+                    'email'    => $padre->email,
+                    'telefono' => $padre->telefono,
+                ]);
+            }
+            return;
+        }
+
+        $usuario = User::where('email', $padre->email)->first();
+
+        if (! $usuario) {
+            $usuario = User::create([
+                'nombre'   => $padre->nombres,
+                'apellido' => $padre->apellidos,
+                'email'    => $padre->email,
+                'password' => 'password123',
+                'role_id'  => $rolPadre->id,
+                'telefono' => $padre->telefono,
+                'estado'   => 'ACTIVO',
+            ]);
+        }
+
+        $padre->update(['user_id' => $usuario->id]);
     }
 
     public function destroy(ParentGuardian $parentGuardian): RedirectResponse|JsonResponse

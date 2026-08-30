@@ -69,8 +69,8 @@
                         </p>
                         <select name="estado" required
                             class="edit-view w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all hidden">
-                            <option value="ACTIVO" {{ old('estado', $config->estado) === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                            <option value="INACTIVO" {{ old('estado', $config->estado) === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                            <option value="ACTIVO" {{ old('estado', $config->estado) === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                            <option value="INACTIVO" {{ old('estado', $config->estado) === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
                         </select>
                         @error('estado') <p class="text-xs text-error">{{ $message }}</p> @enderror
                     </div>

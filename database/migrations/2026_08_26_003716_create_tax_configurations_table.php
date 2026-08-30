@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('leyenda_iva_exento', 255);
             $table->string('leyenda_it_exento', 255);
             $table->string('leyenda_ley070', 255);
+            $table->decimal('monto_mensualidad', 10, 2)->default(0);
             $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
 

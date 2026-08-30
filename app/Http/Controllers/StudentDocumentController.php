@@ -14,7 +14,10 @@ class StudentDocumentController extends Controller
             'estado' => 'required|in:PENDIENTE,ENTREGADO,VERIFICADO',
         ]);
 
-        $studentDocument->update(['estado' => $validated['estado']]);
+        $studentDocument->update([
+            'estado' => $validated['estado'],
+            'fecha_entrega' => in_array($validated['estado'], ['ENTREGADO', 'VERIFICADO']) ? now() : null,
+        ]);
 
         return back()->with('mensaje', 'Estado del documento actualizado correctamente.');
     }

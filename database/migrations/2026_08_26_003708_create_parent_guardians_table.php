@@ -17,13 +17,13 @@ return new class extends Migration
             $table->string('numero_documento', 20);
             $table->string('complemento', 5)->default('');
             $table->string('telefono', 20)->nullable();
-            $table->string('correo', 150)->nullable();
+            $table->string('email', 150)->nullable();
             $table->string('direccion', 255)->nullable();
             $table->string('ocupacion', 100)->nullable();
             $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['numero_documento', 'complemento']);
-            $table->unique('correo');
+            $table->unique('email');
             $table->index(['nombres', 'apellidos']);
             $table->index('estado');
         });

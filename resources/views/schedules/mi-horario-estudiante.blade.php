@@ -2,22 +2,7 @@
 @section('titulo', 'Mi Horario')
 
 @section('sidebar')
-    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white hover:bg-white/15 text-sm transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-        Dashboard
-    </a>
-    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white hover:bg-white/15 text-sm transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        Mis Calificaciones
-    </a>
-    <a href="{{ route('schedules.mi-horario') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Mi Horario
-    </a>
-    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-white hover:bg-white/15 text-sm transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Mi Asistencia
-    </a>
+    @include('dashboard.partials._sidebar-estudiante')
 @endsection
 
 @section('contenido')
@@ -72,32 +57,47 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($horas as $hora)
-                            @php $clave = $claveFranja($hora); @endphp
-                            <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
-                                <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
-                                    <div class="text-sm font-bold text-foreground">{{ $hora->hora_inicio->format('H:i') }}</div>
-                                    <div class="text-[11px] text-muted-foreground">{{ $hora->hora_fin->format('H:i') }}</div>
-                                </td>
-                                @foreach($dias as $dia)
-                                    @php $celda = ($tabla[$dia][$clave] ?? collect())->first(); @endphp
-                                    <td class="p-2 align-top border-l border-border/60">
-                                        @if($celda)
-                                            <div class="h-full rounded-lg bg-card border border-border/70 px-2.5 py-2 shadow-sm">
-                                                <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject->nombre ?? '—' }}</div>
-                                                @if($celda->teacher)
-                                                    <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->teacher->nombres }} {{ $celda->teacher->apellidos }}</div>
-                                                @endif
-                                                @if($celda->aula)
-                                                    <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->aula }}</div>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <div class="h-full min-h-[3.5rem] rounded-lg bg-muted/20"></div>
-                                        @endif
+                        @foreach($bloquesDia as $bloque)
+                            @php $clave = $bloque['inicio'] . '-' . $bloque['fin']; @endphp
+                            @if(($bloque['tipo'] ?? 'clase') === 'receso')
+                                <tr class="border-b border-border">
+                                    <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
+                                        <div class="text-sm font-bold text-foreground">{{ $bloque['inicio'] }}</div>
+                                        <div class="text-[11px] text-muted-foreground">{{ $bloque['fin'] }}</div>
                                     </td>
-                                @endforeach
-                            </tr>
+                                    <td colspan="{{ count($dias) - 1 }}" class="p-2 align-top border-l border-border/60">
+                                        <div class="h-full rounded-lg bg-warning/10 border border-dashed border-warning/40 px-3 py-2 text-center">
+                                            <span class="text-[13px] font-bold text-warning">Receso</span>
+                                            <span class="text-[11px] text-muted-foreground ml-1">{{ $bloque['nombre'] ?? '' }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @else
+                                <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
+                                    <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
+                                        <div class="text-sm font-bold text-foreground">{{ $bloque['inicio'] }}</div>
+                                        <div class="text-[11px] text-muted-foreground">{{ $bloque['fin'] }}</div>
+                                    </td>
+                                    @foreach($dias as $dia)
+                                        @php $celda = ($tabla[$dia][$clave] ?? collect())->first(); @endphp
+                                        <td class="p-2 align-top border-l border-border/60">
+                                            @if($celda)
+                                                <div class="h-full rounded-lg bg-card border border-border/70 px-2.5 py-2 shadow-sm">
+                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject->nombre ?? '—' }}</div>
+                                                    @if($celda->teacher)
+                                                        <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->teacher->nombres }} {{ $celda->teacher->apellidos }}</div>
+                                                    @endif
+                                                    @if($celda->aula)
+                                                        <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->aula }}</div>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <div class="h-full min-h-[3.5rem] rounded-lg bg-muted/20"></div>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

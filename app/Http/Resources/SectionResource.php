@@ -13,7 +13,7 @@ class SectionResource extends JsonResource
             'id'             => $this->id,
             'grade_id'       => $this->grade_id,
             'nombre'         => $this->nombre,
-            'responsable_id' => $this->responsable_id,
+            'teacher_id' => $this->teacher_id,
             'capacidad'      => $this->capacidad,
             'estado'         => $this->estado,
             'created_at'     => $this->created_at,
