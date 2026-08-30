@@ -21,7 +21,9 @@ class AnnouncementController extends Controller
             return response()->json(['data' => $announcements]);
         }
 
-        return view('announcements.index', compact('announcements'));
+        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
+
+        return view('announcements.index', compact('announcements', 'courses'));
     }
 
     public function create()
@@ -80,7 +82,8 @@ class AnnouncementController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['data' => $announcement]);
         }
-        return view('announcements.show', compact('announcement'));
+        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
+        return view('announcements.show', compact('announcement', 'courses'));
     }
 
     public function edit(Announcement $announcement)
