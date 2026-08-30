@@ -313,6 +313,7 @@ class StudentController extends Controller
 
         $inscripcionPeriodo = null;
         $matriculaPeriodo = null;
+        $cursos = collect();
         if ($periodoActivo) {
             $inscripcionPeriodo = \App\Models\Enrollment::where('student_id', $student->id)
                 ->where('academic_year_id', $periodoActivo->id)
@@ -321,9 +322,17 @@ class StudentController extends Controller
                 ->latest('fecha')
                 ->first();
             $matriculaPeriodo = $inscripcionPeriodo?->registration;
+
+            $cursos = \App\Models\Course::with(['grade', 'section'])
+                ->where('academic_year_id', $periodoActivo->id)
+                ->where('estado', 'ACTIVO')
+                ->orderBy('nombre')
+                ->get();
         }
 
-        return view('students.show', compact('student', 'historial', 'documentos', 'periodoActivo', 'inscripcionPeriodo', 'matriculaPeriodo'));
+        $montoMensual = (float) (\App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0);
+
+        return view('students.show', compact('student', 'historial', 'documentos', 'periodoActivo', 'inscripcionPeriodo', 'matriculaPeriodo', 'cursos', 'montoMensual'));
     }
 
     public function update(UpdateStudentRequest $request, Student $student)

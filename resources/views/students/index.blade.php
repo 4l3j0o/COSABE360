@@ -107,7 +107,7 @@
                                             sin inscribir
                                         </button>
                                     @elseif($acad === 'INSCRITO')
-                                        <a href="{{ route('estudiantes.matriculacion', $student) }}" title="Matricular" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info hover:opacity-80 transition-opacity">
+                                        <a href="{{ route('students.show', ['student' => $student->id, 'matricula' => 1]) }}" title="Matricular" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info hover:opacity-80 transition-opacity">
                                             inscrito
                                         </a>
                                     @else

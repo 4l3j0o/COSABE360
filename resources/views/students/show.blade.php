@@ -11,10 +11,10 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $student->apellidos }}, {{ $student->nombres }}</h1>
             <div class="flex items-center gap-2">
-                <a href="{{ route('estudiantes.matriculacion', $student) }}" class="inline-flex items-center gap-2 bg-success text-success-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                <button type="button" onclick="abrirMatricula()" class="inline-flex items-center gap-2 bg-success text-success-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Matricular
-                </a>
+                </button>
                 <button type="button" id="btn-editar-estudiante" onclick="activarEdicion()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     Editar
@@ -570,6 +570,96 @@
             </div>
         @endif
     </div>
+
+    {{-- MODAL MATRICULA --}}
+    <div id="modal-matricula" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
+        <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
+            <div style="width:100%; max-width:36rem; max-height:calc(100vh - 4rem); display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
+                    <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Matricular Estudiante</h2>
+                    <button onclick="closeModalMatricula()" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
+                        <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div style="flex:1; overflow-y:auto; padding:1.5rem;">
+                    @if(! $periodoActivo)
+                        <p class="text-sm text-muted-foreground">No hay un período académico activo. Crea o abre un período para poder matricular estudiantes.</p>
+                    @elseif($matriculaPeriodo && $matriculaPeriodo->estado === 'ACTIVA')
+                        <div class="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Este estudiante ya se encuentra matriculado en el período académico activo.
+                        </div>
+                    @elseif(! $inscripcionPeriodo || $inscripcionPeriodo->estado !== 'COMPLETADA')
+                        <p class="text-sm text-muted-foreground">Este estudiante no tiene una inscripción <strong>completada</strong> en el período activo. Complete la inscripción desde <strong>Editar</strong> para poder matricularlo.</p>
+                    @else
+                        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-5">
+                            <div>
+                                <dt class="text-muted-foreground">Estudiante</dt>
+                                <dd class="text-foreground font-medium">{{ $student->apellidos }} {{ $student->nombres }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-muted-foreground">Código</dt>
+                                <dd class="text-foreground font-mono font-medium">{{ $student->codigo }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-muted-foreground">Período académico</dt>
+                                <dd class="text-foreground font-medium">{{ $periodoActivo->nombre }}</dd>
+                            </div>
+                        </dl>
+                        <form method="POST" action="{{ route('estudiantes.matricular', $student) }}" class="space-y-4">
+                            @csrf
+                            <div>
+                                @php $cursoSeleccionadoBuscador = $cursos->firstWhere('id', old('course_id')); @endphp
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso (grado y paralelo) <span class="text-error">*</span></label>
+                                <input type="hidden" name="course_id" id="mat-course_id" value="{{ old('course_id') }}">
+                                <div id="mat-curso-picker" style="position:relative;">
+                                    <input type="text" id="mat-curso-picker-input" placeholder="Buscar curso (grado, paralelo o nombre)..." autocomplete="off" value="{{ $cursoSeleccionadoBuscador?->nombre ?? '' }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                    <div id="mat-curso-picker-lista" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60; max-height:240px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:0.5rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.15);">
+                                        @foreach($cursos as $curso)
+                                            <div data-curso-id="{{ $curso->id }}" data-curso-label="{{ $curso->nombre }}" data-curso-busqueda="@php echo mb_strtolower(trim(($curso->grade?->nombre ?? '') . ' ' . ($curso->section?->nombre ?? '') . ' ' . ' paralelo ' . $curso->nombre)); @endphp" onmousedown="matSeleccionarCurso(this); return false;" style="padding:0.625rem 0.75rem; cursor:pointer; font-size:0.875rem; color:var(--foreground); border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
+                                                {{ $curso->nombre }}
+                                            </div>
+                                        @endforeach
+                                        @if($cursos->isEmpty())
+                                            <div style="padding:0.625rem 0.75rem; font-size:0.875rem; color:var(--muted-foreground);">No hay cursos activos en el período.</div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <p class="text-xs text-muted-foreground mt-1">Escriba para filtrar por grado, paralelo o nombre.</p>
+                                @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha de matrícula <span class="text-error">*</span></label>
+                                <input type="date" name="fecha" id="mat-fecha" value="{{ old('fecha', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                @error('fecha') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="bg-muted/40 border border-border rounded-lg px-4 py-3 text-sm">
+                                <p class="text-muted-foreground">
+                                    <span class="font-medium text-foreground">Mensualidad:</span>
+                                    <span class="font-semibold text-foreground">Bs {{ number_format($montoMensual, 2) }}</span>
+                                    <span class="text-muted-foreground"> (establecida en la configuración del colegio, 10 cuotas de febrero a noviembre)</span>
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Observaciones</label>
+                                <textarea name="observaciones" rows="2" placeholder="Opcional..." class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">{{ old('observaciones') }}</textarea>
+                                @error('observaciones') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            @if($errors->has('general'))
+                                <div class="bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm">
+                                    {{ $errors->first('general') }}
+                                </div>
+                            @endif
+                            <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
+                                <button type="button" onclick="closeModalMatricula()" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>
+                                <button type="submit" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Registrar matrícula</button>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -634,8 +724,76 @@
             document.getElementById('btn-cancelar-edicion').style.display = 'none';
         }
 
-        @if($errors->any())
+        function abrirMatricula() {
+            var fecha = document.getElementById('mat-fecha');
+            if (fecha && !fecha.value) {
+                var hoy = new Date();
+                fecha.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+            }
+            var m = document.getElementById('modal-matricula');
+            if (m) { m.style.display = 'block'; document.body.style.overflow = 'hidden'; }
+        }
+
+        function closeModalMatricula() {
+            var m = document.getElementById('modal-matricula');
+            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
+        function matBuscarCursos() {
+            var input = document.getElementById('mat-curso-picker-input');
+            var lista = document.getElementById('mat-curso-picker-lista');
+            if (!input || !lista || !lista.style) return;
+            var q = input.value.trim().toLowerCase();
+            var items = lista.querySelectorAll('[data-curso-id]');
+            var visibles = 0;
+            items.forEach(function (it) {
+                var coincide = !q || it.getAttribute('data-curso-busqueda').indexOf(q) !== -1;
+                it.style.display = coincide ? '' : 'none';
+                if (coincide) visibles++;
+            });
+            lista.style.display = 'block';
+        }
+
+        function matSeleccionarCurso(el) {
+            document.getElementById('mat-course_id').value = el.getAttribute('data-curso-id');
+            document.getElementById('mat-curso-picker-input').value = el.getAttribute('data-curso-label');
+            document.getElementById('mat-curso-picker-lista').style.display = 'none';
+        }
+
+        function matCerrarListaCurso(e) {
+            var p = document.getElementById('mat-curso-picker');
+            var lista = document.getElementById('mat-curso-picker-lista');
+            if (!p || !lista) return;
+            if (!p.contains(e.target)) lista.style.display = 'none';
+        }
+
+        var matPickerInput = document.getElementById('mat-curso-picker-input');
+        var matPickerLista = document.getElementById('mat-curso-picker-lista');
+        if (matPickerInput && matPickerLista) {
+            matPickerInput.addEventListener('focus', function () {
+                matBuscarCursos();
+            });
+            matPickerInput.addEventListener('input', matBuscarCursos);
+            matPickerInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    matPickerLista.style.display = 'none';
+                } else if (e.key === 'Enter') {
+                    var items = matPickerLista.querySelectorAll('[data-curso-id]');
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].style.display !== 'none') { matSeleccionarCurso(items[i]); e.preventDefault(); break; }
+                    }
+                }
+            });
+            document.addEventListener('click', matCerrarListaCurso);
+        }
+
+        @if(old('course_id') && $errors->any())
+            abrirMatricula();
+        @elseif($errors->any())
             activarEdicion();
+        @endif
+        @if(request('matricula'))
+            abrirMatricula();
         @endif
     </script>
 @endpush
