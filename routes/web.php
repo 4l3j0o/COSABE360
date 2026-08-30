@@ -106,6 +106,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 // Cursos (ver) - todos los autenticados
 Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
+Route::middleware('auth')->get('/cursos/{course}/calificaciones', [GradeScoreController::class, 'cursoAdmin'])->name('courses.calificaciones');
 
 // CRUD ESTUDIANTES solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
@@ -149,10 +150,9 @@ Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(funct
 });
 
 // HU22: Registrar calificaciones - Docente registra, Estudiante/Padre consulta (HU23)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/calificaciones', [GradeScoreController::class, 'index'])->name('calificaciones.index');
-});
-Route::middleware(['auth', 'role:Docente'])->prefix('calificaciones')->group(function () {
+Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
+    Route::get('/', [GradeScoreController::class, 'index'])->name('calificaciones.index');
+    Route::get('/{assessment}/ver', [GradeScoreController::class, 'ver'])->name('calificaciones.ver');
     Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
     Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
 });

@@ -28,12 +28,8 @@ class AssessmentController extends Controller
         $teacher = $request->user()->teacher;
 
         $assessments = Assessment::with(['subject', 'academicYear', 'courseSubject.course'])
-            ->where(function ($q) use ($teacher) {
-                if ($teacher) {
-                    $q->whereHas('courseSubject', fn ($cq) => $cq->where('teacher_id', $teacher->id));
-                } else {
-                    $q->whereRaw('0 = 1');
-                }
+            ->when($teacher, function ($q) use ($teacher) {
+                $q->whereHas('courseSubject', fn ($cq) => $cq->where('teacher_id', $teacher->id));
             })
             ->when($request->query('subject_id'), fn ($q, $v) => $q->where('subject_id', $v))
             ->when($request->query('academic_year_id'), fn ($q, $v) => $q->where('academic_year_id', $v))

@@ -11,9 +11,8 @@
             <h1 class="text-xl font-bold text-foreground">Asignaciones Docente Materia Curso</h1>
             <p class="text-sm text-muted-foreground">Gestión de asignaciones de docentes a materias y cursos</p>
         </div>
-        <a href="{{ route('course_subjects.create') }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+        <a href="{{ route('course_subjects.create') }}" title="Nueva Asignación" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nueva Asignación
         </a>
     </div>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assessment;
+use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\GradeScore;
 use App\Models\ParentGuardian;
@@ -13,17 +14,12 @@ use Illuminate\View\View;
 
 class GradeScoreController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $user = auth()->user();
 
         if ($user->hasRole('Docente')) {
-            $assessments = Assessment::with(['subject', 'academicYear', 'courseSubject.subject'])
-                ->withCount('gradeScores')
-                ->orderByDesc('fecha')
-                ->get();
-
-            return view('grade-scores.index', compact('assessments'));
+            return redirect()->route('asistencias.index');
         }
 
         $bimestre = $request->input('bimestre');
@@ -39,12 +35,7 @@ class GradeScoreController extends Controller
 
             if (! $parentGuardian) {
                 if ($user->hasRole('Administrador')) {
-                    $assessments = Assessment::with(['subject', 'academicYear', 'courseSubject.subject'])
-                        ->withCount('gradeScores')
-                        ->orderByDesc('fecha')
-                        ->get();
-
-                    return view('grade-scores.index', compact('assessments'));
+                    return redirect()->route('asistencias.index');
                 }
 
                 return view('calificaciones.index', [
@@ -93,6 +84,58 @@ class GradeScoreController extends Controller
             ->keyBy('student_id');
 
         return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes'));
+    }
+
+    /**
+     * Muestra las calificaciones de una evaluación en solo lectura (Ver).
+     */
+    public function ver(Assessment $assessment): View
+    {
+        $assessment->load(['subject', 'academicYear', 'courseSubject.course']);
+
+        $students = Student::where('estado', 'ACTIVO')
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $notasExistentes = GradeScore::where('assessment_id', $assessment->id)
+            ->get()
+            ->keyBy('student_id');
+
+        return view('grade-scores.ver', compact('assessment', 'students', 'notasExistentes'));
+    }
+
+    /**
+     * Lista las evaluaciones de un curso concreto (vista admin, acceso desde Cursos).
+     */
+    public function cursoAdmin(Request $request, Course $course): View
+    {
+        $course->load(['grade', 'section', 'gestion']);
+
+        $materias = $course->courseSubjects()
+            ->with('subject')
+            ->get()
+            ->map(fn ($cs) => $cs->subject)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $query = Assessment::with(['subject', 'academicYear', 'courseSubject.course'])
+            ->whereHas('courseSubject', fn ($q) => $q->where('course_id', $course->id));
+
+        $materia = $request->query('materia');
+        $bimestre = $request->query('bimestre');
+
+        if ($materia) {
+            $query->where('subject_id', $materia);
+        }
+        if ($bimestre) {
+            $query->where('bimestre', $bimestre);
+        }
+
+        $assessments = $query->withCount('gradeScores')->orderByDesc('fecha')->get();
+
+        return view('grade-scores.curso', compact('assessments', 'course', 'materias', 'materia', 'bimestre'));
     }
 
     public function porCurso(Request $request, CourseSubject $courseSubject, Assessment $assessment): View
@@ -209,21 +252,12 @@ class GradeScoreController extends Controller
             ? round($calificacionesPorMateria->avg('promedio'), 2)
             : 0;
 
-        if (view()->exists('calificaciones.index')) {
-            return view('calificaciones.index', [
-                'student' => $student,
-                'estudiantes' => $hijos,
-                'calificacionesPorMateria' => $calificacionesPorMateria,
-                'promedioGeneral' => $promedioGeneral,
-                'bimestre' => $bimestre,
-            ]);
-        }
-
-        return view('grade-scores.index', [
-            'assessments' => Assessment::with(['subject', 'academicYear'])->withCount('gradeScores')->orderByDesc('fecha')->get(),
+        return view('calificaciones.index', [
             'student' => $student,
+            'estudiantes' => $hijos,
             'calificacionesPorMateria' => $calificacionesPorMateria,
             'promedioGeneral' => $promedioGeneral,
+            'bimestre' => $bimestre,
         ]);
     }
 }
