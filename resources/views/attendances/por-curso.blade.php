@@ -90,7 +90,7 @@
                                     <td class="px-2 py-2.5 text-center">
                                         @if($reg)
                                             @php
-                                                $titulo = $reg->estado . ($reg->justificacion ? ' — ' . $reg->justificacion : '');
+                                                $titulo = mb_strtolower($reg->estado) . ($reg->justificacion ? ' — ' . $reg->justificacion : '');
                                             @endphp
                                             <span title="{{ $titulo }}" class="inline-flex w-7 h-7 items-center justify-center rounded-full text-[11px] font-bold {{ $badges[$reg->estado] ?? 'bg-muted text-muted-foreground' }}">
                                                 {{ $iniciales[$reg->estado] ?? '—' }}

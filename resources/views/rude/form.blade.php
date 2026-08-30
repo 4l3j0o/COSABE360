@@ -138,10 +138,10 @@
                 <div>
                     <label class="text-xs font-medium text-muted-foreground">Estado</label>
                     <select name="estado" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                        <option value="PENDIENTE" {{ old('estado', $rude->estado) === 'PENDIENTE' ? 'selected' : '' }}>PENDIENTE</option>
-                        <option value="ENVIADO" {{ old('estado', $rude->estado) === 'ENVIADO' ? 'selected' : '' }}>ENVIADO</option>
-                        <option value="APROBADO" {{ old('estado', $rude->estado) === 'APROBADO' ? 'selected' : '' }}>APROBADO</option>
-                        <option value="RECHAZADO" {{ old('estado', $rude->estado) === 'RECHAZADO' ? 'selected' : '' }}>RECHAZADO</option>
+                        <option value="PENDIENTE" {{ old('estado', $rude->estado) === 'PENDIENTE' ? 'selected' : '' }}>pendiente</option>
+                        <option value="ENVIADO" {{ old('estado', $rude->estado) === 'ENVIADO' ? 'selected' : '' }}>enviado</option>
+                        <option value="APROBADO" {{ old('estado', $rude->estado) === 'APROBADO' ? 'selected' : '' }}>aprobado</option>
+                        <option value="RECHAZADO" {{ old('estado', $rude->estado) === 'RECHAZADO' ? 'selected' : '' }}>rechazado</option>
                     </select>
                 </div>
                 <div class="sm:col-span-2">

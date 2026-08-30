@@ -38,8 +38,8 @@
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, documento o email" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
         </form>
@@ -109,7 +109,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$padre->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $padre->estado }}</span>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$padre->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($padre->estado) }}</span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     @include('parent_guardians._acciones', ['padre' => $padre])
@@ -323,15 +323,6 @@
         function openModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function opcionesEstudiantes(selectedId, modo) {
-            let opts = '<option value="">— Seleccionar estudiante —</option>';
-            ESTUDIANTES.forEach(function (e) {
-                const sel = (String(selectedId) === String(e.id)) ? ' selected' : '';
-                opts += '<option value="' + e.id + '"' + sel + '>' + e.apellidos + ' ' + e.nombres + (e.codigo ? ' (' + e.codigo + ')' : '') + '</option>';
-            });
-            return opts;
-        }
-
         function opcionesTipo(selected, modo) {
             const tipos = ['PADRE', 'MADRE', 'TUTOR'];
             let opts = '<option value=""' + (selected ? '' : ' selected') + '>— Tipo —</option>';
@@ -342,22 +333,140 @@
             return opts;
         }
 
+        function _claveEstudiante(e) {
+            return ((((e.nombres || '') + ' ' + (e.apellidos || '') + ' ' + (e.codigo || '') + ' ' + (e.numero_documento || ''))).toLowerCase());
+        }
+
+        function estudiantePorId(id) {
+            for (var i = 0; i < ESTUDIANTES.length; i++) {
+                if (String(ESTUDIANTES[i].id) === String(id)) return ESTUDIANTES[i];
+            }
+            return null;
+        }
+
+        function abrirBusquedaEstudiante(input) {
+            renderResultadosEstudiantes(input.closest('.fila-estudiante'));
+        }
+
+        function buscarEstudiante(input) {
+            renderResultadosEstudiantes(input.closest('.fila-estudiante'));
+        }
+
+        function renderResultadosEstudiantes(fila) {
+            var dd = fila.querySelector('.resultados-estudiantes');
+            var input = fila.querySelector('.buscador-estudiante');
+            if (!dd || !input) return;
+            var q = (input.value || '').trim().toLowerCase();
+            var idsUsados = {};
+            var cont = fila.parentNode;
+            if (cont) {
+                cont.querySelectorAll('.fila-estudiante').forEach(function (f) {
+                    var v = f.querySelector('.f-est-id').value;
+                    if (v) idsUsados[v] = true;
+                });
+            }
+            var items = [];
+            for (var i = 0; i < ESTUDIANTES.length; i++) {
+                var e = ESTUDIANTES[i];
+                if (idsUsados[e.id]) continue;
+                if (q && _claveEstudiante(e).indexOf(q) === -1) continue;
+                items.push(e);
+            }
+            if (!items.length) {
+                dd.innerHTML = '<div style="padding:0.625rem 0.75rem; font-size:0.875rem; color:var(--muted-foreground);">' +
+                    (q ? 'Sin coincidencias con estudiantes activos.' : 'No hay estudiantes activos registrados todavía.') +
+                    '</div>';
+            } else {
+                var html = '';
+                for (var j = 0; j < items.length; j++) {
+                    var it = items[j];
+                    html += '<div class="px-3 py-2 cursor-pointer text-sm border-b border-border last:border-0 hover:bg-muted transition-colors" onmousedown="seleccionarEstudiante(this); return false;" data-index="' + j + '">' +
+                        '<div class="font-semibold text-foreground">' + (it.apellidos || '') + ' ' + (it.nombres || '') + '</div>' +
+                        '<div class="text-xs text-muted-foreground">' + (it.codigo || '') + '</div>' +
+                    '</div>';
+                }
+                dd.innerHTML = html;
+            }
+            dd._data = items;
+            dd.style.display = 'block';
+        }
+
+        function seleccionarEstudiante(el) {
+            var fila = el.closest('.fila-estudiante');
+            var dd = fila.querySelector('.resultados-estudiantes');
+            var e = (dd._data || [])[el.getAttribute('data-index')] || {};
+            if (!e.id) return;
+            fila.querySelector('.f-est-id').value = e.id;
+            var info = fila.querySelector('.es-info');
+            if (info) info.innerHTML = '<strong>' + (e.apellidos || '') + ' ' + (e.nombres || '') + '</strong>' + (e.codigo ? ' — ' + e.codigo : '');
+            var resumen = fila.querySelector('.estudiante-seleccionado');
+            if (resumen) resumen.style.display = 'flex';
+            fila.querySelector('.buscador-estudiante').value = '';
+            dd.style.display = 'none';
+            dd._data = [];
+            actualizarCorreoRequerido();
+        }
+
+        function quitarVinculacionEstudiante(btn) {
+            var fila = btn.closest('.fila-estudiante');
+            fila.querySelector('.f-est-id').value = '';
+            var resumen = fila.querySelector('.estudiante-seleccionado');
+            if (resumen) resumen.style.display = 'none';
+            var input = fila.querySelector('.buscador-estudiante');
+            if (input) input.focus();
+            actualizarCorreoRequerido();
+        }
+
+        function reordenarFilasEstudiantes(modo) {
+            var cont = document.getElementById('filas-estudiantes-' + modo);
+            if (!cont) return;
+            var filas = cont.querySelectorAll('.fila-estudiante');
+            filas.forEach(function (fila, idx) {
+                var idInput = fila.querySelector('.f-est-id');
+                if (idInput) idInput.name = 'students[' + idx + '][id]';
+                var rel = fila.querySelector('select[name$="[tipo_relacion]"]');
+                if (rel) rel.name = 'students[' + idx + '][tipo_relacion]';
+            });
+        }
+
         function nuevaFilaEstudiantes(modo, datos) {
             datos = datos || {};
             const contenedor = document.getElementById('filas-estudiantes-' + modo);
             const fila = document.createElement('div');
-            fila.className = 'fila-estudiante flex flex-col sm:flex-row gap-2 mb-2';
+            fila.className = 'fila-estudiante mb-2';
+            var idx = contenedor.children.length;
+            var eSel = estudiantePorId(datos.id);
+            var vinculoHtml = '';
+            if (eSel) vinculoHtml = '<strong>' + (eSel.apellidos || '') + ' ' + (eSel.nombres || '') + '</strong>' + (eSel.codigo ? ' — ' + eSel.codigo : '');
             fila.innerHTML =
-                '<div class="flex-1">' +
-                    '<select name="students[' + (contenedor.children.length) + '][id]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesEstudiantes(datos.id, modo) + '</select>' +
-                '</div>' +
-                '<div class="w-full sm:w-40">' +
-                    '<select name="students[' + (contenedor.children.length) + '][tipo_relacion]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesTipo(datos.tipo, modo) + '</select>' +
-                '</div>' +
-                '<button type="button" onclick="this.parentElement.remove(); actualizarCorreoRequerido();" class="px-3 py-2.5 rounded-lg border border-error/20 text-error hover:bg-error/10 transition-colors cursor-pointer" title="Quitar">' +
-                    '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
-                '</button>';
+                '<div class="flex flex-col sm:flex-row gap-2">' +
+                    '<div class="flex-1">' +
+                        '<input type="hidden" class="f-est-id" name="students[' + idx + '][id]" value="' + (datos.id || '') + '">' +
+                        '<div style="position:relative;">' +
+                            '<input type="text" class="buscador-estudiante w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Buscar estudiante por nombre o código..." autocomplete="off" onfocus="abrirBusquedaEstudiante(this)" oninput="buscarEstudiante(this)" value="">' +
+                            '<div class="resultados-estudiantes" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60; max-height:220px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:0.5rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.15);"></div>' +
+                        '</div>' +
+                        '<div class="estudiante-seleccionado" style="' + (eSel ? 'display:flex;' : 'display:none;') + ' align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.5rem; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--muted);">' +
+                            '<span class="es-info" style="font-size:0.8125rem; color:var(--foreground);">' + vinculoHtml + '</span>' +
+                            '<button type="button" onclick="quitarVinculacionEstudiante(this)" style="font-size:0.75rem; color:var(--error); cursor:pointer; background:none; border:none; text-decoration:underline;">Cambiar</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="w-full sm:w-40">' +
+                        '<select name="students[' + idx + '][tipo_relacion]" onchange="actualizarCorreoRequerido()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">' + opcionesTipo(datos.tipo, modo) + '</select>' +
+                    '</div>' +
+                    '<div class="shrink-0">' +
+                        '<button type="button" onclick="quitarFilaEstudiante(this, \'' + modo + '\')" class="px-3 py-2.5 rounded-lg border border-error/20 text-error hover:bg-error/10 transition-colors cursor-pointer" title="Quitar">' +
+                            '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
             contenedor.appendChild(fila);
+        }
+
+        function quitarFilaEstudiante(btn, modo) {
+            btn.closest('.fila-estudiante').remove();
+            reordenarFilasEstudiantes(modo);
+            actualizarCorreoRequerido();
         }
 
         function agregarFilaEstudiantes(modo) {
@@ -402,5 +511,16 @@
             actualizarCorreoRequerido();
             openModal('modal-edit');
         }
+
+        document.addEventListener('click', function (e) {
+            if (!(e.target && e.target.closest && e.target.closest('.fila-estudiante'))) {
+                document.querySelectorAll('.resultados-estudiantes').forEach(function (dd) { dd.style.display = 'none'; });
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.resultados-estudiantes').forEach(function (dd) { dd.style.display = 'none'; });
+            }
+        });
     </script>
 @endpush

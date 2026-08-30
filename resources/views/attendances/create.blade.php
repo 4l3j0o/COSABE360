@@ -91,7 +91,7 @@
                                 <td class="px-4 py-3 text-muted-foreground text-xs">{{ $est->codigo }}</td>
                                 <td class="px-4 py-3">
                                     @if($existente)
-                                        <span title="{{ $existente->estado }}" class="flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold {{ $badges[$existente->estado] ?? 'bg-muted text-muted-foreground' }}">{{ array_flip($estados)[$existente->estado] ?? $existente->estado }}</span>
+                                        <span title="{{ mb_strtolower($existente->estado) }}" class="flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold {{ $badges[$existente->estado] ?? 'bg-muted text-muted-foreground' }}">{{ array_flip($estados)[$existente->estado] ?? mb_strtolower($existente->estado) }}</span>
                                     @else
                                         <span class="text-muted-foreground text-xs">—</span>
                                     @endif
@@ -135,7 +135,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         @foreach($estados as $letra => $estado)
-                                            <label title="{{ $estado }}" class="relative cursor-pointer">
+                                            <label title="{{ mb_strtolower($estado) }}" class="relative cursor-pointer">
                                                 <input type="radio" name="asistencias[{{ $est->id }}][estado]" value="{{ $estado }}" {{ $estadoActual === $estado ? 'checked' : '' }} class="peer sr-only">
                                                 <span class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground text-xs font-semibold hover:bg-accent transition-colors {{ $chip[$estado] }}">{{ $letra }}</span>
                                             </label>

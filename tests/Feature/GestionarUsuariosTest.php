@@ -176,7 +176,7 @@ class GestionarUsuariosTest extends TestCase
 
         $this->get('/usuarios')
             ->assertOk()
-            ->assertSee('Activo')
+            ->assertSee('activo')
             ->assertDontSee('Eliminado');
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParentGuardian;
+use App\Models\Role;
 use App\Models\Student;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,12 +96,17 @@ class ParentGuardianController extends Controller
         }
 
         $this->sincronizarEstudiantes($padre, $request->input('students', []));
+        $this->sincronizarUsuarioTutor($padre, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $padre->loadCount('students')], 201);
         }
 
-        return redirect()->route('tutores.index')->with('success', 'Padre/tutor registrado correctamente.');
+        $mensaje = $hayTutor
+            ? 'Padre/tutor registrado correctamente. Se creó su usuario con email y contraseña por defecto: password123'
+            : 'Padre/tutor registrado correctamente.';
+
+        return redirect()->route('tutores.index')->with('success', $mensaje);
     }
 
     public function update(Request $request, ParentGuardian $parentGuardian): RedirectResponse|JsonResponse
@@ -133,12 +140,17 @@ class ParentGuardianController extends Controller
         $parentGuardian->update($validated);
 
         $this->sincronizarEstudiantes($parentGuardian, $request->input('students', []));
+        $this->sincronizarUsuarioTutor($parentGuardian, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $parentGuardian->fresh()->loadCount('students')]);
         }
 
-        return redirect()->route('tutores.index')->with('success', 'Padre/tutor actualizado correctamente.');
+        $mensaje = $hayTutor
+            ? 'Padre/tutor actualizado correctamente. Usuario con acceso de tutor verificado (contraseña por defecto: password123).'
+            : 'Padre/tutor actualizado correctamente.';
+
+        return redirect()->route('tutores.index')->with('success', $mensaje);
     }
 
     private function tieneTutor(Request $request): bool
@@ -167,6 +179,47 @@ class ParentGuardianController extends Controller
         }
 
         $padre->students()->sync($vinculos);
+    }
+
+    private function sincronizarUsuarioTutor(ParentGuardian $padre, bool $esTutor): void
+    {
+        if (! $esTutor || empty($padre->email)) {
+            return;
+        }
+
+        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
+        if (! $rolPadre) {
+            return;
+        }
+
+        if ($padre->user_id) {
+            $usuario = User::find($padre->user_id);
+            if ($usuario) {
+                $usuario->update([
+                    'nombre'   => $padre->nombres,
+                    'apellido' => $padre->apellidos,
+                    'email'    => $padre->email,
+                    'telefono' => $padre->telefono,
+                ]);
+            }
+            return;
+        }
+
+        $usuario = User::where('email', $padre->email)->first();
+
+        if (! $usuario) {
+            $usuario = User::create([
+                'nombre'   => $padre->nombres,
+                'apellido' => $padre->apellidos,
+                'email'    => $padre->email,
+                'password' => 'password123',
+                'role_id'  => $rolPadre->id,
+                'telefono' => $padre->telefono,
+                'estado'   => 'ACTIVO',
+            ]);
+        }
+
+        $padre->update(['user_id' => $usuario->id]);
     }
 
     public function destroy(ParentGuardian $parentGuardian): RedirectResponse|JsonResponse

@@ -41,7 +41,7 @@
 <select name="academic_year_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                             <option value="">Todas las gestiones</option>
                             @foreach($gestiones as $g)
-                            <option value="{{ $g->id }}" {{ (string)$academic_year_id === (string)$g->id ? 'selected' : '' }}>{{ $g->nombre }} ({{ $g->estado }})</option>
+                            <option value="{{ $g->id }}" {{ (string)$academic_year_id === (string)$g->id ? 'selected' : '' }}>{{ $g->nombre }} ({{ mb_strtolower($g->estado) }})</option>
                         @endforeach
                     </select>
                 </form>

@@ -22,8 +22,8 @@
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar estudiante..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
-                <option value="PAGADA" {{ request('estado') === 'PAGADA' ? 'selected' : '' }}>Pagada</option>
+                <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>pendiente</option>
+                <option value="PAGADA" {{ request('estado') === 'PAGADA' ? 'selected' : '' }}>pagada</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
         </form>
@@ -96,7 +96,7 @@
                                 <td class="px-4 py-3 text-muted-foreground">{{ $pago->metodo_pago ? ucfirst(strtolower($pago->metodo_pago)) : '—' }}</td>
                                 <td class="px-4 py-3">
                                     @php $colores = ['PENDIENTE'=>'bg-warning/10 text-warning','PAGADA'=>'bg-success/10 text-success']; @endphp
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$pago->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $pago->estado }}</span>
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$pago->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($pago->estado) }}</span>
                                 </td>
                             </tr>
                         @endforeach

@@ -276,4 +276,127 @@ class ParentGuardianHu08Test extends TestCase
             'es_principal'       => true,
         ]);
     }
+
+    public function test_crea_usuario_del_sistema_cuando_es_tutor_de_un_estudiante(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Rosa',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email'    => 'rosa.mamani@example.com',
+            'nombre'   => 'Rosa',
+            'apellido' => 'Mamani',
+            'role_id'  => Role::where('nombre', 'Padre/Tutor')->value('id'),
+            'estado'   => 'ACTIVO',
+        ]);
+
+        $tutor = ParentGuardian::where('numero_documento', '4455667')->firstOrFail();
+        $this->assertNotNull($tutor->user_id);
+    }
+
+    public function test_crea_usuario_en_update_cuando_la_persona_pasa_a_ser_tutor(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+        $padre = ParentGuardian::create([
+            'nombres'          => 'Marta',
+            'apellidos'        => 'Torres',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '6677889',
+            'complemento'      => '',
+            'email'           => 'marta.torres@example.com',
+            'estado'           => 'ACTIVO',
+        ]);
+
+        $this->put(route('tutores.update', $padre), [
+            'nombres'          => 'Marta',
+            'apellidos'        => 'Torres',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '6677889',
+            'complemento'      => '',
+            'email'           => 'marta.torres@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email'  => 'marta.torres@example.com',
+            'role_id' => Role::where('nombre', 'Padre/Tutor')->value('id'),
+        ]);
+
+        $this->assertNotNull($padre->fresh()->user_id);
+    }
+
+    public function test_no_crea_usuario_si_la_persona_no_es_tutor(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Pedro',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '1122334',
+            'complemento'      => '',
+            'email'           => 'pedro.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'PADRE'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseMissing('users', ['email' => 'pedro.mamani@example.com']);
+    }
+
+    public function test_sincroniza_datos_del_usuario_tutor_al_actualizar(): void
+    {
+        $this->loginAsAdmin();
+        $estudiante = $this->crearEstudiante();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Rosa',
+            'apellidos'        => 'Mamani',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.mamani@example.com',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ]);
+
+        $tutor = ParentGuardian::where('numero_documento', '4455667')->firstOrFail();
+
+        $this->put(route('tutores.update', $tutor), [
+            'nombres'          => 'Rosa María',
+            'apellidos'        => 'Mamani Cruz',
+            'tipo_documento'   => 'CI',
+            'numero_documento' => '4455667',
+            'complemento'      => '',
+            'email'           => 'rosa.nuevo@example.com',
+            'telefono'         => '79998888',
+            'students'         => [
+                ['id' => $estudiante->id, 'tipo_relacion' => 'TUTOR'],
+            ],
+        ])->assertRedirect(route('tutores.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email'    => 'rosa.nuevo@example.com',
+            'nombre'   => 'Rosa María',
+            'apellido' => 'Mamani Cruz',
+            'telefono' => '79998888',
+        ]);
+    }
 }

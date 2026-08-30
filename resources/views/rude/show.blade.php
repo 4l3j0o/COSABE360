@@ -69,7 +69,7 @@
             <dl class="space-y-2 text-sm">
                 <div class="flex justify-between"><dt class="text-muted-foreground">Idioma Originario</dt><dd>{{ $rude?->idioma_originario ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-muted-foreground">Salud/Discapacidad</dt><dd>{{ $rude?->salud_discapacidad ?? '—' }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><span class="px-2 py-0.5 rounded-full text-xs border {{ ($rude?->estado ?? 'PENDIENTE') === 'APROBADO' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning' }}">{{ $rude?->estado ?? 'PENDIENTE' }}</span></dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">Estado</dt><dd><span class="px-2 py-0.5 rounded-full text-xs border {{ ($rude?->estado ?? 'PENDIENTE') === 'APROBADO' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning' }}">{{ mb_strtolower($rude?->estado ?? 'PENDIENTE') }}</span></dd></div>
                 <div class="flex justify-between"><dt class="text-muted-foreground">Fecha Envío</dt><dd>{{ $rude?->fecha_envio?->format('d/m/Y') ?? '—' }}</dd></div>
                 <div class="flex justify-between"><dt class="text-muted-foreground">Observaciones</dt><dd class="max-w-[200px] truncate">{{ $rude?->observaciones ?? '—' }}</dd></div>
             </dl>

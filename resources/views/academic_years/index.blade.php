@@ -63,7 +63,7 @@
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$periodo->estado] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $periodo->estado }}
+                                        {{ mb_strtolower($periodo->estado) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
@@ -135,7 +135,7 @@
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado <span class="text-error">*</span></label>
                                 <select name="estado" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="PROXIMA" {{ old('estado') === 'PROXIMA' ? 'selected' : '' }}>Próximo</option>
-                                    <option value="ACTIVA" {{ old('estado') === 'ACTIVA' ? 'selected' : '' }}>Activo</option>
+                                    <option value="ACTIVA" {{ old('estado') === 'ACTIVA' ? 'selected' : '' }}>activo</option>
                                 </select>
                                 @error('estado') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>

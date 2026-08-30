@@ -55,7 +55,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             @foreach(['PRESENTE','FALTA','ATRASO','PERMISO','JUSTIFICADO'] as $estado)
                 <div class="bg-card border border-border rounded-xl p-4 text-center">
-                    <p class="text-xs text-muted-foreground">{{ $estado }}</p>
+                    <p class="text-xs text-muted-foreground">{{ mb_strtolower($estado) }}</p>
                     <p class="text-2xl font-bold text-foreground mt-1">{{ $estadisticas[$estado] ?? 0 }}</p>
                 </div>
             @endforeach
@@ -94,7 +94,7 @@
                                         default => 'bg-muted text-muted-foreground',
                                     };
                                 @endphp
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $badge }}">{{ $att->estado }}</span>
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $badge }}">{{ mb_strtolower($att->estado) }}</span>
                             </td>
                             <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->justificacion ?? '-' }}</td>
                             <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->registeredBy->nombre ?? '' }} {{ $att->registeredBy->apellido ?? '' }}</td>

@@ -80,7 +80,7 @@
                 @php
                     $estadoColor = $user->estaActivo() ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning';
                 @endphp
-                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estadoColor }}">{{ $user->estado }}</span>
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estadoColor }}">{{ mb_strtolower($user->estado) }}</span>
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">

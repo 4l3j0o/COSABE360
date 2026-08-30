@@ -175,18 +175,19 @@ class StudentController extends Controller
 
     public function buscarPersona(Request $request)
     {
-        $q = $request->input('q', '');
-        if (strlen($q) < 2) {
-            return response()->json([]);
-        }
-        $qEscaped = addcslashes($q, '%_');
-        $personas = ParentGuardian::where(function ($query) use ($qEscaped) {
+        $q = trim($request->input('q', ''));
+        $query = ParentGuardian::where('estado', 'ACTIVO');
+        if (strlen($q) >= 2) {
+            $qEscaped = addcslashes($q, '%_');
+            $query->where(function ($query) use ($qEscaped) {
                 $query->where('numero_documento', 'like', "%{$qEscaped}%")
                       ->orWhere('nombres', 'like', "%{$qEscaped}%")
                       ->orWhere('apellidos', 'like', "%{$qEscaped}%");
-            })
-            ->where('estado', 'ACTIVO')
-            ->limit(10)
+            });
+        }
+        $personas = $query->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->limit(300)
             ->get(['id', 'nombres', 'apellidos', 'tipo_documento', 'numero_documento', 'complemento', 'telefono', 'email', 'direccion', 'ocupacion']);
         return response()->json($personas);
     }
@@ -784,25 +785,29 @@ class StudentController extends Controller
 
     private function crearCuentaUsuarioSiNoExiste(ParentGuardian $tutor): void
     {
-        if ($tutor->user_id || empty($tutor->email)) {
+        if (! empty($tutor->user_id) || empty($tutor->email)) {
             return;
         }
 
         $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
-        if (!$rolPadre) {
+        if (! $rolPadre) {
             return;
         }
 
-        $password = Str::random(8);
-        $usuario = User::create([
-            'nombre'   => $tutor->nombres,
-            'apellido' => $tutor->apellidos,
-            'email'    => $tutor->email,
-            'password' => $password,
-            'role_id'   => $rolPadre->id,
-            'telefono' => $tutor->telefono,
-            'estado'   => 'ACTIVO',
-        ]);
+        $usuario = User::where('email', $tutor->email)->first();
+
+        if (! $usuario) {
+            $usuario = User::create([
+                'nombre'   => $tutor->nombres,
+                'apellido' => $tutor->apellidos,
+                'email'    => $tutor->email,
+                'password' => 'password123',
+                'role_id'  => $rolPadre->id,
+                'telefono' => $tutor->telefono,
+                'estado'   => 'ACTIVO',
+            ]);
+        }
+
         $tutor->update(['user_id' => $usuario->id]);
     }
 

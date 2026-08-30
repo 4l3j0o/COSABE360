@@ -29,7 +29,7 @@
             <select name="estado" class="mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <option value="">Todos</option>
                 @foreach($estados as $e)
-                    <option value="{{ $e }}" {{ request('estado') === $e ? 'selected' : '' }}>{{ $e }}</option>
+                    <option value="{{ $e }}" {{ request('estado') === $e ? 'selected' : '' }}>{{ mb_strtolower($e) }}</option>
                 @endforeach
             </select>
         </div>
@@ -60,7 +60,7 @@
                             <td class="px-4 py-3 font-mono text-xs">{{ $est->rudeRecord?->codigo_sie_ue ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 @php $estado = $est->rudeRecord?->estado ?? 'PENDIENTE'; @endphp
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $estado === 'APROBADO' ? 'bg-success/10 text-success border-success/30' : ($estado === 'ENVIADO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' : ($estado === 'RECHAZADO' ? 'bg-error/10 text-error border-error/30' : 'bg-warning/10 text-warning border-warning/30')) }}">{{ $estado }}</span>
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $estado === 'APROBADO' ? 'bg-success/10 text-success border-success/30' : ($estado === 'ENVIADO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' : ($estado === 'RECHAZADO' ? 'bg-error/10 text-error border-error/30' : 'bg-warning/10 text-warning border-warning/30')) }}">{{ mb_strtolower($estado) }}</span>
                             </td>
                             <td class="px-4 py-3 text-right flex justify-end gap-2">
                                 <a href="{{ route('rude.show', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">Ver</a>
