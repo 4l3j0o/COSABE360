@@ -22,6 +22,10 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
         $cursos = collect();
+        $cursosRegistro = collect();
+
+        $puede = false;
+        $base = null;
 
         if ($user->hasRole('Docente')) {
             $teacher = Teacher::where('user_id', $user->id)->first();
@@ -31,18 +35,32 @@ class AttendanceController extends Controller
                     ->unique()
                     ->values();
 
-                $cursos = Course::whereIn('id', $cursoIds)
+                $base = Course::where('estado', 'ACTIVO')->whereIn('id', $cursoIds)
                     ->with(['grade', 'section', 'gestion'])
-                    ->orderBy('nombre')
-                    ->get();
+                    ->orderBy('nombre');
+                $puede = true;
             }
         } elseif ($user->hasAnyRole('Director,Administrador,Secretaría')) {
-            $cursos = Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
+            $base = Course::where('estado', 'ACTIVO')
+                ->with(['grade', 'section', 'gestion'])
+                ->orderBy('nombre');
+            $puede = true;
         }
 
-        $materiasPorCurso = $cursos->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
+        if ($puede) {
+            $cursos = (clone $base)->paginate(10)->withQueryString();
+            $cursosRegistro = (clone $base)->paginate(10, ['*'], 'pageRegistro')->withQueryString();
+        }
 
-        return view('attendances.index', compact('cursos', 'materiasPorCurso'));
+        $materiasPorCurso = $cursosRegistro instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $cursosRegistro->getCollection()->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)])
+            : $cursosRegistro->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
+
+        $grados = \App\Models\Grade::with('level')->orderBy('orden')->orderBy('nombre')->get();
+        $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->orderBy('nombre')->get();
+        $gestiones = \App\Models\AcademicYear::orderByDesc('nombre')->get();
+
+        return view('attendances.index', compact('cursos', 'cursosRegistro', 'materiasPorCurso', 'grados', 'paralelos', 'gestiones'));
     }
 
     /**

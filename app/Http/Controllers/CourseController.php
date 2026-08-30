@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicYear;
 use App\Models\Course;
+use App\Models\Grade;
+use App\Models\Section;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
@@ -28,7 +31,36 @@ class CourseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'grade_id'          => ['required', 'exists:grades,id'],
+            'section_id'        => ['required', 'exists:sections,id'],
+            'academic_year_id'  => ['required', 'exists:academic_years,id'],
+            'aula'              => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $grade = Grade::findOrFail($validated['grade_id']);
+        $section = Section::findOrFail($validated['section_id']);
+        $year = AcademicYear::findOrFail($validated['academic_year_id']);
+
+        $existe = Course::where('grade_id', $grade->id)
+            ->where('section_id', $section->id)
+            ->where('academic_year_id', $year->id)
+            ->exists();
+
+        if ($existe) {
+            return back()->withErrors(['general' => 'Ese curso (grado, paralelo y período) ya está registrado.'])->withInput();
+        }
+
+        Course::create([
+            'grade_id'         => $grade->id,
+            'section_id'       => $section->id,
+            'academic_year_id' => $year->id,
+            'nombre'           => $grade->nombre . ' "' . $section->nombre . '" - ' . $year->nombre,
+            'aula'             => $validated['aula'] ?? null,
+            'estado'           => 'ACTIVO',
+        ]);
+
+        return redirect()->route('asistencias.index')->with('success', 'Curso creado correctamente.');
     }
 
     /**

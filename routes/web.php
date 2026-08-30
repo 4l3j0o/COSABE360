@@ -12,6 +12,7 @@ use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
@@ -93,6 +94,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
     Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
     Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
+});
+
+// Cursos (creación) - solo Administrador
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/cursos', [CourseController::class, 'store'])->name('courses.store');
 });
 
 // CRUD ESTUDIANTES solo Administrador

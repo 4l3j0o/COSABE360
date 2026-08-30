@@ -271,7 +271,7 @@
                         </div>
                     </div>
                 </div>
-
+<br>
                 <div class="bg-card border border-border rounded-xl p-6">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Estudiantes a cargo</h3>
