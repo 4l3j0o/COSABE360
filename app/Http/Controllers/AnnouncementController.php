@@ -163,4 +163,51 @@ class AnnouncementController extends Controller
 
         return redirect()->route('announcements.index')->with('success', 'Comunicado archivado correctamente.');
     }
+
+    // Stubs para compatibilidad con rutas develop (HU30 create/edit y HU31 bandeja) — evita 500 si se accede
+    public function create(): View|RedirectResponse
+    {
+        return redirect()->route('announcements.index');
+    }
+
+    public function edit(Announcement $announcement): View|RedirectResponse
+    {
+        return redirect()->route('announcements.index');
+    }
+
+    public function bandeja(Request $request): View|JsonResponse
+    {
+        $query = Announcement::with(['author', 'recipients.course'])
+            ->where('estado', 'PUBLICADO')
+            ->orderByDesc('fecha_publicacion')
+            ->orderByDesc('created_at');
+
+        if ($request->expectsJson()) {
+            return AnnouncementResource::collection($query->get());
+        }
+
+        $announcements = $query->paginate(10)->withQueryString();
+        return view('announcements.bandeja', compact('announcements'));
+    }
+
+    public function showBandeja(Announcement $announcement): View|AnnouncementResource
+    {
+        if (request()->expectsJson()) {
+            return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
+        }
+        return view('announcements.show-bandeja', compact('announcement'));
+    }
+
+    public function marcarLeido(Request $request, Announcement $announcement): JsonResponse|RedirectResponse
+    {
+        $announcement->reads()->updateOrCreate(
+            ['user_id' => $request->user()->id],
+            ['leido' => true, 'fecha_lectura' => now()]
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Marcado como leído']);
+        }
+        return back()->with('success', 'Marcado como leído');
+    }
 }
