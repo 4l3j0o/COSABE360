@@ -12,31 +12,24 @@
             <p class="text-sm text-muted-foreground">Gestión de estudiantes del colegio</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('enrollments.index') }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                Ver inscritos
-            </a>
-            <a href="{{ request('matriculados') ? route('students.index') : route('students.index', ['matriculados' => 1]) }}" class="inline-flex items-center gap-2 {{ request('matriculados') ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-foreground' }} px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                {{ request('matriculados') ? 'Ver todos los estudiantes' : 'Ver Matriculados' }}
-            </a>
             <a href="{{ route('student_documents.pending') }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Ver Documentación
             </a>
             <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Nuevo Estudiante
             </button>
         </div>
     </div>
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('students.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            @if(request('matriculados'))
-                <input type="hidden" name="matriculados" value="1">
-            @endif
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, código o documento..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="estado_academico" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <option value="">Todos los estados académicos</option>
+                <option value="MATRICULADO" {{ request('estado_academico') === 'MATRICULADO' ? 'selected' : '' }}>Matriculados</option>
+                <option value="INSCRITO" {{ request('estado_academico') === 'INSCRITO' ? 'selected' : '' }}>Inscritos</option>
+                <option value="SIN_INSCRIBIR" {{ request('estado_academico') === 'SIN_INSCRIBIR' ? 'selected' : '' }}>Sin inscribir</option>
+            </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>

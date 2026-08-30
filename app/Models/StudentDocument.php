@@ -12,8 +12,11 @@ class StudentDocument extends Model
         'tipo_documento',
         'archivo',
         'estado',
+        'fecha_entrega',
         'observaciones',
     ];
+
+    protected $casts = ['fecha_entrega' => 'datetime'];
 
     public function student(): BelongsTo
     {

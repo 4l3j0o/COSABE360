@@ -181,7 +181,7 @@
                         <tr class="border-b border-border bg-muted/50">
                             <th class="text-left px-4 py-2.5 font-semibold text-foreground">Tipo de Documento</th>
                             <th class="text-left px-4 py-2.5 font-semibold text-foreground">Estado</th>
-                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Fecha</th>
+                            <th class="text-left px-4 py-2.5 font-semibold text-foreground">Fecha de entrega</th>
                             <th class="text-right px-4 py-2.5 font-semibold text-foreground">Acción</th>
                         </tr>
                     </thead>
@@ -199,7 +199,7 @@
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$doc->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $doc->estado }}</span>
                                 </td>
-                                <td class="px-4 py-2.5 text-muted-foreground text-xs">{{ $doc->created_at->format('d/m/Y') }}</td>
+                                <td class="px-4 py-2.5 text-muted-foreground text-xs">{{ $doc->fecha_entrega ? $doc->fecha_entrega->format('d/m/Y') : '—' }}</td>
                                 <td class="px-4 py-2.5">
                                     <form method="POST" action="{{ route('student_documents.updateStatus', $doc) }}" class="inline">
                                         @csrf @method('PATCH')

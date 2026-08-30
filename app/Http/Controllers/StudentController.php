@@ -37,16 +37,30 @@ class StudentController extends Controller
             $query->where('estado', $request->estado);
         }
 
-        // Filtrar solo estudiantes matriculados en el período activo (Ver Matriculados)
-        if ($request->filled('matriculados')) {
+        // Filtrar por estado académico en el período activo (Matriculados / Inscritos / Sin inscribir)
+        if ($request->filled('estado_academico')) {
             $periodoActivo = AcademicYear::where('estado', 'ACTIVA')->first();
+
             if ($periodoActivo) {
-                $query->whereHas('enrollments', function ($q) use ($periodoActivo) {
+                $matriculadosQuery = function ($q) use ($periodoActivo) {
                     $q->where('academic_year_id', $periodoActivo->id)
                         ->whereHas('registration', function ($r) {
                             $r->where('estado', 'ACTIVA');
                         });
-                });
+                };
+                $inscritosQuery = function ($q) use ($periodoActivo) {
+                    $q->where('academic_year_id', $periodoActivo->id)
+                        ->where('estado', 'COMPLETADA');
+                };
+
+                if ($request->estado_academico === 'SIN_INSCRIBIR') {
+                    $query->whereDoesntHave('enrollments', $inscritosQuery);
+                } elseif ($request->estado_academico === 'INSCRITO') {
+                    $query->whereDoesntHave('enrollments', $matriculadosQuery)
+                        ->whereHas('enrollments', $inscritosQuery);
+                } elseif ($request->estado_academico === 'MATRICULADO') {
+                    $query->whereHas('enrollments', $matriculadosQuery);
+                }
             } else {
                 $query->whereRaw('1 = 0');
             }

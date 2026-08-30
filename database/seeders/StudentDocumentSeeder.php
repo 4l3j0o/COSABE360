@@ -36,6 +36,7 @@ class StudentDocumentSeeder extends Seeder
                     ],
                     [
                         'estado'        => $esPendiente ? 'PENDIENTE' : 'ENTREGADO',
+                        'fecha_entrega' => $esPendiente ? null : now()->subDays(rand(1, 60)),
                         'observaciones' => $esPendiente ? 'Pendiente de entrega' : 'Recibido y verificado',
                         'archivo'       => 'documentos/' . $student->id . '/' . str_replace(' ', '_', $tipo) . '.pdf',
                     ]

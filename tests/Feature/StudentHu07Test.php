@@ -2,8 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\AcademicYear;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Grade;
+use App\Models\Level;
+use App\Models\Registration;
 use App\Models\Role;
 use App\Models\OperationHistory;
+use App\Models\Section;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,6 +57,41 @@ class StudentHu07Test extends TestCase
         return Student::create($base);
     }
 
+    private function crearGestionActiva(): AcademicYear
+    {
+        return AcademicYear::create([
+            'nombre' => 'Gestion '.fake()->unique()->numerify('####'),
+            'fecha_inicio' => '2026-02-01',
+            'fecha_fin' => '2026-11-30',
+            'estado' => 'ACTIVA',
+        ]);
+    }
+
+    private function inscribirEstudiante(Student $estudiante, AcademicYear $gestion, bool $conMatricula = false): void
+    {
+        $enrollment = Enrollment::create([
+            'student_id' => $estudiante->id,
+            'academic_year_id' => $gestion->id,
+            'fecha' => '2026-03-01',
+            'estado' => 'COMPLETADA',
+        ]);
+
+        if ($conMatricula) {
+            $nivel = Level::firstOrCreate(['nombre' => 'Primaria Ac'], ['orden' => 2, 'estado' => 'ACTIVO']);
+            $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Ac '.fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
+            $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+            $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Ac '.fake()->unique()->numerify('##'), 'estado' => 'ACTIVO']);
+
+            Registration::create([
+                'enrollment_id' => $enrollment->id,
+                'course_id' => $curso->id,
+                'fecha' => '2026-03-02',
+                'monto_mensual' => 0,
+                'estado' => 'ACTIVA',
+            ]);
+        }
+    }
+
     public function test_consulta_lista_estudiantes(): void
     {
         $admin = $this->adminUser();
@@ -74,6 +116,66 @@ class StudentHu07Test extends TestCase
         $response->assertOk()
             ->assertSee('Ana')
             ->assertDontSee('Luis');
+    }
+
+    public function test_filtra_estudiantes_matriculados(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+
+        $matriculado = $this->crearEstudiante(['codigo' => 'EST-ACAD-0001', 'numero_documento' => '1000001']);
+        $inscrito = $this->crearEstudiante(['codigo' => 'EST-ACAD-0002', 'numero_documento' => '1000002']);
+        $sinInscribir = $this->crearEstudiante(['codigo' => 'EST-ACAD-0003', 'numero_documento' => '1000003']);
+
+        $this->inscribirEstudiante($matriculado, $gestion, conMatricula: true);
+        $this->inscribirEstudiante($inscrito, $gestion, conMatricula: false);
+
+        $response = $this->actingAs($admin)->get(route('students.index', ['estado_academico' => 'MATRICULADO']));
+
+        $response->assertOk()
+            ->assertSee('EST-ACAD-0001')
+            ->assertDontSee('EST-ACAD-0002')
+            ->assertDontSee('EST-ACAD-0003');
+    }
+
+    public function test_filtra_estudiantes_inscritos(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+
+        $matriculado = $this->crearEstudiante(['codigo' => 'EST-ACAD-0004', 'numero_documento' => '1000004']);
+        $inscrito = $this->crearEstudiante(['codigo' => 'EST-ACAD-0005', 'numero_documento' => '1000005']);
+        $sinInscribir = $this->crearEstudiante(['codigo' => 'EST-ACAD-0006', 'numero_documento' => '1000006']);
+
+        $this->inscribirEstudiante($matriculado, $gestion, conMatricula: true);
+        $this->inscribirEstudiante($inscrito, $gestion, conMatricula: false);
+
+        $response = $this->actingAs($admin)->get(route('students.index', ['estado_academico' => 'INSCRITO']));
+
+        $response->assertOk()
+            ->assertSee('EST-ACAD-0005')
+            ->assertDontSee('EST-ACAD-0004')
+            ->assertDontSee('EST-ACAD-0006');
+    }
+
+    public function test_filtra_estudiantes_sin_inscribir(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+
+        $matriculado = $this->crearEstudiante(['codigo' => 'EST-ACAD-0007', 'numero_documento' => '1000007']);
+        $inscrito = $this->crearEstudiante(['codigo' => 'EST-ACAD-0008', 'numero_documento' => '1000008']);
+        $sinInscribir = $this->crearEstudiante(['codigo' => 'EST-ACAD-0009', 'numero_documento' => '1000009']);
+
+        $this->inscribirEstudiante($matriculado, $gestion, conMatricula: true);
+        $this->inscribirEstudiante($inscrito, $gestion, conMatricula: false);
+
+        $response = $this->actingAs($admin)->get(route('students.index', ['estado_academico' => 'SIN_INSCRIBIR']));
+
+        $response->assertOk()
+            ->assertSee('EST-ACAD-0009')
+            ->assertDontSee('EST-ACAD-0007')
+            ->assertDontSee('EST-ACAD-0008');
     }
 
     public function test_consulta_detalle_muestra_datos(): void
