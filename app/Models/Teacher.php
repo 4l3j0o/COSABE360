@@ -42,7 +42,7 @@ class Teacher extends Model
         return $this->hasMany(Schedule::class, 'teacher_id');
     }
 
-    public function usuario(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }

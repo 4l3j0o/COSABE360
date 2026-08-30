@@ -199,85 +199,106 @@
             </div>
         @endif
 
-        <div class="space-y-6">
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Datos Personales</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres <span class="text-error">*</span></label>
-                        <input type="text" name="nombres" class="{{ $claseInput }}" value="{{ old('nombres', $parentGuardian->nombres) }}" required maxlength="150">
-                        @error('nombres') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Datos Personales</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres <span class="text-error">*</span></label>
+                            <input type="text" name="nombres" class="{{ $claseInput }}" value="{{ old('nombres', $parentGuardian->nombres) }}" required maxlength="150">
+                            @error('nombres') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos <span class="text-error">*</span></label>
+                            <input type="text" name="apellidos" class="{{ $claseInput }}" value="{{ old('apellidos', $parentGuardian->apellidos) }}" required maxlength="150">
+                            @error('apellidos') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Ocupación</label>
+                            <input type="text" name="ocupacion" class="{{ $claseInput }}" value="{{ old('ocupacion', $parentGuardian->ocupacion) }}" maxlength="100">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado</label>
+                            <select name="estado" class="{{ $claseInput }}">
+                                @foreach(['ACTIVO','INACTIVO'] as $est)
+                                    <option value="{{ $est }}" @selected(old('estado', $parentGuardian->estado) === $est)>{{ ucfirst(mb_strtolower($est)) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos <span class="text-error">*</span></label>
-                        <input type="text" name="apellidos" class="{{ $claseInput }}" value="{{ old('apellidos', $parentGuardian->apellidos) }}" required maxlength="150">
-                        @error('apellidos') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Documento de Identidad</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo <span class="text-error">*</span></label>
+                            <select name="tipo_documento" class="{{ $claseInput }}">
+                                @foreach(['CI','PASAPORTE','OTRO'] as $td)
+                                    <option value="{{ $td }}" @selected(old('tipo_documento', $parentGuardian->tipo_documento) === $td)>{{ $td }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Número <span class="text-error">*</span></label>
+                            <input type="text" name="numero_documento" class="{{ $claseInput }}" value="{{ old('numero_documento', $parentGuardian->numero_documento) }}" required maxlength="20">
+                            @error('numero_documento') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label>
+                            <input type="text" name="complemento" class="{{ $claseInput }}" value="{{ old('complemento', $parentGuardian->complemento) }}" maxlength="5">
+                        </div>
                     </div>
+                </div>
+
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Contacto</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
+                            <input type="text" name="telefono" class="{{ $claseInput }}" value="{{ old('telefono', $parentGuardian->telefono) }}" maxlength="20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-email-edit" class="text-error hidden">*</span></label>
+                            <input type="email" name="email" id="email-edit" class="{{ $claseInput }}" value="{{ old('email', $parentGuardian->email) }}" maxlength="150" placeholder="Obligatorio si es tutor">
+                            <p class="text-[11px] text-muted-foreground mt-1">El email es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
+                            @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
+                            <input type="text" name="direccion" class="{{ $claseInput }}" value="{{ old('direccion', $parentGuardian->direccion) }}" maxlength="255">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                        <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Estudiantes a cargo</h3>
+                        <button type="button" onclick="agregarFilaEstudiantes('edit')" class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar estudiante
+                        </button>
+                    </div>
+                    <p class="text-xs text-muted-foreground mb-4">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es quien recibe permisos de vista (requiere email).</p>
+                    <div id="filas-estudiantes-edit"></div>
                 </div>
             </div>
 
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Documento de Identidad</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo <span class="text-error">*</span></label>
-                        <select name="tipo_documento" class="{{ $claseInput }}">
-                            @foreach(['CI','PASAPORTE','OTRO'] as $td)
-                                <option value="{{ $td }}" @selected(old('tipo_documento', $parentGuardian->tipo_documento) === $td)>{{ $td }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Número <span class="text-error">*</span></label>
-                        <input type="text" name="numero_documento" class="{{ $claseInput }}" value="{{ old('numero_documento', $parentGuardian->numero_documento) }}" required maxlength="20">
-                        @error('numero_documento') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label>
-                        <input type="text" name="complemento" class="{{ $claseInput }}" value="{{ old('complemento', $parentGuardian->complemento) }}" maxlength="5">
-                    </div>
+            <div class="space-y-6">
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Registro</h3>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-muted-foreground">Creado</dt>
+                            <dd class="text-foreground">{{ $parentGuardian->created_at->format('d/m/Y H:i') }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-muted-foreground">Actualizado</dt>
+                            <dd class="text-foreground">{{ $parentGuardian->updated_at->format('d/m/Y H:i') }}</dd>
+                        </div>
+                    </dl>
                 </div>
-            </div>
-
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Contacto</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
-                        <input type="text" name="telefono" class="{{ $claseInput }}" value="{{ old('telefono', $parentGuardian->telefono) }}" maxlength="20">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo <span id="lbl-email-edit" class="text-error hidden">*</span></label>
-                        <input type="email" name="email" id="email-edit" class="{{ $claseInput }}" value="{{ old('email', $parentGuardian->email) }}" maxlength="150" placeholder="Obligatorio si es tutor">
-                        <p class="text-[11px] text-muted-foreground mt-1">El email es obligatorio cuando la persona es <strong>tutor</strong>, para otorgarle permisos de vista.</p>
-                        @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
-                        <input type="text" name="direccion" class="{{ $claseInput }}" value="{{ old('direccion', $parentGuardian->direccion) }}" maxlength="255">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-card border border-border rounded-xl p-6">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
-                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">Estudiantes a cargo</h3>
-                    <button type="button" onclick="agregarFilaEstudiantes('edit')" class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Agregar estudiante
-                    </button>
-                </div>
-                <p class="text-xs text-muted-foreground mb-4">Seleccione los estudiantes y el tipo de relación. El <strong>tutor</strong> es obligatorio por estudiante y es quien recibe permisos de vista (requiere email).</p>
-                <div id="filas-estudiantes-edit"></div>
-            </div>
-
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Estado</h3>
-                <select name="estado" class="{{ $claseInput }}">
-                    @foreach(['ACTIVO','INACTIVO'] as $est)
-                        <option value="{{ $est }}" @selected(old('estado', $parentGuardian->estado) === $est)>{{ ucfirst(mb_strtolower($est)) }}</option>
-                    @endforeach
-                </select>
             </div>
         </div>
 

@@ -133,63 +133,83 @@
             </div>
         @endif
 
-        <div class="space-y-6">
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Datos Personales</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre <span class="text-error">*</span></label>
-                        <input name="nombre" type="text" value="{{ old('nombre', $user->nombre) }}" required class="{{ $claseInput }}">
-                        @error('nombre') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Datos Personales</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre <span class="text-error">*</span></label>
+                            <input name="nombre" type="text" value="{{ old('nombre', $user->nombre) }}" required class="{{ $claseInput }}">
+                            @error('nombre') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellido <span class="text-error">*</span></label>
+                            <input name="apellido" type="text" value="{{ old('apellido', $user->apellido) }}" required class="{{ $claseInput }}">
+                            @error('apellido') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellido <span class="text-error">*</span></label>
-                        <input name="apellido" type="text" value="{{ old('apellido', $user->apellido) }}" required class="{{ $claseInput }}">
-                        @error('apellido') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Cuenta de Acceso</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo electrónico <span class="text-error">*</span></label>
+                            <input name="email" type="email" value="{{ old('email', $user->email) }}" required class="{{ $claseInput }}">
+                            @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener)</span></label>
+                            <input name="password" type="password" class="{{ $claseInput }}">
+                            @error('password') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Rol y Contacto</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
+                            <select name="role_id" class="{{ $claseInput }}">
+                                @foreach ($roles as $rol)
+                                    <option value="{{ $rol->id }}" @selected((string)old('role_id', $user->role_id) === (string)$rol->id)>{{ $rol->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('role_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
+                            <input name="telefono" type="tel" value="{{ old('telefono', $user->telefono) }}" class="{{ $claseInput }}">
+                            @error('telefono') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Cuenta de Acceso</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo electrónico <span class="text-error">*</span></label>
-                        <input name="email" type="email" value="{{ old('email', $user->email) }}" required class="{{ $claseInput }}">
-                        @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener)</span></label>
-                        <input name="password" type="password" class="{{ $claseInput }}">
-                        @error('password') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+            <div class="space-y-6">
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Estado</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresEstado[$user->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($user->estado) }}</span>
+                        <span class="text-xs text-muted-foreground">Se activa/desactiva desde el listado de usuarios.</span>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-card border border-border rounded-xl p-6">
-                <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Rol y Contacto</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
-                        <select name="role_id" class="{{ $claseInput }}">
-                            @foreach ($roles as $rol)
-                                <option value="{{ $rol->id }}" @selected((string)old('role_id', $user->role_id) === (string)$rol->id)>{{ $rol->nombre }}</option>
-                            @endforeach
-                        </select>
-                        @error('role_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
-                        <input name="telefono" type="tel" value="{{ old('telefono', $user->telefono) }}" class="{{ $claseInput }}">
-                        @error('telefono') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
+                <div class="bg-card border border-border rounded-xl p-6">
+                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Registro de Acceso</h3>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-muted-foreground">Último acceso</dt>
+                            <dd class="text-foreground">{{ $user->ultimo_acceso?->format('d/m/Y H:i') ?: '—' }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-muted-foreground">Actualizado</dt>
+                            <dd class="text-foreground">{{ $user->updated_at?->format('d/m/Y H:i') ?: '—' }}</dd>
+                        </div>
+                    </dl>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border text-sm">
-                <span class="text-muted-foreground">Estado:</span>
-                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresEstado[$user->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($user->estado) }}</span>
-                <span class="text-xs text-muted-foreground">Se activa/desactiva desde el listado de usuarios.</span>
             </div>
         </div>
 

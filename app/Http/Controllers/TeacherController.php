@@ -90,6 +90,12 @@ class TeacherController extends Controller
         return view('teachers.edit', compact('teacher'));
     }
 
+    public function show(Teacher $teacher)
+    {
+        $teacher->load('user.rol');
+        return view('teachers.show', compact('teacher'));
+    }
+
     public function update(Request $request, Teacher $teacher)
     {
         $validated = $request->validate([
@@ -142,7 +148,7 @@ class TeacherController extends Controller
             }
         }
 
-        return redirect()->route('teachers.index')->with('success', 'Docente actualizado correctamente.');
+        return redirect()->route('teachers.show', $teacher)->with('success', 'Docente actualizado correctamente.');
     }
 
     public function toggle(Teacher $teacher)

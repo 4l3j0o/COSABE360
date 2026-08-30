@@ -99,11 +99,11 @@ class SeedCoherenceTest extends TestCase
         }
 
         // 6) Cuentas demo vinculadas a sus perfiles
-        $this->assertNotNull(Teacher::whereHas('usuario', fn ($q) => $q->where('email', 'docente@sanber.edu.bo'))->first(), 'docente@ sin perfil de Teacher');
+        $this->assertNotNull(Teacher::whereHas('user', fn ($q) => $q->where('email', 'docente@sanber.edu.bo'))->first(), 'docente@ sin perfil de Teacher');
         $this->assertNotNull(ParentGuardian::whereHas('user', fn ($q) => $q->where('email', 'padre@sanber.edu.bo'))->first(), 'padre@ sin perfil de ParentGuardian');
         $this->assertNotNull(Student::whereHas('user', fn ($q) => $q->where('email', 'estudiante@sanber.edu.bo'))->first(), 'estudiante@ sin perfil de Student');
 
-        $docenteDemo = Teacher::whereHas('usuario', fn ($q) => $q->where('email', 'docente@sanber.edu.bo'))->first();
+        $docenteDemo = Teacher::whereHas('user', fn ($q) => $q->where('email', 'docente@sanber.edu.bo'))->first();
         $this->assertGreaterThan(0, CourseSubject::where('teacher_id', $docenteDemo->id)->count(), 'docente@ sin materias asignadas');
         $this->assertGreaterThan(0, Schedule::where('teacher_id', $docenteDemo->id)->count(), 'docente@ sin horario');
 
