@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('tipo_destinatario', ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO']);
             $table->foreignId('course_id')->nullable()->constrained('courses')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable();
             $table->index('announcement_id');
             $table->index('course_id');
             $table->index('user_id');

@@ -7,18 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AnnouncementRead extends Model
 {
-    protected $fillable = [
-        'announcement_id',
-        'user_id',
-        'leido',
-        'fecha_lectura',
-    ];
+    public $timestamps = false;
+
+    protected $fillable = ['announcement_id', 'user_id', 'leido', 'fecha_lectura'];
 
     protected function casts(): array
     {
         return [
             'leido' => 'boolean',
             'fecha_lectura' => 'datetime',
+            'created_at' => 'datetime',
         ];
     }
 

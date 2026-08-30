@@ -17,9 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->boolean('leido')->default(false);
             $table->timestamp('fecha_lectura')->nullable();
-            $table->timestamps();
-
-            $table->unique(['announcement_id', 'user_id'], 'uk_announcement_user');
+            $table->timestamp('created_at')->nullable();
+            $table->unique(['announcement_id', 'user_id']);
             $table->index('user_id');
             $table->index('leido');
         });
