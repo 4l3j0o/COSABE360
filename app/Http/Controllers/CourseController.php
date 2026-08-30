@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\Course;
+use App\Models\CourseSubject;
 use App\Models\Grade;
+use App\Models\Registration;
 use App\Models\Section;
 use Illuminate\Http\Request;
 
@@ -68,7 +70,12 @@ class CourseController extends Controller
      */
     public function show(Course $course)
     {
-        //
+        $course->load(['grade.level', 'section', 'gestion']);
+
+        $cantMaterias = CourseSubject::where('course_id', $course->id)->count();
+        $cantEstudiantes = Registration::where('course_id', $course->id)->where('estado', 'ACTIVA')->count();
+
+        return view('courses.show', compact('course', 'cantMaterias', 'cantEstudiantes'));
     }
 
     /**
@@ -84,14 +91,29 @@ class CourseController extends Controller
      */
     public function update(Request $request, Course $course)
     {
-        //
+        $validated = $request->validate([
+            'aula'   => ['nullable', 'string', 'max:100'],
+            'estado' => ['required', 'in:ACTIVO,INACTIVO,ELIMINADO'],
+        ]);
+
+        $course->update($validated);
+
+        return redirect()->route('courses.show', $course)->with('success', 'Curso actualizado correctamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    public function toggle(Course $course)
+    {
+        $nuevo = $course->estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        $course->update(['estado' => $nuevo]);
+        $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
+
+        return redirect()->back()->with('success', "Curso {$accion} correctamente.");
+    }
+
     public function destroy(Course $course)
     {
-        //
+        $course->update(['estado' => 'ELIMINADO']);
+
+        return redirect()->route('asistencias.index')->with('success', 'Curso eliminado correctamente.');
     }
 }

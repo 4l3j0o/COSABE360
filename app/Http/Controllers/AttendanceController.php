@@ -35,13 +35,13 @@ class AttendanceController extends Controller
                     ->unique()
                     ->values();
 
-                $base = Course::where('estado', 'ACTIVO')->whereIn('id', $cursoIds)
+                $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])->whereIn('id', $cursoIds)
                     ->with(['grade', 'section', 'gestion'])
                     ->orderBy('nombre');
                 $puede = true;
             }
         } elseif ($user->hasAnyRole('Director,Administrador,Secretaría')) {
-            $base = Course::where('estado', 'ACTIVO')
+            $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])
                 ->with(['grade', 'section', 'gestion'])
                 ->orderBy('nombre');
             $puede = true;
@@ -49,7 +49,7 @@ class AttendanceController extends Controller
 
         if ($puede) {
             $cursos = (clone $base)->paginate(10)->withQueryString();
-            $cursosRegistro = (clone $base)->paginate(10, ['*'], 'pageRegistro')->withQueryString();
+            $cursosRegistro = (clone $base)->where('estado', 'ACTIVO')->paginate(10, ['*'], 'pageRegistro')->withQueryString();
         }
 
         $materiasPorCurso = $cursosRegistro instanceof \Illuminate\Pagination\LengthAwarePaginator

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('academic_year_id')->constrained('academic_years')->restrictOnDelete();
             $table->string('nombre', 100);
             $table->string('aula', 100)->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['grade_id', 'section_id', 'academic_year_id'], 'uk_grado_section_gestion');
             $table->index('academic_year_id', 'idx_gestion');

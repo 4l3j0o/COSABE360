@@ -96,10 +96,16 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
 });
 
-// Cursos (creación) - solo Administrador
+// Cursos (creación/edición) - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/cursos', [CourseController::class, 'store'])->name('courses.store');
+    Route::put('/cursos/{course}', [CourseController::class, 'update'])->name('courses.update');
+    Route::patch('/cursos/{course}/alternar', [CourseController::class, 'toggle'])->name('courses.toggle');
+    Route::delete('/cursos/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
 });
+
+// Cursos (ver) - todos los autenticados
+Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
 
 // CRUD ESTUDIANTES solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
