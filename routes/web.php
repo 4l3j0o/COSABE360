@@ -246,8 +246,6 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     // HU-19: Pagos de mensualidades por estudiante
     Route::get('/{estudiante}/pagos', [MonthlyPaymentController::class, 'estudiante'])
         ->name('monthly-payments.estudiante');
-    Route::get('/{estudiante}/pagos/crear', [MonthlyPaymentController::class, 'crearParaEstudiante'])
-        ->name('monthly-payments.crear-estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
         ->name('monthly-payments.store-estudiante');
 });

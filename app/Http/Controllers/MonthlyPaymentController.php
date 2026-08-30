@@ -79,22 +79,6 @@ class MonthlyPaymentController extends Controller
     }
 
     /**
-     * Formulario para registrar un pago de mensualidad de un estudiante específico.
-     */
-    public function crearParaEstudiante(Student $estudiante)
-    {
-        $inscripcion = $estudiante->enrollments()
-            ->where('estado', 'COMPLETADA')
-            ->whereHas('registration', function ($q) {
-                $q->where('estado', 'ACTIVA');
-            })
-            ->latest('fecha')
-            ->first();
-
-        return view('monthly-payments.crear-estudiante', compact('estudiante', 'inscripcion'));
-    }
-
-    /**
      * CA-19-01: Registrar un pago con fecha y método de pago para un estudiante.
      * El monto se toma de la cuota ya generada en la matrícula.
      */
