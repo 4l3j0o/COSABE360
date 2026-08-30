@@ -61,7 +61,14 @@ Route::get('/dashboard', function () {
         default => 'dashboard.administrador',
     };
 
-    return view($vista);
+    $datos = [
+        'totalEstudiantes' => \App\Models\Student::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalDocentes' => \App\Models\Teacher::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalUsuarios' => \App\Models\User::where('estado', '!=', 'ELIMINADO')->count(),
+        'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
+    ];
+
+    return view($vista, $datos);
 })->middleware('auth')->name('dashboard');
 
 // HU02: Gestionar usuarios - solo Administrador

@@ -10,28 +10,28 @@
             <div class="h-1.5 bg-primary"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Estudiantes</p>
-                <p class="text-2xl font-bold text-primary mt-1" id="estudiantes-count">--</p>
+                <p class="text-2xl font-bold text-primary mt-1">{{ $totalEstudiantes ?? '--' }}</p>
             </div>
         </div>
         <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/60"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Docentes</p>
-                <p class="text-2xl font-bold text-primary mt-1" id="docentes-count">--</p>
+                <p class="text-2xl font-bold text-primary mt-1">{{ $totalDocentes ?? '--' }}</p>
             </div>
         </div>
         <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/40"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Total Usuarios</p>
-                <p class="text-2xl font-bold text-primary mt-1" id="usuarios-count">--</p>
+                <p class="text-2xl font-bold text-primary mt-1">{{ $totalUsuarios ?? '--' }}</p>
             </div>
         </div>
         <div class="bg-card border border-border rounded-xl overflow-hidden hover:shadow-2xl transition-shadow">
             <div class="h-1.5 bg-primary/30"></div>
             <div class="p-5">
                 <p class="text-sm text-muted-foreground">Año Académico</p>
-                <p class="text-2xl font-bold text-primary mt-1" id="ano-academico">--</p>
+                <p class="text-2xl font-bold text-primary mt-1">{{ isset($periodoActivo) && $periodoActivo ? $periodoActivo->nombre : '--' }}</p>
             </div>
         </div>
     </div>
