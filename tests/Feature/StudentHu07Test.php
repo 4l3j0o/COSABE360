@@ -105,6 +105,56 @@ class StudentHu07Test extends TestCase
             ->assertSee('Luis');
     }
 
+    public function test_lista_muestra_estado_de_inscripcion_y_matricula(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+        $est = $this->crearEstudiante(['codigo' => 'EST-CIP-0001', 'numero_documento' => '9101010']);
+        $this->inscribirEstudiante($est, $gestion, conMatricula: true);
+
+        $response = $this->actingAs($admin)->get(route('students.index'));
+
+        $response->assertOk()
+            ->assertSee('completada')
+            ->assertSee('activa');
+    }
+
+    public function test_detalle_muestra_seccion_inscripcion_y_matricula(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+        $est = $this->crearEstudiante(['codigo' => 'EST-CIP-0002', 'numero_documento' => '9102020']);
+        $this->inscribirEstudiante($est, $gestion, conMatricula: true);
+
+        $response = $this->actingAs($admin)->get(route('students.show', $est));
+
+        $response->assertOk()
+            ->assertSee('Inscripción y Matrícula')
+            ->assertSee('completada')
+            ->assertSee('activa')
+            ->assertDontSee('No hay un período académico activo.');
+    }
+
+    public function test_inscripcion_pendiente_no_cuenta_como_inscrito(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+        $est = $this->crearEstudiante(['codigo' => 'EST-PEN-0001', 'numero_documento' => '7200001']);
+
+        Enrollment::create([
+            'student_id' => $est->id,
+            'academic_year_id' => $gestion->id,
+            'fecha' => '2026-03-01',
+            'estado' => 'PENDIENTE',
+        ]);
+
+        $inscritos = $this->actingAs($admin)->get(route('students.index', ['estado_academico' => 'INSCRITO']));
+        $inscritos->assertOk()->assertDontSee('EST-PEN-0001');
+
+        $sinInscribir = $this->actingAs($admin)->get(route('students.index', ['estado_academico' => 'SIN_INSCRIBIR']));
+        $sinInscribir->assertOk()->assertSee('EST-PEN-0001');
+    }
+
     public function test_consulta_lista_con_busqueda(): void
     {
         $admin = $this->adminUser();
@@ -209,6 +259,45 @@ class StudentHu07Test extends TestCase
 
         $response->assertRedirect(route('students.show', $est));
         $this->assertDatabaseHas('students', ['id' => $est->id, 'nombres' => 'Juan Carlos', 'apellidos' => 'Pérez García']);
+    }
+
+    public function test_edicion_actualiza_inscripcion_y_matricula(): void
+    {
+        $admin = $this->adminUser();
+        $gestion = $this->crearGestionActiva();
+        $est = $this->crearEstudiante(['codigo' => 'EST-CIP-0003', 'numero_documento' => '9103030']);
+        $this->inscribirEstudiante($est, $gestion, conMatricula: true);
+
+        $enrollment = Enrollment::where('student_id', $est->id)->firstOrFail();
+        $registration = $enrollment->registration;
+
+        $response = $this->actingAs($admin)->put(route('students.update', $est), [
+            'nombres'                => 'Juan',
+            'apellidos'              => 'Pérez',
+            'fecha_nacimiento'       => '2010-01-01',
+            'sexo'                   => 'M',
+            'tipo_documento'         => 'CI',
+            'numero_documento'       => '9103030',
+            'complemento'            => '',
+            'estado'                 => 'ACTIVO',
+            'quien_es_tutor'         => 'PADRE',
+            'inscripcion_estado'     => 'COMPLETADA',
+            'inscripcion_observaciones' => 'documentos verificados',
+            'matricula_estado'       => 'CANCELADA',
+            'matricula_observaciones' => 'retiro voluntario',
+        ]);
+
+        $response->assertRedirect(route('students.show', $est));
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'estado' => 'COMPLETADA',
+            'observaciones' => 'documentos verificados',
+        ]);
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'estado' => 'CANCELADA',
+            'observaciones' => 'retiro voluntario',
+        ]);
     }
 
     public function test_no_permite_documento_duplicado_al_editar(): void
@@ -374,7 +463,7 @@ class StudentHu07Test extends TestCase
 
         $response->assertOk();
         $response->assertSee('Historial de Cambios');
-        $response->assertSee('EDITAR');
+        $response->assertSee('editar');
         $response->assertSee('María José');
     }
 

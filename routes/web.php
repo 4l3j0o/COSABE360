@@ -199,12 +199,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(fun
     Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
 });
 
-// HU-17: Registrar inscripciones
+// HU-17: Registrar inscripciones (desde el modal de la lista de estudiantes)
 Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
-    Route::get('/inscripciones', [EnrollmentController::class, 'index'])->name('enrollments.index');
     Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
-    Route::put('/inscripciones/{enrollment}', [EnrollmentController::class, 'update'])->name('enrollments.update');
-    Route::delete('/inscripciones/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
 });
 
 // HU-28: Administrar horarios solo Administrador

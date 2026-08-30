@@ -6,6 +6,19 @@
 @endsection
 
 @section('contenido')
+    @php
+        // Errores que pertenecen únicamente al formulario de "Registrar nuevo estudiante"
+        $clavesNuevoEstudiante = ['nombres', 'apellidos', 'fecha_nacimiento', 'lugar_nacimiento', 'sexo', 'tipo_documento', 'numero_documento', 'complemento', 'direccion', 'telefono', 'email', 'email_estudiante', 'idioma', 'cultura', 'discapacidad', 'fotografia', 'familiares', 'tutor_email', 'general'];
+        $esErrorNuevoEstudiante = $errors->hasAny($clavesNuevoEstudiante);
+        if (! $esErrorNuevoEstudiante) {
+            foreach ($errors->keys() as $claveError) {
+                if (str_starts_with((string) $claveError, 'familiares.')) {
+                    $esErrorNuevoEstudiante = true;
+                    break;
+                }
+            }
+        }
+    @endphp
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Estudiantes</h1>
@@ -58,6 +71,8 @@
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Sexo</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Estado</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Estado académico</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Inscripción</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Matrícula</th>
                             <th class="text-right px-4 py-3 font-semibold text-foreground">Acciones</th>
                         </tr>
                     </thead>
@@ -80,35 +95,67 @@
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$student->estado] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $student->estado }}
+                                        {{ mb_strtolower($student->estado) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
                                     @php
-                                        $acad = $estadosAcademicos[$student->id] ?? 'SIN_INSCRIBIR';
-                                        $chip = [
-                                            'MATRICULADO'  => ['bg-success/10 text-success', 'Matriculado', route('students.show', $student)],
-                                            'INSCRITO'     => ['bg-info/10 text-info', 'Inscrito', route('estudiantes.matriculacion', $student)],
-                                            'SIN_INSCRIBIR' => ['bg-muted text-muted-foreground', 'Sin inscribir', route('enrollments.index')],
-                                        ][$acad];
+                                        $acad = $estadosAcademicos[$student->id]['estado_academico'] ?? 'SIN_INSCRIBIR';
                                     @endphp
-                                    <a href="{{ $chip[2] }}" title="{{ $acad === 'SIN_INSCRIBIR' ? 'Ir a inscripciones' : 'Ver / matricular' }}" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $chip[0] }} hover:opacity-80 transition-opacity">
-                                        {{ $chip[1] }}
-                                    </a>
+                                    @if($acad === 'SIN_INSCRIBIR')
+                                        <button type="button" onclick="abrirInscripcion({{ $student->id }})" title="Inscribir al período académico activo" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer">
+                                            sin inscribir
+                                        </button>
+                                    @elseif($acad === 'INSCRITO')
+                                        <a href="{{ route('estudiantes.matriculacion', $student) }}" title="Matricular" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info hover:opacity-80 transition-opacity">
+                                            inscrito
+                                        </a>
+                                    @else
+                                        <a href="{{ route('students.show', $student) }}" title="Ver" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success hover:opacity-80 transition-opacity">
+                                            matriculado
+                                        </a>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $insc = $estadosAcademicos[$student->id]['inscripcion'] ?? null;
+                                        $coloresIns = [
+                                            'PENDIENTE' => 'bg-warning/10 text-warning',
+                                            'COMPLETADA' => 'bg-success/10 text-success',
+                                            'ANULADA' => 'bg-error/10 text-error',
+                                        ];
+                                    @endphp
+                                    @if($insc)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresIns[$insc['estado']] ?? 'bg-muted text-muted-foreground' }}" title="Inscripción {{ ucfirst(mb_strtolower($insc['estado'])) }} · {{ $insc['fecha'] ?? '—' }}">{{ mb_strtolower($insc['estado']) }}</span>
+                                    @else
+                                        <span class="text-muted-foreground text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $mat = $estadosAcademicos[$student->id]['matricula'] ?? null;
+                                        $coloresMat = [
+                                            'ACTIVA' => 'bg-success/10 text-success',
+                                            'INACTIVA' => 'bg-neutral-100 text-neutral-600',
+                                            'CANCELADA' => 'bg-error/10 text-error',
+                                        ];
+                                    @endphp
+                                    @if($mat)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresMat[$mat['estado']] ?? 'bg-muted text-muted-foreground' }}" title="Matrícula {{ ucfirst(mb_strtolower($mat['estado'])) }} · {{ $mat['fecha'] ?? '—' }}">{{ mb_strtolower($mat['estado']) }}</span>
+                                    @else
+                                        <span class="text-muted-foreground text-xs">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
                                         <a href="{{ route('students.show', $student) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </a>
-                                        @if(($estadosAcademicos[$student->id] ?? 'SIN_INSCRIBIR') === 'MATRICULADO')
+                                        @if(($estadosAcademicos[$student->id]['estado_academico'] ?? '') === 'MATRICULADO')
                                             <a href="{{ route('monthly-payments.estudiante', $student) }}" class="p-1.5 rounded-lg hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary cursor-pointer" title="Ver pagos">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             </a>
                                         @endif
-                                        <button onclick="editarEstudiante(this)" data-id="{{ $student->id }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
                                         <form method="POST" action="{{ route('students.destroy', $student) }}" onsubmit="return confirm('¿Estás seguro de eliminar este estudiante?')" class="inline">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
@@ -150,6 +197,15 @@
                 </div>
                 <form method="POST" action="{{ route('students.store') }}" enctype="multipart/form-data" style="flex:1; overflow-y:auto; padding:1.5rem;">
                     @csrf
+
+                    @if($esErrorNuevoEstudiante)
+                        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos Personales</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -336,10 +392,93 @@
         </div>
     </div>
 
-    @include('students.partials._modal-editar')
+    {{-- MODAL INSCRIPCION --}}
+    <div id="modal-create-inscripcion" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
+        <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
+            <div style="width:100%; max-width:36rem; max-height:calc(100vh - 4rem); display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
+                    <h2 id="ins-modal-titulo" style="font-size:1rem; font-weight:700; color:var(--foreground);">Inscribir Estudiante</h2>
+                    <button onclick="closeModal('modal-create-inscripcion')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
+                        <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <form method="POST" action="{{ route('enrollments.store') }}" style="flex:1; overflow-y:auto; padding:1.5rem;" class="space-y-4">
+                    @csrf
 
-    @if(old('nombres') || $errors->any())
-        <script>openModal('modal-create')</script>
+                    @if($errors->has('student_id') || $errors->has('academic_year_id') || $errors->has('fecha') || $errors->has('estado') || $errors->has('observaciones'))
+                        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estudiante <span class="text-error">*</span></label>
+                        <input type="hidden" name="student_id" id="ins-student_id" value="{{ old('student_id') }}">
+                        <div id="ins-estudiante-nombre" style="padding:0.625rem 0.75rem; border-radius:0.5rem; border:1px solid var(--border); background:var(--muted); color:var(--foreground); font-size:0.875rem;">
+                            {{ old('student_id') ? '' : 'Seleccione el estudiante desde la lista.' }}
+                        </div>
+                        @error('student_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Período académico <span class="text-error">*</span></label>
+                        <select name="academic_year_id" id="ins-academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="">Seleccionar período...</option>
+                            @foreach($gestiones as $g)
+                                <option value="{{ $g->id }}" {{ (old('academic_year_id') ?: $periodoActivo?->id) == $g->id ? 'selected' : '' }}>{{ $g->nombre }} — {{ $g->estado }}</option>
+                            @endforeach
+                        </select>
+                        @error('academic_year_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha <span class="text-error">*</span></label>
+                            <input type="date" name="fecha" id="ins-fecha" value="{{ old('fecha', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            @error('fecha') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado <span class="text-error">*</span></label>
+                            <select name="estado" id="ins-estado" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <option value="COMPLETADA" {{ old('estado', 'COMPLETADA') === 'COMPLETADA' ? 'selected' : '' }}>Completada</option>
+                                <option value="PENDIENTE" {{ old('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="ANULADA" {{ old('estado') === 'ANULADA' ? 'selected' : '' }}>Anulada</option>
+                            </select>
+                            @error('estado') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Observaciones</label>
+                        <textarea name="observaciones" id="ins-observaciones" rows="3" placeholder="Opcional..." class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">{{ old('observaciones') }}</textarea>
+                        @error('observaciones') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
+                        <button type="button" onclick="closeModal('modal-create-inscripcion')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>
+                        <button type="submit" id="ins-submit-btn" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Registrar Inscripción</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @include('students.partials._familiares-js')
+
+    @if($esErrorNuevoEstudiante)
+        <script>
+            openModal('modal-create');
+            var fams = @json(old('familiares', []));
+            if (fams && fams.length) {
+                var cont = document.getElementById('lista-familiares');
+                cont.innerHTML = '';
+                familiarSeq = 0;
+                fams.forEach(function(f) {
+                    cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(familiarSeq, f, false));
+                    familiarSeq++;
+                });
+                cont.style.display = 'block';
+                renumerarFilas('lista-familiares');
+            }
+        </script>
     @endif
 
     <script>
@@ -348,6 +487,8 @@
             {{ $student->id }}: @json($student->toArray()){{ $loop->last ? '' : ',' }}
             @endforeach
         };
+
+        var inscripcionesMap = @json($estadosAcademicos);
 
         function formatFecha(fecha) {
             if (!fecha) return '—';
@@ -367,7 +508,8 @@
             cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(familiarSeq, null, false));
             familiarSeq++;
             cont.style.display = 'block';
-            document.getElementById('sin-familiar').style.display = 'none';
+            var sn = document.getElementById('sin-familiar');
+            if (sn) sn.style.display = 'none';
             renumerarFilas('lista-familiares');
         }
 
@@ -385,7 +527,7 @@
                 ph.style.display = 'block';
             }
             document.getElementById('v-codigo').textContent = s.codigo || '—';
-            document.getElementById('v-estado').textContent = s.estado || '—';
+            document.getElementById('v-estado').textContent = (s.estado || '—').toLowerCase();
             document.getElementById('v-nombres').textContent = s.nombres || '—';
             document.getElementById('v-apellidos').textContent = s.apellidos || '—';
             document.getElementById('v-fecha_nacimiento').textContent = formatFecha(s.fecha_nacimiento);
@@ -432,6 +574,57 @@
             document.getElementById('v-historial-content').innerHTML = histHtml;
             openModal('modal-view');
         }
+
+        var periodoActivoId = {{ $periodoActivo?->id ?? 'null' }};
+
+        function abrirInscripcion(id) {
+            var s = estudiantesMap[id];
+            if (!s) return;
+            document.getElementById('ins-student_id').value = id;
+            document.getElementById('ins-estudiante-nombre').textContent = (s.codigo || '') + ' — ' + (s.apellidos || '') + ' ' + (s.nombres || '');
+            var selPeriodo = document.getElementById('ins-academic_year_id');
+            if (periodoActivoId) {
+                selPeriodo.value = periodoActivoId;
+            }
+            var infoIns = inscripcionesMap[id] ? inscripcionesMap[id].inscripcion : null;
+            var edicion = infoIns && infoIns.estado && infoIns.estado !== 'ANULADA';
+            var insEstado = document.getElementById('ins-estado');
+            var insFecha = document.getElementById('ins-fecha');
+            var insObs = document.getElementById('ins-observaciones');
+            if (edicion) {
+                insEstado.value = infoIns.estado;
+                insFecha.value = infoIns.fecha_iso || '';
+                insObs.value = infoIns.observaciones || '';
+            } else {
+                insEstado.value = 'COMPLETADA';
+                var hoy = new Date();
+                insFecha.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+                insObs.value = '';
+            }
+            var titulo = document.getElementById('ins-modal-titulo');
+            if (titulo) titulo.textContent = edicion ? 'Editar Inscripción' : 'Inscribir Estudiante';
+            var btn = document.getElementById('ins-submit-btn');
+            if (btn) btn.textContent = edicion ? 'Guardar Inscripción' : 'Registrar Inscripción';
+            openModal('modal-create-inscripcion');
+        }
+
+        @if(old('student_id') || $errors->has('student_id') || $errors->has('academic_year_id') || $errors->has('fecha') || $errors->has('estado') || $errors->has('observaciones'))
+            var insId = @json(old('student_id'));
+            if (insId) {
+                document.getElementById('ins-student_id').value = insId;
+                var s = estudiantesMap[insId];
+                if (s) {
+                    document.getElementById('ins-estudiante-nombre').textContent = (s.codigo || '') + ' — ' + (s.apellidos || '') + ' ' + (s.nombres || '');
+                }
+                var infoIns = inscripcionesMap[insId] ? inscripcionesMap[insId].inscripcion : null;
+                var edicion = infoIns && infoIns.estado && infoIns.estado !== 'ANULADA';
+                var titulo = document.getElementById('ins-modal-titulo');
+                if (titulo) titulo.textContent = edicion ? 'Editar Inscripción' : 'Inscribir Estudiante';
+                var btn = document.getElementById('ins-submit-btn');
+                if (btn) btn.textContent = edicion ? 'Guardar Inscripción' : 'Registrar Inscripción';
+            }
+            openModal('modal-create-inscripcion');
+        @endif
 
         </script>
 @endpush

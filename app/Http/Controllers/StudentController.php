@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\MonthlyPayment;
 use App\Models\OperationHistory;
+use App\Models\Registration;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\ParentGuardian;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -96,7 +98,10 @@ class StudentController extends Controller
 
         $estadosAcademicos = $this->estadosAcademicos($students->pluck('id'));
 
-        return view('students.index', compact('students', 'eliminadosCount', 'estadosAcademicos'));
+        $gestiones = \App\Models\AcademicYear::orderByDesc('fecha_inicio')->get();
+        $periodoActivo = $gestiones->firstWhere('estado', 'ACTIVA');
+
+        return view('students.index', compact('students', 'eliminadosCount', 'estadosAcademicos', 'gestiones', 'periodoActivo'));
     }
 
     protected function estadosAcademicos($studentIds): array
@@ -105,13 +110,21 @@ class StudentController extends Controller
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
 
         if (! $periodo || $studentIds->isEmpty()) {
+            foreach ($studentIds as $id) {
+                $estados[$id] = [
+                    'estado_academico' => 'SIN_INSCRIBIR',
+                    'inscripcion' => null,
+                    'matricula' => null,
+                ];
+            }
+
             return $estados;
         }
 
         $enrollments = Enrollment::whereIn('student_id', $studentIds)
-            ->where('estado', 'COMPLETADA')
             ->where('academic_year_id', $periodo->id)
-            ->with('registration')
+            ->with(['registration'])
+            ->orderByDesc('fecha')
             ->get();
 
         $matriculadosPorPeriodo = Enrollment::whereIn('student_id', $studentIds)
@@ -123,13 +136,33 @@ class StudentController extends Controller
             ->unique();
 
         foreach ($studentIds as $id) {
+            $propias = $enrollments->where('student_id', $id);
+            $insc = $propias->where('estado', '!=', 'ANULADA')->first() ?? $propias->first();
+            $matricula = $insc?->registration;
+
             if ($matriculadosPorPeriodo->contains($id)) {
-                $estados[$id] = 'MATRICULADO';
-            } elseif ($enrollments->firstWhere('student_id', $id)) {
-                $estados[$id] = 'INSCRITO';
+                $estadoAcademico = 'MATRICULADO';
+            } elseif ($insc && $insc->estado === 'COMPLETADA') {
+                $estadoAcademico = 'INSCRITO';
             } else {
-                $estados[$id] = 'SIN_INSCRIBIR';
+                $estadoAcademico = 'SIN_INSCRIBIR';
             }
+
+            $estados[$id] = [
+                'estado_academico' => $estadoAcademico,
+                'inscripcion' => $insc
+                    ? [
+                        'id' => $insc->id,
+                        'estado' => $insc->estado,
+                        'fecha' => $insc->fecha?->format('d/m/Y'),
+                        'fecha_iso' => $insc->fecha?->format('Y-m-d'),
+                        'observaciones' => $insc->observaciones,
+                    ]
+                    : null,
+                'matricula' => $matricula
+                    ? ['id' => $matricula->id, 'estado' => $matricula->estado, 'fecha' => $matricula->fecha?->format('d/m/Y')]
+                    : null,
+            ];
         }
 
         return $estados;
@@ -196,12 +229,10 @@ class StudentController extends Controller
         $this->validarFamiliares($request);
 
         $complemento = $datos['complemento'] ?? '';
-        $existe = Student::where('numero_documento', $datos['numero_documento'])
-            ->where('complemento', $complemento)
-            ->exists();
+        $tipoEnUso = $this->documentoEnUso($datos['numero_documento'], $complemento);
 
-        if ($existe) {
-            return back()->withErrors(['numero_documento' => 'Ya existe un estudiante con ese documento y complemento.'])->withInput();
+        if ($tipoEnUso) {
+            return back()->withErrors(['numero_documento' => 'Ya existe un ' . $tipoEnUso . ' registrado con ese documento de identidad.'])->withInput();
         }
 
         DB::beginTransaction();
@@ -278,23 +309,44 @@ class StudentController extends Controller
                 ->get()
             : collect();
 
-        return view('students.show', compact('student', 'historial', 'documentos'));
+        $periodoActivo = \App\Models\AcademicYear::where('estado', 'ACTIVA')->first();
+
+        $inscripcionPeriodo = null;
+        $matriculaPeriodo = null;
+        if ($periodoActivo) {
+            $inscripcionPeriodo = \App\Models\Enrollment::where('student_id', $student->id)
+                ->where('academic_year_id', $periodoActivo->id)
+                ->where('estado', '!=', 'ANULADA')
+                ->with(['gestion', 'registration.course'])
+                ->latest('fecha')
+                ->first();
+            $matriculaPeriodo = $inscripcionPeriodo?->registration;
+        }
+
+        return view('students.show', compact('student', 'historial', 'documentos', 'periodoActivo', 'inscripcionPeriodo', 'matriculaPeriodo'));
     }
 
     public function update(UpdateStudentRequest $request, Student $student)
     {
-        $datos = $request->validated();
+        $datos = collect($request->validated())->except(['familiares'])->all();
 
         $this->validarFamiliares($request);
 
-        $complemento = $datos['complemento'] ?? '';
-        $existe = Student::where('numero_documento', $datos['numero_documento'])
-            ->where('complemento', $complemento)
-            ->where('id', '!=', $student->id)
-            ->exists();
+        $request->validate([
+            'inscripcion_estado' => ['nullable', Rule::in(Enrollment::ESTADOS)],
+            'inscripcion_fecha' => ['nullable', 'date'],
+            'inscripcion_observaciones' => ['nullable', 'string', 'max:1000'],
+            'matricula_estado' => ['nullable', Rule::in(Registration::ESTADOS)],
+            'matricula_fecha' => ['nullable', 'date'],
+            'matricula_monto' => ['nullable', 'numeric', 'min:0'],
+            'matricula_observaciones' => ['nullable', 'string', 'max:1000'],
+        ]);
 
-        if ($existe) {
-            return back()->withErrors(['numero_documento' => 'Ya existe otro estudiante con ese documento y complemento.'])->withInput();
+        $complemento = $datos['complemento'] ?? '';
+        $tipoEnUso = $this->documentoEnUso($datos['numero_documento'], $complemento, $student->id);
+
+        if ($tipoEnUso) {
+            return back()->withErrors(['numero_documento' => 'Ya existe un ' . $tipoEnUso . ' registrado con ese documento de identidad.'])->withInput();
         }
 
         DB::beginTransaction();
@@ -306,6 +358,12 @@ class StudentController extends Controller
                 $datos['email'] = $datos['email_estudiante'];
             }
             unset($datos['email_estudiante']);
+
+            foreach (['lugar_nacimiento', 'direccion', 'telefono', 'idioma', 'cultura', 'discapacidad'] as $campoOpcional) {
+                if (!isset($datos[$campoOpcional]) || $datos[$campoOpcional] === null) {
+                    $datos[$campoOpcional] = '';
+                }
+            }
 
             if ($request->hasFile('fotografia')) {
                 if ($student->fotografia) {
@@ -325,6 +383,8 @@ class StudentController extends Controller
 
             $this->guardarFamiliares($student, $request);
 
+            $this->actualizarInscripcionYMatricula($student, $request);
+
             DB::commit();
 
             return redirect()->route('students.show', $student)->with('mensaje', 'Estudiante actualizado correctamente.');
@@ -332,6 +392,40 @@ class StudentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['general' => 'Error al actualizar: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    private function actualizarInscripcionYMatricula(Student $student, Request $request): void
+    {
+        $anio = AcademicYear::where('estado', 'ACTIVA')->first();
+        if (! $anio) {
+            return;
+        }
+
+        $inscripcion = Enrollment::where('student_id', $student->id)
+            ->where('academic_year_id', $anio->id)
+            ->where('estado', '!=', 'ANULADA')
+            ->latest('fecha')
+            ->first();
+
+        if (! $inscripcion || ! $request->has('inscripcion_estado')) {
+            return;
+        }
+
+        $inscripcion->update([
+            'estado' => $request->input('inscripcion_estado', $inscripcion->estado),
+            'fecha' => $request->filled('inscripcion_fecha') ? $request->input('inscripcion_fecha') : $inscripcion->fecha,
+            'observaciones' => $request->input('inscripcion_observaciones', $inscripcion->observaciones),
+        ]);
+
+        $matricula = $inscripcion->registration;
+        if ($matricula && $request->has('matricula_estado')) {
+            $matricula->update([
+                'estado' => $request->input('matricula_estado', $matricula->estado),
+                'fecha' => $request->filled('matricula_fecha') ? $request->input('matricula_fecha') : $matricula->fecha,
+                'monto_mensual' => $request->filled('matricula_monto') ? $request->input('matricula_monto') : $matricula->monto_mensual,
+                'observaciones' => $request->input('matricula_observaciones', $matricula->observaciones),
+            ]);
         }
     }
 
@@ -509,6 +603,47 @@ class StudentController extends Controller
         );
     }
 
+    private function documentoEnUso(string $numeroDocumento, string $complemento, ?int $excluirEstudianteId = null, ?int $excluirParentGuardianId = null, bool $incluirParentGuardians = true): ?string
+    {
+        $numeroDocumento = trim($numeroDocumento);
+        $complemento = trim($complemento);
+
+        $filtroDocumento = function ($q) use ($numeroDocumento, $complemento) {
+            $q->where('numero_documento', $numeroDocumento);
+
+            if ($complemento === '') {
+                $q->where(function ($q2) {
+                    $q2->where('complemento', '')->orWhereNull('complemento');
+                });
+            } else {
+                $q->where('complemento', $complemento);
+            }
+        };
+
+        if (Student::where($filtroDocumento)
+            ->when($excluirEstudianteId, fn ($q) => $q->where('id', '!=', $excluirEstudianteId))
+            ->exists()
+        ) {
+            return 'estudiante';
+        }
+
+        if ($incluirParentGuardians && ParentGuardian::where($filtroDocumento)
+            ->when($excluirParentGuardianId, fn ($q) => $q->where('id', '!=', $excluirParentGuardianId))
+            ->exists()
+        ) {
+            return 'padre o tutor';
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('teachers')
+            && \Illuminate\Support\Facades\Schema::hasColumn('teachers', 'numero_documento')
+            && \App\Models\Teacher::where($filtroDocumento)->exists()
+        ) {
+            return 'docente';
+        }
+
+        return null;
+    }
+
     private function validarFamiliares(Request $request): void
     {
         $familiares = $request->input('familiares', []);
@@ -543,6 +678,29 @@ class StudentController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'familiares' => 'El tutor debe tener un email, ya que es quien recibe el acceso al sistema.',
             ]);
+        }
+
+        foreach ($completos as $f) {
+            if (! empty($f['id_existente'])) {
+                continue;
+            }
+
+            $numDoc = trim((string) ($f['num_doc'] ?? ''));
+            if ($numDoc === '') {
+                continue;
+            }
+
+            $complemento = trim((string) ($f['complemento'] ?? ''));
+            $tipoEnUso = $this->documentoEnUso($numDoc, $complemento, null, null, false);
+
+            if ($tipoEnUso) {
+                $nombre = trim(($f['nombres'] ?? '') . ' ' . ($f['apellidos'] ?? ''));
+                $quien = $nombre !== '' ? 'El familiar "' . $nombre . '"' : 'Un familiar';
+
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'familiares' => $quien . ' tiene un documento de identidad ya asignado a un ' . $tipoEnUso . ' del sistema.',
+                ]);
+            }
         }
     }
 
@@ -643,13 +801,12 @@ class StudentController extends Controller
     {
         $anio = date('Y');
         $ultimo = Student::where('codigo', 'LIKE', "EST-{$anio}-%")
-            ->orderByDesc('codigo')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(codigo, \'-\', -1) AS UNSIGNED) DESC')
             ->value('codigo');
 
-        if ($ultimo) {
-            $consecutivo = (int) substr($ultimo, -4) + 1;
-        } else {
-            $consecutivo = 1;
+        $consecutivo = 1;
+        if ($ultimo && preg_match('/(\d+)$/', (string) $ultimo, $m)) {
+            $consecutivo = (int) $m[1] + 1;
         }
 
         return 'EST-' . $anio . '-' . str_pad($consecutivo, 4, '0', STR_PAD_LEFT);
@@ -677,6 +834,9 @@ class StudentController extends Controller
 
         $cambios = [];
         foreach ($nuevos as $campo => $valor) {
+            if (is_array($valor) || is_array($anterior[$campo] ?? null)) {
+                continue;
+            }
             $valorAnterior = $anterior[$campo] ?? null;
             if ((string) $valorAnterior !== (string) $valor) {
                 $cambios[] = $campo . ': "' . $valorAnterior . '" → "' . $valor . '"';
