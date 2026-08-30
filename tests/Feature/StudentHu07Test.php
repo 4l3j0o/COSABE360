@@ -207,7 +207,7 @@ class StudentHu07Test extends TestCase
             'quien_es_tutor'   => 'PADRE',
         ]);
 
-        $response->assertRedirect(route('students.index'));
+        $response->assertRedirect(route('students.show', $est));
         $this->assertDatabaseHas('students', ['id' => $est->id, 'nombres' => 'Juan Carlos', 'apellidos' => 'Pérez García']);
     }
 
@@ -250,7 +250,7 @@ class StudentHu07Test extends TestCase
             'quien_es_tutor'   => 'PADRE',
         ]);
 
-        $response->assertRedirect(route('students.index'));
+        $response->assertRedirect(route('students.show', $est2));
         $this->assertDatabaseHas('students', ['id' => $est2->id, 'complemento' => '1A']);
     }
 
@@ -293,7 +293,7 @@ class StudentHu07Test extends TestCase
             'fotografia'       => $foto2,
         ]);
 
-        $response->assertRedirect(route('students.index'));
+        $response->assertRedirect(route('students.show', $est));
         Storage::disk('public')->assertMissing($oldPath);
         $est->refresh();
         Storage::disk('public')->assertExists($est->fotografia);

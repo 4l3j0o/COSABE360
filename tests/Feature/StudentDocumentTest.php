@@ -21,9 +21,9 @@ class StudentDocumentTest extends TestCase
         return $user;
     }
 
-    private function crearDocumento(): StudentDocument
+    private function crearEstudiante(): Student
     {
-        $est = Student::create([
+        return Student::create([
             'codigo' => 'EST-DOC-'.fake()->unique()->numerify('####'),
             'nombres' => fake()->firstName(),
             'apellidos' => fake()->lastName(),
@@ -34,6 +34,11 @@ class StudentDocumentTest extends TestCase
             'complemento' => '',
             'estado' => 'ACTIVO',
         ]);
+    }
+
+    private function crearDocumento(): StudentDocument
+    {
+        $est = $this->crearEstudiante();
 
         return StudentDocument::create([
             'student_id' => $est->id,
@@ -95,5 +100,22 @@ class StudentDocumentTest extends TestCase
             ->assertSee('Fecha de entrega')
             ->assertSee($doc->tipo_documento)
             ->assertSee(now()->format('d/m/Y'));
+    }
+
+    public function test_genera_documentos_obligatorios_pendientes_para_estudiantes_sin_expediente(): void
+    {
+        $this->admin();
+        $est = $this->crearEstudiante();
+
+        $response = $this->get(route('students.show', $est));
+
+        $response->assertOk()
+            ->assertSee('Certificado de Nacimiento')
+            ->assertSee('Cédula de Identidad')
+            ->assertSee('Fotografía')
+            ->assertSee('Certificado de Estudios');
+
+        $this->assertSame(4, StudentDocument::where('student_id', $est->id)->count());
+        $this->assertSame(4, StudentDocument::where('student_id', $est->id)->where('estado', 'PENDIENTE')->count());
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\MonthlyPayment;
 use App\Models\OperationHistory;
 use App\Models\Student;
+use App\Models\StudentDocument;
 use App\Models\ParentGuardian;
 use App\Models\User;
 use App\Models\Role;
@@ -19,6 +20,30 @@ use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
+    private const DOCUMENTOS_OBLIGATORIOS = [
+        'Certificado de Nacimiento',
+        'Cédula de Identidad',
+        'Fotografía',
+        'Certificado de Estudios',
+    ];
+
+    private function asegurarDocumentosObligatorios(Student $student): void
+    {
+        $existentes = StudentDocument::where('student_id', $student->id)->pluck('tipo_documento')->all();
+
+        foreach (self::DOCUMENTOS_OBLIGATORIOS as $tipo) {
+            if (! in_array($tipo, $existentes, true)) {
+                StudentDocument::create([
+                    'student_id'     => $student->id,
+                    'tipo_documento' => $tipo,
+                    'archivo'        => 'documentos/' . $student->id . '/' . str_replace(' ', '_', $tipo) . '.pdf',
+                    'estado'         => 'PENDIENTE',
+                    'observaciones'  => 'Pendiente de entrega',
+                ]);
+            }
+        }
+    }
+
     public function index(Request $request)
     {
         $query = Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user'])->where('estado', '!=', 'ELIMINADO');
@@ -209,6 +234,8 @@ class StudentController extends Controller
 
             $this->guardarFamiliares($student, $request);
 
+            $this->asegurarDocumentosObligatorios($student);
+
             DB::commit();
 
             return redirect()->route('students.index')->with('mensaje', 'Estudiante registrado correctamente.');
@@ -243,18 +270,15 @@ class StudentController extends Controller
             ->limit(50)
             ->get();
 
+        $this->asegurarDocumentosObligatorios($student);
+
         $documentos = \Illuminate\Support\Facades\Schema::hasTable('student_documents')
             ? \App\Models\StudentDocument::where('student_id', $student->id)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id')
                 ->get()
             : collect();
 
         return view('students.show', compact('student', 'historial', 'documentos'));
-    }
-
-    public function edit(Student $student)
-    {
-        return view('students.edit', compact('student'));
     }
 
     public function update(UpdateStudentRequest $request, Student $student)
@@ -303,7 +327,7 @@ class StudentController extends Controller
 
             DB::commit();
 
-            return redirect()->route('students.index')->with('mensaje', 'Estudiante actualizado correctamente.');
+            return redirect()->route('students.show', $student)->with('mensaje', 'Estudiante actualizado correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -362,7 +386,6 @@ class StudentController extends Controller
 
     public function matricular(Request $request, Student $estudiante)
     {
-        // CA-18-01 y CA-18-02: curso/paralelo y costo de matrícula
         $validated = $request->validate([
             'course_id'          => 'required|exists:courses,id',
             'fecha'              => 'required|date',
@@ -370,12 +393,11 @@ class StudentController extends Controller
             'observaciones'      => 'nullable|string|max:500',
         ]);
 
-        // HU-19 / CA-19-01: mensualidad - prioriza valor enviado (test), fallback a configuración global
         $montoMensual = isset($validated['monto_mensual'])
             ? (float) $validated['monto_mensual']
             : (float) (\App\Models\TaxConfiguration::first()?->monto_mensualidad ?? 0);
 
-        // CA-18-03: Solo se puede matricular un estudiante que tenga inscripción completada
+        // Solo se puede matricular un estudiante que tenga inscripción completada
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
 
         $inscripcion = $estudiante->enrollments()
