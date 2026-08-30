@@ -12,6 +12,19 @@ class UpdateAnnouncementRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('fecha_publicacion') && $this->input('fecha_publicacion') === '') {
+            $this->merge(['fecha_publicacion' => null]);
+        }
+        if ($this->has('course_id') && $this->input('course_id') === '') {
+            $this->merge(['course_id' => null]);
+        }
+        if ($this->has('user_id') && $this->input('user_id') === '') {
+            $this->merge(['user_id' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [

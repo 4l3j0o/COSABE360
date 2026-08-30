@@ -33,7 +33,7 @@ class AnnouncementController extends Controller
         }
 
         $announcements = $query->paginate(10)->withQueryString();
-        $courses = Course::orderBy('nombre')->get();
+        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
 
         return view('announcements.index', compact('announcements', 'courses'));
     }
@@ -42,18 +42,20 @@ class AnnouncementController extends Controller
     {
         $validated = $request->validated();
 
+        // Lógica específica HU30: fecha solo si PUBLICADO o si viene explícita
+        $fecha = $validated['fecha_publicacion'] ?? null;
+        $estado = $validated['estado'] ?? 'BORRADOR';
+        if (! $fecha && $estado === 'PUBLICADO') {
+            $fecha = now();
+        }
+
         $announcement = Announcement::create([
             'titulo' => $validated['titulo'],
             'contenido' => $validated['contenido'],
             'author_id' => auth()->id(),
-            'fecha_publicacion' => $validated['fecha_publicacion'] ?? ($validated['estado'] ?? null) === 'PUBLICADO' ? now() : null,
-            'estado' => $validated['estado'] ?? 'BORRADOR',
+            'fecha_publicacion' => $fecha,
+            'estado' => $estado,
         ]);
-
-        // Si se publicó sin fecha, setear ahora
-        if ($announcement->estado === 'PUBLICADO' && ! $announcement->fecha_publicacion) {
-            $announcement->update(['fecha_publicacion' => now()]);
-        }
 
         $announcement->recipients()->create([
             'tipo_destinatario' => $validated['tipo_destinatario'],

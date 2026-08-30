@@ -65,7 +65,7 @@
                             @php $recipient = $announcement->recipients->first(); @endphp
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3 font-medium text-foreground max-w-[200px] truncate">{{ $announcement->titulo }}</td>
-                                <td class="px-4 py-3 text-muted-foreground max-w-[300px] truncate">{{ Str::limit($announcement->contenido, 80) }}</td>
+                                <td class="px-4 py-3 text-muted-foreground max-w-[300px] truncate">{{ \Illuminate\Support\Str::limit($announcement->contenido, 80) }}</td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                         {{ $recipient?->tipo_destinatario ?? '—' }}
@@ -87,7 +87,10 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarComunicado({{ $announcement->id }}, '{{ addslashes($announcement->titulo) }}', `{{ addslashes($announcement->contenido) }}`, '{{ $recipient?->tipo_destinatario }}', '{{ $recipient?->course_id }}', '{{ $announcement->estado }}', '{{ $announcement->fecha_publicacion?->format('Y-m-d\TH:i') }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button type="button"
+                                            data-announcement='{!! json_encode(['id' => $announcement->id, 'titulo' => $announcement->titulo, 'contenido' => $announcement->contenido, 'estado' => $announcement->estado, 'fecha' => $announcement->fecha_publicacion?->format('Y-m-d\TH:i')], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
+                                            data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'course_id' => $recipient?->course_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
+                                            onclick="editarComunicado(this)" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         @if($announcement->estado !== 'PUBLICADO')
@@ -271,14 +274,16 @@
             const wrap = document.getElementById(prefix + '-course-wrap');
             wrap.style.display = tipo === 'CURSO_ESPECIFICO' ? 'block' : 'none';
         }
-        function editarComunicado(id, titulo, contenido, tipo, course_id, estado, fecha) {
-            document.getElementById('form-edit').action = '/comunicados/' + id;
-            document.getElementById('edit-titulo').value = titulo;
-            document.getElementById('edit-contenido').value = contenido;
-            document.getElementById('edit-tipo').value = tipo || 'TODOS';
-            document.getElementById('edit-course_id').value = course_id || '';
-            document.getElementById('edit-estado').value = estado || 'BORRADOR';
-            document.getElementById('edit-fecha').value = fecha || '';
+        function editarComunicado(btn) {
+            const ann = JSON.parse(btn.getAttribute('data-announcement') || '{}');
+            const rec = JSON.parse(btn.getAttribute('data-recipient') || '{}');
+            document.getElementById('form-edit').action = '/comunicados/' + (ann.id || '');
+            document.getElementById('edit-titulo').value = ann.titulo || '';
+            document.getElementById('edit-contenido').value = ann.contenido || '';
+            document.getElementById('edit-tipo').value = rec.tipo || 'TODOS';
+            document.getElementById('edit-course_id').value = rec.course_id || '';
+            document.getElementById('edit-estado').value = ann.estado || 'BORRADOR';
+            document.getElementById('edit-fecha').value = ann.fecha || '';
             toggleCourseSelect('edit');
             openModal('modal-edit');
         }
