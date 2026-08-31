@@ -73,7 +73,43 @@ Route::get('/dashboard', function () {
         'pagosPendientes' => \App\Models\MonthlyPayment::where('estado', 'PENDIENTE')->count(),
         'documentosPendientes' => \App\Models\StudentDocument::where('estado', 'PENDIENTE')->count(),
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
+        'misNoLeidos' => \App\Models\AnnouncementRead::where('user_id', auth()->id())->where('leido', false)->count(),
     ];
+
+    $user = auth()->user();
+
+    // Para el rol Docente: datos reales de cursos, evaluaciones y horario
+    if ($rol === 'Docente') {
+        $teacher = $user->teacher;
+        $courseSubjectIds = $teacher
+            ? \App\Models\CourseSubject::where('teacher_id', $teacher->id)->pluck('id')
+            : collect();
+        $datos['misCursos'] = $courseSubjectIds->count();
+        $datos['misEvaluaciones'] = \App\Models\Assessment::whereIn('course_subject_id', $courseSubjectIds)->count();
+        $datos['miHorario'] = $teacher
+            ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count()
+            : 0;
+    }
+
+    // Para el rol Estudiante: promedio, asistencia, materias y curso activo
+    if ($rol === 'Estudiante') {
+        $student = $user->student;
+        $datos['estudiante'] = $student;
+        if ($student) {
+            $notas = $student->gradeScores()->pluck('nota');
+            $datos['promedio'] = $notas->isNotEmpty() ? round($notas->avg(), 2) : null;
+
+            $asistencias = $student->attendances();
+            $totalAsist = (clone $asistencias)->count();
+            $presentes = (clone $asistencias)->where('estado', 'PRESENTE')->count()
+                + (clone $asistencias)->where('estado', 'PERMISO')->count();
+            $datos['asistenciaPct'] = $totalAsist > 0 ? round(($presentes / $totalAsist) * 100, 0) : null;
+
+            $curso = $student->activeCourse();
+            $datos['curso'] = $curso;
+            $datos['materias'] = $curso ? $curso->courseSubjects()->count() : 0;
+        }
+    }
 
     // Para el rol Padre/Tutor: sus hijos de los que es responsable
     if ($rol === 'Padre/Tutor') {

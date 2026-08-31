@@ -19,20 +19,29 @@ class ReporteExportController extends Controller
     private function headerHtml(string $titulo): string
     {
         $fecha = now()->format('d/m/Y H:i');
-        $logo = asset('images/logo-colegio.png');
+        $logoRuta = public_path('images/logo-colegio.png');
+        $logoHtml = is_file($logoRuta)
+            ? '<td style="width:90px;vertical-align:middle;text-align:left;">'
+                . '<img src="' . $logoRuta . '" alt="Logo" style="height:55px;">'
+                . '</td>'
+            : '';
         return <<<HTML
-<div style="text-align:center;border-bottom:2px solid #1e3a8a;padding:10px;margin-bottom:15px;">
-<img src="{$logo}" alt="Logo" style="height:50px;" onerror="this.style.display='none'">
-<h2 style="margin:5px 0;color:#1e3a8a;">Unidad Educativa San Bernardo</h2>
-<h3 style="margin:0;">{$titulo}</h3>
-<p style="font-size:11px;color:#555;">Fecha de generación: {$fecha}</p>
-</div>
+<table style="width:100%;border-collapse:collapse;border-bottom:2px solid #005100;padding-bottom:10px;margin-bottom:15px;">
+<tr>
+{$logoHtml}
+<td style="vertical-align:middle;text-align:left;">
+<h2 style="margin:0;color:#005100;font-size:16px;">Unidad Educativa San Bernardo</h2>
+<h3 style="margin:4px 0 0 0;font-size:13px;">{$titulo}</h3>
+<p style="margin:4px 0 0 0;font-size:11px;color:#555;">Fecha de generación: {$fecha}</p>
+</td>
+</tr>
+</table>
 HTML;
     }
 
     private function pdfDownload(string $titulo, string $bodyHtml, string $filename): \Illuminate\Http\Response
     {
-        $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans, sans-serif;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #aaa;padding:6px;text-align:left;}th{background:#1e3a8a;color:#fff;}</style></head><body>' . $this->headerHtml($titulo) . $bodyHtml . '</body></html>';
+        $html = '<html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans, sans-serif;font-size:11px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #aaa;padding:6px;text-align:left;}th{background:#005100;color:#fff;}</style></head><body>' . $this->headerHtml($titulo) . $bodyHtml . '</body></html>';
 
         $pdf = Pdf::loadHTML($html);
         $pdf->setPaper('letter', 'landscape');
