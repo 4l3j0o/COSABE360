@@ -2,18 +2,25 @@
 @section('titulo', 'Materias')
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @if(auth()->user()->hasRole('Director'))
+        @include('dashboard.partials._sidebar-director')
+    @else
+        @include('dashboard.partials._sidebar-admin')
+    @endif
 @endsection
 
 @section('contenido')
+    @php $esAdmin = auth()->user()->esAdmin(); @endphp
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Materias</h1>
             <p class="text-sm text-muted-foreground">Gestión de materias por nivel educativo</p>
         </div>
+        @if($esAdmin)
         <button onclick="openModal('modal-create')" title="Nueva Materia" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         </button>
+        @endif
     </div>
 
     @if(session('success'))
@@ -44,10 +51,12 @@
         <div class="bg-card border border-border rounded-xl p-12 text-center">
             <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
             <p class="text-muted-foreground text-sm">No se encontraron materias</p>
+            @if($esAdmin)
             <button onclick="openModal('modal-create')" class="mt-3 inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Crear primera materia
             </button>
+            @endif
         </div>
     @else
         <div class="bg-card border border-border rounded-xl overflow-hidden">
@@ -89,12 +98,14 @@
                                         <a href="{{ route('subjects.show', $subject) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </a>
+                                        @if($esAdmin)
                                         <form method="POST" action="{{ route('subjects.destroy', $subject) }}" onsubmit="return confirm('¿Estás seguro de eliminar esta materia?')" class="inline">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

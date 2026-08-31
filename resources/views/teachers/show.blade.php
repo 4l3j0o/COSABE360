@@ -2,7 +2,11 @@
 @section('titulo', $teacher->apellidos . ', ' . $teacher->nombres)
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @if(auth()->user()->hasRole('Director'))
+        @include('dashboard.partials._sidebar-director')
+    @else
+        @include('dashboard.partials._sidebar-admin')
+    @endif
 @endsection
 
 @section('contenido')
@@ -18,6 +22,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $teacher->apellidos }}, {{ $teacher->nombres }}</h1>
             <div class="flex items-center gap-2">
+                @if(auth()->user()->esAdmin())
                 <button type="button" id="btn-editar-docente" onclick="activarEdicionDocente()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     Editar
@@ -25,6 +30,7 @@
                 <button type="button" id="btn-cancelar-edicion-docente" onclick="cancelarEdicionDocente()" style="display:none;" class="inline-flex items-center gap-2 bg-muted text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
                     Cancelar
                 </button>
+                @endif
             </div>
         </div>
     </div>

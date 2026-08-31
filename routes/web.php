@@ -66,6 +66,10 @@ Route::get('/dashboard', function () {
         'totalEstudiantes' => \App\Models\Student::where('estado', '!=', 'ELIMINADO')->count(),
         'totalDocentes' => \App\Models\Teacher::where('estado', '!=', 'ELIMINADO')->count(),
         'totalUsuarios' => \App\Models\User::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalCursos' => \App\Models\Course::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalMaterias' => \App\Models\Subject::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalComunicados' => \App\Models\Announcement::count(),
+        'totalMatriculados' => \App\Models\Enrollment::where('estado', 'COMPLETADA')->count(),
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
     ];
 
@@ -84,13 +88,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
-// HU10: Registrar docentes - solo Administrador
-Route::middleware(['auth', 'admin'])->group(function () {
+// Docentes: consulta (Administrador y Director) y gestión (solo Administrador)
+Route::middleware(['auth', 'role:Administrador,Director'])->group(function () {
     Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
+    Route::get('/docentes/{teacher}', [TeacherController::class, 'show'])->name('teachers.show');
+});
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::get('/docentes/crear', [TeacherController::class, 'create'])->name('teachers.create');
     Route::post('/docentes', [TeacherController::class, 'store'])->name('teachers.store');
     Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
-    Route::get('/docentes/{teacher}', [TeacherController::class, 'show'])->name('teachers.show');
     Route::put('/docentes/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
     Route::patch('/docentes/{teacher}/alternar', [TeacherController::class, 'toggle'])->name('teachers.toggle');
     Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
@@ -108,12 +114,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
 Route::middleware('auth')->get('/cursos/{course}/calificaciones', [GradeScoreController::class, 'cursoAdmin'])->name('courses.calificaciones');
 
-// CRUD ESTUDIANTES solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->group(function () {
-    Route::resource('students', StudentController::class)->except(['edit']);
+// Estudiantes: consulta (Administrador y Director) y gestión (solo Administrador)
+Route::middleware(['auth', 'role:Administrador,Director'])->group(function () {
+    Route::get('students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('students/{student}', [StudentController::class, 'show'])->name('students.show');
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
-    Route::patch('students/{student}/restaurar', [StudentController::class, 'restaurar'])->name('students.restaurar');
     Route::get('buscar-persona', [StudentController::class, 'buscarPersona'])->name('students.buscarPersona');
+});
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
+    Route::get('students/crear', [StudentController::class, 'create'])->name('students.create');
+    Route::post('students', [StudentController::class, 'store'])->name('students.store');
+    Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+    Route::patch('students/{student}/restaurar', [StudentController::class, 'restaurar'])->name('students.restaurar');
 });
 
 // CONFIGURACIÓN TRIBUTARIA solo Administrador
@@ -181,10 +194,12 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(fu
     Route::delete('/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
 });
 
-// HU-14: Administrar materias solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(function () {
+// Materias: consulta (Administrador y Director) y gestión (solo Administrador)
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('materias')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('subjects.index');
     Route::get('/{subject}', [SubjectController::class, 'show'])->name('subjects.show');
+});
+Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(function () {
     Route::post('/', [SubjectController::class, 'store'])->name('subjects.store');
     Route::put('/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
     Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
@@ -266,9 +281,10 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
         ->name('monthly-payments.store-estudiante');
 });
 
-// HU24: Notas finales por materia - Estudiante y Padre/Tutor
+// HU24: Notas finales por materia - Estudiante, Padre/Tutor, Director y Administrador
 Route::middleware(['auth'])->group(function () {
     Route::get('/notas-finales', [FinalGradesController::class, 'index'])->name('notas-finales.index');
+    Route::get('/notas-finales/detalle', [FinalGradesController::class, 'show'])->name('notas-finales.show');
 });
 
 // HU-25: Historial académico - Estudiante/Padre/Director

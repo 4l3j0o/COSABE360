@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'RUDE - Listado')
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')

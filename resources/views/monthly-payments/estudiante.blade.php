@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('titulo', 'Pagos de ' . $estudiante->apellidos . ', ' . $estudiante->nombres)
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')

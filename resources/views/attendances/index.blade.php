@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Cursos')
 
@@ -6,7 +6,7 @@
     @if(auth()->user()->hasRole('Docente'))
         @include('dashboard.partials._sidebar-docente')
     @else
-        @include('dashboard.partials._sidebar-admin')
+        @include('dashboard.partials._sidebar-by-rol')
     @endif
 @endsection
 

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Mis Calificaciones')
 
@@ -6,7 +6,7 @@
     @if(auth()->user()->hasRole('Estudiante'))
         @include('dashboard.partials._sidebar-estudiante')
     @else
-        @include('dashboard.partials._sidebar-admin')
+        @include('dashboard.partials._sidebar-by-rol')
     @endif
 @endsection
 

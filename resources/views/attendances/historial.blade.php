@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Historial de Asistencia')
 
@@ -8,7 +8,7 @@
     @elseif(auth()->user()->hasAnyRole('Estudiante,Padre/Tutor'))
         @include('dashboard.partials._sidebar-estudiante')
     @else
-        @include('dashboard.partials._sidebar-admin')
+        @include('dashboard.partials._sidebar-by-rol')
     @endif
 @endsection
 

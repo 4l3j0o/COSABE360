@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('titulo', 'Registrar Calificaciones')
 
 @section('sidebar')
     @if(auth()->user()->hasRole('Administrador'))
-        @include('dashboard.partials._sidebar-admin')
+        @include('dashboard.partials._sidebar-by-rol')
     @else
         @include('dashboard.partials._sidebar-docente')
     @endif
