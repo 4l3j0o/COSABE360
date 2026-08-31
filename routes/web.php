@@ -186,6 +186,9 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
 
     // Registrar calificaciones de una evaluación de ese curso
     Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', [GradeScoreController::class, 'porCurso'])->name('docente.calificaciones');
+
+    // Vista de calificaciones general por estudiante del curso (matriz de evaluaciones + nota final)
+    Route::get('/{courseSubject}/notas', [GradeScoreController::class, 'notasCurso'])->name('docente.notas-curso');
 });
 
 // HU-13: Administrar paralelos solo Administrador

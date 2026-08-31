@@ -34,7 +34,8 @@ class AssessmentController extends Controller
             ->when($request->query('subject_id'), fn ($q, $v) => $q->where('subject_id', $v))
             ->when($request->query('academic_year_id'), fn ($q, $v) => $q->where('academic_year_id', $v))
             ->orderByDesc('fecha')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         $subjects = Subject::orderBy('nombre')
             ->when($teacher, fn ($q) => $q->whereIn('id', CourseSubject::where('teacher_id', $teacher->id)->pluck('subject_id')))

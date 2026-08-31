@@ -2,33 +2,47 @@
 @section('titulo', 'Ver Comunicado')
 
 @section('sidebar')
-    @php
-        $sidebarComunicado = match (auth()->user()->rol?->nombre) {
-            'Docente' => 'dashboard.partials._sidebar-docente',
-            'Estudiante', 'Padre/Tutor' => 'dashboard.partials._sidebar-estudiante',
-            default => 'dashboard.partials._sidebar-admin',
-        };
-    @endphp
-    @include($sidebarComunicado)
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')
-    <div class="max-w-3xl">
+    <div class="max-w-3xl mx-auto">
         <div class="mb-6">
-            <a href="{{ route('comunicados.bandeja') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="{{ route('comunicados.bandeja') }}" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Volver a mis comunicados
             </a>
-            <h1 class="text-xl font-bold text-foreground mt-2">{{ $announcement->titulo }}</h1>
-            <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $leido ? 'Leído' : 'Nuevo' }}</span>
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}</span>
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ $announcement->author?->nombre }} {{ $announcement->author?->apellido }}</span>
-            </div>
         </div>
 
-        <div class="bg-card border border-border rounded-xl p-6">
-            <div class="whitespace-pre-wrap text-sm text-foreground leading-relaxed">{{ $announcement->contenido }}</div>
+        <div class="bg-card border border-border rounded-2xl overflow-hidden">
+            <div class="h-1.5 {{ $leido ? 'bg-muted' : 'bg-primary' }}"></div>
+
+            <div class="p-6 sm:p-8">
+                <div class="flex items-start justify-between gap-4 mb-6">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $leido ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary' }}">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $leido ? 'bg-muted-foreground' : 'bg-primary' }}"></span>
+                        {{ $leido ? 'Leído' : 'Nuevo' }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}
+                    </span>
+                </div>
+
+                <h1 class="text-2xl font-bold text-foreground leading-tight">{{ $announcement->titulo }}</h1>
+
+                <div class="flex items-center gap-3 mt-5 mb-7 pb-6 border-b border-border">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full {{ $leido ? 'bg-muted text-muted-foreground' : 'bg-primary/15 text-primary' }} text-sm font-bold">
+                        {{ substr($announcement->author?->nombre ?? 'U', 0, 1) }}{{ substr($announcement->author?->apellido ?? '', 0, 1) }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-foreground">{{ trim(($announcement->author?->nombre ?? '') . ' ' . ($announcement->author?->apellido ?? '')) ?: 'Administración' }}</p>
+                        <p class="text-xs text-muted-foreground">{{ ucfirst(mb_strtolower($announcement->author?->rol?->nombre ?? 'Dirección')) }} · U.E. San Bernardo</p>
+                    </div>
+                </div>
+
+                <div class="whitespace-pre-wrap text-[15px] text-foreground leading-relaxed">{{ $announcement->contenido }}</div>
+            </div>
         </div>
 
         @if(! $leido)
