@@ -2,11 +2,7 @@
 @section('titulo', $student->apellidos . ', ' . $student->nombres)
 
 @section('sidebar')
-    @if(auth()->user()->hasRole('Director'))
-        @include('dashboard.partials._sidebar-director')
-    @else
-        @include('dashboard.partials._sidebar-admin')
-    @endif
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')

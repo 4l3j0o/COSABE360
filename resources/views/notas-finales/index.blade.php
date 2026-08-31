@@ -13,7 +13,7 @@
 @endsection
 
 @section('contenido')
-    @php $esConsultaMasiva = auth()->user()->hasAnyRole('Administrador,Director,Padre/Tutor'); @endphp
+    @php $esConsultaMasiva = auth()->user()->hasAnyRole('Administrador,Director,Padre/Tutor,Secretaría'); @endphp
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>

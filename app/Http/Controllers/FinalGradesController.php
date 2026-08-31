@@ -27,7 +27,7 @@ class FinalGradesController extends Controller
             ]);
         }
 
-        if ($user->hasRole('Administrador') || $user->hasRole('Director')) {
+        if ($user->hasRole('Administrador') || $user->hasRole('Director') || $user->hasRole('Secretaría')) {
             $estudiantes = $this->consultarEstudiantes($request);
             $resumen = $this->calcularResumenTodos($estudiantes->getCollection(), $bimestre);
             return view('notas-finales.index', [
@@ -135,7 +135,7 @@ class FinalGradesController extends Controller
         $bimestre = $request->input('bimestre', '4');
         $student = null;
 
-        if ($user->hasRole('Administrador') || $user->hasRole('Director')) {
+        if ($user->hasRole('Administrador') || $user->hasRole('Director') || $user->hasRole('Secretaría')) {
             $student = Student::where('estado', 'ACTIVO')->find($request->input('student_id'));
         } elseif ($user->hasRole('Padre/Tutor')) {
             $parentGuardian = ParentGuardian::where('user_id', $user->id)->first();

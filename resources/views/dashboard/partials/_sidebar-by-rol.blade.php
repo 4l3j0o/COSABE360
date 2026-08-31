@@ -1,5 +1,7 @@
 @if(auth()->user()->hasRole('Director'))
     @include('dashboard.partials._sidebar-director')
+@elseif(auth()->user()->hasRole('Secretaría'))
+    @include('dashboard.partials._sidebar-secretaria')
 @elseif(auth()->user()->hasRole('Docente'))
     @include('dashboard.partials._sidebar-docente')
 @elseif(auth()->user()->hasRole('Estudiante'))

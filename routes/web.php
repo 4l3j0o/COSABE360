@@ -70,6 +70,8 @@ Route::get('/dashboard', function () {
         'totalMaterias' => \App\Models\Subject::where('estado', '!=', 'ELIMINADO')->count(),
         'totalComunicados' => \App\Models\Announcement::count(),
         'totalMatriculados' => \App\Models\Enrollment::where('estado', 'COMPLETADA')->count(),
+        'pagosPendientes' => \App\Models\MonthlyPayment::where('estado', 'PENDIENTE')->count(),
+        'documentosPendientes' => \App\Models\StudentDocument::where('estado', 'PENDIENTE')->count(),
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
     ];
 
@@ -114,8 +116,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
 Route::middleware('auth')->get('/cursos/{course}/calificaciones', [GradeScoreController::class, 'cursoAdmin'])->name('courses.calificaciones');
 
-// Estudiantes: consulta (Administrador y Director) y gestión (solo Administrador)
-Route::middleware(['auth', 'role:Administrador,Director'])->group(function () {
+// Estudiantes: consulta (Administrador, Director y Secretaría) y gestión (solo Administrador)
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
     Route::get('students', [StudentController::class, 'index'])->name('students.index');
     Route::get('students/{student}', [StudentController::class, 'show'])->name('students.show');
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
