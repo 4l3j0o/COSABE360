@@ -260,12 +260,18 @@ class AttendanceController extends Controller
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
+        // Resumen de asistencia por hijo y por bimestre (usado por Padre/Tutor).
+        $resumenPorHijo = $user->hasRole('Padre/Tutor')
+            ? $this->resumenAsistenciaPorHijo($estudiantesDisponibles)
+            : collect();
+
         return view('attendances.historial', compact(
             'asistencias',
             'estudiantesDisponibles',
             'studentSeleccionado',
             'materias',
             'estadisticas',
+            'resumenPorHijo',
             'materiaFiltro',
             'studentId',
             'fechaDesde',
@@ -290,6 +296,49 @@ class AttendanceController extends Controller
         $fin = $inicio->copy()->addMonths($b * 3)->startOfMonth()->subDay();
 
         return [$ini->format('Y-m-d'), $fin->format('Y-m-d')];
+    }
+
+    /**
+     * Resumen de asistencia de cada estudiante agrupado por bimestre (1-4).
+     * Devuelve una colección indexada por student_id con, por bimestre, el conteo
+     * de cada estado y el porcentaje de asistencia (presente/permiso/atraso/justificado).
+     */
+    private function resumenAsistenciaPorHijo($estudiantes)
+    {
+        $estados = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO'];
+
+        $porAlumno = collect();
+        foreach ($estudiantes as $est) {
+            $rangos = [];
+            foreach ([1, 2, 3, 4] as $b) {
+                $rangos[$b] = $this->rangoBimestre($b);
+            }
+
+            $bimestres = collect();
+            $asistencias = Attendance::where('student_id', $est->id)->get();
+
+            foreach ([1, 2, 3, 4] as $b) {
+                [$ini, $fin] = $rangos[$b];
+                $registros = $asistencias->filter(fn ($a) =>
+                    $a->fecha->format('Y-m-d') >= $ini && $a->fecha->format('Y-m-d') <= $fin
+                )->values();
+
+                $conteos = [];
+                foreach ($estados as $e) {
+                    $conteos[$e] = $registros->where('estado', $e)->count();
+                }
+                $asistio = $conteos['PRESENTE'] + $conteos['PERMISO'] + $conteos['ATRASO'] + $conteos['JUSTIFICADO'];
+                $total = $registros->count();
+                $conteos['total'] = $total;
+                $conteos['pct'] = $total > 0 ? round(($asistio / $total) * 100) : 0;
+
+                $bimestres->put($b, $conteos);
+            }
+
+            $porAlumno->put($est->id, $bimestres);
+        }
+
+        return $porAlumno;
     }
 
 /**

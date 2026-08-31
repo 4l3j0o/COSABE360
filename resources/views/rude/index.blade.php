@@ -20,13 +20,13 @@
     @endif
 
     <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[200px]">
+        <div class="w-full sm:flex-1 sm:min-w-[200px] min-w-0">
             <label class="text-xs font-medium text-muted-foreground">Buscar (código, nombre, CI)</label>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Ej: EST-2026-0001" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
         </div>
-        <div>
+        <div class="w-full sm:w-auto">
             <label class="text-xs font-medium text-muted-foreground">Estado RUDE</label>
-            <select name="estado" class="mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+            <select name="estado" class="mt-1 w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <option value="">Todos</option>
                 @foreach($estados as $e)
                     <option value="{{ $e }}" {{ request('estado') === $e ? 'selected' : '' }}>{{ mb_strtolower($e) }}</option>

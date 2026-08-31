@@ -45,6 +45,9 @@ class DatabaseSeeder extends Seeder
 
             // Bitácora del sistema
             OperationHistorySeeder::class,
+
+            // Comunicados para distintos destinatarios (roles y curso específico)
+            AnnouncementSeeder::class,
         ]);
     }
 }
