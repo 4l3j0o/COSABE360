@@ -346,27 +346,25 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/mis-comunicados/{announcement}/leido', [AnnouncementController::class, 'marcarLeido'])->name('comunicados.bandeja.leido');
 });
 
-// HU-32: Reportes académicos - Director/Administrador/Secretaría
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/academicos')->group(function () {
+// HU-32: Reportes académicos - Director/Administrador (según documentación)
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('reportes/academicos')->group(function () {
     Route::get('/', [ReporteAcademicoController::class, 'index'])->name('reportes.academicos.index');
-    Route::get('/calificaciones', [ReporteAcademicoController::class, 'calificaciones'])->name('reportes.academicos.calificaciones');
-    Route::get('/promedios', [ReporteAcademicoController::class, 'promedios'])->name('reportes.academicos.promedios');
 });
 
 // HU-33: Reportes administrativos - Director/Administrador/Secretaría
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/administrativos')->group(function () {
     Route::get('/', [ReporteAdministrativoController::class, 'index'])->name('reportes.administrativos.index');
-    Route::get('/inscripciones', [ReporteAdministrativoController::class, 'inscripciones'])->name('reportes.administrativos.inscripciones');
-    Route::get('/matriculas', [ReporteAdministrativoController::class, 'matriculas'])->name('reportes.administrativos.matriculas');
-    Route::get('/pagos', [ReporteAdministrativoController::class, 'pagos'])->name('reportes.administrativos.pagos');
-    Route::get('/documentacion', [ReporteAdministrativoController::class, 'documentacion'])->name('reportes.administrativos.documentacion');
 });
 
 // HU-34: Exportar reportes a PDF/Excel con encabezado
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
+// Académicos: solo Administrador y Director. Administrativos: Administrador, Director y Secretaría.
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('reportes/export')->group(function () {
     Route::get('/academico/calificaciones', [ReporteExportController::class, 'academicoCalificaciones'])->name('reportes.export.academico.calificaciones');
     Route::get('/academico/promedios', [ReporteExportController::class, 'academicoPromedios'])->name('reportes.export.academico.promedios');
+});
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');
+    Route::get('/administrativo/matriculas', [ReporteExportController::class, 'administrativoMatriculas'])->name('reportes.export.administrativo.matriculas');
     Route::get('/administrativo/pagos', [ReporteExportController::class, 'administrativoPagos'])->name('reportes.export.administrativo.pagos');
     Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
 });
