@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSubject;
@@ -166,10 +167,11 @@ class AttendanceController extends Controller
     public function historial(Request $request): View
     {
         $user = auth()->user();
-        $subjectId = $request->query('subject_id');
+        $materiaFiltro = $request->query('materia');
         $studentId = $request->query('student_id');
         $fechaDesde = $request->query('desde');
         $fechaHasta = $request->query('hasta');
+        $bimestre = $request->query('bimestre');
 
         // Estudiantes a los que el usuario tiene acceso (según rol)
         $estudiantesDisponibles = collect();
@@ -208,14 +210,22 @@ class AttendanceController extends Controller
         if ($studentSeleccionado) {
             $query->where('student_id', $studentSeleccionado->id);
         }
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+        if ($materiaFiltro) {
+            if ($materiaFiltro === 'General') {
+                $query->whereNull('subject_id');
+            } else {
+                $query->whereHas('subject', fn ($q) => $q->where('nombre', $materiaFiltro));
+            }
         }
         if ($fechaDesde) {
             $query->where('fecha', '>=', $fechaDesde);
         }
         if ($fechaHasta) {
             $query->where('fecha', '<=', $fechaHasta);
+        }
+        if ($bimestre) {
+            $periodo = $this->rangoBimestre((int) $bimestre);
+            $query->whereBetween('fecha', $periodo);
         }
 
         $asistencias = $query->paginate(10)->withQueryString();
@@ -236,9 +246,14 @@ class AttendanceController extends Controller
         $estadisticasQuery = Attendance::query()
             ->whereIn('student_id', $permitidos)
             ->when($studentSeleccionado, fn ($q) => $q->where('student_id', $studentSeleccionado->id))
-            ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
+            ->when($materiaFiltro, function ($q) use ($materiaFiltro) {
+                $materiaFiltro === 'General'
+                    ? $q->whereNull('subject_id')
+                    : $q->whereHas('subject', fn ($sq) => $sq->where('nombre', $materiaFiltro));
+            })
             ->when($fechaDesde, fn ($q) => $q->where('fecha', '>=', $fechaDesde))
-            ->when($fechaHasta, fn ($q) => $q->where('fecha', '<=', $fechaHasta));
+            ->when($fechaHasta, fn ($q) => $q->where('fecha', '<=', $fechaHasta))
+            ->when($bimestre, fn ($q) => $q->whereBetween('fecha', $this->rangoBimestre((int) $bimestre)));
 
         $estadisticas = $estadisticasQuery
             ->selectRaw("estado, COUNT(*) as total")
@@ -251,11 +266,30 @@ class AttendanceController extends Controller
             'studentSeleccionado',
             'materias',
             'estadisticas',
-            'subjectId',
+            'materiaFiltro',
             'studentId',
             'fechaDesde',
-            'fechaHasta'
+            'fechaHasta',
+            'bimestre'
         ));
+    }
+
+    /**
+     * Rango de fechas (inicio/fin) de un bimestre según la gestión académica activa.
+     * Cada bimestre abarca 3 meses desde la fecha de inicio de la gestión.
+     */
+    private function rangoBimestre(int $bimestre): array
+    {
+        $gestion = AcademicYear::where('estado', 'ACTIVA')->first();
+        $inicio = $gestion && $gestion->fecha_inicio
+            ? Carbon::parse($gestion->fecha_inicio)
+            : Carbon::create(Carbon::now()->year, 2, 1);
+
+        $b = max(1, min(4, $bimestre));
+        $ini = $inicio->copy()->addMonths(($b - 1) * 3)->startOfMonth();
+        $fin = $inicio->copy()->addMonths($b * 3)->startOfMonth()->subDay();
+
+        return [$ini->format('Y-m-d'), $fin->format('Y-m-d')];
     }
 
 /**
