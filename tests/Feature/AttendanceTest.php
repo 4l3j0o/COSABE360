@@ -203,17 +203,11 @@ class AttendanceTest extends TestCase
 
     public function test_historial_muestra_estadisticas(): void
     {
-        $datos = $this->crearCursoConEstudiantes(2);
+        $datos = $this->crearCursoConEstudiantes(1);
         $this->actingAs($datos['userDocente']);
-        $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
-            'fecha' => '2026-04-10',
-            'asistencias' => [
-                $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
-                $datos['estudiantes'][1]->id => ['estado' => 'FALTA'],
-            ],
-        ]);
+
+        Attendance::create(['student_id' => $datos['estudiantes'][0]->id, 'course_id' => $datos['curso']->id, 'fecha' => '2026-04-10', 'estado' => 'PRESENTE', 'registered_by_user_id' => $datos['userDocente']->id]);
+        Attendance::create(['student_id' => $datos['estudiantes'][0]->id, 'course_id' => $datos['curso']->id, 'fecha' => '2026-04-11', 'estado' => 'FALTA', 'justificacion' => 'Enfermo', 'registered_by_user_id' => $datos['userDocente']->id]);
 
         $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id);
         $response->assertStatus(200);

@@ -134,7 +134,7 @@ class LevelTest extends TestCase
         $response = $this->deleteJson("/niveles/{$level->id}");
 
         $response->assertOk();
-        $this->assertDatabaseMissing('levels', ['id' => $level->id]);
+        $this->assertDatabaseHas('levels', ['id' => $level->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_muestra_nivel(): void

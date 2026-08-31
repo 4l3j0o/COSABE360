@@ -75,8 +75,7 @@ class GradeScoreTest extends TestCase
     {
         $this->loginAsDocente();
         $response = $this->get('/calificaciones');
-        $response->assertStatus(200);
-        $response->assertSee('Calificaciones');
+        $response->assertRedirect(route('asistencias.index'));
     }
 
     public function test_docente_can_register_grades_via_web(): void
@@ -169,9 +168,12 @@ class GradeScoreTest extends TestCase
 
     public function test_non_docente_redirected_to_access_denied(): void
     {
+        // El rol Administrador no registra calificaciones (index redirige a asistencias),
+        // pero sí puede consultar la vista de una evaluación (show).
         $admin = User::where('email', 'admin@sanber.edu.bo')->first();
         $this->actingAs($admin);
         $datos = $this->crearDatosBase();
-        $this->get("/calificaciones/{$datos['assessment']->id}")->assertRedirect(route('acceso.denegado'));
+        $this->get('/calificaciones')->assertRedirect(route('asistencias.index'));
+        $this->get("/calificaciones/{$datos['assessment']->id}")->assertStatus(200);
     }
 }

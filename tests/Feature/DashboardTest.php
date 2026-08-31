@@ -101,10 +101,10 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($admin)->get(route('dashboard'));
 
         $response->assertStatus(200);
-        $response->assertSeeInOrder(['Total Estudiantes', 'Total Docentes', 'Total Usuarios', 'Año Académico']);
+        $response->assertSeeInOrder(['Total Estudiantes', 'Total Docentes', 'Total Usuarios', 'Matriculados']);
         $response->assertSee('text-2xl font-bold text-primary mt-1">2</p>', false);
-        $response->assertSee('text-2xl font-bold text-primary mt-1">1</p>', false);
-        $response->assertSee('text-2xl font-bold text-primary mt-1">2</p>', false);
-        $response->assertSee('text-2xl font-bold text-primary mt-1">2027</p>', false);
+        $response->assertSee('text-2xl font-bold text-success mt-1">1</p>', false);
+        $response->assertSee('text-2xl font-bold text-info mt-1">2</p>', false);
+        $response->assertSee('Gestión 2027', false);
     }
 }

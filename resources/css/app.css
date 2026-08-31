@@ -15,6 +15,20 @@
     --primary-900: #001800;
     --primary-950: #000f00;
 
+    /*
+      --primary-50: #fbeaea;
+      --primary-100: #f8d5d5;
+      --primary-200: #f2a9a9;
+      --primary-300: #ed7878;
+      --primary-400: #ea3c3c;
+      --primary-500: #b52c2c;
+      --primary-600: #831d1d;
+  --primary-700: #550f0f;
+  --primary-800: #290404;
+  --primary-900: #1e0202;
+  --primary-950: #0e0101;
+    */
+
 
     --footer-bg: var(--primary-600);
     --footer-text: var(--primary-50);

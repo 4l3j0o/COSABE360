@@ -154,7 +154,7 @@ class SectionTest extends TestCase
         $response = $this->delete("/paralelos/{$sec->id}");
 
         $response->assertRedirect(route('sections.index'));
-        $this->assertDatabaseMissing('sections', ['id' => $sec->id]);
+        $this->assertDatabaseHas('sections', ['id' => $sec->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_no_elimina_paralelo_con_estudiantes_matriculados(): void
@@ -233,7 +233,7 @@ class SectionTest extends TestCase
         $response = $this->delete("/paralelos/{$sec->id}");
 
         $response->assertRedirect(route('sections.index'));
-        $this->assertDatabaseMissing('sections', ['id' => $sec->id]);
+        $this->assertDatabaseHas('sections', ['id' => $sec->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_lista_paralelos_y_muestra_campos_principales(): void
