@@ -166,34 +166,47 @@ class AttendanceController extends Controller
     public function historial(Request $request): View
     {
         $user = auth()->user();
-        $courseId = $request->query('course_id');
         $subjectId = $request->query('subject_id');
+        $studentId = $request->query('student_id');
         $fechaDesde = $request->query('desde');
         $fechaHasta = $request->query('hasta');
 
-        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject', 'registeredBy'])
-            ->orderByDesc('fecha');
+        // Estudiantes a los que el usuario tiene acceso (según rol)
+        $estudiantesDisponibles = collect();
 
-        // Filtrado por rol
         if ($user->hasRole('Docente')) {
             $teacher = Teacher::where('user_id', $user->id)->first();
             if ($teacher) {
                 $cursoIds = CourseSubject::where('teacher_id', $teacher->id)->pluck('course_id')->unique();
-                $query->whereIn('course_id', $cursoIds);
+                $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
+                    ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('course_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
+                    ->orderBy('apellidos')->orderBy('nombres')->get();
             }
         } elseif ($user->hasRole('Estudiante')) {
-            $student = Student::where('user_id', $user->id)->first();
-            if ($student) {
-                $query->where('student_id', $student->id);
-            }
+            $estudiantesDisponibles = Student::where('user_id', $user->id)->where('estado', 'ACTIVO')->get();
         } elseif ($user->hasRole('Padre/Tutor') || $user->hasAnyRole('Padre/Tutor')) {
             $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
-            $hijos = $parent ? $parent->students()->pluck('students.id') : collect();
-            $query->whereIn('student_id', $hijos);
+            $estudiantesDisponibles = $parent
+                ? $parent->students()->where('students.estado', 'ACTIVO')->orderBy('apellidos')->orderBy('nombres')->get()
+                : collect();
+        } else {
+            $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
+                ->orderBy('apellidos')->orderBy('nombres')->get();
         }
 
-        if ($courseId) {
-            $query->where('course_id', $courseId);
+        // Forzar selección dentro de los estudiantes permitidos
+        $permitidos = $estudiantesDisponibles->pluck('id');
+        $studentSeleccionado = $studentId && $permitidos->contains((int) $studentId)
+            ? $estudiantesDisponibles->firstWhere('id', (int) $studentId)
+            : $estudiantesDisponibles->first();
+
+        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject'])
+            ->whereIn('student_id', $permitidos)
+            ->orderByDesc('fecha');
+
+        // Filtro por rol base: siempre restringe a los estudiantes permitidos
+        if ($studentSeleccionado) {
+            $query->where('student_id', $studentSeleccionado->id);
         }
         if ($subjectId) {
             $query->where('subject_id', $subjectId);
@@ -205,21 +218,44 @@ class AttendanceController extends Controller
             $query->where('fecha', '<=', $fechaHasta);
         }
 
-        $asistencias = $query->paginate(30)->withQueryString();
-        $cursos = Course::with(['grade', 'section'])->orderBy('nombre')->get();
+        $asistencias = $query->paginate(10)->withQueryString();
 
-        $materias = $courseId
-            ? Subject::whereIn('id', CourseSubject::where('course_id', $courseId)->pluck('subject_id'))->orderBy('nombre')->get()
-            : collect();
+        // Materias del estudiante seleccionado (de sus cursos activos)
+        $materias = collect();
+        if ($studentSeleccionado) {
+            $cursoIdsEst = $studentSeleccionado->registrations()
+                ->where('registrations.estado', 'ACTIVA')
+                ->pluck('course_id');
+            if ($cursoIdsEst->isNotEmpty()) {
+                $materias = Subject::whereIn('id', CourseSubject::whereIn('course_id', $cursoIdsEst)->pluck('subject_id'))
+                    ->orderBy('nombre')->get();
+            }
+        }
 
-        // Estadísticas
-        $estadisticas = Attendance::selectRaw("estado, COUNT(*) as total")
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+        // Estadísticas: mismas restricciones de rol y filtros, sobre los estudiantes permitidos
+        $estadisticasQuery = Attendance::query()
+            ->whereIn('student_id', $permitidos)
+            ->when($studentSeleccionado, fn ($q) => $q->where('student_id', $studentSeleccionado->id))
             ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
+            ->when($fechaDesde, fn ($q) => $q->where('fecha', '>=', $fechaDesde))
+            ->when($fechaHasta, fn ($q) => $q->where('fecha', '<=', $fechaHasta));
+
+        $estadisticas = $estadisticasQuery
+            ->selectRaw("estado, COUNT(*) as total")
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
-        return view('attendances.historial', compact('asistencias', 'cursos', 'materias', 'estadisticas', 'courseId', 'subjectId', 'fechaDesde', 'fechaHasta'));
+        return view('attendances.historial', compact(
+            'asistencias',
+            'estudiantesDisponibles',
+            'studentSeleccionado',
+            'materias',
+            'estadisticas',
+            'subjectId',
+            'studentId',
+            'fechaDesde',
+            'fechaHasta'
+        ));
     }
 
 /**

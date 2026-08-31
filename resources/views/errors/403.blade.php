@@ -10,7 +10,7 @@
             'Director' => 'dashboard.director',
             'Secretaría' => 'dashboard.secretaria',
             'Docente' => 'dashboard.partials._sidebar-docente',
-            'Padre/Tutor' => 'dashboard.partials._sidebar-estudiante',
+            'Padre/Tutor' => 'dashboard.partials._sidebar-tutor',
             'Estudiante' => 'dashboard.partials._sidebar-estudiante',
         ];
         $sidebarView = $sidebarMap[$rol] ?? 'dashboard.partials._sidebar-admin';

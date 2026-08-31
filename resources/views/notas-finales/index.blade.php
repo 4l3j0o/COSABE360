@@ -3,8 +3,10 @@
 @section('titulo', 'Notas Finales')
 
 @section('sidebar')
-    @if(auth()->user()->hasAnyRole('Estudiante,Padre/Tutor'))
+    @if(auth()->user()->hasRole('Estudiante'))
         @include('dashboard.partials._sidebar-estudiante')
+    @elseif(auth()->user()->hasRole('Padre/Tutor'))
+        @include('dashboard.partials._sidebar-tutor')
     @elseif(auth()->user()->hasRole('Docente'))
         @include('dashboard.partials._sidebar-docente')
     @else

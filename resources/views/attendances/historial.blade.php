@@ -5,8 +5,10 @@
 @section('sidebar')
     @if(auth()->user()->hasRole('Docente'))
         @include('dashboard.partials._sidebar-docente')
-    @elseif(auth()->user()->hasAnyRole('Estudiante,Padre/Tutor'))
+    @elseif(auth()->user()->hasRole('Estudiante'))
         @include('dashboard.partials._sidebar-estudiante')
+    @elseif(auth()->user()->hasRole('Padre/Tutor'))
+        @include('dashboard.partials._sidebar-tutor')
     @else
         @include('dashboard.partials._sidebar-by-rol')
     @endif
@@ -16,22 +18,27 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Historial de Asistencia</h1>
-            <p class="text-sm text-muted-foreground mt-1">Consulta por curso, materia, fecha y estado</p>
+            <p class="text-sm text-muted-foreground mt-1">Consulta por estudiante, materia y rango de fechas</p>
         </div>
-        <a href="{{ route('asistencias.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">Registrar Asistencia</a>
+        @if(auth()->user()->hasAnyRole('Docente,Administrador,Director,Secretaría'))
+            <a href="{{ route('asistencias.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">Registrar Asistencia</a>
+        @endif
     </div>
 
     <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div class="flex-1 min-w-[180px]">
-            <label class="text-xs font-medium text-muted-foreground">Curso</label>
-            <select name="course_id" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option value="">Todos los cursos</option>
-                @foreach($cursos as $c)
-                    <option value="{{ $c->id }}" {{ (string)$courseId === (string)$c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
-                @endforeach
-            </select>
+        <div class="min-w-[260px] flex-1">
+            <x-forms.picker
+                id="estudiante"
+                name="student_id"
+                label="Estudiante"
+                required
+                placeholder="Buscar estudiante por nombre o código..."
+                searchHint="Escriba para buscar por nombre o código del estudiante."
+                value="{{ $studentSeleccionado?->id }}"
+                :items="$estudiantesDisponibles->map(fn($est) => ['value' => $est->id, 'label' => $est->apellidos.' '.$est->nombres.' ('.$est->codigo.')', 'search' => $est->apellidos.' '.$est->nombres.' '.$est->codigo])"
+            />
         </div>
-        <div class="flex-1 min-w-[160px]">
+        <div class="min-w-[160px] flex-1">
             <label class="text-xs font-medium text-muted-foreground">Materia</label>
             <select name="subject_id" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <option value="">Todas las materias</option>
@@ -69,18 +76,19 @@
                     <tr>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Fecha</th>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Estudiante</th>
+                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Código</th>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Curso</th>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Materia</th>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
                         <th class="text-left px-4 py-3 font-medium text-muted-foreground">Justificación</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Registrado por</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
                     @forelse($asistencias as $att)
                         <tr class="hover:bg-muted/20">
-                            <td class="px-4 py-3 text-foreground">{{ $att->fecha->format('d/m/Y') }}</td>
+                            <td class="px-4 py-3 text-foreground whitespace-nowrap">{{ $att->fecha->format('d/m/Y') }}</td>
                             <td class="px-4 py-3 font-medium text-foreground">{{ $att->student->apellidos }} {{ $att->student->nombres }}</td>
+                            <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{{ $att->student->codigo }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $att->course->nombre ?? '' }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $att->subject?->nombre ?? 'General' }}</td>
                             <td class="px-4 py-3">
@@ -97,7 +105,6 @@
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border {{ $badge }}">{{ mb_strtolower($att->estado) }}</span>
                             </td>
                             <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->justificacion ?? '-' }}</td>
-                            <td class="px-4 py-3 text-muted-foreground text-xs">{{ $att->registeredBy->nombre ?? '' }} {{ $att->registeredBy->apellido ?? '' }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -107,8 +114,8 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4 border-t border-border">
-            {{ $asistencias->links() }}
+        <div class="px-4 py-3 border-t border-border">
+            {{ $asistencias->links('pagina.custom') }}
         </div>
     </div>
 @endsection

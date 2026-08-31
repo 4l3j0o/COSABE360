@@ -48,11 +48,12 @@ class GradeScoreController extends Controller
             }
 
             $hijos = $parentGuardian->students()->where('students.estado', 'ACTIVO')->get();
+            $estudiantesPaginados = $parentGuardian->students()->where('students.estado', 'ACTIVO')->paginate(10)->withQueryString();
             $studentId = $request->input('student_id');
 
             if ($hijos->isEmpty()) {
                 return view('calificaciones.index', [
-                    'estudiantes' => $hijos,
+                    'estudiantes' => $estudiantesPaginados,
                     'student' => null,
                     'calificacionesPorMateria' => collect(),
                     'promedioGeneral' => 0,
@@ -60,11 +61,21 @@ class GradeScoreController extends Controller
                 ]);
             }
 
-            $student = $studentId
-                ? $hijos->firstWhere('id', $studentId) ?? $hijos->first()
-                : $hijos->first();
+            // Sin selección previa: mostrar la lista de hijos con acción "Ver".
+            if ($studentId) {
+                $student = $hijos->firstWhere('id', $studentId);
+                if ($student) {
+                    return $this->verCalificaciones($student, $bimestre, $hijos);
+                }
+            }
 
-            return $this->verCalificaciones($student, $bimestre, $hijos);
+            return view('calificaciones.index', [
+                'estudiantes' => $estudiantesPaginados,
+                'student' => null,
+                'calificacionesPorMateria' => collect(),
+                'promedioGeneral' => 0,
+                'bimestre' => $bimestre,
+            ]);
         }
 
         abort(403);

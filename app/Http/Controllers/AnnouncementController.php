@@ -250,7 +250,7 @@ class AnnouncementController extends Controller
         }
         $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
         if ($parent) {
-            $studentIds = \App\Models\StudentParent::where('parent_guardian_id', $parent->id)->pluck('student_id');
+            $studentIds = $parent->students()->pluck('students.id');
             return \App\Models\Registration::whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $studentIds))->pluck('course_id')->unique();
         }
         return collect();

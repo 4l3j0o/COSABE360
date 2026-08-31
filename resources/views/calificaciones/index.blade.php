@@ -1,10 +1,12 @@
 ﻿@extends('layouts.app')
 
-@section('titulo', 'Mis Calificaciones')
+@section('titulo', auth()->user()->hasRole('Estudiante') ? 'Mis Calificaciones' : 'Calificaciones')
 
 @section('sidebar')
     @if(auth()->user()->hasRole('Estudiante'))
         @include('dashboard.partials._sidebar-estudiante')
+    @elseif(auth()->user()->hasRole('Padre/Tutor'))
+        @include('dashboard.partials._sidebar-tutor')
     @else
         @include('dashboard.partials._sidebar-by-rol')
     @endif
@@ -20,17 +22,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-            @if($estudiantes && $estudiantes->count() > 1)
-                <form method="GET" action="{{ route('calificaciones.index') }}" class="flex items-center gap-2">
-                    <label class="text-sm text-muted-foreground">Hijo:</label>
-                    <select name="student_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        @foreach($estudiantes as $hijo)
-                            <option value="{{ $hijo->id }}" {{ $student && $student->id === $hijo->id ? 'selected' : '' }}>{{ $hijo->nombres }} {{ $hijo->apellidos }}</option>
-                        @endforeach
-                    </select>
-                </form>
-            @endif
-
             <form method="GET" action="{{ route('calificaciones.index') }}" class="flex items-center gap-2">
                 @if($student)
                     <input type="hidden" name="student_id" value="{{ $student->id }}">
@@ -42,6 +33,10 @@
                     @endfor
                 </select>
             </form>
+
+            @if($student && auth()->user()->hasRole('Padre/Tutor'))
+                <a href="{{ route('calificaciones.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">Volver a la lista</a>
+            @endif
         </div>
     </div>
 
@@ -141,6 +136,34 @@
                 @endforeach
             </div>
         @endif
+    @elseif($estudiantes && $estudiantes->count() > 0)
+        <div class="bg-card border border-border rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-muted/50 border-b border-border">
+                        <tr>
+                            <th class="text-left px-5 py-3 font-medium text-muted-foreground text-xs">Estudiante</th>
+                            <th class="text-left px-5 py-3 font-medium text-muted-foreground text-xs">Código</th>
+                            <th class="text-center px-5 py-3 font-medium text-muted-foreground text-xs">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($estudiantes as $est)
+                            <tr class="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                                <td class="px-5 py-3 font-medium text-foreground">{{ $est->nombres }} {{ $est->apellidos }}</td>
+                                <td class="px-5 py-3 text-muted-foreground">{{ $est->codigo }}</td>
+                                <td class="px-5 py-3 text-center">
+                                    <a href="{{ route('calificaciones.index', ['student_id' => $est->id]) }}" title="Ver calificaciones" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {{ $estudiantes->links('pagina.custom') }}
     @else
         <div class="bg-card border border-border rounded-xl p-12 text-center">
             <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>

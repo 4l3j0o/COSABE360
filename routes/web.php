@@ -75,6 +75,14 @@ Route::get('/dashboard', function () {
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
     ];
 
+    // Para el rol Padre/Tutor: sus hijos de los que es responsable
+    if ($rol === 'Padre/Tutor') {
+        $parent = \App\Models\ParentGuardian::where('user_id', auth()->id())->first();
+        $datos['hijos'] = $parent
+            ? $parent->students()->where('students.estado', 'ACTIVO')->get()
+            : collect();
+    }
+
     return view($vista, $datos);
 })->middleware('auth')->name('dashboard');
 
