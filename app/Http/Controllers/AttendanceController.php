@@ -57,7 +57,7 @@ class AttendanceController extends Controller
             ? $cursosRegistro->getCollection()->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)])
             : $cursosRegistro->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
 
-        $grados = \App\Models\Grade::with('level')->orderBy('orden')->orderBy('nombre')->get();
+        $grados = \App\Models\Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('orden')->orderBy('nombre')->get();
         $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->orderBy('nombre')->get();
         $gestiones = \App\Models\AcademicYear::orderByDesc('nombre')->get();
 

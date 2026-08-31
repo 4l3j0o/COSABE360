@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nombre', 10)->nullable(false);
             $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->unsignedTinyInteger('capacidad')->default(40);
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['grade_id', 'nombre'], 'uk_grado_paralelo');
             $table->index('grade_id', 'idx_grado');

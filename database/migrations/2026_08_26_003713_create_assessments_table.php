@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('peso', 5, 2)->default(1.00);
             $table->date('fecha')->nullable();
             $table->string('descripcion', 255)->nullable();
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
 
             $table->index('course_subject_id');

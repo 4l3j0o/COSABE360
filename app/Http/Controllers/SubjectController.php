@@ -35,7 +35,7 @@ class SubjectController extends Controller
             return SubjectResource::collection($subjects->get());
         }
 
-        $levels = Level::orderBy('orden')->get();
+        $levels = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
 
         return view('subjects.index', [
             'subjects' => $subjects->paginate(10)->withQueryString(),
@@ -65,7 +65,7 @@ class SubjectController extends Controller
             return new SubjectResource($subject);
         }
 
-        $levels = Level::orderBy('orden')->get();
+        $levels = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
 
         return view('subjects.show', [
             'subject' => $subject,

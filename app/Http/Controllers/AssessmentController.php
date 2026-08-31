@@ -28,6 +28,7 @@ class AssessmentController extends Controller
         $teacher = $request->user()->teacher;
 
         $assessments = Assessment::with(['subject', 'academicYear', 'courseSubject.course'])
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($teacher, function ($q) use ($teacher) {
                 $q->whereHas('courseSubject', fn ($cq) => $cq->where('teacher_id', $teacher->id));
             })
@@ -123,7 +124,7 @@ class AssessmentController extends Controller
             return redirect()->route('evaluaciones.index')->with('error', 'No se puede eliminar la evaluación porque tiene calificaciones registradas.');
         }
 
-        $assessment->delete();
+        $assessment->update(['estado' => 'ELIMINADO']);
 
         return redirect()->route('evaluaciones.index')->with('success', 'Evaluación eliminada correctamente.');
     }
@@ -139,6 +140,7 @@ class AssessmentController extends Controller
         $dias = $this->diasDeClase($courseSubject);
 
         $assessments = $courseSubject->assessments()
+            ->where('estado', '!=', 'ELIMINADO')
             ->withCount('gradeScores')
             ->orderByDesc('fecha')
             ->orderByDesc('id')
