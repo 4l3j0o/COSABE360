@@ -25,6 +25,14 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\ContingencyQueueController;
+use App\Http\Controllers\DailyCufdController;
+use App\Http\Controllers\EducationalServiceController;
+use App\Http\Controllers\ElectronicInvoiceController;
+use App\Http\Controllers\InvoiceDetailController;
+use App\Http\Controllers\InvoiceSequenceController;
+use App\Http\Controllers\RcIvaWithholdingController;
+use App\Http\Controllers\SignificantEventController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeacherCourseController;
@@ -409,4 +417,63 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
 Route::middleware(['auth', 'role:Administrador'])->prefix('auditoria')->group(function () {
     Route::get('/', [OperationHistoryController::class, 'index'])->name('auditoria.index');
     Route::get('/{operationHistory}', [OperationHistoryController::class, 'show'])->name('auditoria.show');
+});
+
+// HU-TRIB-01/02/03: Facturación Electrónica SFE - solo Administrador/Secretaría
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('facturacion')->group(function () {
+    // Catálogo servicios educativos (RF29)
+    Route::get('servicios', [EducationalServiceController::class, 'index'])->name('educational-services.index');
+    Route::post('servicios', [EducationalServiceController::class, 'store'])->name('educational-services.store');
+    Route::get('servicios/{educationalService}', [EducationalServiceController::class, 'show'])->name('educational-services.show');
+    Route::put('servicios/{educationalService}', [EducationalServiceController::class, 'update'])->name('educational-services.update');
+    Route::delete('servicios/{educationalService}', [EducationalServiceController::class, 'destroy'])->name('educational-services.destroy');
+
+    // Secuencias de numeración
+    Route::get('secuencias', [InvoiceSequenceController::class, 'index'])->name('invoice-sequences.index');
+    Route::post('secuencias', [InvoiceSequenceController::class, 'store'])->name('invoice-sequences.store');
+    Route::get('secuencias/{invoiceSequence}', [InvoiceSequenceController::class, 'show'])->name('invoice-sequences.show');
+    Route::put('secuencias/{invoiceSequence}', [InvoiceSequenceController::class, 'update'])->name('invoice-sequences.update');
+    Route::delete('secuencias/{invoiceSequence}', [InvoiceSequenceController::class, 'destroy'])->name('invoice-sequences.destroy');
+
+    // CUFD diario
+    Route::get('cufds', [DailyCufdController::class, 'index'])->name('daily-cufds.index');
+    Route::post('cufds', [DailyCufdController::class, 'store'])->name('daily-cufds.store');
+    Route::get('cufds/{dailyCufd}', [DailyCufdController::class, 'show'])->name('daily-cufds.show');
+    Route::put('cufds/{dailyCufd}', [DailyCufdController::class, 'update'])->name('daily-cufds.update');
+    Route::delete('cufds/{dailyCufd}', [DailyCufdController::class, 'destroy'])->name('daily-cufds.destroy');
+
+    // Eventos significativos (contingencia)
+    Route::get('eventos', [SignificantEventController::class, 'index'])->name('significant-events.index');
+    Route::post('eventos', [SignificantEventController::class, 'store'])->name('significant-events.store');
+    Route::get('eventos/{significantEvent}', [SignificantEventController::class, 'show'])->name('significant-events.show');
+    Route::put('eventos/{significantEvent}', [SignificantEventController::class, 'update'])->name('significant-events.update');
+    Route::delete('eventos/{significantEvent}', [SignificantEventController::class, 'destroy'])->name('significant-events.destroy');
+
+    // Facturas electrónicas (HU-TRIB-02)
+    Route::get('facturas', [ElectronicInvoiceController::class, 'index'])->name('electronic-invoices.index');
+    Route::post('facturas', [ElectronicInvoiceController::class, 'store'])->name('electronic-invoices.store');
+    Route::get('facturas/{electronicInvoice}', [ElectronicInvoiceController::class, 'show'])->name('electronic-invoices.show');
+    Route::put('facturas/{electronicInvoice}', [ElectronicInvoiceController::class, 'update'])->name('electronic-invoices.update');
+    Route::delete('facturas/{electronicInvoice}', [ElectronicInvoiceController::class, 'destroy'])->name('electronic-invoices.destroy');
+
+    // Detalles de factura
+    Route::get('detalles', [InvoiceDetailController::class, 'index'])->name('invoice-details.index');
+    Route::post('detalles', [InvoiceDetailController::class, 'store'])->name('invoice-details.store');
+    Route::get('detalles/{invoiceDetail}', [InvoiceDetailController::class, 'show'])->name('invoice-details.show');
+    Route::put('detalles/{invoiceDetail}', [InvoiceDetailController::class, 'update'])->name('invoice-details.update');
+    Route::delete('detalles/{invoiceDetail}', [InvoiceDetailController::class, 'destroy'])->name('invoice-details.destroy');
+
+    // Cola de contingencia (HU-TRIB-03 reenvío automático)
+    Route::get('contingencia', [ContingencyQueueController::class, 'index'])->name('contingency-queues.index');
+    Route::post('contingencia', [ContingencyQueueController::class, 'store'])->name('contingency-queues.store');
+    Route::get('contingencia/{contingencyQueue}', [ContingencyQueueController::class, 'show'])->name('contingency-queues.show');
+    Route::put('contingencia/{contingencyQueue}', [ContingencyQueueController::class, 'update'])->name('contingency-queues.update');
+    Route::delete('contingencia/{contingencyQueue}', [ContingencyQueueController::class, 'destroy'])->name('contingency-queues.destroy');
+
+    // Retenciones RC-IVA (HU-TRIB-06)
+    Route::get('rc-iva', [RcIvaWithholdingController::class, 'index'])->name('rc-iva-withholdings.index');
+    Route::post('rc-iva', [RcIvaWithholdingController::class, 'store'])->name('rc-iva-withholdings.store');
+    Route::get('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'show'])->name('rc-iva-withholdings.show');
+    Route::put('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'update'])->name('rc-iva-withholdings.update');
+    Route::delete('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'destroy'])->name('rc-iva-withholdings.destroy');
 });

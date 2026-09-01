@@ -6,35 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('monthly_payments', function (Blueprint $table) {
             $table->id();
-            // Vínculo con la matrícula (registrations)
             $table->foreignId('registration_id')->constrained('registrations')->restrictOnDelete();
-            // Mes correspondiente de la cuota (1-12)
-            $table->unsignedTinyInteger('mes');
-            // CA-19-01: monto de la cuota
-            $table->decimal('monto', 10, 2);
-            // CA-19-01: fecha de pago (null mientras esté pendiente)
-            $table->date('fecha')->nullable();
-            // CA-19-01: método de pago (EFECTIVO, TRANSFERENCIA, TARJETA, OTRO)
-            $table->string('metodo_pago')->nullable();
-            // CA-19-03: estado de la mensualidad
-            $table->enum('estado', ['PENDIENTE', 'PAGADA'])->default('PENDIENTE');
+            // FK a factura electrónica (diagrama #18 - nullable SET NULL)
+            // Nota: sin constrained() aquí para evitar orden de creación; FK se añade en patch posterior si se requiere
+            $table->unsignedBigInteger('electronic_invoice_id')->nullable();
+            $table->unsignedTinyInteger('mes'); // 1-12
+            $table->unsignedSmallInteger('anio')->default((int) date('Y'));
+            $table->decimal('monto_esperado', 10, 2)->default(0);
+            $table->decimal('monto_pagado', 10, 2)->default(0);
+            $table->decimal('monto', 10, 2); // compatibilidad HU-19
+            $table->date('fecha_pago')->nullable();
+            $table->date('fecha')->nullable(); // compatibilidad
+            $table->enum('metodo_pago', ['EFECTIVO', 'TRANSFERENCIA', 'QR', 'TARJETA', 'OTRO'])->nullable();
+            $table->enum('estado', ['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'VENCIDO'])->default('PENDIENTE');
+            $table->text('observaciones')->nullable();
             $table->timestamps();
 
-            $table->unique(['registration_id', 'mes']);
+            $table->unique(['registration_id', 'mes', 'anio'], 'uk_registration_month_year');
+            $table->index('registration_id');
+            $table->index('electronic_invoice_id');
             $table->index('estado');
+            $table->index(['anio', 'mes']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('monthly_payments');

@@ -6,20 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('significant_events', function (Blueprint $table) {
             $table->id();
+            $table->string('tipo_evento', 50);
+            $table->timestamp('fecha_inicio');
+            $table->timestamp('fecha_fin')->nullable();
+            $table->text('motivo');
+            $table->text('documentos_soporte')->nullable();
+            $table->string('cufd_inicio', 100)->nullable();
+            $table->enum('estado', ['ABIERTO', 'CERRADO', 'REPORTADO'])->default('ABIERTO');
             $table->timestamps();
+
+            $table->index('estado');
+            $table->index('fecha_inicio');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('significant_events');

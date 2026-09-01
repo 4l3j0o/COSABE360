@@ -48,6 +48,9 @@ class DatabaseSeeder extends Seeder
 
             // Comunicados para distintos destinatarios (roles y curso específico)
             AnnouncementSeeder::class,
+
+            // Facturación SFE (HU-TRIB-02/03) - catálogo SIN
+            EducationalServiceSeeder::class,
         ]);
     }
 }
