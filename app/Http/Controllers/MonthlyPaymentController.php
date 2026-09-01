@@ -68,10 +68,21 @@ class MonthlyPaymentController extends Controller
                 ->orderBy('mes')
                 ->get();
 
-            $saldoPendiente = (float) $pagos->where('estado', 'PENDIENTE')->sum('monto');
+            $saldoPendiente = (float) $pagos->whereIn('estado', ['PENDIENTE', 'ESPERA'])->sum('monto');
             $totalPagado = (float) $pagos->where('estado', 'PAGADA')->sum('monto');
-            $mesesPendientes = $pagos->where('estado', 'PENDIENTE')->count();
+            $mesesPendientes = $pagos->whereIn('estado', ['PENDIENTE', 'ESPERA'])->count();
             $mesesPagados = $pagos->where('estado', 'PAGADA')->count();
+        }
+
+        // Receptor/facturación: el tutor que paga (usuario actual si es Padre/Tutor, si no su tutor principal)
+        $currentUser = auth()->user();
+        $esTutor = $currentUser && $currentUser->hasRole('Padre/Tutor');
+        $pagador = null;
+        if ($esTutor) {
+            $pagador = ParentGuardian::where('user_id', $currentUser->id)->first();
+        }
+        if (! $pagador) {
+            $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
         }
 
         return view('monthly-payments.estudiante', compact(
@@ -81,7 +92,9 @@ class MonthlyPaymentController extends Controller
             'saldoPendiente',
             'totalPagado',
             'mesesPendientes',
-            'mesesPagados'
+            'mesesPagados',
+            'pagador',
+            'esTutor'
         ));
     }
 
@@ -104,7 +117,6 @@ class MonthlyPaymentController extends Controller
             'razon_social_receptor' => ['nullable', 'string', 'max:200'],
         ]);
 
-        // Recuperar la inscripción completada con matrícula activa del estudiante
         $inscripcion = $estudiante->enrollments()
             ->where('estado', 'COMPLETADA')
             ->whereHas('registration', function ($q) {
@@ -129,13 +141,26 @@ class MonthlyPaymentController extends Controller
             ])->withInput();
         }
 
-        if ($cuota->estado === 'PAGADA') {
-            return back()->withErrors([
-                'mes' => 'La mensualidad de este mes ya se encuentra pagada.',
-            ])->withInput();
+        if (in_array($cuota->estado, ['PAGADA', 'ESPERA'])) {
+            $msg = $cuota->estado === 'ESPERA'
+                ? 'La mensualidad de este mes ya fue registrada y está pendiente de verificación.'
+                : 'La mensualidad de este mes ya se encuentra pagada.';
+            return back()->withErrors(['mes' => $msg])->withInput();
         }
 
-        // Generar factura electrónica exenta si se solicitó
+        $esTutor = auth()->user()->hasRole('Padre/Tutor');
+
+        if ($esTutor) {
+            $cuota->update([
+                'fecha'       => $validated['fecha'],
+                'metodo_pago' => $validated['metodo_pago'],
+                'estado'      => 'ESPERA',
+            ]);
+
+            return redirect()->route('monthly-payments.estudiante', $estudiante)
+                ->with('mensaje', 'Pago registrado correctamente. Está pendiente de verificación por el personal de la institución.');
+        }
+
         $generarFactura = $request->boolean('generar_factura', true);
         $facturaId = null;
         $facturaMsg = '';
@@ -146,10 +171,8 @@ class MonthlyPaymentController extends Controller
                 $invoice = $this->crearFacturaExenta($estudiante, $cuota, $validated);
                 $facturaId = $invoice->id;
                 $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada (PDF listo para imprimir/compartir).";
-                // Enviar por correo al tutor/padre y/o responsable (local: log driver)
                 $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$validated['mes']);
                 $facturaMsg .= " Enviada por correo al tutor.";
-                // Crear comunicado en bandeja del tutor para visibilidad inmediata (sin depender de mail)
                 $this->crearComunicadoFactura($estudiante, $invoice, (int)$validated['mes']);
                 $facturaMsg .= " Notificación en Comunicados.";
             } catch (\Throwable $e) {
@@ -165,7 +188,6 @@ class MonthlyPaymentController extends Controller
             'electronic_invoice_id' => $facturaId ?? $cuota->electronic_invoice_id,
         ]);
 
-        // Si se generó factura, redirigir con link directo al PDF en el mensaje
         if ($facturaId) {
             $pdfUrl = route('electronic-invoices.pdf', $facturaId);
             return redirect()->route('monthly-payments.estudiante', $estudiante)
@@ -195,6 +217,52 @@ class MonthlyPaymentController extends Controller
             Log::error('Error reenvio factura: '.$e->getMessage());
             return back()->with('error', 'No se pudo reenviar: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Aprueba un pago en estado ESPERA: cambia a PAGADA, genera factura, email y comunicado.
+     * Solo Admin/Secretaría/Director.
+     */
+    public function aprobar(Request $request, Student $estudiante, MonthlyPayment $pago)
+    {
+        $user = auth()->user();
+        if (! $user || ! $user->hasAnyRole(['Administrador', 'Secretaría', 'Director'])) {
+            abort(403, 'Solo el personal de la institución puede aprobar pagos.');
+        }
+        if ($pago->registration->enrollment->student_id !== $estudiante->id) abort(404);
+        if ($pago->estado !== 'ESPERA') {
+            return back()->with('error', 'Este pago no está en estado de espera.');
+        }
+
+        $validated = $request->validate([
+            'observaciones' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $invoice = null;
+        $facturaMsg = '';
+
+        try {
+            $invoice = $this->crearFacturaExenta($estudiante, $pago, ['mes' => (int)$pago->mes]);
+            $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
+            $this->crearComunicadoFactura($estudiante, $invoice, (int)$pago->mes);
+            $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada y enviada por correo. Notificación en Comunicados.";
+        } catch (\Throwable $e) {
+            Log::error('Error factura al aprobar: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
+            $facturaMsg = ' (Error al generar factura: '.$e->getMessage().')';
+        }
+
+        $pago->update([
+            'estado' => 'PAGADA',
+            'electronic_invoice_id' => $invoice?->id ?? $pago->electronic_invoice_id,
+            'observaciones' => $validated['observaciones'] ?? $pago->observaciones,
+        ]);
+
+        if ($invoice) {
+            $pdfUrl = route('electronic-invoices.pdf', $invoice->id);
+            return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg.' <a href="'.$pdfUrl.'" target="_blank" class="underline font-bold text-primary">Ver factura PDF</a>');
+        }
+
+        return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg);
     }
 
     /**
@@ -394,16 +462,24 @@ class MonthlyPaymentController extends Controller
         // Literal en palabras
         $literal = $this->numeroALiteral($monto);
 
-        // Determinar email receptor: prioriza tutor principal, luego usuario actual, luego estudiante
-        $emailReceptor = null;
+        // Determinar el pagador/receptor: prioriza el usuario actual si es Padre/Tutor,
+        // luego el tutor principal del estudiante. El receptor de la factura es quien paga.
         $currentUser = auth()->user();
+        $pagador = null;
         if ($currentUser && $currentUser->hasRole('Padre/Tutor')) {
-            $emailReceptor = $currentUser->email;
+            $pagador = ParentGuardian::where('user_id', $currentUser->id)->first();
         }
-        if (empty($emailReceptor)) {
-            $tutorPrincipal = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
-            if ($tutorPrincipal && !empty($tutorPrincipal->email)) $emailReceptor = $tutorPrincipal->email;
-            elseif ($tutorPrincipal && $tutorPrincipal->user && !empty($tutorPrincipal->user->email)) $emailReceptor = $tutorPrincipal->user->email;
+        if (! $pagador) {
+            $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
+        }
+
+        $emailReceptor = null;
+        if ($pagador && !empty($pagador->email) && filter_var($pagador->email, FILTER_VALIDATE_EMAIL)) {
+            $emailReceptor = $pagador->email;
+        } elseif ($currentUser && $currentUser->hasRole('Padre/Tutor') && !empty($currentUser->email)) {
+            $emailReceptor = $currentUser->email;
+        } elseif ($pagador && $pagador->user && !empty($pagador->user->email) && filter_var($pagador->user->email, FILTER_VALIDATE_EMAIL)) {
+            $emailReceptor = $pagador->user->email;
         }
         if (empty($emailReceptor) && !empty($estudiante->email) && filter_var($estudiante->email, FILTER_VALIDATE_EMAIL)) {
             $emailReceptor = $estudiante->email;
@@ -411,12 +487,18 @@ class MonthlyPaymentController extends Controller
         // Si se pasó explícitamente en el form, respétalo
         if (!empty($validated['email_receptor'] ?? null) && filter_var($validated['email_receptor'], FILTER_VALIDATE_EMAIL)) {
             $emailReceptor = $validated['email_receptor'];
-        } elseif (!empty($validated['nit_receptor']) && filter_var($validated['nit_receptor'], FILTER_VALIDATE_EMAIL)) {
-            // no usar nit como email
         }
 
+        // Datos de identidad del receptor (tutor/pagador si existe, si no el estudiante)
+        $receptorNombre  = $pagador
+            ? (trim(($pagador->apellidos ?? '').' '.($pagador->nombres ?? '')) ?: null)
+            : (trim(($estudiante->apellidos ?? '').' '.($estudiante->nombres ?? '')) ?: null);
+        $receptorDoc     = $pagador?->numero_documento ?: $estudiante->numero_documento;
+        $receptorTipoDoc = $pagador?->tipo_documento ?: $estudiante->tipo_documento;
+        $receptorDir     = $pagador?->direccion ?: $estudiante->direccion;
+
         $invoice = null;
-        \Illuminate\Support\Facades\DB::transaction(function() use ($validated, $tax, $sucursal, $nro, $cuf, $monto, $descripcion, $literal, $emailReceptor, $estudiante, &$invoice) {
+        \Illuminate\Support\Facades\DB::transaction(function() use ($validated, $tax, $sucursal, $nro, $cuf, $monto, $descripcion, $literal, $emailReceptor, $receptorNombre, $receptorDoc, $receptorTipoDoc, $receptorDir, $estudiante, &$invoice) {
             $invoice = \App\Models\ElectronicInvoice::create([
                 'nro_factura' => $nro,
                 'cuf' => $cuf,
@@ -430,11 +512,11 @@ class MonthlyPaymentController extends Controller
                 'codigo_sucursal' => $sucursal,
                 'nit_emisor' => $tax?->nit_colegio ?? '000000000',
                 'razon_social_emisor' => $tax?->razon_social ?? 'UNIDAD EDUCATIVA SAN BERNARDO',
-                'nit_receptor' => $validated['nit_receptor'] ?? $estudiante->numero_documento ?? null,
-                'tipo_doc_receptor' => $estudiante->tipo_documento ?? null,
-                'nro_doc_receptor' => $estudiante->numero_documento ?? null,
-                'razon_social_receptor' => $validated['razon_social_receptor'] ?? trim($estudiante->apellidos.' '.$estudiante->nombres) ?: 'S/N',
-                'direccion_receptor' => $estudiante->direccion ?? null,
+                'nit_receptor' => $validated['nit_receptor'] ?? $receptorDoc ?? null,
+                'tipo_doc_receptor' => $receptorTipoDoc ?? null,
+                'nro_doc_receptor' => $receptorDoc ?? null,
+                'razon_social_receptor' => $validated['razon_social_receptor'] ?? $receptorNombre ?: 'S/N',
+                'direccion_receptor' => $receptorDir ?? null,
                 'email_receptor' => $emailReceptor,
                 'total_exento' => $monto,
                 'total_descuentos' => 0,

@@ -28,19 +28,19 @@
         <x-ui.stat-card label="Materias" :value="$totalMaterias ?? '--'" color="info" />
         <x-ui.stat-card label="Estudiantes inscritos" :value="$totalMatriculados ?? '--'" color="success" />
         <x-ui.stat-card label="Comunicados" :value="$totalComunicados ?? '--'" color="warning" />
-        <x-ui.stat-card label="Pagos pendientes" :value="$pagosPendientes ?? '--'" color="warning" />
+        <x-ui.stat-card label="Pagos por cobrar" :value="(($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0)) ? (($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0)) : '--'" color="warning" />
         <x-ui.stat-card label="Documentos pendientes" :value="$documentosPendientes ?? '--'" color="error" />
     </div>
 
-    @if((($pagosPendientes ?? 0) > 0) || (($documentosPendientes ?? 0) > 0))
+    @if((($pagosPendientes ?? 0) > 0) || (($pagosEnEspera ?? 0) > 0) || (($documentosPendientes ?? 0) > 0))
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        @if(($pagosPendientes ?? 0) > 0)
+        @if((($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0)) > 0)
         <a href="{{ route('reportes.administrativos.index') }}" class="flex items-center gap-4 bg-card border border-border rounded-xl p-4">
             <span class="w-10 h-10 rounded-lg bg-warning flex items-center justify-center text-white shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </span>
             <div class="flex-1">
-                <p class="font-semibold text-foreground">{{ $pagosPendientes }} pago(s) pendiente(s)</p>
+                <p class="font-semibold text-foreground">{{ ($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0) }} pago(s) por cobrar ({{ $pagosEnEspera ?? 0 }} en espera)</p>
                 <p class="text-xs text-muted-foreground">Revise el reporte de pagos y deudas</p>
             </div>
             <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>

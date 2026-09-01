@@ -12,6 +12,7 @@
         $totEstudiantes = $totalEstudiantes ?? 0;
         $totMatriculados = $totalMatriculados ?? 0;
         $pagosPend = $pagosPendientes ?? 0;
+        $pagosEspera = $pagosEnEspera ?? 0;
         $docsPend = $documentosPendientes ?? 0;
     @endphp
 
@@ -32,19 +33,19 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="Total Estudiantes" :value="$totEstudiantes" color="primary" />
         <x-ui.stat-card label="Estudiantes matriculados" :value="$totMatriculados" color="success" />
-        <x-ui.stat-card label="Pagos pendientes" :value="$pagosPend" color="warning" />
+        <x-ui.stat-card label="Pagos por cobrar" :value="($pagosPend + $pagosEspera) ? ($pagosPend + $pagosEspera) : '--'" color="warning" />
         <x-ui.stat-card label="Documentos pendientes" :value="$docsPend" color="error" />
     </div>
 
-    @if($pagosPend > 0 || $docsPend > 0)
+    @if(($pagosPend + $pagosEspera) > 0 || $docsPend > 0)
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        @if($pagosPend > 0)
+        @if(($pagosPend + $pagosEspera) > 0)
         <a href="{{ route('students.index') }}" class="flex items-center gap-4 bg-card border border-border rounded-xl p-4">
             <span class="w-10 h-10 rounded-lg bg-warning flex items-center justify-center text-white shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </span>
             <div class="flex-1">
-                <p class="font-semibold text-foreground">{{ $pagosPend }} pago(s) pendiente(s)</p>
+                <p class="font-semibold text-foreground">{{ $pagosPend + $pagosEspera }} pago(s) por cobrar ({{ $pagosEspera }} en espera)</p>
                 <p class="text-xs text-muted-foreground">Gestionar mensualidades y deudas por estudiante</p>
             </div>
             <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>

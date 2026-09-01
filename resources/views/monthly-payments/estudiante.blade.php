@@ -112,18 +112,22 @@
         <div class="mt-6">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Mensualidades</h2>
-                <span class="text-xs text-muted-foreground flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-warning"></span> Pendiente <span class="w-2 h-2 rounded-full bg-success ml-2"></span> Pagada con factura</span>
+                <span class="text-xs text-muted-foreground flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-warning"></span> Pendiente <span class="w-2 h-2 rounded-full bg-amber-500 ml-2"></span> En espera <span class="w-2 h-2 rounded-full bg-success ml-2"></span> Pagada</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                 @foreach($pagos as $pago)
-                    @php $pagada = $pago->estado === 'PAGADA'; @endphp
-                    <div class="rounded-xl border px-3 py-2.5 {{ $pagada ? 'bg-success/5 border-success/30 shadow-sm' : 'bg-muted/40 border-border' }}">
+                    @php
+                        $pagada = $pago->estado === 'PAGADA';
+                        $enEspera = $pago->estado === 'ESPERA';
+                        $pendiente = !$pagada && !$enEspera;
+                    @endphp
+                    <div class="rounded-xl border px-3 py-2.5 {{ $pagada ? 'bg-success/5 border-success/30 shadow-sm' : ($enEspera ? 'bg-warning/5 border-warning/40' : 'bg-muted/40 border-border') }}">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-medium {{ $pagada ? 'text-success' : 'text-muted-foreground' }}">{{ $meses[$pago->mes] ?? 'Mes ' . $pago->mes }}</span>
+                            <span class="text-sm font-medium {{ $pagada ? 'text-success' : ($enEspera ? 'text-warning' : 'text-muted-foreground') }}">{{ $meses[$pago->mes] ?? 'Mes ' . $pago->mes }}</span>
                             @if($pagada)
                                 <svg class="w-4 h-4 text-success shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             @else
-                                <span class="w-2 h-2 rounded-full bg-warning shrink-0"></span>
+                                <span class="w-2 h-2 rounded-full {{ $enEspera ? 'bg-warning animate-pulse' : 'bg-warning' }} shrink-0"></span>
                             @endif
                         </div>
                         @if($pagada)
@@ -141,6 +145,19 @@
                                 <p class="text-[10px] text-muted-foreground mt-1">✉ {{ Str::limit($pago->electronicInvoice->email_receptor ?? 'tutor',18) }}</p>
                             @else
                                 <p class="text-[10px] text-warning mt-1">Sin factura</p>
+                            @endif
+                        @elseif($enEspera)
+                            <p class="text-xs font-semibold text-warning mt-1">En espera de verificación</p>
+                            <p class="text-[10px] text-muted-foreground mt-0.5">Pago registrado · Bs {{ number_format($pago->monto,2) }} · {{ $pago->fecha?->format('d/m/Y') }}</p>
+                            @if($esTutor)
+                                <p class="text-[10px] text-warning mt-1">La factura se generará cuando el personal apruebe el pago.</p>
+                            @else
+                                <form method="POST" action="{{ route('monthly-payments.aprobar', [$estudiante, $pago]) }}" class="mt-2">
+                                    @csrf
+                                    <input type="text" name="observaciones" placeholder="Observación (opcional)" class="w-full mb-2 px-2 py-1 text-[10px] border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                    <button type="submit" class="inline-flex items-center px-2 py-1 rounded-md bg-success text-white text-[10px] font-bold hover:opacity-90" title="Aprobar y generar factura">✓ Aprobar pago</button>
+                                </form>
+                                <p class="text-[10px] text-muted-foreground mt-1.5">Al aprobar se genera la factura y se notifica al tutor.</p>
                             @endif
                         @else
                             <p class="text-xs text-muted-foreground mt-1">Pendiente · Bs {{ number_format($pago->monto,2) }}</p>
@@ -256,6 +273,9 @@
                             <select name="metodo_pago" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <option value="">Seleccionar método...</option>
                                 @foreach(['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'OTRO'] as $metodo)
+                                    @if($esTutor && $metodo === 'EFECTIVO')
+                                        @continue
+                                    @endif
                                     <option value="{{ $metodo }}" {{ old('metodo_pago') === $metodo ? 'selected' : '' }}>{{ ucfirst(strtolower($metodo)) }}</option>
                                 @endforeach
                             </select>
@@ -263,6 +283,7 @@
                         </div>
                     </div>
 
+                    @if(! $esTutor)
                     <div class="mt-4 p-3 rounded-lg border border-primary/20 bg-primary/5">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="generar_factura" value="1" {{ old('generar_factura', '1') ? 'checked' : '' }} onchange="document.getElementById('factura-campos').style.display=this.checked?'block':'none'" class="w-4 h-4 rounded border-input text-primary focus:ring-primary/30">
@@ -272,16 +293,24 @@
                         <div id="factura-campos" style="display: {{ old('generar_factura', '1') ? 'block' : 'none' }}; margin-top:0.75rem;" class="space-y-3">
                             <div>
                                 <label class="block text-xs font-medium text-muted-foreground mb-1">NIT / CI Receptor (opcional)</label>
-                                <input type="text" name="nit_receptor" value="{{ old('nit_receptor') }}" placeholder="Ej: 1234567 o vacío = Consumidor Final" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                <input type="text" name="nit_receptor" value="{{ old('nit_receptor', $pagador?->numero_documento ?? $estudiante->numero_documento) }}" placeholder="Ej: 1234567 o vacío = Consumidor Final" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
                                 @error('nit_receptor') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-muted-foreground mb-1">Razón Social Receptor</label>
-                                <input type="text" name="razon_social_receptor" value="{{ old('razon_social_receptor', $estudiante->apellidos.' '.$estudiante->nombres) }}" placeholder="Nombre para la factura" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
+                                <input type="text" name="razon_social_receptor" value="{{ old('razon_social_receptor', trim(($pagador?->apellidos ?? $estudiante->apellidos).' '.($pagador?->nombres ?? $estudiante->nombres))) }}" placeholder="Nombre para la factura" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
                                 @error('razon_social_receptor') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
+                    @else
+                    <div class="mt-4 p-3 rounded-lg border border-warning/40 bg-warning/10">
+                        <p class="text-xs text-warning font-semibold flex items-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Al registrar, el pago quedará en <strong>ESPERA</strong> hasta que el personal de la institución lo verifique y apruebe. La factura se generará y enviará por correo tras la aprobación.
+                        </p>
+                    </div>
+                    @endif
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; margin-top:1.25rem; border-top:1px solid var(--border);">
                         <button type="button" onclick="closeModal('modal-pago')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>

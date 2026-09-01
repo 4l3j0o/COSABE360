@@ -41,7 +41,14 @@
                     </div>
                 </div>
 
-                <div class="whitespace-pre-wrap text-[15px] text-foreground leading-relaxed">{{ $announcement->contenido }}</div>
+                @php
+                    // Render del contenido permitiendo etiquetas seguras de los comunicados de factura
+                    $contenidoHTML = $announcement->contenido;
+                    $contenidoHTML = preg_replace('#<(script|style|iframe|object|embed)[^>]*>.*?</\1>#is', '', $contenidoHTML);
+                    $contenidoHTML = preg_replace('#<(script|style|iframe|object|embed)[^>]*/?>#i', '', $contenidoHTML);
+                    $contenidoHTML = preg_replace('#(on\w+)\s*=\s*("[^"]*"|\'[^\']*\'|\S+)#i', '', $contenidoHTML);
+                @endphp
+                <div class="text-[15px] text-foreground leading-relaxed">{!! $contenidoHTML !!}</div>
             </div>
         </div>
 

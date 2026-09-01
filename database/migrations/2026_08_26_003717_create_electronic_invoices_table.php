@@ -49,10 +49,26 @@ return new class extends Migration
             $table->index('estado');
             $table->index('nit_receptor');
         });
+
+        // FK de monthly_payments.electronic_invoice_id (esta migración corre tras create_monthly_payments_table)
+        if (Schema::hasTable('monthly_payments') && Schema::hasColumn('monthly_payments', 'electronic_invoice_id')) {
+            Schema::table('monthly_payments', function (Blueprint $table) {
+                $table->foreign('electronic_invoice_id')
+                    ->references('id')->on('electronic_invoices')
+                    ->nullOnDelete();
+            });
+        }
     }
 
     public function down(): void
     {
+        if (Schema::hasTable('monthly_payments')) {
+            Schema::table('monthly_payments', function (Blueprint $table) {
+                if (Schema::hasColumn('monthly_payments', 'electronic_invoice_id')) {
+                    $table->dropForeign(['electronic_invoice_id']);
+                }
+            });
+        }
         Schema::dropIfExists('electronic_invoices');
     }
 };

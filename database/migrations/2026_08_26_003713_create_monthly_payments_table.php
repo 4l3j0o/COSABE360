@@ -11,18 +11,16 @@ return new class extends Migration
         Schema::create('monthly_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('registration_id')->constrained('registrations')->restrictOnDelete();
-            // FK a factura electrónica (diagrama #18 - nullable SET NULL)
-            // Nota: sin constrained() aquí para evitar orden de creación; FK se añade en patch posterior si se requiere
             $table->unsignedBigInteger('electronic_invoice_id')->nullable();
-            $table->unsignedTinyInteger('mes'); // 1-12
+            $table->unsignedTinyInteger('mes');
             $table->unsignedSmallInteger('anio')->default((int) date('Y'));
             $table->decimal('monto_esperado', 10, 2)->default(0);
             $table->decimal('monto_pagado', 10, 2)->default(0);
-            $table->decimal('monto', 10, 2); // compatibilidad HU-19
+            $table->decimal('monto', 10, 2);
             $table->date('fecha_pago')->nullable();
-            $table->date('fecha')->nullable(); // compatibilidad
+            $table->date('fecha')->nullable();
             $table->enum('metodo_pago', ['EFECTIVO', 'TRANSFERENCIA', 'QR', 'TARJETA', 'OTRO'])->nullable();
-            $table->enum('estado', ['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'VENCIDO'])->default('PENDIENTE');
+            $table->enum('estado', ['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'VENCIDO', 'ESPERA'])->default('PENDIENTE');
             $table->text('observaciones')->nullable();
             $table->timestamps();
 

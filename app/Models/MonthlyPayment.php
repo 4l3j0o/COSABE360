@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MonthlyPayment extends Model
 {
-    public const ESTADOS = ['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'VENCIDO'];
+    public const ESTADOS = ['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'VENCIDO', 'ESPERA'];
     public const METODOS_PAGO = ['EFECTIVO', 'TRANSFERENCIA', 'QR', 'TARJETA', 'OTRO'];
 
     protected $fillable = [
@@ -53,5 +53,10 @@ class MonthlyPayment extends Model
     public function estaPagada(): bool
     {
         return in_array($this->estado, ['PAGADO', 'PAGADA']);
+    }
+
+    public function estaEnEspera(): bool
+    {
+        return $this->estado === 'ESPERA';
     }
 }

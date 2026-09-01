@@ -26,7 +26,7 @@
         <x-ui.stat-card label="Matriculados" :value="$totalMatriculados ?? '--'" color="warning" />
         <x-ui.stat-card label="Cursos" :value="$totalCursos ?? '--'" color="primary" />
         <x-ui.stat-card label="Materias" :value="$totalMaterias ?? '--'" color="success" />
-        <x-ui.stat-card label="Pagos pendientes" :value="$pagosPendientes ?? '--'" color="warning" />
+        <x-ui.stat-card label="Pagos por cobrar" :value="(($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0)) ? (($pagosPendientes ?? 0) + ($pagosEnEspera ?? 0)) : '--'" color="warning" />
         <x-ui.stat-card label="Documentos pendientes" :value="$documentosPendientes ?? '--'" color="error" />
     </div>
 

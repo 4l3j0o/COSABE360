@@ -157,7 +157,7 @@
                 var leidoUrl = el.getAttribute('data-leido-url');
 
                 document.getElementById('com-titulo').textContent = titulo;
-                document.getElementById('com-contenido').textContent = contenido;
+                document.getElementById('com-contenido').innerHTML = contenido;
                 document.getElementById('com-autor').textContent = autor;
                 document.getElementById('com-meta').textContent = rol + ' · U.E. San Bernardo · ' + fecha;
 

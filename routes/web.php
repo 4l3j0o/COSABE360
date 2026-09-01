@@ -79,6 +79,7 @@ Route::get('/dashboard', function () {
         'totalComunicados' => \App\Models\Announcement::count(),
         'totalMatriculados' => \App\Models\Enrollment::where('estado', 'COMPLETADA')->count(),
         'pagosPendientes' => \App\Models\MonthlyPayment::where('estado', 'PENDIENTE')->count(),
+        'pagosEnEspera' => \App\Models\MonthlyPayment::where('estado', 'ESPERA')->count(),
         'documentosPendientes' => \App\Models\StudentDocument::where('estado', 'PENDIENTE')->count(),
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
         'misNoLeidos' => \App\Models\AnnouncementRead::where('user_id', auth()->id())->where('leido', false)->count(),
@@ -119,12 +120,32 @@ Route::get('/dashboard', function () {
         }
     }
 
-    // Para el rol Padre/Tutor: sus hijos de los que es responsable
+    // Para el rol Padre/Tutor: sus hijos de los que es responsable + resumen de mensualidades
     if ($rol === 'Padre/Tutor') {
         $parent = \App\Models\ParentGuardian::where('user_id', auth()->id())->first();
-        $datos['hijos'] = $parent
-            ? $parent->students()->where('students.estado', 'ACTIVO')->get()
+        $hijos = $parent
+            ? $parent->students()
+                ->where('students.estado', 'ACTIVO')
+                ->with(['enrollments.registration.monthlyPayments'])
+                ->get()
             : collect();
+
+        $hijos->each(function ($hijo) {
+            $reg = $hijo->enrollments
+                ->sortByDesc('fecha')
+                ->firstWhere('estado', 'COMPLETADA')
+                ?->registration;
+            $pagos = $reg?->monthlyPayments ?? collect();
+            $pendientes = $pagos->whereIn('estado', ['PENDIENTE', 'ESPERA']);
+            $hijo->setAttribute('pagos_saldo', (float) $pendientes->sum('monto'));
+            $hijo->setAttribute('pagos_meses_pendientes', $pendientes->count());
+            $hijo->setAttribute('pagos_meses_en_espera', $pagos->where('estado', 'ESPERA')->count());
+            $hijo->setAttribute('pagos_meses_pagados', $pagos->filter(fn ($p) => in_array($p->estado, ['PAGADO', 'PAGADA']))->count());
+            $hijo->setAttribute('pagos_total_meses', $pagos->count());
+            $hijo->setAttribute('pagos_mensualidad', (float) ($reg?->monto_mensual ?? $pagos->first()?->monto ?? 0));
+        });
+
+        $datos['hijos'] = $hijos;
     }
 
     return view($vista, $datos);
@@ -340,6 +361,8 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'
         ->name('monthly-payments.store-estudiante');
     Route::post('/{estudiante}/pagos/{pago}/reenviar', [MonthlyPaymentController::class, 'reenviar'])
         ->name('monthly-payments.reenviar');
+    Route::post('/{estudiante}/pagos/{pago}/aprobar', [MonthlyPaymentController::class, 'aprobar'])
+        ->name('monthly-payments.aprobar');
 });
 
 // HU24: Notas finales por materia - Estudiante, Padre/Tutor, Director y Administrador
