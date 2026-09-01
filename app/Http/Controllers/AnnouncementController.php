@@ -15,7 +15,7 @@ class AnnouncementController extends Controller
         $announcements = Announcement::with(['author.rol', 'recipients.course'])
             ->orderByDesc('fecha_publicacion')
             ->orderByDesc('id')
-            ->paginate(15);
+            ->paginate(10);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $announcements]);
@@ -188,7 +188,7 @@ class AnnouncementController extends Controller
             ->orderByDesc('fecha_publicacion')
             ->orderByDesc('id');
 
-        $announcements = $query->paginate(15);
+        $announcements = $query->paginate(10);
 
         $reads = $user->id ? \App\Models\AnnouncementRead::where('user_id', $user->id)->whereIn('announcement_id', $announcements->pluck('id'))->get()->keyBy('announcement_id') : collect();
 

@@ -74,6 +74,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-4 border-t border-border">{{ $estudiantes->links() }}</div>
+        <div class="p-4 border-t border-border">{{ $estudiantes->links('pagina.custom') }}</div>
     </div>
 @endsection

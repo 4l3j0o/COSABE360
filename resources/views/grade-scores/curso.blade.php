@@ -37,11 +37,11 @@
                 </select>
             </div>
             <div class="w-full min-w-0 sm:min-w-[140px] flex flex-col gap-1">
-                <label for="bimestre" class="text-xs font-medium text-muted-foreground">Trimestre</label>
+                <label for="bimestre" class="text-xs font-medium text-muted-foreground">Bimestre</label>
                 <select name="bimestre" id="bimestre" class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
                     <option value="">Todos</option>
                     @for($b = 1; $b <= 4; $b++)
-                        <option value="{{ $b }}" @selected((string) $bimestre === (string) $b)>{{ $b }}º trimestre</option>
+                        <option value="{{ $b }}" @selected((string) $bimestre === (string) $b)>{{ $b }}º Bimestre</option>
                     @endfor
                 </select>
             </div>

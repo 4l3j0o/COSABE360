@@ -93,7 +93,7 @@ class StudentController extends Controller
             }
         }
 
-        $students = $query->orderBy('apellidos')->paginate(15)->withQueryString();
+        $students = $query->orderBy('apellidos')->paginate(10)->withQueryString();
         $eliminadosCount = Student::where('estado', 'ELIMINADO')->count();
 
         $estadosAcademicos = $this->estadosAcademicos($students->pluck('id'));
@@ -449,7 +449,7 @@ class StudentController extends Controller
     {
         $students = Student::where('estado', 'ELIMINADO')
             ->orderBy('apellidos')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('students.eliminados', compact('students'));
     }
@@ -571,6 +571,9 @@ class StudentController extends Controller
                 }
                 MonthlyPayment::insert($cuotas);
             }
+
+            // Al estar matriculado, el estudiante obtiene su cuenta de usuario
+            $this->crearCuentaUsuarioEstudianteSiNoExiste($estudiante);
 
             return redirect()->route('students.show', $estudiante)
                 ->with('mensaje', 'Matrícula registrada correctamente para el estudiante.');
@@ -809,6 +812,34 @@ class StudentController extends Controller
         }
 
         $tutor->update(['user_id' => $usuario->id]);
+    }
+
+    private function crearCuentaUsuarioEstudianteSiNoExiste(Student $student): void
+    {
+        if (! empty($student->user_id) || empty($student->email)) {
+            return;
+        }
+
+        $rolEstudiante = Role::where('nombre', 'Estudiante')->first();
+        if (! $rolEstudiante) {
+            return;
+        }
+
+        $usuario = User::where('email', $student->email)->first();
+
+        if (! $usuario) {
+            $usuario = User::create([
+                'nombre'   => $student->nombres,
+                'apellido' => $student->apellidos,
+                'email'    => $student->email,
+                'password' => 'password123',
+                'role_id'  => $rolEstudiante->id,
+                'telefono' => $student->telefono,
+                'estado'   => 'ACTIVO',
+            ]);
+        }
+
+        $student->update(['user_id' => $usuario->id]);
     }
 
     private function generarCodigo(): string
