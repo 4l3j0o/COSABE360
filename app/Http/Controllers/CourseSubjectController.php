@@ -16,7 +16,7 @@ class CourseSubjectController extends Controller
     {
         $courseSubjects = CourseSubject::with(['teacher', 'subject', 'course', 'schedules'])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('course_subjects.index', compact('courseSubjects'));
     }

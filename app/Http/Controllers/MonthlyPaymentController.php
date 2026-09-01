@@ -30,7 +30,7 @@ class MonthlyPaymentController extends Controller
             });
         }
 
-        $pagos = $query->paginate(15)->withQueryString();
+        $pagos = $query->paginate(10)->withQueryString();
 
         return view('monthly-payments.index', compact('pagos'));
     }

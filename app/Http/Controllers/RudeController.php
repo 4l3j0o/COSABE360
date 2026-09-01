@@ -31,7 +31,7 @@ class RudeController extends Controller
             });
         }
 
-        $estudiantes = $query->paginate(20)->withQueryString();
+        $estudiantes = $query->paginate(10)->withQueryString();
         $estados = StudentRudeRecord::ESTADOS;
 
         return view('rude.index', compact('estudiantes', 'estados'));

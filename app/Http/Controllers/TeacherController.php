@@ -31,7 +31,7 @@ class TeacherController extends Controller
         }
 
         $teachers = $query->orderBy('apellidos')->orderBy('nombres')
-            ->paginate(15)->withQueryString();
+            ->paginate(10)->withQueryString();
         return view('teachers.index', compact('teachers'));
     }
 
