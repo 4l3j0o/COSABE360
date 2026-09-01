@@ -191,6 +191,55 @@
             });
         }
 
+        // Fix bloque verde: preservar scroll del sidebar (Facturación SFE queda abajo y se reseteaba al cambiar de página)
+        (function(){
+            var KEY='sanber-sidebar-scroll';
+            var navs=document.querySelectorAll('.app-sidebar nav');
+            function restore(){
+                var v=sessionStorage.getItem(KEY);
+                if(v!==null){ var n=parseInt(v,10); if(!isNaN(n)) navs.forEach(function(nv){ nv.scrollTop=n; }); }
+            }
+            function save(){ if(navs[0]) sessionStorage.setItem(KEY, navs[0].scrollTop); }
+            document.addEventListener('DOMContentLoaded', restore);
+            window.addEventListener('load', restore);
+            setTimeout(restore, 100);
+            setTimeout(restore, 400);
+            navs.forEach(function(nv){
+                nv.addEventListener('scroll', function(){ sessionStorage.setItem(KEY, nv.scrollTop); });
+            });
+            // Guardar antes de navegar (click en cualquier link del sidebar)
+            document.addEventListener('click', function(e){
+                var a=e.target.closest('.app-sidebar a');
+                if(a) save();
+            });
+            window.addEventListener('beforeunload', save);
+            // También preservar scroll de la página principal al usar filtros/paginación (evita volver arriba)
+            var mainKey='sanber-main-scroll';
+            var mainRestored=false;
+            function restoreMain(){
+                if(mainRestored) return;
+                var saved=sessionStorage.getItem(mainKey);
+                if(saved!==null && window.location.search){
+                    var y=parseInt(saved,10);
+                    if(!isNaN(y) && y>0) setTimeout(function(){ window.scrollTo(0,y); }, 30);
+                }
+                mainRestored=true;
+            }
+            // Guardar scroll antes de submit de filtros o click en paginación
+            document.addEventListener('click', function(e){
+                var pag=e.target.closest('.pagination a, a[href*="page="]');
+                if(pag) sessionStorage.setItem(mainKey, window.scrollY);
+            });
+            document.addEventListener('submit', function(e){
+                var f=e.target;
+                if(f && f.matches('form[method="GET"]')) sessionStorage.setItem(mainKey, window.scrollY);
+            });
+            document.addEventListener('DOMContentLoaded', restoreMain);
+            window.addEventListener('load', restoreMain);
+            // Limpiar si es navegación sin query (ej: Dashboard)
+            if(!window.location.search) sessionStorage.removeItem(mainKey);
+        })();
+
         document.addEventListener('DOMContentLoaded', function () {
             pickInit();
             setTimeout(pickInit, 300);

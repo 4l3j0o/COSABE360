@@ -324,18 +324,22 @@ Route::middleware('auth')->get('sistema/estado', function () {
     ];
 })->name('sistema.estado');
 
-// HU-18: Registrar matrículas
+// HU-18: Registrar matrículas (solo admin/secretaria/director)
 Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
     Route::get('/{estudiante}/matricular', [StudentController::class, 'matriculacionForm'])
         ->name('estudiantes.matriculacion');
     Route::post('/{estudiante}/matricular', [StudentController::class, 'matricular'])
         ->name('estudiantes.matricular');
+});
 
-    // HU-19: Pagos de mensualidades por estudiante
+// HU-19: Pagos de mensualidades por estudiante - admin/secretaria/director + Padre/Tutor (solo hijos, verificado en controller)
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'])->prefix('estudiantes')->group(function () {
     Route::get('/{estudiante}/pagos', [MonthlyPaymentController::class, 'estudiante'])
         ->name('monthly-payments.estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
         ->name('monthly-payments.store-estudiante');
+    Route::post('/{estudiante}/pagos/{pago}/reenviar', [MonthlyPaymentController::class, 'reenviar'])
+        ->name('monthly-payments.reenviar');
 });
 
 // HU24: Notas finales por materia - Estudiante, Padre/Tutor, Director y Administrador
@@ -419,7 +423,13 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('auditoria')->group(fu
     Route::get('/{operationHistory}', [OperationHistoryController::class, 'show'])->name('auditoria.show');
 });
 
-// HU-TRIB-01/02/03: Facturación Electrónica SFE - solo Administrador/Secretaría
+// PDF de facturas accesible a Administrador/Secretaría/Director y Padre/Tutor (propios hijos) - ownership en controller
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'])->group(function () {
+    Route::get('facturacion/facturas/{electronicInvoice}/pdf', [ElectronicInvoiceController::class, 'pdf'])->name('electronic-invoices.pdf');
+    Route::get('facturacion/facturas/{electronicInvoice}/download', [ElectronicInvoiceController::class, 'downloadPdf'])->name('electronic-invoices.download');
+});
+
+// HU-TRIB-01/02/03: Facturación Electrónica SFE - solo Administrador/Secretaría (gestión)
 Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('facturacion')->group(function () {
     // Catálogo servicios educativos (RF29)
     Route::get('servicios', [EducationalServiceController::class, 'index'])->name('educational-services.index');
@@ -449,7 +459,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     Route::put('eventos/{significantEvent}', [SignificantEventController::class, 'update'])->name('significant-events.update');
     Route::delete('eventos/{significantEvent}', [SignificantEventController::class, 'destroy'])->name('significant-events.destroy');
 
-    // Facturas electrónicas (HU-TRIB-02)
+    // Facturas electrónicas (HU-TRIB-02) - listado/gestión solo admin/secretaria/director (pdf está en grupo compartido arriba)
     Route::get('facturas', [ElectronicInvoiceController::class, 'index'])->name('electronic-invoices.index');
     Route::post('facturas', [ElectronicInvoiceController::class, 'store'])->name('electronic-invoices.store');
     Route::get('facturas/{electronicInvoice}', [ElectronicInvoiceController::class, 'show'])->name('electronic-invoices.show');

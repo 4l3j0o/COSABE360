@@ -169,15 +169,17 @@ class AnnouncementController extends Controller
                 ->where('estado', 'PUBLICADO')
                 ->where(function ($q) use ($tipo, $courseIds, $user) {
                     $q->whereHas('recipients', function ($rq) use ($tipo, $courseIds, $user) {
-                        $rq->where('tipo_destinatario', 'TODOS');
+                        // TODOS genérico (sin user_id específico)
+                        $rq->where(function ($w) { $w->where('tipo_destinatario', 'TODOS')->whereNull('user_id'); });
                         if ($tipo) {
-                            $rq->orWhere('tipo_destinatario', $tipo);
+                            $rq->orWhere(function ($w) use ($tipo) { $w->where('tipo_destinatario', $tipo)->whereNull('user_id'); });
                         }
                         if ($courseIds->isNotEmpty()) {
                             $rq->orWhere(function ($cq) use ($courseIds) {
-                                $cq->where('tipo_destinatario', 'CURSO_ESPECIFICO')->whereIn('course_id', $courseIds);
+                                $cq->where('tipo_destinatario', 'CURSO_ESPECIFICO')->whereIn('course_id', $courseIds)->whereNull('user_id');
                             });
                         }
+                        // Privado por usuario (facturas) — solo el destinatario específico
                         $rq->orWhere(function ($uq) use ($user) {
                             $uq->whereNotNull('user_id')->where('user_id', $user->id);
                         });

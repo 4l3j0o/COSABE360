@@ -198,10 +198,195 @@ class ElectronicInvoiceController extends Controller
     }
 
     /**
-     * Simula conversión número a literal boliviano (simplificado).
+     * Verifica que Padre/Tutor solo vea facturas de sus hijos.
+     * Admin/Secretaría/Director pasan directo.
+     */
+    private function autorizarFactura(ElectronicInvoice $invoice): void
+    {
+        $user = auth()->user();
+        if (! $user) abort(403, 'No autenticado');
+        $rol = $user->rol?->nombre;
+        if (in_array($rol, ['Administrador', 'Secretaría', 'Director'], true)) return;
+        if ($rol === 'Padre/Tutor') {
+            $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
+            if (! $parent) abort(403, 'Sin perfil tutor');
+            $hijoIds = $parent->students()->pluck('students.id')->toArray();
+            if (empty($hijoIds)) abort(403, 'Sin hijos asignados');
+            // Factura vinculada via monthly_payments -> registration -> enrollment -> student
+            $esDeHijo = \App\Models\MonthlyPayment::where('electronic_invoice_id', $invoice->id)
+                ->whereHas('registration.enrollment', function ($q) use ($hijoIds) {
+                    $q->whereIn('student_id', $hijoIds);
+                })->exists();
+            if ($esDeHijo) return;
+            // Fallback: si no hay vínculo mensualidad, verificar email receptor coincide con tutor
+            if (!empty($invoice->email_receptor) && $invoice->email_receptor === $user->email) return;
+            abort(403, 'No tiene permiso para ver esta factura.');
+        }
+        abort(403, 'Rol no autorizado');
+    }
+
+    /**
+     * Genera PDF factura electrónica para imprimir/compartir (formato SFE profesional no genérico).
+     * Usa plantilla SIN-compliant con branding verde institucional, QR real y literal en palabras.
+     */
+    public function pdf(ElectronicInvoice $electronicInvoice)
+    {
+        $this->autorizarFactura($electronicInvoice);
+        $invoice = $electronicInvoice->load('detalles');
+        $tax = TaxConfiguration::first();
+        $logoBase64 = $this->resolveLogoBase64();
+        $qrBase64 = $this->generateQrBase64($invoice);
+        $literal = $invoice->total_factura_texto ?: $this->numeroALiteral((float) $invoice->total_factura);
+        $html = view('electronic-invoices.pdf', [
+            'invoice' => $invoice,
+            'tax' => $tax,
+            'logoBase64' => $logoBase64,
+            'qrBase64' => $qrBase64,
+            'literal' => $literal,
+        ])->render();
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isPhpEnabled', false);
+        $options->set('chroot', public_path());
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $filename = 'Factura-'.str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT).'-'.$invoice->cuf.'.pdf';
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+        ]);
+    }
+
+    public function downloadPdf(ElectronicInvoice $electronicInvoice)
+    {
+        $this->autorizarFactura($electronicInvoice);
+        $invoice = $electronicInvoice->load('detalles');
+        $tax = TaxConfiguration::first();
+        $logoBase64 = $this->resolveLogoBase64();
+        $qrBase64 = $this->generateQrBase64($invoice);
+        $literal = $invoice->total_factura_texto ?: $this->numeroALiteral((float) $invoice->total_factura);
+        $html = view('electronic-invoices.pdf', ['invoice' => $invoice, 'tax' => $tax, 'logoBase64' => $logoBase64, 'qrBase64' => $qrBase64, 'literal' => $literal])->render();
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('chroot', public_path());
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="Factura-'.str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT).'.pdf"',
+        ]);
+    }
+
+    private function resolveLogoBase64(): ?string
+    {
+        // Prioriza thumb optimizado (320px) para evitar OOM con PNG gigante 4609x2336
+        $candidates = [
+            public_path('images/logo-colegio-thumb.png'),
+            public_path('images/logo-colegio.png'),
+        ];
+        foreach ($candidates as $path) {
+            if (!file_exists($path)) continue;
+            if (filesize($path) > 90000) continue; // evita dompdf memory 43MB
+            $mime = @mime_content_type($path) ?: 'image/png';
+            if (!str_starts_with($mime, 'image/')) continue;
+            return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
+        }
+        return null;
+    }
+
+    private function generateQrBase64(ElectronicInvoice $invoice): ?string
+    {
+        try {
+            // Contenido QR estilo SIN: URL verificación + NIT + CUF + Nro + fecha + total
+            $payload = sprintf(
+                'https://sin.gob.bo/verificar?cuf=%s&nit=%s&nro=%s&fecha=%s&total=%s',
+                $invoice->cuf,
+                $invoice->nit_emisor,
+                $invoice->nro_factura,
+                $invoice->fecha_emision instanceof \Carbon\Carbon ? $invoice->fecha_emision->format('Y-m-d') : $invoice->fecha_emision,
+                number_format((float)$invoice->total_factura, 2, '.', '')
+            );
+            // Si es muy largo, usa solo CUF
+            if (strlen($payload) > 180) $payload = $invoice->cuf;
+
+            $result = \Endroid\QrCode\Builder\Builder::create()
+                ->writer(new \Endroid\QrCode\Writer\PngWriter())
+                ->writerOptions([])
+                ->data($payload)
+                ->encoding(new \Endroid\QrCode\Encoding\Encoding('UTF-8'))
+                ->errorCorrectionLevel(\Endroid\QrCode\ErrorCorrectionLevel::Medium)
+                ->size(300)
+                ->margin(8)
+                ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin)
+                ->validateResult(false)
+                ->build();
+            return 'data:image/png;base64,'.base64_encode($result->getString());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('QR gen fail: '.$e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Convierte número a literal boliviano en palabras (ej: 700 => SETECIENTOS 00/100 BOLIVIANOS)
+     * Soporta hasta 9999999.99
      */
     private function numeroALiteral(float $n): string
     {
-        return number_format($n, 2) . ' BOLIVIANOS';
+        $n = round($n, 2);
+        $entero = (int) floor($n);
+        $centavos = (int) round(($n - $entero) * 100);
+        $palabras = $this->numeroEnPalabras($entero);
+        if ($palabras === '') $palabras = 'CERO';
+        return $palabras.' '.str_pad((string)$centavos, 2, '0', STR_PAD_LEFT).'/100 BOLIVIANOS';
+    }
+
+    private function numeroEnPalabras(int $n): string
+    {
+        if ($n === 0) return 'CERO';
+        $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE', 'DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+        $veintenas = ['', 'VEINTI', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+        $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+        $toWords = function(int $num) use (&$toWords, $unidades, $veintenas, $centenas): string {
+            if ($num < 20) return $unidades[$num];
+            if ($num < 100) {
+                $d = intdiv($num, 10);
+                $r = $num % 10;
+                if ($d === 2 && $r !== 0) return 'VEINTI'.$unidades[$r];
+                if ($d === 2) return 'VEINTE';
+                $base = $veintenas[$d - 1];
+                return $r === 0 ? $base : $base.' Y '.$unidades[$r];
+            }
+            if ($num < 1000) {
+                if ($num === 100) return 'CIEN';
+                $c = intdiv($num, 100);
+                $r = $num % 100;
+                $pref = $centenas[$c];
+                return $r === 0 ? $pref : $pref.' '.$toWords($r);
+            }
+            if ($num < 1000000) {
+                $miles = intdiv($num, 1000);
+                $r = $num % 1000;
+                $pref = $miles === 1 ? 'MIL' : $toWords($miles).' MIL';
+                return $r === 0 ? $pref : $pref.' '.$toWords($r);
+            }
+            // hasta 9 millones
+            $millones = intdiv($num, 1000000);
+            $r = $num % 1000000;
+            $pref = $millones === 1 ? 'UN MILLON' : $toWords($millones).' MILLONES';
+            return $r === 0 ? $pref : $pref.' '.$toWords($r);
+        };
+
+        return $toWords($n);
     }
 }
