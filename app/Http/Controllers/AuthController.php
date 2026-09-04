@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
@@ -101,6 +102,8 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
+            Log::error('HU-36 Google callback fallido: '.$e->getMessage());
+
             return redirect()->route('login')
                 ->withErrors(['email' => 'No se pudo completar el acceso con Google. Intente nuevamente.']);
         }
