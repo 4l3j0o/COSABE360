@@ -20,7 +20,16 @@ class TeacherCourseController extends Controller
         }
 
         $cursos = $teacher->courseSubjects()
-            ->with(['subject', 'course.grade', 'course.section', 'course.gestion'])
+            ->with([
+                'subject',
+                'course.grade',
+                'course.section',
+                'course.gestion',
+                // HU-41: bloques de horario de cada asignación, ordenados por día y hora
+                'schedules' => fn ($q) => $q->where('estado', 'ACTIVO')
+                    ->orderByRaw("CASE dia WHEN 'LUNES' THEN 1 WHEN 'MARTES' THEN 2 WHEN 'MIERCOLES' THEN 3 WHEN 'JUEVES' THEN 4 WHEN 'VIERNES' THEN 5 WHEN 'SABADO' THEN 6 END")
+                    ->orderBy('hora_inicio'),
+            ])
             ->withCount('assessments')
             ->orderBy('course_id')
             ->orderBy('subject_id')
