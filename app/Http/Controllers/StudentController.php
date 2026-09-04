@@ -845,14 +845,14 @@ class StudentController extends Controller
     private function generarCodigo(): string
     {
         $anio = date('Y');
-        $ultimo = Student::where('codigo', 'LIKE', "EST-{$anio}-%")
-            ->orderByRaw('CAST(SUBSTRING_INDEX(codigo, \'-\', -1) AS UNSIGNED) DESC')
-            ->value('codigo');
 
-        $consecutivo = 1;
-        if ($ultimo && preg_match('/(\d+)$/', (string) $ultimo, $m)) {
-            $consecutivo = (int) $m[1] + 1;
-        }
+        // Códigos del año; el máximo consecutivo se calcula en PHP (compatible SQLite/MySQL)
+        $max = Student::where('codigo', 'LIKE', "EST-{$anio}-%")
+            ->pluck('codigo')
+            ->map(fn ($c) => (int) substr((string) $c, strrpos((string) $c, '-') + 1))
+            ->max() ?? 0;
+
+        $consecutivo = $max + 1;
 
         return 'EST-' . $anio . '-' . str_pad($consecutivo, 4, '0', STR_PAD_LEFT);
     }
