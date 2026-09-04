@@ -149,7 +149,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 |---|---|---|---|
 | Sprint 7 | HU-36, HU-37, HU-38 — Identidad Google | 16 | Finalizado |
 | Sprint 8 | HU-39, HU-40 — Navegación (HU-41 en rama panel-docente) | 13 | HU-39/40 Finalizado |
-| Sprint 9 | HU-42, HU-43, HU-44 — Evaluaciones, lista y reportes | 18 | Por iniciar |
+| Sprint 9 | HU-42, HU-43, HU-44 — Evaluaciones, lista y reportes | 18 | Finalizado |
 | Sprint 10 | HU-45, HU-46 — RUDE oficial | 11 | Por iniciar |
 | **Total** | **11 historias** | **63** | |
 
@@ -214,3 +214,10 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 - **HU-39** — El sidebar del administrador se reorganizó en secciones colapsables (`<details>`/`<summary>`): Gestión Escolar, Personas, Comunicación, Reportes, Auditoría, Configuración y Facturación SFE. Un script guarda en `localStorage` los grupos abiertos. No cambia ninguna ruta ni permiso.
 - **HU-40** — Nueva vista jerárquica `courses.index` (ruta `GET /cursos` solo admin) que muestra Nivel → Grado → Paralelo → Curso con conteos (materias y estudiantes), con enlaces a la gestión de grados (filtro `level_id`) y paralelos (filtro `grade_id`). El enlace "Cursos" del sidebar ahora apunta a `courses.index` (antes apuntaba a `asistencias.index`).
+
+### Panel docente (Épica 14, HU-41 a HU-44)
+
+- **HU-41** — "Mis Cursos" (`TeacherCourseController@index`) ahora carga los bloques de horario (`schedules`) ordenados por día/hora y los muestra como chips en cada tarjeta; se añadió acceso rápido de 4 acciones: Evaluaciones, Pasar lista, Historial de asistencia y Notas.
+- **HU-42** — Ya existía: `docente.evaluaciones` crea evaluaciones dentro del curso heredando materia y gestión (validación de día de clase y peso). Sin cambios.
+- **HU-43** — Ya existía: `AttendanceController@create/store` registra asistencia por curso con los 5 estados (RB17) y upsert sin duplicados. Sin cambios.
+- **HU-44** — Nuevo `AttendanceReportController` con `index` y `export`: filtros por rango (día/semana/mes/trimestre), fecha base, curso y materia; conteos por estado y % de asistencia; exportación PDF (DomPDF) y Excel/CSV. Rutas `reportes.asistencia.index/export`, accesible a Docente/Secretaría/Director/Admin. Enlaces añadidos en los sidebars docente, admin y director.
