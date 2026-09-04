@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // HU-36: OAuth 2.0 con Google Workspace (solo dominio cosabe.edu.bo)
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'hd' => env('GOOGLE_HD', 'cosabe.edu.bo'),
+    ],
+
 ];

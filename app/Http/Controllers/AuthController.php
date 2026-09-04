@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
     public const MAX_INTENTOS = 5;
 
     public const MINUTOS_BLOQUEO = 15;
+
+    /** Dominio Google Workspace permitido (HU-36). */
+    public const GOOGLE_HD = 'cosabe.edu.bo';
 
     public function showLoginForm()
     {
@@ -74,6 +78,66 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    /**
+     * HU-36: redirige a Google para autenticar con cuenta @cosabe.edu.bo.
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')
+            ->with(['hd' => config('services.google.hd', self::GOOGLE_HD)])
+            ->redirect();
+    }
+
+    /**
+     * HU-36: procesa el callback de Google.
+     * - Solo admite el dominio cosabe.edu.bo.
+     * - Vincula por google_id o por email existente (conserva rol y estado).
+     * - Los emails sin cuenta registrada se rechazan (sin auto-creación).
+     */
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'No se pudo completar el acceso con Google. Intente nuevamente.']);
+        }
+
+        $email = strtolower((string) $googleUser->getEmail());
+        $dominio = substr(strrchr($email, '@'), 1);
+
+        if ($dominio !== self::GOOGLE_HD) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Solo se permiten cuentas del dominio @'.self::GOOGLE_HD.'.']);
+        }
+
+        $user = User::where('google_id', $googleUser->getId())->first()
+            ?? User::where('email', $email)->first();
+
+        if (! $user) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Su cuenta Google no está registrada en el sistema. Contacte al administrador.']);
+        }
+
+        if ($user->estado !== 'ACTIVO') {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Su cuenta se encuentra inactiva. Contacte al administrador.']);
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        $user->forceFill([
+            'google_id' => $googleUser->getId(),
+            'avatar' => $googleUser->getAvatar(),
+            'ultimo_acceso' => now(),
+            'intentos_fallidos' => 0,
+            'bloqueado_hasta' => null,
+        ])->save();
+
+        return redirect()->intended(route('dashboard'));
     }
 
     private function registrarIntentoFallido(User $user): void
