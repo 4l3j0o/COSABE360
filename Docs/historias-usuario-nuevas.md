@@ -147,7 +147,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 
 | Sprint | Contenido | Puntos | Estado |
 |---|---|---|---|
-| Sprint 7 | HU-36, HU-37, HU-38 — Identidad Google | 16 | Por iniciar |
+| Sprint 7 | HU-36, HU-37, HU-38 — Identidad Google | 16 | Finalizado |
 | Sprint 8 | HU-39, HU-40, HU-41 — Navegación + Mis cursos | 18 | Por iniciar |
 | Sprint 9 | HU-42, HU-43, HU-44 — Evaluaciones, lista y reportes | 18 | Por iniciar |
 | Sprint 10 | HU-45, HU-46 — RUDE oficial | 11 | Por iniciar |
@@ -200,3 +200,12 @@ PHP en Windows requiere un bundle de certificados CA para verificar HTTPS (OAuth
 
 - `curl.cainfo` y `openssl.cafile` en `php.ini` apuntando a `cacert.pem` descargado en el directorio de PHP.
 - Sin esto, el callback OAuth fallaba con `cURL error 60`.
+
+### Cambios de base de datos (Épica 12)
+
+Tabla `users` — se agregaron columnas (no se eliminó `password`, se conserva para la cuenta de emergencia y migración):
+
+- `google_id` (string, unique, nullable): id del usuario en Google; se autocompleta en el primer acceso.
+- `avatar` (string, nullable): foto de perfil de Google.
+
+El login real se resuelve por `google_id`/`email`; `password` queda como respaldo exclusivo de la cuenta de emergencia (`admin@csb360.local`).
