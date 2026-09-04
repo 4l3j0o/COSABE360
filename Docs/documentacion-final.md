@@ -1641,3 +1641,4 @@ De esta manera, el documento proporciona una visión integral del proyecto y est
 ## Documentos relacionados
 
 - [Diagrama físico de la base de datos](./diagrama-fisico.md)
+- [Nuevas historias de usuario HU-36 a HU-46 (segunda iteración)](./historias-usuario-nuevas.md)
