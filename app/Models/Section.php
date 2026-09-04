@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Section extends Model
 {
-    protected $fillable = ['grade_id', 'nombre', 'teacher_id', 'capacidad', 'estado'];
+    protected $fillable = ['grade_id', 'nombre', 'codigo', 'teacher_id', 'capacidad', 'estado'];
 
     public function grade(): BelongsTo
     {

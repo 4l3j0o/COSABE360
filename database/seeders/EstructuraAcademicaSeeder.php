@@ -69,7 +69,11 @@ class EstructuraAcademicaSeeder extends Seeder
                 foreach ($gradoData['paralelos'] as $paralelo) {
                     $seccion = Section::updateOrCreate(
                         ['grade_id' => $grado->id, 'nombre' => $paralelo],
-                        ['capacidad' => 40, 'estado' => 'ACTIVO']
+                        [
+                            'capacidad' => 40,
+                            'estado' => 'ACTIVO',
+                            'codigo' => $this->codigo($nivel, $grado, $paralelo),
+                        ]
                     );
 
                     if ($añoActivo) {
@@ -91,5 +95,20 @@ class EstructuraAcademicaSeeder extends Seeder
         }
 
         $this->command->info('Estructura académica (niveles, grados, paralelos y cursos) actualizada correctamente.');
+    }
+
+    /**
+     * Código corto del paralelo: [nivel][grado][paralelo].
+     * Ej.: P2C = Primaria, 2do grado, paralelo C. Letra del nivel: I/P/S.
+     */
+    private function codigo(Level $nivel, Grade $grado, string $paralelo): string
+    {
+        $letraNivel = match ($nivel->nombre) {
+            'Inicial en Familia Comunitaria' => 'I',
+            'Primaria Comunitaria Vocacional' => 'P',
+            default => 'S', // Secundaria Comunitaria Productiva
+        };
+
+        return $letraNivel.$grado->orden.mb_substr($paralelo, 0, 1);
     }
 }
