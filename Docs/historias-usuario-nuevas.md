@@ -148,7 +148,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 | Sprint | Contenido | Puntos | Estado |
 |---|---|---|---|
 | Sprint 7 | HU-36, HU-37, HU-38 — Identidad Google | 16 | Finalizado |
-| Sprint 8 | HU-39, HU-40, HU-41 — Navegación + Mis cursos | 18 | Por iniciar |
+| Sprint 8 | HU-39, HU-40 — Navegación (HU-41 en rama panel-docente) | 13 | HU-39/40 Finalizado |
 | Sprint 9 | HU-42, HU-43, HU-44 — Evaluaciones, lista y reportes | 18 | Por iniciar |
 | Sprint 10 | HU-45, HU-46 — RUDE oficial | 11 | Por iniciar |
 | **Total** | **11 historias** | **63** | |
@@ -209,3 +209,8 @@ Tabla `users` — se agregaron columnas (no se eliminó `password`, se conserva 
 - `avatar` (string, nullable): foto de perfil de Google.
 
 El login real se resuelve por `google_id`/`email`; `password` queda como respaldo exclusivo de la cuenta de emergencia (`admin@csb360.local`).
+
+### Cambios de interfaz (Épica 13, HU-39 y HU-40)
+
+- **HU-39** — El sidebar del administrador se reorganizó en secciones colapsables (`<details>`/`<summary>`): Gestión Escolar, Personas, Comunicación, Reportes, Auditoría, Configuración y Facturación SFE. Un script guarda en `localStorage` los grupos abiertos. No cambia ninguna ruta ni permiso.
+- **HU-40** — Nueva vista jerárquica `courses.index` (ruta `GET /cursos` solo admin) que muestra Nivel → Grado → Paralelo → Curso con conteos (materias y estudiantes), con enlaces a la gestión de grados (filtro `level_id`) y paralelos (filtro `grade_id`). El enlace "Cursos" del sidebar ahora apunta a `courses.index` (antes apuntaba a `asistencias.index`).
