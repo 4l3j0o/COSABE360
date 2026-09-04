@@ -37,7 +37,7 @@
                     </div>
                     <div>
                         <p class="text-sm font-medium text-foreground">{{ trim(($announcement->author?->nombre ?? '') . ' ' . ($announcement->author?->apellido ?? '')) ?: 'Administración' }}</p>
-                        <p class="text-xs text-muted-foreground">{{ ucfirst(mb_strtolower($announcement->author?->rol?->nombre ?? 'Dirección')) }} · U.E. San Bernardo</p>
+                        <p class="text-xs text-muted-foreground">{{ ucfirst(mb_strtolower($announcement->author?->rol?->nombre ?? 'Dirección')) }} · CSB 360</p>
                     </div>
                 </div>
 

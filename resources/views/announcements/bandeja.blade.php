@@ -159,7 +159,7 @@
                 document.getElementById('com-titulo').textContent = titulo;
                 document.getElementById('com-contenido').innerHTML = contenido;
                 document.getElementById('com-autor').textContent = autor;
-                document.getElementById('com-meta').textContent = rol + ' · U.E. San Bernardo · ' + fecha;
+                document.getElementById('com-meta').textContent = rol + ' · CSB 360 · ' + fecha;
 
                 var avatar = document.getElementById('com-avatar');
                 avatar.textContent = (autor.charAt(0) || 'U').toUpperCase() + ((autor.split(' ')[1] || '').charAt(0) || '').toUpperCase();

@@ -51,6 +51,9 @@ Route::view('/acceso-denegado', 'errors.403')->name('acceso.denegado');
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    // HU-36: OAuth 2.0 con Google Workspace (dominio cosabe.edu.bo)
+    Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('login.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
 });
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')

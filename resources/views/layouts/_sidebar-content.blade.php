@@ -1,5 +1,5 @@
 <div class="p-5 border-b border-white/20">
-    <h1 class="text-lg font-bold text-white">U.E. San Bernardo</h1>
+    <h1 class="text-lg font-bold text-white">CSB 360</h1>
     <p class="text-xs text-white/70 mt-0.5">Sistema de Gestión Escolar</p>
 </div>
 
