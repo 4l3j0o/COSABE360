@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - U.E. San Bernardo</title>
+    <title>Iniciar Sesión - CSB 360</title>
     <link rel="icon" type="image/png" href="/images/logo-colegio-thumb.png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,10 +24,10 @@
                 <!-- Logo y encabezado -->
                 <div class="flex flex-col items-center text-center mb-12">
                     <div class="w-80 h-28 bg-white rounded-3xl flex items-center justify-center shadow-2xl shadow-green-900/10 p-4 mb-6 transition-all hover:scale-105 duration-500 border border-gray-100">
-                        <img src="/images/logo-colegio.png" alt="U.E. San Bernardo" class="w-full h-full object-contain">
+                        <img src="/images/logo-colegio.png" alt="CSB 360" class="w-full h-full object-contain">
                     </div>
                     <div class="space-y-2">
-                        <h1 class="text-4xl font-extrabold text-black tracking-tight leading-none uppercase font-heading">U.E. San Bernardo</h1>
+                        <h1 class="text-4xl font-extrabold text-black tracking-tight leading-none uppercase font-heading">CSB 360</h1>
                         <p class="text-xs font-bold text-[#0E710E] uppercase tracking-[0.4em]">Sistema de Gestión Escolar</p>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                 <!-- Pie -->
                 <div class="mt-12 text-center">
                     <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-loose">
-                        &copy; {{ date('Y') }} Unidad Educativa San Bernardo <br />
+                        &copy; {{ date('Y') }} CSB 360 <br />
                         <span class="text-gray-300">Sistema de Gestión Escolar</span>
                     </p>
                 </div>
