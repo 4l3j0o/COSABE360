@@ -39,7 +39,7 @@
     @else
         <div class="space-y-4">
             @foreach($levels as $level)
-                <details open class="bg-card border border-border rounded-xl overflow-hidden" data-gesc-group="level-{{ $level->id }}">
+                <details class="bg-card border border-border rounded-xl overflow-hidden" data-gesc-group="level-{{ $level->id }}">
                     <summary class="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border cursor-pointer select-none list-none">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-bold text-foreground uppercase">{{ $level->nombre }}</span>
