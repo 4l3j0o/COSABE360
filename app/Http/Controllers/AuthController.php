@@ -102,7 +102,14 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
-            Log::error('HU-36 Google callback fallido: '.$e->getMessage());
+            Log::error('HU-36 Google callback fallido', [
+                'clase' => get_class($e),
+                'mensaje' => $e->getMessage(),
+                'codigo' => $e->getCode(),
+                'query' => $request->except('code'),
+                'tiene_code' => $request->has('code'),
+                'origen' => $e->getFile().':'.$e->getLine(),
+            ]);
 
             return redirect()->route('login')
                 ->withErrors(['email' => 'No se pudo completar el acceso con Google. Intente nuevamente.']);
