@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\OperationHistoryController;
@@ -390,6 +391,12 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
 // HU-27: Consultar historial de asistencia - todos los roles con filtros
 Route::middleware(['auth'])->group(function () {
     Route::get('/asistencias/historial', [AttendanceController::class, 'historial'])->name('asistencias.historial');
+});
+
+// HU-44: Reportes de asistencia (día, semana, mes, trimestre) PDF/Excel
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/reportes-asistencia', [AttendanceReportController::class, 'index'])->name('reportes.asistencia.index');
+    Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
 });
 
 // HU-TRIB-04: Formulario RUDE RM 0684/2025 completo (Secciones I-VI) + export MinEdu
