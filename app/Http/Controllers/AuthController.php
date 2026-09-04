@@ -87,6 +87,7 @@ class AuthController extends Controller
     public function redirectToGoogle()
     {
         return Socialite::driver('google')
+            ->redirectUrl(url('/auth/google/callback'))
             ->with(['hd' => config('services.google.hd', self::GOOGLE_HD)])
             ->redirect();
     }
@@ -99,8 +100,24 @@ class AuthController extends Controller
      */
     public function handleGoogleCallback(Request $request)
     {
+        if (! $request->has('code')) {
+            Log::warning('HU-36 callback sin code', ['query' => $request->except('code')]);
+
+            $mensaje = $request->filled('error')
+                ? 'Google rechazó el acceso. '.$request->input('error_description', '')
+                : 'Acceso con Google cancelado o incompleto. Intente nuevamente.';
+
+            return redirect()->route('login')
+                ->withErrors(['email' => $mensaje]);
+        }
+
         try {
             $googleUser = Socialite::driver('google')->user();
+        } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
+            Log::error('HU-36 InvalidState (sesión/host)', ['query' => $request->except('code')]);
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'La sesión expiró o cambiaste de host. Abre la página de nuevo y reintenta.']);
         } catch (\Exception $e) {
             Log::error('HU-36 Google callback fallido', [
                 'clase' => get_class($e),
