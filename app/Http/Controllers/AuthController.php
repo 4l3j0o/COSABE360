@@ -24,6 +24,15 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // HU-38: el acceso por contraseña queda restringido a la cuenta de emergencia.
+        $emergencyEmail = (string) config('app.emergency_admin_email');
+        $emergencyEnabled = env('EMERGENCY_LOGIN_ENABLED', app()->environment('local'));
+
+        if (! $emergencyEnabled || strtolower((string) $request->input('email')) !== strtolower($emergencyEmail)) {
+            return redirect()->route('login.google')
+                ->withErrors(['email' => 'El acceso por contraseña está deshabilitado. Inicie sesión con Google.']);
+        }
+
         $credenciales = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
