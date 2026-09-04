@@ -182,6 +182,7 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 
 // Cursos (creación/edición) - solo Administrador
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/cursos', [CourseController::class, 'index'])->name('courses.index');
     Route::post('/cursos', [CourseController::class, 'store'])->name('courses.store');
     Route::put('/cursos/{course}', [CourseController::class, 'update'])->name('courses.update');
     Route::patch('/cursos/{course}/alternar', [CourseController::class, 'toggle'])->name('courses.toggle');

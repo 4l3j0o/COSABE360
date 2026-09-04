@@ -6,6 +6,7 @@ use App\Models\AcademicYear;
 use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\Grade;
+use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Section;
 use Illuminate\Http\Request;
@@ -13,9 +14,42 @@ use Illuminate\Http\Request;
 class CourseController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * HU-40: índice jerárquico Nivel → Grado → Paralelo → Curso.
      */
     public function index()
+    {
+        $activo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        $levels = Level::withCount(['grades' => fn ($q) => $q->where('estado', 'ACTIVO')])
+            ->with([
+                'grades' => function ($q) use ($activo) {
+                    $q->where('estado', 'ACTIVO')
+                        ->withCount(['sections' => fn ($s) => $s->where('estado', 'ACTIVO')])
+                        ->with([
+                            'sections' => function ($s) use ($activo) {
+                                $s->where('estado', 'ACTIVO')
+                                    ->withCount(['courses' => fn ($c) => $c->where('academic_year_id', $activo?->id)])
+                                    ->with([
+                                        'courses' => function ($c) use ($activo) {
+                                            $c->where('academic_year_id', $activo?->id)
+                                                ->withCount(['courseSubjects', 'registrations']);
+                                        },
+                                    ]);
+                            },
+                        ]);
+                },
+            ])
+            ->where('estado', 'ACTIVO')
+            ->orderBy('orden')
+            ->get();
+
+        return view('courses.index', compact('levels', 'activo'));
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function indexLegacy()
     {
         //
     }
