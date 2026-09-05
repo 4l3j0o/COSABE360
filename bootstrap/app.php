@@ -19,5 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // HU05: Si abort 403, mostrar vista acceso-denegado personalizada
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($e->getStatusCode() === 403) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Acceso denegado.'], 403);
+                }
+                return response()->view('errors.403', [], 403);
+            }
+        });
     })->create();

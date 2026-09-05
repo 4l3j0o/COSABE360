@@ -8,20 +8,42 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserHasRole
 {
+    /**
+     * HU05: Control de permisos por rol
+     * - Deniega acceso a módulos no autorizados
+     * - Redirige a /acceso-denegado si URL no autorizada
+     * - Soporta múltiples roles separados por coma: role:Administrador,Secretaría
+     * - Ocultar menús/botones se maneja en Blade con hasAnyRole()/canAccess()
+     */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (! auth()->check()) {
             return redirect()->route('login');
         }
 
-        // Soporta tanto "role:Administrador,Director" (uno con comas) como "role:Administrador" "role:Director" separados
-        $all = collect($roles)
-            ->flatMap(fn ($r) => explode(',', $r))
-            ->map(fn ($r) => trim($r))
-            ->filter()
-            ->toArray();
+$user = auth()->user();
 
-        if (! in_array(auth()->user()->rol->nombre, $all, true)) {
+        // Soporta "Administrador,Secretaría" como un solo parámetro
+        $allowedRoles = [];
+        foreach ($roles as $role) {
+            foreach (explode(',', $role) as $r) {
+                $allowedRoles[] = trim($r);
+            }
+        }
+
+        // Carga relación rol si no está cargada
+        if (! $user->relationLoaded('rol')) {
+            $user->load('rol');
+        }
+
+        $userRole = $user->rol?->nombre;
+
+        if (! in_array($userRole, $allowedRoles, true)) {
+            // Si es petición AJAX/JSON devolver 403, sino redirigir a acceso denegado
+            if ($request->expectsJson()) {
+                abort(403, 'Acceso denegado: rol no autorizado.');
+            }
+
             return redirect()->route('acceso.denegado');
         }
 
