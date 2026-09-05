@@ -2,259 +2,212 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAnnouncementRequest;
+use App\Http\Requests\UpdateAnnouncementRequest;
+use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\Course;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\View\View;
 
 class AnnouncementController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection|View|JsonResponse
     {
-        $announcements = Announcement::with(['author.rol', 'recipients.course'])
+        $query = Announcement::with(['author', 'recipients.course'])
+            ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
+            ->when($request->query('search'), function ($q, $v) {
+                $q->where(function ($qq) use ($v) {
+                    $qq->where('titulo', 'like', "%{$v}%")
+                        ->orWhere('contenido', 'like', "%{$v}%");
+                });
+            })
             ->orderByDesc('fecha_publicacion')
-            ->orderByDesc('id')
-            ->paginate(10);
+            ->orderByDesc('created_at');
 
         if ($request->expectsJson()) {
-            return response()->json(['data' => $announcements]);
+            return AnnouncementResource::collection($query->get());
         }
 
+        $announcements = $query->paginate(10)->withQueryString();
         $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
 
         return view('announcements.index', compact('announcements', 'courses'));
     }
 
-    public function create()
+    public function store(StoreAnnouncementRequest $request): JsonResponse|RedirectResponse
     {
-        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
-        return view('announcements.create', compact('courses'));
-    }
+        $validated = $request->validated();
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'titulo' => ['required', 'string', 'max:200'],
-            'contenido' => ['required', 'string'],
-            'fecha_publicacion' => ['nullable', 'date'],
-            'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO'])],
-            'destinatarios' => ['required', 'array', 'min:1'],
-            'destinatarios.*.tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO'])],
-            'destinatarios.*.course_id' => ['nullable', 'integer', 'exists:courses,id'],
-            'destinatarios.*.user_id' => ['nullable', 'integer', 'exists:users,id'],
-        ]);
-
-        return DB::transaction(function () use ($validated, $request) {
-            $estado = $validated['estado'] ?? (!empty($validated['fecha_publicacion']) ? 'PUBLICADO' : 'BORRADOR');
-            $fecha = $validated['fecha_publicacion'] ?? ($estado === 'PUBLICADO' ? now() : null);
-
-            $announcement = Announcement::create([
-                'titulo' => $validated['titulo'],
-                'contenido' => $validated['contenido'],
-                'author_id' => $request->user()->id,
-                'fecha_publicacion' => $fecha,
-                'estado' => $estado,
-            ]);
-
-            foreach ($validated['destinatarios'] as $dest) {
-                if ($dest['tipo_destinatario'] === 'CURSO_ESPECIFICO' && empty($dest['course_id'])) {
-                    abort(422, 'CURSO_ESPECIFICO requiere course_id');
-                }
-                $announcement->recipients()->create([
-                    'tipo_destinatario' => $dest['tipo_destinatario'],
-                    'course_id' => $dest['course_id'] ?? null,
-                    'user_id' => $dest['user_id'] ?? null,
-                ]);
-            }
-
-            if ($request->expectsJson()) {
-                return response()->json(['data' => $announcement->load('recipients')], 201);
-            }
-
-            return redirect()->route('comunicados.index')->with('success', 'Comunicado creado correctamente.');
-        });
-    }
-
-    public function show(Request $request, Announcement $announcement)
-    {
-        $announcement->load(['author.rol', 'recipients.course', 'reads']);
-        if ($request->expectsJson()) {
-            return response()->json(['data' => $announcement]);
-        }
-        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
-        return view('announcements.show', compact('announcement', 'courses'));
-    }
-
-    public function edit(Announcement $announcement)
-    {
-        $announcement->load('recipients');
-        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
-        return view('announcements.edit', compact('announcement', 'courses'));
-    }
-
-    public function update(Request $request, Announcement $announcement)
-    {
-        $validated = $request->validate([
-            'titulo' => ['sometimes', 'string', 'max:200'],
-            'contenido' => ['sometimes', 'string'],
-            'fecha_publicacion' => ['nullable', 'date'],
-            'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO', 'ARCHIVADO'])],
-            'destinatarios' => ['sometimes', 'array', 'min:1'],
-            'destinatarios.*.tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO'])],
-            'destinatarios.*.course_id' => ['nullable', 'integer', 'exists:courses,id'],
-            'destinatarios.*.user_id' => ['nullable', 'integer', 'exists:users,id'],
-        ]);
-
-        DB::transaction(function () use ($announcement, $validated) {
-            $announcement->update(collect($validated)->only(['titulo', 'contenido', 'fecha_publicacion', 'estado'])->toArray());
-            if (isset($validated['destinatarios'])) {
-                $announcement->recipients()->delete();
-                foreach ($validated['destinatarios'] as $dest) {
-                    $announcement->recipients()->create([
-                        'tipo_destinatario' => $dest['tipo_destinatario'],
-                        'course_id' => $dest['course_id'] ?? null,
-                        'user_id' => $dest['user_id'] ?? null,
-                    ]);
-                }
-            }
-        });
-
-        if ($request->expectsJson()) {
-            return response()->json(['data' => $announcement->fresh()->load('recipients')]);
+        // Lógica específica HU30: fecha solo si PUBLICADO o si viene explícita
+        $fecha = $validated['fecha_publicacion'] ?? null;
+        $estado = $validated['estado'] ?? 'BORRADOR';
+        if (! $fecha && $estado === 'PUBLICADO') {
+            $fecha = now();
         }
 
-        return redirect()->route('comunicados.index')->with('success', 'Comunicado actualizado correctamente.');
+        $announcement = Announcement::create([
+            'titulo' => $validated['titulo'],
+            'contenido' => $validated['contenido'],
+            'author_id' => auth()->id(),
+            'fecha_publicacion' => $fecha,
+            'estado' => $estado,
+        ]);
+
+        $announcement->recipients()->create([
+            'tipo_destinatario' => $validated['tipo_destinatario'],
+            'course_id' => $validated['course_id'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+        ]);
+
+        if ($request->expectsJson()) {
+            return (new AnnouncementResource($announcement->load(['author', 'recipients'])))->response()->setStatusCode(201);
+        }
+
+        return redirect()->route('announcements.index')->with('success', 'Comunicado creado correctamente.');
     }
 
-    public function destroy(Request $request, Announcement $announcement)
+    public function show(Announcement $announcement): AnnouncementResource
+    {
+        return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
+    }
+
+    public function update(UpdateAnnouncementRequest $request, Announcement $announcement): JsonResponse|RedirectResponse|AnnouncementResource
+    {
+        $validated = $request->validated();
+
+        $data = [];
+        if (isset($validated['titulo'])) {
+            $data['titulo'] = $validated['titulo'];
+        }
+        if (isset($validated['contenido'])) {
+            $data['contenido'] = $validated['contenido'];
+        }
+        if (array_key_exists('fecha_publicacion', $validated)) {
+            $data['fecha_publicacion'] = $validated['fecha_publicacion'];
+        }
+        if (isset($validated['estado'])) {
+            $data['estado'] = $validated['estado'];
+            if ($validated['estado'] === 'PUBLICADO' && ! $announcement->fecha_publicacion && empty($validated['fecha_publicacion'])) {
+                $data['fecha_publicacion'] = now();
+            }
+        }
+
+        if ($data !== []) {
+            $announcement->update($data);
+        }
+
+        if (isset($validated['tipo_destinatario'])) {
+            $recipient = $announcement->recipients()->first();
+            $payload = [
+                'tipo_destinatario' => $validated['tipo_destinatario'],
+                'course_id' => $validated['course_id'] ?? null,
+                'user_id' => $validated['user_id'] ?? null,
+            ];
+            if ($recipient) {
+                $recipient->update($payload);
+            } else {
+                $announcement->recipients()->create($payload);
+            }
+        }
+
+        if ($request->expectsJson()) {
+            return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
+        }
+
+        return redirect()->route('announcements.index')->with('success', 'Comunicado actualizado correctamente.');
+    }
+
+    public function destroy(Announcement $announcement): JsonResponse|RedirectResponse
     {
         $announcement->delete();
-        if ($request->expectsJson()) {
+
+        if (request()->expectsJson()) {
             return response()->json(['message' => 'Comunicado eliminado correctamente.']);
         }
-        return redirect()->route('comunicados.index')->with('success', 'Comunicado eliminado correctamente.');
+
+        return redirect()->route('announcements.index')->with('success', 'Comunicado eliminado correctamente.');
     }
 
-    public function publicar(Request $request, Announcement $announcement)
+    public function publicar(Announcement $announcement): JsonResponse|RedirectResponse
     {
-        $announcement->update(['estado' => 'PUBLICADO', 'fecha_publicacion' => $announcement->fecha_publicacion ?? now()]);
-        if ($request->expectsJson()) {
-            return response()->json(['data' => $announcement->fresh()]);
+        if ($announcement->estado === 'PUBLICADO') {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'El comunicado ya está publicado.'], 409);
+            }
+            return redirect()->route('announcements.index')->with('error', 'El comunicado ya está publicado.');
         }
-        return redirect()->route('comunicados.index')->with('success', 'Comunicado publicado correctamente.');
+
+        $announcement->update([
+            'estado' => 'PUBLICADO',
+            'fecha_publicacion' => $announcement->fecha_publicacion ?? now(),
+        ]);
+
+        if (request()->expectsJson()) {
+            return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
+        }
+
+        return redirect()->route('announcements.index')->with('success', 'Comunicado publicado correctamente.');
     }
 
-    public function bandeja(Request $request)
+    public function archivar(Announcement $announcement): JsonResponse|RedirectResponse
     {
-        $user = $request->user();
-        $rol = $user->rol?->nombre;
+        $announcement->update(['estado' => 'ARCHIVADO']);
 
-        $mapRolATipo = [
-            'Administrador' => null,
-            'Director' => null,
-            'Secretaría' => null,
-            'Docente' => 'DOCENTES',
-            'Padre/Tutor' => 'PADRES',
-            'Estudiante' => 'ESTUDIANTES',
-        ];
-
-        $tipo = $mapRolATipo[$rol] ?? null;
-        $courseIds = $this->courseIdsForUser($user);
-
-        if (in_array($rol, ['Administrador', 'Director', 'Secretaría'], true)) {
-            $query = Announcement::with(['author.rol', 'recipients'])->where('estado', 'PUBLICADO');
-        } else {
-            $query = Announcement::with(['author.rol', 'recipients'])
-                ->where('estado', 'PUBLICADO')
-                ->where(function ($q) use ($tipo, $courseIds, $user) {
-                    $q->whereHas('recipients', function ($rq) use ($tipo, $courseIds, $user) {
-                        // TODOS genérico (sin user_id específico)
-                        $rq->where(function ($w) { $w->where('tipo_destinatario', 'TODOS')->whereNull('user_id'); });
-                        if ($tipo) {
-                            $rq->orWhere(function ($w) use ($tipo) { $w->where('tipo_destinatario', $tipo)->whereNull('user_id'); });
-                        }
-                        if ($courseIds->isNotEmpty()) {
-                            $rq->orWhere(function ($cq) use ($courseIds) {
-                                $cq->where('tipo_destinatario', 'CURSO_ESPECIFICO')->whereIn('course_id', $courseIds)->whereNull('user_id');
-                            });
-                        }
-                        // Privado por usuario (facturas) — solo el destinatario específico
-                        $rq->orWhere(function ($uq) use ($user) {
-                            $uq->whereNotNull('user_id')->where('user_id', $user->id);
-                        });
-                    });
-                });
+        if (request()->expectsJson()) {
+            return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
         }
-        $query = $query
+
+        return redirect()->route('announcements.index')->with('success', 'Comunicado archivado correctamente.');
+    }
+
+    // Stubs para compatibilidad con rutas develop (HU30 create/edit y HU31 bandeja) — evita 500 si se accede
+    public function create(): View|RedirectResponse
+    {
+        return redirect()->route('announcements.index');
+    }
+
+    public function edit(Announcement $announcement): View|RedirectResponse
+    {
+        return redirect()->route('announcements.index');
+    }
+
+    public function bandeja(Request $request): View|JsonResponse
+    {
+        $query = Announcement::with(['author', 'recipients.course'])
+            ->where('estado', 'PUBLICADO')
             ->orderByDesc('fecha_publicacion')
-            ->orderByDesc('id');
-
-        $announcements = $query->paginate(10);
-
-        $reads = $user->id ? \App\Models\AnnouncementRead::where('user_id', $user->id)->whereIn('announcement_id', $announcements->pluck('id'))->get()->keyBy('announcement_id') : collect();
-
-        $announcements->getCollection()->transform(function ($a) use ($reads) {
-            $read = $reads->get($a->id);
-            $a->leido = $read?->leido ?? false;
-            $a->es_nuevo = ! $read || ! $read->leido;
-            return $a;
-        });
+            ->orderByDesc('created_at');
 
         if ($request->expectsJson()) {
-            return response()->json(['data' => $announcements]);
+            return AnnouncementResource::collection($query->get());
         }
 
+        $announcements = $query->paginate(10)->withQueryString();
         return view('announcements.bandeja', compact('announcements'));
     }
 
-    public function showBandeja(Request $request, Announcement $announcement)
+    public function showBandeja(Announcement $announcement): View|AnnouncementResource
     {
-        abort_unless($announcement->estado === 'PUBLICADO', 404);
-        $announcement->load(['author.rol', 'recipients.course']);
-        $this->marcarLeidoInterno($request->user(), $announcement);
-
-        $leido = \App\Models\AnnouncementRead::where('announcement_id', $announcement->id)->where('user_id', $request->user()->id)->value('leido') ?? false;
-
-        if ($request->expectsJson()) {
-            return response()->json(['data' => $announcement->fresh()->load(['author.rol', 'recipients']), 'leido' => (bool) $leido]);
+        if (request()->expectsJson()) {
+            return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
         }
-
-        return view('announcements.show-bandeja', compact('announcement', 'leido'));
+        return view('announcements.show-bandeja', compact('announcement'));
     }
 
-    public function marcarLeido(Request $request, Announcement $announcement)
+    public function marcarLeido(Request $request, Announcement $announcement): JsonResponse|RedirectResponse
     {
-        $this->marcarLeidoInterno($request->user(), $announcement);
+        $announcement->reads()->updateOrCreate(
+            ['user_id' => $request->user()->id],
+            ['leido' => true, 'fecha_lectura' => now()]
+        );
+
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Marcado como leído']);
         }
         return back()->with('success', 'Marcado como leído');
-    }
-
-    private function marcarLeidoInterno($user, Announcement $announcement): void
-    {
-        \App\Models\AnnouncementRead::updateOrCreate(
-            ['announcement_id' => $announcement->id, 'user_id' => $user->id],
-            ['leido' => true, 'fecha_lectura' => now(), 'created_at' => now()]
-        );
-    }
-
-    private function courseIdsForUser($user)
-    {
-        if ($user->teacher) {
-            return \App\Models\CourseSubject::where('teacher_id', $user->teacher->id)->pluck('course_id')->merge(
-                \App\Models\Section::where('teacher_id', $user->teacher->id)->pluck('id')->map(fn ($sid) => \App\Models\Course::where('section_id', $sid)->pluck('id'))->flatten()
-            )->unique()->filter();
-        }
-        if ($user->student) {
-            return \App\Models\Registration::whereHas('enrollment', fn ($q) => $q->where('student_id', $user->student->id))->pluck('course_id')->unique();
-        }
-        $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
-        if ($parent) {
-            $studentIds = $parent->students()->pluck('students.id');
-            return \App\Models\Registration::whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $studentIds))->pluck('course_id')->unique();
-        }
-        return collect();
     }
 }

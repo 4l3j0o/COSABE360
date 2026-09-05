@@ -8,7 +8,7 @@
 @section('contenido')
     <div class="max-w-3xl">
         <div class="mb-6">
-            <a href="{{ route('comunicados.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="{{ route('announcements.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Volver a comunicados
             </a>
@@ -69,7 +69,7 @@
                     </form>
                 @endif
                 <button id="btn-editar-comunicado" type="button" onclick="activarEdicionComunicado()" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer">Editar</button>
-                <a href="{{ route('comunicados.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-muted transition-colors">Volver</a>
+                <a href="{{ route('announcements.index') }}" class="px-4 py-2.5 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-muted transition-colors">Volver</a>
             </div>
         </div>
 

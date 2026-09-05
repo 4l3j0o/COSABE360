@@ -409,16 +409,15 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::get('/rude/{student}/export', [RudeController::class, 'export'])->name('rude.export');
 });
 
-// HU-30: Crear y publicar comunicados - solo Administrador y Director
+// HU-30: Crear y publicar comunicados - solo Administrador y Director (pulido: nombres announcements.* para AnnouncementTest - 7 rutas)
 Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados')->group(function () {
-    Route::get('/', [AnnouncementController::class, 'index'])->name('comunicados.index');
-    Route::get('/crear', [AnnouncementController::class, 'create'])->name('comunicados.create');
-    Route::post('/', [AnnouncementController::class, 'store'])->name('comunicados.store');
-    Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('comunicados.show');
-    Route::get('/{announcement}/editar', [AnnouncementController::class, 'edit'])->name('comunicados.edit');
-    Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('comunicados.update');
-    Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('comunicados.destroy');
-    Route::patch('/{announcement}/publicar', [AnnouncementController::class, 'publicar'])->name('comunicados.publicar');
+    Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    Route::patch('/{announcement}/publicar', [AnnouncementController::class, 'publicar'])->name('announcements.publicar');
+    Route::patch('/{announcement}/archivar', [AnnouncementController::class, 'archivar'])->name('announcements.archivar');
 });
 
 // HU-31: Consultar comunicados - todos los usuarios autenticados

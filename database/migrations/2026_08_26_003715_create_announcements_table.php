@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamp('fecha_publicacion')->nullable();
             $table->enum('estado', ['BORRADOR', 'PUBLICADO', 'ARCHIVADO'])->default('BORRADOR');
             $table->timestamps();
+
             $table->index('author_id');
             $table->index('estado');
             $table->index('fecha_publicacion');

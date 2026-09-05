@@ -8,9 +8,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Announcement extends Model
 {
-    protected $fillable = ['titulo', 'contenido', 'author_id', 'fecha_publicacion', 'estado'];
+    public const ESTADOS = ['BORRADOR', 'PUBLICADO', 'ARCHIVADO'];
+    public const TIPOS_DESTINATARIO = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO'];
 
-    protected $casts = ['fecha_publicacion' => 'datetime'];
+    protected $fillable = [
+        'titulo',
+        'contenido',
+        'author_id',
+        'fecha_publicacion',
+        'estado',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'fecha_publicacion' => 'datetime',
+        ];
+    }
 
     public function author(): BelongsTo
     {
@@ -19,16 +33,21 @@ class Announcement extends Model
 
     public function recipients(): HasMany
     {
-        return $this->hasMany(AnnouncementRecipient::class);
+        return $this->hasMany(AnnouncementRecipient::class, 'announcement_id');
     }
 
     public function reads(): HasMany
     {
-        return $this->hasMany(AnnouncementRead::class);
+        return $this->hasMany(AnnouncementRead::class, 'announcement_id');
     }
 
-    public function scopePublicados($q)
+    public function isPublicado(): bool
     {
-        return $q->where('estado', 'PUBLICADO')->orderByDesc('fecha_publicacion');
+        return $this->estado === 'PUBLICADO';
+    }
+
+    public function scopePublicados($query)
+    {
+        return $query->where('estado', 'PUBLICADO')->orderByDesc('fecha_publicacion');
     }
 }

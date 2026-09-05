@@ -14,11 +14,14 @@ class EnsureUserHasRole
             return redirect()->route('login');
         }
 
-        // Soporte para "role:Admin,Secretaría" (variadic) y "role:Admin,Secretaría" como string único
-        $roles = collect($roles)->flatMap(fn ($r) => explode(',', $r))->map(fn ($r) => trim($r))->filter()->toArray();
-        $userRole = auth()->user()->rol?->nombre ?? 'NULL';
+        // Soporta tanto "role:Administrador,Director" (uno con comas) como "role:Administrador" "role:Director" separados
+        $all = collect($roles)
+            ->flatMap(fn ($r) => explode(',', $r))
+            ->map(fn ($r) => trim($r))
+            ->filter()
+            ->toArray();
 
-        if (! in_array($userRole, $roles, true)) {
+        if (! in_array(auth()->user()->rol->nombre, $all, true)) {
             return redirect()->route('acceso.denegado');
         }
 
