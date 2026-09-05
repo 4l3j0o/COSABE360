@@ -25,6 +25,7 @@ class TaxConfigurationController extends Controller
                 'leyenda_iva_exento' => '',
                 'leyenda_it_exento' => '',
                 'leyenda_ley070' => '',
+                'monto_mensualidad' => 0,
                 'estado' => 'ACTIVO',
             ]
         );
@@ -48,6 +49,7 @@ class TaxConfigurationController extends Controller
             'leyenda_iva_exento' => ['required', 'string', 'max:255'],
             'leyenda_it_exento' => ['required', 'string', 'max:255'],
             'leyenda_ley070' => ['required', 'string', 'max:255'],
+            'monto_mensualidad' => ['required', 'numeric', 'min:0'],
             'estado' => ['required', 'in:ACTIVO,INACTIVO'],
         ]);
 

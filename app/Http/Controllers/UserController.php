@@ -6,14 +6,32 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('rol')->where('estado', '!=', 'ELIMINADO')->orderBy('nombre')->paginate(10);
+        $users = User::with('rol')
+            ->where('estado', '!=', 'ELIMINADO')
+            ->when($request->query('buscar'), function ($query, $buscar) {
+                $buscable = addcslashes($buscar, '%_');
+                $query->where(function ($q) use ($buscable) {
+                    $q->where('nombre', 'like', "%{$buscable}%")
+                        ->orWhere('apellido', 'like', "%{$buscable}%")
+                        ->orWhere('email', 'like', "%{$buscable}%")
+                        ->orWhere('telefono', 'like', "%{$buscable}%")
+                        ->orWhereHas('rol', fn ($r) => $r->where('nombre', 'like', "%{$buscable}%"));
+                });
+            })
+            ->when($request->query('rol'), fn ($q, $v) => $q->whereHas('rol', fn ($r) => $r->where('roles.id', $v)))
+            ->orderBy('nombre')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('users.index', compact('users'));
+        $roles = Role::orderBy('id')->get();
+
+        return view('users.index', compact('users', 'roles'));
     }
 
     public function create()
@@ -45,6 +63,16 @@ class UserController extends Controller
         ]);
     }
 
+    public function show(User $user): View
+    {
+        $user->load('rol');
+
+        return view('users.show', [
+            'user' => $user,
+            'roles' => Role::orderBy('id')->get(),
+        ]);
+    }
+
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -69,7 +97,7 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('users.show', $user)->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function toggle(User $user)

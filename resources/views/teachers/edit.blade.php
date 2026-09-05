@@ -13,7 +13,7 @@
             <div class="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border rounded-t-2xl bg-card">
                 <div>
                     <h2 class="text-base font-bold text-foreground">Editar: {{ $teacher->apellidos }}, {{ $teacher->nombres }}</h2>
-                    <p class="text-xs text-muted-foreground mt-0.5">Código: <span class="font-mono font-semibold text-primary">{{ $teacher->codigo }}</span> · Estado: <span class="{{ $teacher->estaActivo() ? 'text-success' : 'text-error' }} font-medium">{{ $teacher->estado }}</span></p>
+                    <p class="text-xs text-muted-foreground mt-0.5">Código: <span class="font-mono font-semibold text-primary">{{ $teacher->codigo }}</span> · Estado: <span class="{{ $teacher->estaActivo() ? 'text-success' : 'text-error' }} font-medium">{{ mb_strtolower($teacher->estado) }}</span></p>
                 </div>
                 <a href="{{ route('teachers.index') }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -49,8 +49,8 @@
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado <span class="text-error">*</span></label>
                             <select name="estado" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <option value="ACTIVO" {{ old('estado', $teacher->estado) === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                                <option value="INACTIVO" {{ old('estado', $teacher->estado) === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                                <option value="ACTIVO" {{ old('estado', $teacher->estado) === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                                <option value="INACTIVO" {{ old('estado', $teacher->estado) === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
                             </select>
                             @error('estado') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -92,8 +92,8 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico</label>
-                            <input type="email" name="correo" value="{{ old('correo', $teacher->correo) }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            @error('correo') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            <input type="email" name="email" value="{{ old('email', $teacher->email) }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>

@@ -3,9 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schedule extends Model
 {
+    public const DIAS_LABEL = [
+        'LUNES' => 'Lunes',
+        'MARTES' => 'Martes',
+        'MIERCOLES' => 'Miércoles',
+        'JUEVES' => 'Jueves',
+        'VIERNES' => 'Viernes',
+        'SABADO' => 'Sábado',
+    ];
+
     protected $fillable = [
         'course_id',
         'subject_id',
@@ -14,6 +24,7 @@ class Schedule extends Model
         'hora_inicio',
         'hora_fin',
         'aula',
+        'estado',
     ];
 
     protected $casts = [
@@ -21,18 +32,23 @@ class Schedule extends Model
         'hora_fin' => 'datetime:H:i:s',
     ];
 
-    public function teacher()
+    public function scopeActivos($query)
     {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
+        return $query->where('estado', 'ACTIVO');
     }
 
-    public function subject()
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'subject_id');
     }
 
-    public function course()
+    public function teacher(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 }

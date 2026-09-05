@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -24,6 +25,8 @@ class User extends Authenticatable
         'intentos_fallidos',
         'bloqueado_hasta',
         'ultimo_acceso',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -43,6 +46,16 @@ class User extends Authenticatable
     public function rol(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function student(): HasOne
+    {
+        return $this->hasOne(Student::class, 'user_id');
+    }
+
+    public function teacher(): HasOne
+    {
+        return $this->hasOne(Teacher::class, 'user_id');
     }
 
     public function esAdmin(): bool

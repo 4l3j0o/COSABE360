@@ -36,7 +36,7 @@ class AsignacionTestDataSeeder extends Seeder
         );
 
         $course = Course::firstOrCreate(
-            ['grade_id' => $grade->id, 'section_id' => $section->id, 'gestion_id' => $year->id],
+            ['grade_id' => $grade->id, 'section_id' => $section->id, 'academic_year_id' => $year->id],
             ['nombre' => '1ro A - 2026', 'estado' => 'ACTIVO']
         );
 
@@ -55,7 +55,7 @@ class AsignacionTestDataSeeder extends Seeder
             [
                 'codigo' => 'DOC001', 'nombres' => 'Pedro', 'apellidos' => 'García',
                 'especialidad' => 'Matemáticas', 'tipo_documento' => 'CI', 'complemento' => '',
-                'telefono' => '70000000', 'correo' => 'docente1@sanber.edu.bo', 'estado' => 'ACTIVO',
+                'telefono' => '70000000', 'email' => 'docente1@sanber.edu.bo', 'estado' => 'ACTIVO',
             ]
         );
 
@@ -64,7 +64,7 @@ class AsignacionTestDataSeeder extends Seeder
             [
                 'codigo' => 'DOC002', 'nombres' => 'Ana', 'apellidos' => 'Rojas',
                 'especialidad' => 'Lenguaje', 'tipo_documento' => 'CI', 'complemento' => '',
-                'telefono' => '70000001', 'correo' => 'docente2@sanber.edu.bo', 'estado' => 'ACTIVO',
+                'telefono' => '70000001', 'email' => 'docente2@sanber.edu.bo', 'estado' => 'ACTIVO',
             ]
         );
 

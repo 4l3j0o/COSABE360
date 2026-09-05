@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
@@ -27,7 +31,7 @@ class TeacherController extends Controller
         }
 
         $teachers = $query->orderBy('apellidos')->orderBy('nombres')
-            ->paginate(15)->withQueryString();
+            ->paginate(10)->withQueryString();
         return view('teachers.index', compact('teachers'));
     }
 
@@ -46,7 +50,7 @@ class TeacherController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento' => ['nullable', 'string', 'max:5'],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'correo' => ['nullable', 'email', 'max:150', 'unique:teachers,correo'],
+            'email' => ['nullable', 'email', 'max:150', 'unique:teachers,email'],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
@@ -57,14 +61,39 @@ class TeacherController extends Controller
             return back()->withErrors(['numero_documento' => 'El documento ya está registrado.'])->withInput();
         }
 
-        Teacher::create($validated);
+        DB::transaction(function () use ($validated) {
+            $teacher = Teacher::create($validated);
 
-        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Código: ' . $validated['codigo']);
+            if (! empty($validated['email'])) {
+                $user = User::where('email', $validated['email'])->first();
+
+                if (! $user) {
+                    $user = User::create([
+                        'nombre' => $validated['nombres'],
+                        'apellido' => $validated['apellidos'],
+                        'email' => $validated['email'],
+                        'password' => Hash::make('password123'),
+                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'estado' => 'ACTIVO',
+                    ]);
+                }
+
+                $teacher->update(['user_id' => $user->id]);
+            }
+        });
+
+        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Código: ' . $validated['codigo'] . ' | Usuario creado con email y contraseña por defecto: password123');
     }
 
     public function edit(Teacher $teacher)
     {
         return view('teachers.edit', compact('teacher'));
+    }
+
+    public function show(Teacher $teacher)
+    {
+        $teacher->load('user.rol');
+        return view('teachers.show', compact('teacher'));
     }
 
     public function update(Request $request, Teacher $teacher)
@@ -77,7 +106,7 @@ class TeacherController extends Controller
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento' => ['nullable', 'string', 'max:5'],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'correo' => ['nullable', 'email', 'max:150', Rule::unique('teachers', 'correo')->ignore($teacher->id)],
+            'email' => ['nullable', 'email', 'max:150', Rule::unique('teachers', 'email')->ignore($teacher->id)],
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
@@ -92,7 +121,34 @@ class TeacherController extends Controller
 
         $teacher->update($validated);
 
-        return redirect()->route('teachers.index')->with('success', 'Docente actualizado correctamente.');
+        // Sincronizar usuario con el nuevo email si existe
+        if (! empty($validated['email'])) {
+            if ($teacher->user_id) {
+                $user = User::find($teacher->user_id);
+                if ($user) {
+                    $user->update([
+                        'email' => $validated['email'],
+                        'nombre' => $validated['nombres'],
+                        'apellido' => $validated['apellidos'],
+                    ]);
+                }
+            } else {
+                $user = User::where('email', $validated['email'])->first();
+                if (! $user) {
+                    $user = User::create([
+                        'nombre' => $validated['nombres'],
+                        'apellido' => $validated['apellidos'],
+                        'email' => $validated['email'],
+                        'password' => Hash::make('password123'),
+                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'estado' => 'ACTIVO',
+                    ]);
+                }
+                $teacher->update(['user_id' => $user->id]);
+            }
+        }
+
+        return redirect()->route('teachers.show', $teacher)->with('success', 'Docente actualizado correctamente.');
     }
 
     public function toggle(Teacher $teacher)

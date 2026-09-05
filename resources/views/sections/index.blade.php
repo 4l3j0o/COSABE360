@@ -11,9 +11,8 @@
             <h1 class="text-xl font-bold text-foreground">Paralelos</h1>
             <p class="text-sm text-muted-foreground">Gestión de paralelos por grado (A, B, C, etc.)</p>
         </div>
-        <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+        <button onclick="openModal('modal-create')" title="Nuevo Paralelo" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nuevo Paralelo
         </button>
     </div>
 
@@ -34,8 +33,8 @@
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
+                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
         </form>
@@ -91,12 +90,12 @@
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$section->estado] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $section->estado }}
+{{ mb_strtolower($section->estado) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grade_id }}, '{{ $section->nombre }}', {{ $section->responsable_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
+                                        <button onclick="editarParalelo({{ $section->id }}, {{ $section->grade_id }}, '{{ $section->nombre }}', {{ $section->teacher_id ?? 'null' }}, {{ $section->capacidad }}, '{{ $section->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
                                         <form method="POST" action="{{ route('sections.destroy', $section) }}" onsubmit="return confirm('¿Estás seguro de eliminar este paralelo?')" class="inline">
@@ -136,13 +135,15 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Paralelo</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">Seleccionar grado...</option>
-                                    @foreach($grados as $grado)
-                                        <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="grade-create"
+                                    name="grade_id"
+                                    label="Grado"
+                                    required
+                                    placeholder="Buscar grado..."
+                                    searchHint="Escriba para buscar por nivel o grado."
+                                    :items="$grados->map(fn($g) => ['value' => $g->id, 'label' => $g->level->nombre . ' · ' . $g->nombre])"
+                                />
                                 @error('grade_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -156,14 +157,16 @@
                                 @error('capacidad') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="responsable_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">— Sin asignar —</option>
-                                    @foreach($docentes as $docente)
-                                        <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
-                                    @endforeach
-                                </select>
-                                @error('responsable_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                <x-forms.picker
+                                    id="teacher-create"
+                                    name="teacher_id"
+                                    label="Docente Responsable"
+                                    placeholder="Buscar docente..."
+                                    searchHint="Opcional. Escriba para buscar por nombre o especialidad."
+                                    especialidad
+                                    :items="$docentes->map(fn($d) => ['value' => $d->id, 'label' => $d->apellidos . ' ' . $d->nombres, 'subtitulo' => $d->especialidad ?? ''])"
+                                />
+                                @error('teacher_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
@@ -192,12 +195,14 @@
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Paralelo</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Grado <span class="text-error">*</span></label>
-                                <select name="grade_id" id="edit-grade_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    @foreach($grados as $grado)
-                                        <option value="{{ $grado->id }}">{{ $grado->level->nombre }} · {{ $grado->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="grade-edit"
+                                    name="grade_id"
+                                    label="Grado"
+                                    required
+                                    placeholder="Buscar grado..."
+                                    :items="$grados->map(fn($g) => ['value' => $g->id, 'label' => $g->level->nombre . ' · ' . $g->nombre])"
+                                />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo <span class="text-error">*</span></label>
@@ -208,13 +213,15 @@
                                 <input type="number" name="capacidad" id="edit-capacidad" min="1" max="255" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                             </div>
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Docente Responsable</label>
-                                <select name="responsable_id" id="edit-responsable_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">— Sin asignar —</option>
-                                    @foreach($docentes as $docente)
-                                        <option value="{{ $docente->id }}">{{ $docente->apellidos }} {{ $docente->nombres }}</option>
-                                    @endforeach
-                                </select>
+                                <x-forms.picker
+                                    id="teacher-edit"
+                                    name="teacher_id"
+                                    label="Docente Responsable"
+                                    placeholder="Buscar docente..."
+                                    especialidad
+                                    :items="$docentes->map(fn($d) => ['value' => $d->id, 'label' => $d->apellidos . ' ' . $d->nombres, 'subtitulo' => $d->especialidad ?? ''])"
+                                />
+                                <button type="button" onclick="limpiarDocenteEdit()" class="text-xs text-muted-foreground underline mt-1 cursor-pointer">Quitar asignación</button>
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado</label>
@@ -243,12 +250,15 @@
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
+        function limpiarDocenteEdit() {
+            setPickerValor('teacher-edit', '');
+        }
         function editarParalelo(id, gradoId, nombre, responsableId, capacidad, estado) {
             document.getElementById('form-edit').action = '/paralelos/' + id;
-            document.getElementById('edit-grade_id').value = gradoId;
+            setPickerValor('grade-edit', gradoId);
             document.getElementById('edit-nombre').value = nombre;
             document.getElementById('edit-capacidad').value = capacidad;
-            document.getElementById('edit-responsable_id').value = responsableId || '';
+            setPickerValor('teacher-edit', responsableId || '');
             document.getElementById('edit-estado').value = estado;
             openModal('modal-edit');
         }

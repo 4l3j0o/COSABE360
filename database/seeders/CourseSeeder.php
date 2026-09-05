@@ -14,24 +14,27 @@ class CourseSeeder extends Seeder
         $year = DB::table('academic_years')->where('estado', 'ACTIVA')->first() ?? DB::table('academic_years')->first();
 
         if ($grades->count() > 0 && $sections->count() > 0 && $year) {
-            foreach ($grades->take(3) as $grade) {
-                foreach ($sections->take(2) as $section) {
+            $aulaSiguiente = 10;
+            foreach ($grades as $grade) {
+                foreach ($sections->where('grade_id', $grade->id) as $section) {
                     $exists = DB::table('courses')->where([
                         'grade_id' => $grade->id,
                         'section_id' => $section->id,
-                        'gestion_id' => $year->id,
+                        'academic_year_id' => $year->id,
                     ])->exists();
 
                     if (!$exists) {
                         DB::table('courses')->insert([
                             'grade_id' => $grade->id,
                             'section_id' => $section->id,
-                            'gestion_id' => $year->id,
+                            'academic_year_id' => $year->id,
                             'nombre' => $grade->nombre . ' "' . $section->nombre . '" - ' . $year->nombre,
+                            'aula' => (string) $aulaSiguiente,
                             'estado' => 'ACTIVO',
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+                        $aulaSiguiente++;
                     }
                 }
             }

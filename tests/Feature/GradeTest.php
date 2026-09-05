@@ -183,7 +183,7 @@ class GradeTest extends TestCase
         $cursoId = \DB::table('courses')->insertGetId([
             'grade_id' => $grade->id,
             'section_id' => $sectionId,
-            'gestion_id' => $gestionId,
+            'academic_year_id' => $gestionId,
             'nombre' => '4to Primaria A',
             'estado' => 'ACTIVO',
             'created_at' => now(),
@@ -238,7 +238,7 @@ class GradeTest extends TestCase
         $response = $this->deleteJson("/grados/{$grade->id}");
 
         $response->assertOk();
-        $this->assertDatabaseMissing('grades', ['id' => $grade->id]);
+        $this->assertDatabaseHas('grades', ['id' => $grade->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_lista_grados_filtrando_por_nivel(): void

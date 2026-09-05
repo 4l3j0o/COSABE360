@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Student extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -27,7 +27,7 @@ class Student extends Model
         'complemento',
         'direccion',
         'telefono',
-        'correo',
+        'email',
         'fotografia',
         'idioma',
         'cultura',
@@ -49,12 +49,12 @@ class Student extends Model
 
     public function rudeRecord(): HasOne
     {
-        return $this->hasOne(StudentRudeRecord::class, 'estudiante_id');
+        return $this->hasOne(StudentRudeRecord::class, 'student_id');
     }
 
     public function medicalRecord(): HasOne
     {
-        return $this->hasOne(MedicalRecord::class, 'estudiante_id');
+        return $this->hasOne(MedicalRecord::class, 'student_id');
     }
 
     public function parentGuardians(): BelongsToMany
@@ -66,12 +66,41 @@ class Student extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'student_id');
+    }
+
+    public function registrations(): HasManyThrough
+    {
+        return $this->hasManyThrough(Registration::class, Enrollment::class, 'student_id', 'enrollment_id');
+    }
+
+    public function activeRegistration(): ?Registration
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        if (! $periodo) {
+            return null;
+        }
+
+        return $this->registrations()
+            ->whereHas('enrollment', function ($q) use ($periodo) {
+                $q->where('academic_year_id', $periodo->id)
+                    ->where('enrollments.estado', 'COMPLETADA');
+            })
+            ->where('registrations.estado', 'ACTIVA')
+            ->with('course')
+            ->latest('id')
+            ->first();
+    }
+
+    public function activeCourse(): ?Course
+    {
+        return $this->activeRegistration()?->course;
     }
 
     public function documents(): HasMany
     {
-        return $this->hasMany(StudentDocument::class);
+        return $this->hasMany(StudentDocument::class, 'student_id');
     }
 
     public function gradeScores(): HasMany

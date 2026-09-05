@@ -9,9 +9,9 @@
             'Administrador' => 'dashboard.partials._sidebar-admin',
             'Director' => 'dashboard.director',
             'Secretaría' => 'dashboard.secretaria',
-            'Docente' => 'dashboard.docente',
-            'Padre/Tutor' => 'dashboard.padre',
-            'Estudiante' => 'dashboard.estudiante',
+            'Docente' => 'dashboard.partials._sidebar-docente',
+            'Padre/Tutor' => 'dashboard.partials._sidebar-tutor',
+            'Estudiante' => 'dashboard.partials._sidebar-estudiante',
         ];
         $sidebarView = $sidebarMap[$rol] ?? 'dashboard.partials._sidebar-admin';
     @endphp

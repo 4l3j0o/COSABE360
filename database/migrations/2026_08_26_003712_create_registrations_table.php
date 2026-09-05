@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('course_id')->constrained('courses')->restrictOnDelete();
             $table->date('fecha')->nullable();
             $table->decimal('monto_mensual', 10, 2)->nullable();
+            $table->text('observaciones')->nullable();
             $table->enum('estado', ['ACTIVA', 'INACTIVA', 'CANCELADA'])->default('ACTIVA');
             $table->timestamps();
 

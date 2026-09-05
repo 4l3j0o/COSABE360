@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Emergency Local Account (HU-38)
+    |--------------------------------------------------------------------------
+    |
+    | Cuenta administrativa local de emergencia. El acceso por contraseña queda
+    | restringido únicamente a esta cuenta y solo si EMERGENCY_LOGIN_ENABLED.
+    |
+    */
+
+    'emergency_admin_email' => env('EMERGENCY_ADMIN_EMAIL', 'admin@csb360.local'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

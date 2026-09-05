@@ -25,14 +25,13 @@ return new class extends Migration
             $table->string('complemento', 5)->default('');
             $table->string('direccion', 255)->nullable();
             $table->string('telefono', 20)->nullable();
-            $table->string('correo', 150)->nullable()->unique();
+            $table->string('email', 150)->nullable()->unique();
             $table->string('fotografia', 500)->nullable();
             $table->string('idioma', 50)->default('Castellano');
             $table->string('cultura', 50)->nullable();
             $table->string('discapacidad', 100)->nullable();
-            $table->softDeletes();
             $table->enum('quien_es_tutor', ['PADRE', 'MADRE', 'TUTOR'])->default('PADRE');
-            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'EGRESADO', 'TRASLADADO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
             $table->unique(['numero_documento', 'complemento']);
             $table->index('codigo');

@@ -19,7 +19,7 @@ class ParentGuardian extends Model
         'numero_documento',
         'complemento',
         'telefono',
-        'correo',
+        'email',
         'direccion',
         'ocupacion',
         'estado',

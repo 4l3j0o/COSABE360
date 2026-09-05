@@ -22,7 +22,7 @@ class StoreSectionRequest extends FormRequest
                     fn ($q) => $q->where('grade_id', $this->input('grade_id'))
                 ),
             ],
-            'responsable_id' => 'nullable|exists:teachers,id',
+            'teacher_id' => 'nullable|exists:teachers,id',
             'capacidad'      => 'nullable|integer|min:1|max:255',
         ];
     }

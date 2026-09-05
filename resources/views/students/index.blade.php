@@ -2,30 +2,59 @@
 @section('titulo', 'Estudiantes')
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')
+    @php
+        $esAdmin = auth()->user()->esAdmin();
+        // Errores que pertenecen únicamente al formulario de "Registrar nuevo estudiante"
+        $clavesNuevoEstudiante = ['nombres', 'apellidos', 'fecha_nacimiento', 'lugar_nacimiento', 'sexo', 'tipo_documento', 'numero_documento', 'complemento', 'direccion', 'telefono', 'email', 'email_estudiante', 'idioma', 'cultura', 'discapacidad', 'fotografia', 'familiares', 'tutor_email', 'general'];
+        $esErrorNuevoEstudiante = $errors->hasAny($clavesNuevoEstudiante);
+        if (! $esErrorNuevoEstudiante) {
+            foreach ($errors->keys() as $claveError) {
+                if (str_starts_with((string) $claveError, 'familiares.')) {
+                    $esErrorNuevoEstudiante = true;
+                    break;
+                }
+            }
+        }
+    @endphp
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Estudiantes</h1>
             <p class="text-sm text-muted-foreground">Gestión de estudiantes del colegio</p>
         </div>
-        <button onclick="openModal('modal-create')" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Nuevo Estudiante
-        </button>
+        <div class="flex items-center gap-2">
+            @if($esAdmin)
+                <a href="{{ route('student_documents.pending') }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Documentos Pendientes
+                </a>
+            @endif
+            @if($esAdmin)
+                <button onclick="openModal('modal-create')" title="Registrar Estudiante" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </button>
+            @endif
+        </div>
     </div>
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('students.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, código o documento..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <select name="estado_academico" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <option value="">Todos los estados académicos</option>
+                <option value="MATRICULADO" {{ request('estado_academico') === 'MATRICULADO' ? 'selected' : '' }}>matriculados</option>
+                <option value="INSCRITO" {{ request('estado_academico') === 'INSCRITO' ? 'selected' : '' }}>inscritos</option>
+                <option value="SIN_INSCRIBIR" {{ request('estado_academico') === 'SIN_INSCRIBIR' ? 'selected' : '' }}>sin inscribir</option>
+            </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
-                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>Activo</option>
-                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>Inactivo</option>
-                <option value="EGRESADO" {{ request('estado') === 'EGRESADO' ? 'selected' : '' }}>Egresado</option>
-                <option value="TRASLADADO" {{ request('estado') === 'TRASLADADO' ? 'selected' : '' }}>Trasladado</option>
+                <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
+                <option value="INACTIVO" {{ request('estado') === 'INACTIVO' ? 'selected' : '' }}>inactivo</option>
+                <option value="EGRESADO" {{ request('estado') === 'EGRESADO' ? 'selected' : '' }}>egresado</option>
+                <option value="TRASLADADO" {{ request('estado') === 'TRASLADADO' ? 'selected' : '' }}>trasladado</option>
             </select>
             <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Buscar</button>
         </form>
@@ -47,6 +76,9 @@
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Documento</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Sexo</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Estado</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Estado académico</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Inscripción</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Matrícula</th>
                             <th class="text-right px-4 py-3 font-semibold text-foreground">Acciones</th>
                         </tr>
                     </thead>
@@ -69,23 +101,75 @@
                                         ];
                                     @endphp
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $colores[$student->estado] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $student->estado }}
+                                        {{ mb_strtolower($student->estado) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">
+                                    @php
+                                        $acad = $estadosAcademicos[$student->id]['estado_academico'] ?? 'SIN_INSCRIBIR';
+                                    @endphp
+                                    @if($acad === 'SIN_INSCRIBIR')
+                                        <button type="button" onclick="abrirInscripcion({{ $student->id }})" title="Inscribir al período académico activo" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer">
+                                            sin inscribir
+                                        </button>
+                                    @elseif($acad === 'INSCRITO')
+                                        <a href="{{ route('students.show', ['student' => $student->id, 'matricula' => 1]) }}" title="Matricular" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info hover:opacity-80 transition-opacity">
+                                            inscrito
+                                        </a>
+                                    @else
+                                        <a href="{{ route('students.show', $student) }}" title="Ver" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success hover:opacity-80 transition-opacity">
+                                            matriculado
+                                        </a>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $insc = $estadosAcademicos[$student->id]['inscripcion'] ?? null;
+                                        $coloresIns = [
+                                            'PENDIENTE' => 'bg-warning/10 text-warning',
+                                            'COMPLETADA' => 'bg-success/10 text-success',
+                                            'ANULADA' => 'bg-error/10 text-error',
+                                        ];
+                                    @endphp
+                                    @if($insc)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresIns[$insc['estado']] ?? 'bg-muted text-muted-foreground' }}" title="Inscripción {{ ucfirst(mb_strtolower($insc['estado'])) }} · {{ $insc['fecha'] ?? '—' }}">{{ mb_strtolower($insc['estado']) }}</span>
+                                    @else
+                                        <span class="text-muted-foreground text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $mat = $estadosAcademicos[$student->id]['matricula'] ?? null;
+                                        $coloresMat = [
+                                            'ACTIVA' => 'bg-success/10 text-success',
+                                            'INACTIVA' => 'bg-neutral-100 text-neutral-600',
+                                            'CANCELADA' => 'bg-error/10 text-error',
+                                        ];
+                                    @endphp
+                                    @if($mat)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresMat[$mat['estado']] ?? 'bg-muted text-muted-foreground' }}" title="Matrícula {{ ucfirst(mb_strtolower($mat['estado'])) }} · {{ $mat['fecha'] ?? '—' }}">{{ mb_strtolower($mat['estado']) }}</span>
+                                    @else
+                                        <span class="text-muted-foreground text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button onclick="verEstudiante(this)" data-id="{{ $student->id }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver">
+                                        <a href="{{ route('students.show', $student) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Ver">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        </button>
-                                        <button onclick="editarEstudiante(this)" data-id="{{ $student->id }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <form method="POST" action="{{ route('students.destroy', $student) }}" onsubmit="return confirm('¿Estás seguro de eliminar este estudiante?')" class="inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
+                                        </a>
+                                        @if(($estadosAcademicos[$student->id]['estado_academico'] ?? '') === 'MATRICULADO')
+                                            <a href="{{ route('monthly-payments.estudiante', $student) }}" class="p-1.5 rounded-lg hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary cursor-pointer" title="Ver pagos">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </a>
+                                        @endif
+                                        @if($esAdmin)
+                                            <form method="POST" action="{{ route('students.destroy', $student) }}" onsubmit="return confirm('¿Estás seguro de eliminar este estudiante?')" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -98,7 +182,7 @@
             </div>
         </div>
 
-        @if($eliminadosCount > 0)
+        @if($esAdmin && $eliminadosCount > 0)
             <div class="flex justify-end mt-3">
                 <a href="{{ route('students.eliminados') }}" class="text-sm text-muted-foreground hover:text-error transition-colors">
                     Ver eliminados ({{ $eliminadosCount }}) →
@@ -112,15 +196,24 @@
     {{-- MODAL CREAR --}}
     <div id="modal-create" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
         <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
-            <div style="width:100%; max-width:48rem; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
+            <div style="width:100%; max-width:48rem; max-height:calc(100vh - 4rem); display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
                     <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Registrar Nuevo Estudiante</h2>
                     <button onclick="closeModal('modal-create')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('students.store') }}" enctype="multipart/form-data" style="padding:1.5rem;">
+                <form method="POST" action="{{ route('students.store') }}" enctype="multipart/form-data" style="flex:1; overflow-y:auto; padding:1.5rem;">
                     @csrf
+
+                    @if($esErrorNuevoEstudiante)
+                        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos Personales</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -206,9 +299,9 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico del Estudiante</label>
-                                <input type="email" name="correo_estudiante" value="{{ old('correo_estudiante') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <input type="email" name="email_estudiante" value="{{ old('email_estudiante') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 <p class="text-xs text-muted-foreground mt-1">Si se deja vacío, se generará: nombre.apellido@sanber.edu.bo</p>
-                                @error('correo_estudiante') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('email_estudiante') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
@@ -223,7 +316,7 @@
                         </div>
                         <div id="lista-familiares" style="display:none;"></div>
                         @error('familiares') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
-                        @error('tutor_correo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
+                        @error('tutor_email') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
                     </div>
 
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
@@ -238,14 +331,14 @@
     {{-- MODAL VER DETALLE --}}
     <div id="modal-view" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
         <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
-            <div style="width:100%; max-width:48rem; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
+            <div style="width:100%; max-width:48rem; max-height:calc(100vh - 4rem); display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
                     <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Detalle del Estudiante</h2>
                     <button onclick="closeModal('modal-view')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <div style="padding:1.5rem;">
+                <div style="flex:1; overflow-y:auto; padding:1.5rem;">
                     <div style="display:flex; gap:1.5rem; margin-bottom:1.25rem;">
                         <div style="flex-shrink:0; width:6rem; height:7.5rem; border-radius:0.75rem; overflow:hidden; background:var(--muted); display:flex; align-items:center; justify-content:center;">
                             <img id="v-fotografia" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
@@ -279,7 +372,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Dirección</span><span class="text-foreground" id="v-direccion"></span></div>
                             <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Teléfono</span><span class="text-foreground" id="v-telefono"></span></div>
-                            <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Correo</span><span class="text-foreground" id="v-correo"></span></div>
+                            <div><span class="text-muted-foreground block text-xs uppercase tracking-wider">Correo</span><span class="text-foreground" id="v-email"></span></div>
                         </div>
                     </div>
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
@@ -307,148 +400,93 @@
         </div>
     </div>
 
-    {{-- MODAL EDITAR --}}
-    <div id="modal-edit" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
+    {{-- MODAL INSCRIPCION --}}
+    <div id="modal-create-inscripcion" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto; background:rgba(0,0,0,0.3); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);">
         <div style="min-height:100%; padding:2rem 1rem; display:flex; align-items:flex-start; justify-content:center;">
-            <div style="width:100%; max-width:48rem; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
-                    <h2 style="font-size:1rem; font-weight:700; color:var(--foreground);">Editar Estudiante</h2>
-                    <button onclick="closeModal('modal-edit')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
+            <div style="width:100%; max-width:36rem; max-height:calc(100vh - 4rem); display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border); border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-bottom:1px solid var(--border); border-radius:1rem 1rem 0 0; background:var(--card);">
+                    <h2 id="ins-modal-titulo" style="font-size:1rem; font-weight:700; color:var(--foreground);">Inscribir Estudiante</h2>
+                    <button onclick="closeModal('modal-create-inscripcion')" style="padding:0.375rem; border-radius:0.5rem; cursor:pointer; color:var(--muted-foreground); background:none; border:none;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background='none'">
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form id="form-edit" method="POST" enctype="multipart/form-data" style="padding:1.5rem;">
-                    @csrf @method('PUT')
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos Personales</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres <span class="text-error">*</span></label>
-                                <input type="text" name="nombres" id="e-nombres" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos <span class="text-error">*</span></label>
-                                <input type="text" name="apellidos" id="e-apellidos" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha de Nacimiento <span class="text-error">*</span></label>
-                                <input type="date" name="fecha_nacimiento" id="e-fecha_nacimiento" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Lugar de Nacimiento</label>
-                                <input type="text" name="lugar_nacimiento" id="e-lugar_nacimiento" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Sexo <span class="text-error">*</span></label>
-                                <select name="sexo" id="e-sexo" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="M">Masculino</option>
-                                    <option value="F">Femenino</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado <span class="text-error">*</span></label>
-                                <select name="estado" id="e-estado" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="ACTIVO">Activo</option>
-                                    <option value="INACTIVO">Inactivo</option>
-                                    <option value="EGRESADO">Egresado</option>
-                                    <option value="TRASLADADO">Trasladado</option>
-                                </select>
-                            </div>
+                <form method="POST" action="{{ route('enrollments.store') }}" style="flex:1; overflow-y:auto; padding:1.5rem;" class="space-y-4">
+                    @csrf
+
+                    @if($errors->has('student_id') || $errors->has('academic_year_id') || $errors->has('fecha') || $errors->has('estado') || $errors->has('observaciones'))
+                        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm space-y-1">
+                            @foreach($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estudiante <span class="text-error">*</span></label>
+                        <input type="hidden" name="student_id" id="ins-student_id" value="{{ old('student_id') }}">
+                        <div id="ins-estudiante-nombre" style="padding:0.625rem 0.75rem; border-radius:0.5rem; border:1px solid var(--border); background:var(--muted); color:var(--foreground); font-size:0.875rem;">
+                            {{ old('student_id') ? '' : 'Seleccione el estudiante desde la lista.' }}
+                        </div>
+                        @error('student_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Período académico <span class="text-error">*</span></label>
+                        <select name="academic_year_id" id="ins-academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="">Seleccionar período...</option>
+                            @foreach($gestiones as $g)
+                                <option value="{{ $g->id }}" {{ (old('academic_year_id') ?: $periodoActivo?->id) == $g->id ? 'selected' : '' }}>{{ $g->nombre }} — {{ mb_strtolower($g->estado) }}</option>
+                            @endforeach
+                        </select>
+                        @error('academic_year_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha <span class="text-error">*</span></label>
+                            <input type="date" name="fecha" id="ins-fecha" value="{{ old('fecha', date('Y-m-d')) }}" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            @error('fecha') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estado <span class="text-error">*</span></label>
+                            <select name="estado" id="ins-estado" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <option value="COMPLETADA" {{ old('estado', 'COMPLETADA') === 'COMPLETADA' ? 'selected' : '' }}>Completada</option>
+                                <option value="PENDIENTE" {{ old('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="ANULADA" {{ old('estado') === 'ANULADA' ? 'selected' : '' }}>Anulada</option>
+                            </select>
+                            @error('estado') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Documento de Identidad</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo <span class="text-error">*</span></label>
-                                <select name="tipo_documento" id="e-tipo_documento" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="CI">Cédula de Identidad</option>
-                                    <option value="PASAPORTE">Pasaporte</option>
-                                    <option value="OTRO">Otro</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Número <span class="text-error">*</span></label>
-                                <input type="text" name="numero_documento" id="e-numero_documento" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Complemento</label>
-                                <input type="text" name="complemento" id="e-complemento" maxlength="5" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Observaciones</label>
+                        <textarea name="observaciones" id="ins-observaciones" rows="3" placeholder="Opcional..." class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">{{ old('observaciones') }}</textarea>
+                        @error('observaciones') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Contacto</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Dirección</label>
-                                <input type="text" name="direccion" id="e-direccion" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
-                                <input type="text" name="telefono" id="e-telefono" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del Estudiante</label>
-                                <input type="email" name="correo_estudiante" id="e-correo_estudiante" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                <p class="text-xs text-muted-foreground mt-1">Dejar vacío para mantener el actual.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.25rem;">
-                            <h3 class="text-xs font-bold text-primary uppercase tracking-wider">Familia y Tutor <span class="text-error">*</span></h3>
-                            <button type="button" id="btn-agregar-familiar-edit" onclick="agregarFilaFamiliarEdit()" class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                Agregar familiar
-                            </button>
-                        </div>
-                        <p class="text-xs text-muted-foreground mb-4">Agregue a los familiares del estudiante. Para cada uno elija su <strong>relación</strong> y marque quién será el <strong>tutor</strong> (debe haber exactamente uno). Si no es de la familia, use la relación <strong>TUTOR</strong>.</p>
-
-                        <div id="lista-familiares-edit" style="display:none;"></div>
-                        <div id="sin-familiar-edit" class="text-xs text-muted-foreground bg-muted/40 border border-dashed border-border rounded-lg px-4 py-5 text-center">
-                            No hay familiares registrados para este estudiante. Use <strong>"Agregar familiar"</strong>.
-                        </div>
-                        @error('familiares') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
-                        <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Información Adicional</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Idioma</label>
-                                <input type="text" name="idioma" id="e-idioma" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Cultura</label>
-                                <input type="text" name="cultura" id="e-cultura" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Discapacidad</label>
-                                <input type="text" name="discapacidad" id="e-discapacidad" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fotografía</label>
-                                <input type="file" name="fotografia" accept="image/*" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
-                                <p class="text-xs text-muted-foreground mt-1">Dejar vacío para mantener la actual.</p>
-                            </div>
-                        </div>
-                    </div>
-
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
-                        <button type="button" onclick="closeModal('modal-edit')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>
-                        <button type="submit" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Guardar Cambios</button>
+                        <button type="button" onclick="closeModal('modal-create-inscripcion')" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:1px solid var(--border); background:var(--background); color:var(--foreground); cursor:pointer;">Cancelar</button>
+                        <button type="submit" id="ins-submit-btn" style="padding:0.625rem 1.25rem; border-radius:0.5rem; font-size:0.875rem; font-weight:500; border:none; background:var(--primary); color:var(--primary-foreground); cursor:pointer;">Registrar Inscripción</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    @if(old('nombres') || $errors->any())
-        <script>openModal('modal-create')</script>
+    @include('students.partials._familiares-js')
+
+    @if($esErrorNuevoEstudiante)
+        <script>
+            openModal('modal-create');
+            var fams = @json(old('familiares', []));
+            if (fams && fams.length) {
+                var cont = document.getElementById('lista-familiares');
+                cont.innerHTML = '';
+                familiarSeq = 0;
+                fams.forEach(function(f) {
+                    cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(familiarSeq, f, false));
+                    familiarSeq++;
+                });
+                cont.style.display = 'block';
+                renumerarFilas('lista-familiares');
+            }
+        </script>
     @endif
 
     <script>
@@ -457,6 +495,8 @@
             {{ $student->id }}: @json($student->toArray()){{ $loop->last ? '' : ',' }}
             @endforeach
         };
+
+        var inscripcionesMap = @json($estadosAcademicos);
 
         function formatFecha(fecha) {
             if (!fecha) return '—';
@@ -470,167 +510,15 @@
             return dia + '/' + mes + '/' + anio + ' (' + edad + ' años)';
         }
 
-        var ETIQUETAS_RELACION = {
-            PADRE: 'Padre',
-            MADRE: 'Madre',
-            TIO: 'Tío',
-            TIA: 'Tía',
-            ABUELO: 'Abuelo',
-            ABUELA: 'Abuela',
-            HERMANO: 'Hermano',
-            HERMANA: 'Hermana',
-            OTRO: 'Otro Familiar',
-            TUTOR: 'Tutor (no familia)'
-        };
-
-        function construirFilaFamiliar(idx, pg, esEdit) {
-            var p = pg || {};
-            var relacion = (pg && pg.pivot) ? pg.pivot.tipo_relacion : 'PADRE';
-            var esTutor = (pg && pg.pivot) ? (pg.pivot.es_principal ? 1 : 0) : 0;
-            var sel = esEdit ? 'lista-familiares-edit' : 'lista-familiares';
-            var opciones = '';
-            var rels = ['PADRE','MADRE','TIO','TIA','ABUELO','ABUELA','HERMANO','HERMANA','OTRO','TUTOR'];
-            for (var r = 0; r < rels.length; r++) {
-                opciones += '<option value="' + rels[r] + '"' + (relacion === rels[r] ? ' selected' : '') + '>' + ETIQUETAS_RELACION[rels[r]] + '</option>';
-            }
-            return '<div class="fila-familiar" data-idx="' + idx + '" style="border:1px solid var(--border); border-radius:0.75rem; padding:1rem; margin-bottom:1rem; background:var(--card);">' +
-                  '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">' +
-                      '<h4 class="text-sm font-semibold text-foreground">Familiar</h4>' +
-                      '<button type="button" onclick="quitarFilaFamiliar(this)" class="text-xs text-error hover:underline cursor-pointer">Quitar</button>' +
-                  '</div>' +
-                  '<div style="margin-bottom:0.75rem;">' +
-                      '<input type="text" class="buscador-familiar" placeholder="Buscar persona existente por CI o nombre..." oninput="buscarPersonaFamiliar(this)" value="" style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
-                      '<div class="resultados-familiar hidden"></div>' +
-                  '</div>' +
-                  '<input type="hidden" data-field="id_existente" name="familiares[' + idx + '][id_existente]" class="f-id" value="' + (p.id || '') + '">' +
-                  '<input type="hidden" data-field="tipo_doc" name="familiares[' + idx + '][tipo_doc]" class="f-tipo_doc" value="' + (p.tipo_documento || 'CI') + '">' +
-                  '<input type="hidden" data-field="complemento" name="familiares[' + idx + '][complemento]" class="f-complemento" value="' + (p.complemento || '') + '">' +
-                  '<input type="hidden" data-field="direccion" name="familiares[' + idx + '][direccion]" class="f-direccion" value="' + (p.direccion || '') + '">' +
-                  '<input type="hidden" data-field="ocupacion" name="familiares[' + idx + '][ocupacion]" class="f-ocupacion" value="' + (p.ocupacion || '') + '">' +
-                  '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombres</label><input type="text" data-field="nombres" name="familiares[' + idx + '][nombres]" class="f-nombres" value="' + (p.nombres || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Apellidos</label><input type="text" data-field="apellidos" name="familiares[' + idx + '][apellidos]" class="f-apellidos" value="' + (p.apellidos || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">N° Documento</label><input type="text" data-field="num_doc" name="familiares[' + idx + '][num_doc]" class="f-num_doc" value="' + (p.numero_documento || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label><input type="text" data-field="telefono" name="familiares[' + idx + '][telefono]" class="f-telefono" value="' + (p.telefono || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;"></div>' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Relación</label><select data-field="relacion" name="familiares[' + idx + '][relacion]" class="f-relacion" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' + opciones + '</select></div>' +
-                      '<div><label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">¿Es tutor?</label><label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" data-field="es_tutor" name="familiares[' + idx + '][es_tutor]" class="f-es_tutor" value="1" ' + (esTutor ? 'checked' : '') + ' onchange="marcarTutor(this)"> Es el tutor</label></div>' +
-                  '</div>' +
-                  '<div class="campo-correo-tutor" style="' + (esTutor ? '' : 'display:none;') + 'margin-top:0.75rem;">' +
-                      '<label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo del tutor (para acceso al sistema) <span class="text-error">*</span></label>' +
-                      '<input type="email" data-field="correo" name="familiares[' + idx + '][correo]" class="f-correo" value="' + (p.correo || '') + '" style="width:100%; padding:0.625rem 0.75rem; border:1px solid var(--border); border-radius:0.5rem; background:var(--background); color:var(--foreground); font-size:0.875rem;">' +
-                      '<p class="text-xs text-muted-foreground mt-1">El tutor es quien recibe el acceso al sistema.</p>' +
-                  '</div>' +
-              '</div>';
-        }
-
         var familiarSeq = 0;
         function agregarFilaFamiliar() {
             var cont = document.getElementById('lista-familiares');
             cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(familiarSeq, null, false));
             familiarSeq++;
             cont.style.display = 'block';
-            document.getElementById('sin-familiar').style.display = 'none';
-            renumerarFilas('lista-familiares');
-        }
-
-        var familiarSeqEdit = 0;
-        function agregarFilaFamiliarEdit(editIdx) {
-            var cont = document.getElementById('lista-familiares-edit');
-            cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(editIdx, null, true));
-            familiarSeqEdit++;
-            cont.style.display = 'block';
-            var sn = document.getElementById('sin-familiar-edit');
+            var sn = document.getElementById('sin-familiar');
             if (sn) sn.style.display = 'none';
-            renumerarFilas('lista-familiares-edit');
-        }
-
-        function quitarFilaFamiliar(btn) {
-            var fila = btn.closest('.fila-familiar');
-            var cont = fila.parentNode;
-            fila.remove();
-            renumerarFilas(cont.id);
-        }
-
-        function renumerarFilas(contenedorId) {
-            var cont = document.getElementById(contenedorId);
-            if (!cont) return;
-            var filas = cont.querySelectorAll('.fila-familiar');
-            var idx = 0;
-            filas.forEach(function(fila) {
-                fila.dataset.idx = idx;
-                fila.querySelectorAll('[data-field]').forEach(function(input) {
-                    var campo = input.dataset.field;
-                    input.name = 'familiares[' + idx + '][' + campo + ']';
-                });
-                var buscador = fila.querySelector('.buscador-familiar');
-                if (buscador) buscador.oninput = (function(f){ return function(){ buscarPersonaFamiliar(f); }; })(buscador);
-                idx++;
-            });
-            var vacio = (contenedorId === 'lista-familiares') ? 'sin-familiar' : 'sin-familiar-edit';
-            if (idx === 0) {
-                cont.style.display = 'none';
-                var v = document.getElementById(vacio);
-                if (v) v.style.display = 'block';
-            }
-        }
-
-        var busquedaTimeout = null;
-        function buscarPersonaFamiliar(input) {
-            var fila = input.closest('.fila-familiar');
-            var dd = fila.querySelector('.resultados-familiar');
-            var query = input.value;
-            clearTimeout(busquedaTimeout);
-            if (query.length < 2) { dd.classList.add('hidden'); dd.innerHTML = ''; return; }
-            busquedaTimeout = setTimeout(function() {
-                fetch('{{ route("students.buscarPersona") }}?q=' + encodeURIComponent(query))
-                .then(r => r.json()).then(data => {
-                    if (!data.length) { dd.classList.add('hidden'); return; }
-                    dd.innerHTML = data.map(function(p) {
-                        return '<div class="px-3 py-2 cursor-pointer hover:bg-muted text-sm border-b border-border last:border-0" onclick="seleccionarPersonaFamiliar(this)">' +
-                            '<span class="font-semibold">' + (p.nombres||'') + ' ' + (p.apellidos||'') + '</span> — ' + (p.numero_documento||'') +
-                            '</div>';
-                    }).join('');
-                    dd.classList.remove('hidden');
-                    dd._data = data;
-                });
-            }, 300);
-        }
-
-        function seleccionarPersonaFamiliar(el) {
-            var fila = el.closest('.fila-familiar');
-            var dd = fila.querySelector('.resultados-familiar');
-            var data = dd._data || [];
-            var li = Array.prototype.indexOf.call(dd.children, el);
-            var p = data[li] || {};
-            fila.querySelector('.f-id').value = p.id || '';
-            fila.querySelector('.f-nombres').value = p.nombres || '';
-            fila.querySelector('.f-apellidos').value = p.apellidos || '';
-            fila.querySelector('.f-num_doc').value = p.numero_documento || '';
-            fila.querySelector('.f-tipo_doc').value = p.tipo_documento || 'CI';
-            fila.querySelector('.f-complemento').value = p.complemento || '';
-            fila.querySelector('.f-telefono').value = p.telefono || '';
-            fila.querySelector('.f-correo').value = p.correo || '';
-            fila.querySelector('.f-direccion').value = p.direccion || '';
-            fila.querySelector('.f-ocupacion').value = p.ocupacion || '';
-            fila.querySelector('.f-es_tutor').checked = true;
-            var campoCorreo = fila.querySelector('.campo-correo-tutor');
-            if (campoCorreo) campoCorreo.style.display = 'block';
-            marcarTutor(fila.querySelector('.f-es_tutor'));
-            fila.querySelector('.buscador-familiar').value = '';
-            dd.classList.add('hidden');
-            dd.innerHTML = '';
-        }
-
-        function marcarTutor(cb) {
-            var fila = cb.closest('.fila-familiar');
-            var cont = fila.parentNode;
-            var hermanos = cont.querySelectorAll('.f-es_tutor');
-            hermanos.forEach(function(h) { if (h !== cb) h.checked = false; });
-            cont.querySelectorAll('.campo-correo-tutor').forEach(function(c) { c.style.display = 'none'; });
-            if (cb.checked) {
-                var cc = fila.querySelector('.campo-correo-tutor');
-                if (cc) cc.style.display = 'block';
-            }
+            renumerarFilas('lista-familiares');
         }
 
         function verEstudiante(btn) {
@@ -647,7 +535,7 @@
                 ph.style.display = 'block';
             }
             document.getElementById('v-codigo').textContent = s.codigo || '—';
-            document.getElementById('v-estado').textContent = s.estado || '—';
+            document.getElementById('v-estado').textContent = (s.estado || '—').toLowerCase();
             document.getElementById('v-nombres').textContent = s.nombres || '—';
             document.getElementById('v-apellidos').textContent = s.apellidos || '—';
             document.getElementById('v-fecha_nacimiento').textContent = formatFecha(s.fecha_nacimiento);
@@ -658,7 +546,7 @@
             document.getElementById('v-complemento').textContent = s.complemento || '—';
             document.getElementById('v-direccion').textContent = s.direccion || '—';
             document.getElementById('v-telefono').textContent = s.telefono || '—';
-            document.getElementById('v-correo').textContent = s.correo || '—';
+            document.getElementById('v-email').textContent = s.email || '—';
             document.getElementById('v-idioma').textContent = s.idioma || '—';
             document.getElementById('v-cultura').textContent = s.cultura || '—';
             document.getElementById('v-discapacidad').textContent = s.discapacidad || '—';
@@ -672,7 +560,7 @@
                 famHtml += '<div id="' + idTutor + '" style="border:1px solid ' + (esTutor ? 'rgba(124,58,237,0.35)' : 'var(--border)') + '; border-radius:0.5rem; padding:0.5rem 0.75rem; margin-bottom:0.5rem;' + (esTutor ? ' background-color:rgba(124,58,237,0.06)' : '') + '">' +
                     '<div class="text-xs font-semibold uppercase tracking-wider ' + (esTutor ? 'text-primary' : 'text-muted-foreground') + '">' + etiqueta + (esTutor ? ' · Tutor' : '') + '</div>' +
                     '<div class="font-medium text-foreground">' + (p.nombres || '') + ' ' + (p.apellidos || '') + '</div>' +
-                    '<div class="text-xs text-muted-foreground">' + (p.numero_documento ? 'CI ' + p.numero_documento : '') + (esTutor && p.correo ? ' · ' + p.correo : '') + '</div>' +
+                    '<div class="text-xs text-muted-foreground">' + (p.numero_documento ? 'CI ' + p.numero_documento : '') + (esTutor && p.email ? ' · ' + p.email : '') + '</div>' +
                     '</div>';
             });
             if (!famHtml) famHtml = '<span class="text-muted-foreground">Sin datos familiares registrados</span>';
@@ -695,46 +583,56 @@
             openModal('modal-view');
         }
 
-        function editarEstudiante(btn) {
-            var s = estudiantesMap[btn.dataset.id];
-            if (!s) return;
-            document.getElementById('form-edit').action = '{{ url("students") }}/' + s.id;
-            document.getElementById('e-nombres').value = s.nombres || '';
-            document.getElementById('e-apellidos').value = s.apellidos || '';
-            document.getElementById('e-fecha_nacimiento').value = s.fecha_nacimiento ? s.fecha_nacimiento.substring(0, 10) : '';
-            document.getElementById('e-lugar_nacimiento').value = s.lugar_nacimiento || '';
-            document.getElementById('e-sexo').value = s.sexo || '';
-            document.getElementById('e-estado').value = s.estado || 'ACTIVO';
-            document.getElementById('e-tipo_documento').value = s.tipo_documento || 'CI';
-            document.getElementById('e-numero_documento').value = s.numero_documento || '';
-            document.getElementById('e-complemento').value = s.complemento || '';
-            document.getElementById('e-direccion').value = s.direccion || '';
-            document.getElementById('e-telefono').value = s.telefono || '';
-            document.getElementById('e-correo_estudiante').value = s.correo || '';
-            document.getElementById('e-idioma').value = s.idioma || '';
-            document.getElementById('e-cultura').value = s.cultura || '';
-            document.getElementById('e-discapacidad').value = s.discapacidad || '';
+        var periodoActivoId = {{ $periodoActivo?->id ?? 'null' }};
 
-            var cont = document.getElementById('lista-familiares-edit');
-            cont.innerHTML = '';
-            familiarSeqEdit = 0;
-            var pgs = s.parent_guardians || [];
-            pgs.forEach(function(p) {
-                var idx = familiarSeqEdit;
-                cont.insertAdjacentHTML('beforeend', construirFilaFamiliar(idx, p, true));
-                familiarSeqEdit++;
-            });
-            if (pgs.length > 0) {
-                cont.style.display = 'block';
-                var sn = document.getElementById('sin-familiar-edit');
-                if (sn) sn.style.display = 'none';
-            } else {
-                cont.style.display = 'none';
-                var sn2 = document.getElementById('sin-familiar-edit');
-                if (sn2) sn2.style.display = 'block';
+        function abrirInscripcion(id) {
+            var s = estudiantesMap[id];
+            if (!s) return;
+            document.getElementById('ins-student_id').value = id;
+            document.getElementById('ins-estudiante-nombre').textContent = (s.codigo || '') + ' — ' + (s.apellidos || '') + ' ' + (s.nombres || '');
+            var selPeriodo = document.getElementById('ins-academic_year_id');
+            if (periodoActivoId) {
+                selPeriodo.value = periodoActivoId;
             }
-            renumerarFilas('lista-familiares-edit');
-            openModal('modal-edit');
+            var infoIns = inscripcionesMap[id] ? inscripcionesMap[id].inscripcion : null;
+            var edicion = infoIns && infoIns.estado && infoIns.estado !== 'ANULADA';
+            var insEstado = document.getElementById('ins-estado');
+            var insFecha = document.getElementById('ins-fecha');
+            var insObs = document.getElementById('ins-observaciones');
+            if (edicion) {
+                insEstado.value = infoIns.estado;
+                insFecha.value = infoIns.fecha_iso || '';
+                insObs.value = infoIns.observaciones || '';
+            } else {
+                insEstado.value = 'COMPLETADA';
+                var hoy = new Date();
+                insFecha.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+                insObs.value = '';
+            }
+            var titulo = document.getElementById('ins-modal-titulo');
+            if (titulo) titulo.textContent = edicion ? 'Editar Inscripción' : 'Inscribir Estudiante';
+            var btn = document.getElementById('ins-submit-btn');
+            if (btn) btn.textContent = edicion ? 'Guardar Inscripción' : 'Registrar Inscripción';
+            openModal('modal-create-inscripcion');
         }
-    </script>
+
+        @if(old('student_id') || $errors->has('student_id') || $errors->has('academic_year_id') || $errors->has('fecha') || $errors->has('estado') || $errors->has('observaciones'))
+            var insId = @json(old('student_id'));
+            if (insId) {
+                document.getElementById('ins-student_id').value = insId;
+                var s = estudiantesMap[insId];
+                if (s) {
+                    document.getElementById('ins-estudiante-nombre').textContent = (s.codigo || '') + ' — ' + (s.apellidos || '') + ' ' + (s.nombres || '');
+                }
+                var infoIns = inscripcionesMap[insId] ? inscripcionesMap[insId].inscripcion : null;
+                var edicion = infoIns && infoIns.estado && infoIns.estado !== 'ANULADA';
+                var titulo = document.getElementById('ins-modal-titulo');
+                if (titulo) titulo.textContent = edicion ? 'Editar Inscripción' : 'Inscribir Estudiante';
+                var btn = document.getElementById('ins-submit-btn');
+                if (btn) btn.textContent = edicion ? 'Guardar Inscripción' : 'Registrar Inscripción';
+            }
+            openModal('modal-create-inscripcion');
+        @endif
+
+        </script>
 @endpush

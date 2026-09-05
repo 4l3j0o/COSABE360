@@ -18,6 +18,16 @@ class OperationHistory extends Model
         'user_agent',
     ];
 
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            abort(403, 'El historial de auditoría no es editable');
+        });
+        static::deleting(function () {
+            abort(403, 'El historial de auditoría no es eliminable');
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

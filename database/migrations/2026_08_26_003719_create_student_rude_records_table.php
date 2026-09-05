@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('student_rude_records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('estudiante_id')->constrained('students')->cascadeOnDelete();
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->string('codigo_rude', 20)->nullable()->unique();
             $table->string('codigo_sie_ue', 20)->nullable();
             $table->enum('turno', ['MANANA', 'TARDE', 'NOCTURNO'])->nullable();

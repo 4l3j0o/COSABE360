@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('level_id')->constrained()->restrictOnDelete();
             $table->string('nombre', 50);
             $table->unsignedTinyInteger('orden');
-            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            $table->enum('estado', ['ACTIVO', 'INACTIVO', 'ELIMINADO'])->default('ACTIVO');
             $table->timestamps();
 
             $table->unique(['level_id', 'nombre'], 'uk_level_grado');

@@ -3,17 +3,31 @@
 
 :root {
     --font-body: 'Outfit', sans-serif;
-    --primary-50: #d3ffd3;
-    --primary-100: #88ff88;
-    --primary-200: #007f00;
-    --primary-300: #006e00;
-    --primary-400: #006100;
-    --primary-500: #005100;
-    --primary-600: #004100;
-    --primary-700: #003200;
-    --primary-800: #002600;
-    --primary-900: #001800;
-    --primary-950: #000f00;
+    --primary-50: #e6f4e6;
+    --primary-100: #c8e8c9;
+    --primary-200: #a5d7a8;
+    --primary-300: #7cc483;
+    --primary-400: #4fad58;
+    --primary-500: #2e9e3a;
+    --primary-600: #1A8C1A;
+    --primary-700: #0E710E;
+    --primary-800: #0a5a0a;
+    --primary-900: #084508;
+    --primary-950: #052e05;
+
+    /*
+      --primary-50: #fbeaea;
+      --primary-100: #f8d5d5;
+      --primary-200: #f2a9a9;
+      --primary-300: #ed7878;
+      --primary-400: #ea3c3c;
+      --primary-500: #b52c2c;
+      --primary-600: #831d1d;
+  --primary-700: #550f0f;
+  --primary-800: #290404;
+  --primary-900: #1e0202;
+  --primary-950: #0e0101;
+    */
 
 
     --footer-bg: var(--primary-600);
@@ -338,6 +352,15 @@
         border-radius: 20px;
         opacity: 0.5;
     }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
 
 body {
@@ -375,6 +398,10 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+}
+
+.app-sidebar nav::-webkit-scrollbar {
+    display: none;
 }
 
 #sidebar-mobile-wrap {

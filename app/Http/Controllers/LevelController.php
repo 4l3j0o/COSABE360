@@ -16,6 +16,7 @@ class LevelController extends Controller
     public function index(Request $request): AnonymousResourceCollection|\Illuminate\Contracts\View\View
     {
         $levels = Level::withCount('grades')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('orden')
             ->get();
@@ -84,7 +85,7 @@ class LevelController extends Controller
             return redirect()->route('levels.index')->with('error', $message);
         }
 
-        $level->delete();
+        $level->update(['estado' => 'ELIMINADO']);
 
         if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
             return response()->json(['message' => 'Nivel eliminado correctamente.']);

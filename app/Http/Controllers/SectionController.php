@@ -24,11 +24,12 @@ class SectionController extends Controller
             return $this->apiIndex($request);
         }
 
-        $levels  = Level::orderBy('orden')->get();
-        $grados  = Grade::with('level')->orderBy('level_id')->orderBy('orden')->get();
+        $levels  = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
+        $grados  = Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('level_id')->orderBy('orden')->get();
         $docentes = Teacher::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
 
         $sections = Section::with(['grade.level', 'responsable'])
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('level_id'), function ($q, $v) {
                 $q->whereHas('grade', fn ($g) => $g->where('level_id', $v));
             })
@@ -113,19 +114,7 @@ class SectionController extends Controller
             return redirect()->route('sections.index')->with('error', 'No se puede eliminar el paralelo porque tiene estudiantes matriculados.');
         }
 
-        DB::transaction(function () use ($section) {
-            if (Schema::hasColumn('courses', 'section_id')) {
-                $cursoIds = DB::table('courses')->where('section_id', $section->id)->pluck('id');
-
-                if ($cursoIds->isNotEmpty() && Schema::hasColumn('registrations', 'course_id')) {
-                    DB::table('registrations')->whereIn('course_id', $cursoIds)->delete();
-                }
-
-                DB::table('courses')->whereIn('id', $cursoIds)->delete();
-            }
-
-            $section->delete();
-        });
+        $section->update(['estado' => 'ELIMINADO']);
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Paralelo eliminado correctamente.']);

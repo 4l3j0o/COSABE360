@@ -19,6 +19,7 @@ class TeacherTest extends TestCase
 
     private function adminUser(): User
     {
+        Role::firstOrCreate(['nombre' => 'Docente'], ['descripcion' => 'Docente']);
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
             'role_id' => $rol->id,
@@ -38,28 +39,28 @@ class TeacherTest extends TestCase
             'numero_documento' => '1234567',
             'complemento' => 'LP',
             'telefono' => '71234567',
-            'correo' => 'juan@test.com',
+            'email' => 'juan@test.com',
         ];
 
         $response = $this->post('/docentes', $payload);
 
         $response->assertRedirect(route('teachers.index'));
-        $teacher = \App\Models\Teacher::where('correo', 'juan@test.com')->first();
+        $teacher = \App\Models\Teacher::where('email', 'juan@test.com')->first();
         $this->assertNotNull($teacher);
         $this->assertSame('Juan', $teacher->nombres);
         $this->assertSame('Perez', $teacher->apellidos);
         $this->assertSame('Matematicas', $teacher->especialidad);
         $this->assertSame('1234567', $teacher->numero_documento);
         $this->assertSame('71234567', $teacher->telefono);
-        $this->assertSame('juan@test.com', $teacher->correo);
+        $this->assertSame('juan@test.com', $teacher->email);
         $this->assertSame('DOC-0001', $teacher->codigo, 'Debe generar codigo unico DOC-0001');
         $this->assertSame('ACTIVO', $teacher->estado);
 
         $segundo = $this->post('/docentes', [
             'nombres' => 'Ana', 'apellidos' => 'Lopez', 'tipo_documento' => 'CI',
-            'numero_documento' => '7654321', 'complemento' => '', 'correo' => 'ana@test.com',
+            'numero_documento' => '7654321', 'complemento' => '', 'email' => 'ana@test.com',
         ])->assertRedirect();
-        $anaCodigo = \App\Models\Teacher::where('correo', 'ana@test.com')->value('codigo');
+        $anaCodigo = \App\Models\Teacher::where('email', 'ana@test.com')->value('codigo');
         $this->assertSame('DOC-0002', $anaCodigo, 'Codigo debe ser creciente y unico');
     }
 
