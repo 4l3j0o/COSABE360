@@ -39,17 +39,20 @@
     @else
         <div class="space-y-4">
             @foreach($levels as $level)
-                <div class="bg-card border border-border rounded-xl overflow-hidden">
-                    <div class="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border">
+                <details class="bg-card border border-border rounded-xl overflow-hidden" data-gesc-group="level-{{ $level->id }}">
+                    <summary class="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border cursor-pointer select-none list-none">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-bold text-foreground uppercase">{{ $level->nombre }}</span>
                             <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">{{ $level->grades_count }} grados</span>
                         </div>
-                        <a href="{{ route('grados.index', ['level_id' => $level->id]) }}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                            Gestionar grados
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </a>
-                    </div>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('grados.index', ['level_id' => $level->id]) }}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                                Gestionar grados
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </a>
+                            <svg class="w-3.5 h-3.5 text-muted-foreground transition-transform" data-gesc-chevron fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </summary>
 
                     @if($level->grades->isEmpty())
                         <div class="px-4 py-6 text-center text-sm text-muted-foreground">Sin grados configurados.</div>
@@ -98,8 +101,33 @@
                             @endforeach
                         </div>
                     @endif
-                </div>
+                </details>
             @endforeach
         </div>
+
+        <script>
+            // HU-40: mantener desglosado cada nivel hasta que el usuario lo oculte
+            (function () {
+                var key = 'csb-gesc-groups';
+                function persist() {
+                    var o = {};
+                    document.querySelectorAll('[data-gesc-group]').forEach(function (d) { o[d.dataset.gescGroup] = d.open; });
+                    try { localStorage.setItem(key, JSON.stringify(o)); } catch (e) {}
+                }
+                document.querySelectorAll('[data-gesc-group]').forEach(function (d) {
+                    d.addEventListener('toggle', function () {
+                        var ch = d.querySelector('[data-gesc-chevron]');
+                        if (ch) ch.style.transform = d.open ? 'rotate(180deg)' : '';
+                        persist();
+                    });
+                    try {
+                        var saved = JSON.parse(localStorage.getItem(key) || '{}');
+                        if (saved.hasOwnProperty(d.dataset.gescGroup)) d.open = saved[d.dataset.gescGroup];
+                    } catch (e) {}
+                    var ch = d.querySelector('[data-gesc-chevron]');
+                    if (ch) ch.style.transform = d.open ? 'rotate(180deg)' : '';
+                });
+            })();
+        </script>
     @endif
 @endsection
