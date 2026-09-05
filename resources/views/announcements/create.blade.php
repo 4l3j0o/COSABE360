@@ -76,7 +76,7 @@
             </div>
 
             <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-border">
-                <a href="{{ route('comunicados.index') }}" class="text-center px-5 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-accent transition-colors">Cancelar</a>
+                <a href="{{ route('announcements.index') }}" class="text-center px-5 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-accent transition-colors">Cancelar</a>
                 <button type="submit" class="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer">Guardar comunicado</button>
             </div>
         </form>

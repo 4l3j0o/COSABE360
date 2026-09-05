@@ -25,6 +25,7 @@ class ParentGuardianController extends Controller
         $tipo = $request->query('tipo', 'tutores');
 
         $padres = ParentGuardian::with(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos'])
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($tipo === 'tutores', function ($q) {
                 $q->whereHas('students', function ($c) {
                     $c->where('student_parent.es_principal', true);
@@ -64,6 +65,7 @@ class ParentGuardianController extends Controller
     private function apiIndex(Request $request): JsonResponse
     {
         $padres = ParentGuardian::withCount('students')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('apellidos')
             ->get();
@@ -321,7 +323,7 @@ class ParentGuardianController extends Controller
             return redirect()->route('tutores.index')->with('error', 'No se puede eliminar el padre/tutor porque está asociado a uno o más estudiantes.');
         }
 
-        $parentGuardian->delete();
+        $parentGuardian->update(['estado' => 'ELIMINADO']);
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Padre/tutor eliminado correctamente.']);

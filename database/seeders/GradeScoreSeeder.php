@@ -27,15 +27,26 @@ class GradeScoreSeeder extends Seeder
             }
 
             $registrante = $assessment->courseSubject->teacher?->user_id;
-
             $students = $curso->students()->orderBy('students.id')->get();
 
             foreach ($students as $student) {
+                // Dejar sin nota a una pequeña proporción para un panorama realista.
                 if (($assessment->id + $student->id) % 7 === 0) {
                     continue;
                 }
 
-                $nota = 51 + (($assessment->id * 31 + $student->id * 17) % 45);
+                // Notas coherentes con el bimestre: ligero progreso a lo largo del año.
+                $falloSiBaja = (($assessment->id + $student->id) % 11 === 0) ? -12 : 0;
+                $nota = 45 + (($assessment->id * 31 + $student->id * 17) % 45)
+                    + ($assessment->bimestre - 1) * 2 + $falloSiBaja;
+                $nota = max(0, min(100, $nota));
+
+                $observaciones = null;
+                if ($nota >= 90) {
+                    $observaciones = 'Excelente desempeño';
+                } elseif ($nota < 51) {
+                    $observaciones = 'Requiere reforzamiento';
+                }
 
                 GradeScore::updateOrCreate(
                     [
@@ -43,10 +54,11 @@ class GradeScoreSeeder extends Seeder
                         'student_id'    => $student->id,
                     ],
                     [
-                        'nota'                 => $nota,
-                        'observaciones'        => null,
+                        'nota'                  => $nota,
+                        'promedio_ponderado'    => null,
+                        'observaciones'         => $observaciones,
                         'registered_by_user_id' => $registrante,
-                        'registrado_en'        => now(),
+                        'registrado_en'         => now(),
                     ]
                 );
                 $procesadas++;

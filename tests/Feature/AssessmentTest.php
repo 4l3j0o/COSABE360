@@ -128,7 +128,7 @@ class AssessmentTest extends TestCase
 
         $response = $this->delete("/evaluaciones/{$assessment->id}");
         $response->assertRedirect('/evaluaciones');
-        $this->assertDatabaseMissing('assessments', ['id' => $assessment->id]);
+        $this->assertDatabaseHas('assessments', ['id' => $assessment->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_assessment_validation_fails_without_required_fields(): void

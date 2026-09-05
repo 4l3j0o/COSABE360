@@ -6,20 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('invoice_sequences', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo_sucursal', 10)->default('0');
+            $table->string('punto_venta', 10)->default('0');
+            $table->unsignedInteger('ultimo_numero')->default(0);
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->timestamps();
+
+            $table->unique(['codigo_sucursal', 'punto_venta'], 'uk_branch_pos');
+            $table->index('estado');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('invoice_sequences');

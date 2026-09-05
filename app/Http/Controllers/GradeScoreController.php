@@ -48,11 +48,12 @@ class GradeScoreController extends Controller
             }
 
             $hijos = $parentGuardian->students()->where('students.estado', 'ACTIVO')->get();
+            $estudiantesPaginados = $parentGuardian->students()->where('students.estado', 'ACTIVO')->paginate(10)->withQueryString();
             $studentId = $request->input('student_id');
 
             if ($hijos->isEmpty()) {
                 return view('calificaciones.index', [
-                    'estudiantes' => $hijos,
+                    'estudiantes' => $estudiantesPaginados,
                     'student' => null,
                     'calificacionesPorMateria' => collect(),
                     'promedioGeneral' => 0,
@@ -60,11 +61,21 @@ class GradeScoreController extends Controller
                 ]);
             }
 
-            $student = $studentId
-                ? $hijos->firstWhere('id', $studentId) ?? $hijos->first()
-                : $hijos->first();
+            // Sin selección previa: mostrar la lista de hijos con acción "Ver".
+            if ($studentId) {
+                $student = $hijos->firstWhere('id', $studentId);
+                if ($student) {
+                    return $this->verCalificaciones($student, $bimestre, $hijos);
+                }
+            }
 
-            return $this->verCalificaciones($student, $bimestre, $hijos);
+            return view('calificaciones.index', [
+                'estudiantes' => $estudiantesPaginados,
+                'student' => null,
+                'calificacionesPorMateria' => collect(),
+                'promedioGeneral' => 0,
+                'bimestre' => $bimestre,
+            ]);
         }
 
         abort(403);
@@ -112,9 +123,17 @@ class GradeScoreController extends Controller
     {
         $course->load(['grade', 'section', 'gestion']);
 
-        $materias = $course->courseSubjects()
-            ->with('subject')
-            ->get()
+        $user = $request->user();
+        $esDocente = $user->role?->nombre === 'Docente';
+        $teacherId = $esDocente ? optional($user->teacher)->id : null;
+
+        $courseSubjectsQuery = $course->courseSubjects()->with('subject');
+
+        if ($esDocente) {
+            $courseSubjectsQuery->where('teacher_id', $teacherId);
+        }
+
+        $materias = $courseSubjectsQuery->get()
             ->map(fn ($cs) => $cs->subject)
             ->filter()
             ->unique('id')
@@ -122,6 +141,10 @@ class GradeScoreController extends Controller
 
         $query = Assessment::with(['subject', 'academicYear', 'courseSubject.course'])
             ->whereHas('courseSubject', fn ($q) => $q->where('course_id', $course->id));
+
+        if ($esDocente) {
+            $query->whereHas('courseSubject', fn ($q) => $q->where('course_id', $course->id)->where('teacher_id', $teacherId));
+        }
 
         $materia = $request->query('materia');
         $bimestre = $request->query('bimestre');
@@ -160,6 +183,68 @@ class GradeScoreController extends Controller
         $volverCurso = $courseSubject->id;
 
         return view('grade-scores.show', compact('assessment', 'students', 'notasExistentes', 'volver', 'volverCurso'));
+    }
+
+    public function notasCurso(Request $request, CourseSubject $courseSubject): View
+    {
+        $teacher = $request->user()->teacher;
+
+        abort_if(! $teacher || $teacher->id !== $courseSubject->teacher_id, 403);
+
+        $courseSubject->load(['subject', 'course.grade', 'course.section', 'course.gestion']);
+
+        $assessments = $courseSubject->assessments()
+            ->orderBy('bimestre')
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
+
+        $students = $courseSubject->course->students()
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $notas = GradeScore::whereIn('assessment_id', $assessments->pluck('id'))
+            ->get()
+            ->groupBy('student_id');
+
+        $rows = $students->map(function ($student) use ($assessments, $notas) {
+            $notasEstudiante = $notas->get($student->id, collect());
+
+            $porEvaluacion = [];
+            $sumaPonderada = 0;
+            $sumaPesos = 0;
+            $evaluacionesConNota = 0;
+
+            foreach ($assessments as $assessment) {
+                $nota = $notasEstudiante->firstWhere('assessment_id', $assessment->id);
+                $valor = $nota && $nota->nota !== null ? (float) $nota->nota : null;
+                $porEvaluacion[$assessment->id] = $valor;
+
+                if ($valor !== null) {
+                    $peso = (float) $assessment->peso;
+                    $sumaPonderada += $valor * $peso;
+                    $sumaPesos += $peso;
+                    $evaluacionesConNota++;
+                }
+            }
+
+            $notaFinal = $sumaPesos > 0
+                ? round($sumaPonderada / $sumaPesos, 2)
+                : null;
+
+            return [
+                'codigo' => $student->codigo,
+                'apellidos' => $student->apellidos,
+                'nombres' => $student->nombres,
+                'porEvaluacion' => $porEvaluacion,
+                'notaFinal' => $notaFinal,
+                'evaluacionesConNota' => $evaluacionesConNota,
+                'totalEvaluaciones' => $assessments->count(),
+            ];
+        });
+
+        return view('grade-scores.notas-curso', compact('courseSubject', 'assessments', 'students', 'rows'));
     }
 
     public function update(Request $request, Assessment $assessment): RedirectResponse

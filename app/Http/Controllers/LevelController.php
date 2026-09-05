@@ -20,6 +20,7 @@ class LevelController extends Controller
         }
 
         $levels = Level::withCount('grades')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('orden')
             ->get();
@@ -30,6 +31,7 @@ class LevelController extends Controller
     private function apiIndex(Request $request): JsonResponse
     {
         $levels = Level::withCount('grades')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('orden')
             ->get();
@@ -113,7 +115,7 @@ class LevelController extends Controller
             return redirect()->route('levels.index')->with('error', 'No se puede eliminar el nivel porque tiene grados asociados.');
         }
 
-        $level->delete();
+        $level->update(['estado' => 'ELIMINADO']);
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Nivel eliminado correctamente.']);

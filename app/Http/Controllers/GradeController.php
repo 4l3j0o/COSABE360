@@ -20,8 +20,9 @@ class GradeController extends Controller
             return $this->apiIndex($request);
         }
 
-        $levels = Level::orderBy('orden')->get();
+        $levels = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
         $grades = Grade::with('level')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('level_id'), fn ($q, $v) => $q->where('level_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('level_id')
@@ -35,6 +36,7 @@ class GradeController extends Controller
     private function apiIndex(Request $request): JsonResponse
     {
         $grades = Grade::with('level')
+            ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('level_id'), fn ($q, $v) => $q->where('level_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderBy('level_id')
@@ -132,7 +134,7 @@ class GradeController extends Controller
             return redirect()->route('grados.index')->with('error', 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.');
         }
 
-        $grade->delete();
+        $grade->update(['estado' => 'ELIMINADO']);
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Grado eliminado correctamente.']);

@@ -24,7 +24,7 @@ class OperationHistoryController extends Controller
             ->when($request->fecha_hasta, fn ($q, $v) => $q->whereDate('created_at', '<=', $v))
             ->orderByDesc('created_at');
 
-        $historial = $query->paginate(20)->withQueryString();
+        $historial = $query->paginate(10)->withQueryString();
 
         $usuarios = User::with('rol')->orderBy('nombre')->get();
         $modulos = OperationHistory::select('modulo')->distinct()->pluck('modulo')->filter()->values();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSubject;
@@ -56,7 +57,7 @@ class AttendanceController extends Controller
             ? $cursosRegistro->getCollection()->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)])
             : $cursosRegistro->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
 
-        $grados = \App\Models\Grade::with('level')->orderBy('orden')->orderBy('nombre')->get();
+        $grados = \App\Models\Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('orden')->orderBy('nombre')->get();
         $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->orderBy('nombre')->get();
         $gestiones = \App\Models\AcademicYear::orderByDesc('nombre')->get();
 
@@ -166,37 +167,55 @@ class AttendanceController extends Controller
     public function historial(Request $request): View
     {
         $user = auth()->user();
-        $courseId = $request->query('course_id');
-        $subjectId = $request->query('subject_id');
+        $materiaFiltro = $request->query('materia');
+        $studentId = $request->query('student_id');
         $fechaDesde = $request->query('desde');
         $fechaHasta = $request->query('hasta');
+        $bimestre = $request->query('bimestre');
 
-        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject', 'registeredBy'])
-            ->orderByDesc('fecha');
+        // Estudiantes a los que el usuario tiene acceso (según rol)
+        $estudiantesDisponibles = collect();
 
-        // Filtrado por rol
         if ($user->hasRole('Docente')) {
             $teacher = Teacher::where('user_id', $user->id)->first();
             if ($teacher) {
                 $cursoIds = CourseSubject::where('teacher_id', $teacher->id)->pluck('course_id')->unique();
-                $query->whereIn('course_id', $cursoIds);
+                $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
+                    ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('course_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
+                    ->orderBy('apellidos')->orderBy('nombres')->get();
             }
         } elseif ($user->hasRole('Estudiante')) {
-            $student = Student::where('user_id', $user->id)->first();
-            if ($student) {
-                $query->where('student_id', $student->id);
-            }
+            $estudiantesDisponibles = Student::where('user_id', $user->id)->where('estado', 'ACTIVO')->get();
         } elseif ($user->hasRole('Padre/Tutor') || $user->hasAnyRole('Padre/Tutor')) {
             $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
-            $hijos = $parent ? $parent->students()->pluck('students.id') : collect();
-            $query->whereIn('student_id', $hijos);
+            $estudiantesDisponibles = $parent
+                ? $parent->students()->where('students.estado', 'ACTIVO')->orderBy('apellidos')->orderBy('nombres')->get()
+                : collect();
+        } else {
+            $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
+                ->orderBy('apellidos')->orderBy('nombres')->get();
         }
 
-        if ($courseId) {
-            $query->where('course_id', $courseId);
+        // Forzar selección dentro de los estudiantes permitidos
+        $permitidos = $estudiantesDisponibles->pluck('id');
+        $studentSeleccionado = $studentId && $permitidos->contains((int) $studentId)
+            ? $estudiantesDisponibles->firstWhere('id', (int) $studentId)
+            : $estudiantesDisponibles->first();
+
+        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject'])
+            ->whereIn('student_id', $permitidos)
+            ->orderByDesc('fecha');
+
+        // Filtro por rol base: siempre restringe a los estudiantes permitidos
+        if ($studentSeleccionado) {
+            $query->where('student_id', $studentSeleccionado->id);
         }
-        if ($subjectId) {
-            $query->where('subject_id', $subjectId);
+        if ($materiaFiltro) {
+            if ($materiaFiltro === 'General') {
+                $query->whereNull('subject_id');
+            } else {
+                $query->whereHas('subject', fn ($q) => $q->where('nombre', $materiaFiltro));
+            }
         }
         if ($fechaDesde) {
             $query->where('fecha', '>=', $fechaDesde);
@@ -204,22 +223,122 @@ class AttendanceController extends Controller
         if ($fechaHasta) {
             $query->where('fecha', '<=', $fechaHasta);
         }
+        if ($bimestre) {
+            $periodo = $this->rangoBimestre((int) $bimestre);
+            $query->whereBetween('fecha', $periodo);
+        }
 
-        $asistencias = $query->paginate(30)->withQueryString();
-        $cursos = Course::with(['grade', 'section'])->orderBy('nombre')->get();
+        $asistencias = $query->paginate(10)->withQueryString();
 
-        $materias = $courseId
-            ? Subject::whereIn('id', CourseSubject::where('course_id', $courseId)->pluck('subject_id'))->orderBy('nombre')->get()
-            : collect();
+        // Materias del estudiante seleccionado (de sus cursos activos)
+        $materias = collect();
+        if ($studentSeleccionado) {
+            $cursoIdsEst = $studentSeleccionado->registrations()
+                ->where('registrations.estado', 'ACTIVA')
+                ->pluck('course_id');
+            if ($cursoIdsEst->isNotEmpty()) {
+                $materias = Subject::whereIn('id', CourseSubject::whereIn('course_id', $cursoIdsEst)->pluck('subject_id'))
+                    ->orderBy('nombre')->get();
+            }
+        }
 
-        // Estadísticas
-        $estadisticas = Attendance::selectRaw("estado, COUNT(*) as total")
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
-            ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
+        // Estadísticas: mismas restricciones de rol y filtros, sobre los estudiantes permitidos
+        $estadisticasQuery = Attendance::query()
+            ->whereIn('student_id', $permitidos)
+            ->when($studentSeleccionado, fn ($q) => $q->where('student_id', $studentSeleccionado->id))
+            ->when($materiaFiltro, function ($q) use ($materiaFiltro) {
+                $materiaFiltro === 'General'
+                    ? $q->whereNull('subject_id')
+                    : $q->whereHas('subject', fn ($sq) => $sq->where('nombre', $materiaFiltro));
+            })
+            ->when($fechaDesde, fn ($q) => $q->where('fecha', '>=', $fechaDesde))
+            ->when($fechaHasta, fn ($q) => $q->where('fecha', '<=', $fechaHasta))
+            ->when($bimestre, fn ($q) => $q->whereBetween('fecha', $this->rangoBimestre((int) $bimestre)));
+
+        $estadisticas = $estadisticasQuery
+            ->selectRaw("estado, COUNT(*) as total")
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
-        return view('attendances.historial', compact('asistencias', 'cursos', 'materias', 'estadisticas', 'courseId', 'subjectId', 'fechaDesde', 'fechaHasta'));
+        // Resumen de asistencia por hijo y por bimestre (usado por Padre/Tutor).
+        $resumenPorHijo = $user->hasRole('Padre/Tutor')
+            ? $this->resumenAsistenciaPorHijo($estudiantesDisponibles)
+            : collect();
+
+        return view('attendances.historial', compact(
+            'asistencias',
+            'estudiantesDisponibles',
+            'studentSeleccionado',
+            'materias',
+            'estadisticas',
+            'resumenPorHijo',
+            'materiaFiltro',
+            'studentId',
+            'fechaDesde',
+            'fechaHasta',
+            'bimestre'
+        ));
+    }
+
+    /**
+     * Rango de fechas (inicio/fin) de un bimestre según la gestión académica activa.
+     * Cada bimestre abarca 3 meses desde la fecha de inicio de la gestión.
+     */
+    private function rangoBimestre(int $bimestre): array
+    {
+        $gestion = AcademicYear::where('estado', 'ACTIVA')->first();
+        $inicio = $gestion && $gestion->fecha_inicio
+            ? Carbon::parse($gestion->fecha_inicio)
+            : Carbon::create(Carbon::now()->year, 2, 1);
+
+        $b = max(1, min(4, $bimestre));
+        $ini = $inicio->copy()->addMonths(($b - 1) * 3)->startOfMonth();
+        $fin = $inicio->copy()->addMonths($b * 3)->startOfMonth()->subDay();
+
+        return [$ini->format('Y-m-d'), $fin->format('Y-m-d')];
+    }
+
+    /**
+     * Resumen de asistencia de cada estudiante agrupado por bimestre (1-4).
+     * Devuelve una colección indexada por student_id con, por bimestre, el conteo
+     * de cada estado y el porcentaje de asistencia (presente/permiso/atraso/justificado).
+     */
+    private function resumenAsistenciaPorHijo($estudiantes)
+    {
+        $estados = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO'];
+
+        $porAlumno = collect();
+        foreach ($estudiantes as $est) {
+            $rangos = [];
+            foreach ([1, 2, 3, 4] as $b) {
+                $rangos[$b] = $this->rangoBimestre($b);
+            }
+
+            $bimestres = collect();
+            $asistencias = Attendance::where('student_id', $est->id)->get();
+
+            foreach ([1, 2, 3, 4] as $b) {
+                [$ini, $fin] = $rangos[$b];
+                $registros = $asistencias->filter(fn ($a) =>
+                    $a->fecha->format('Y-m-d') >= $ini && $a->fecha->format('Y-m-d') <= $fin
+                )->values();
+
+                $conteos = [];
+                foreach ($estados as $e) {
+                    $conteos[$e] = $registros->where('estado', $e)->count();
+                }
+                $asistio = $conteos['PRESENTE'] + $conteos['PERMISO'] + $conteos['ATRASO'] + $conteos['JUSTIFICADO'];
+                $total = $registros->count();
+                $conteos['total'] = $total;
+                $conteos['pct'] = $total > 0 ? round(($asistio / $total) * 100) : 0;
+
+                $bimestres->put($b, $conteos);
+            }
+
+            $porAlumno->put($est->id, $bimestres);
+        }
+
+        return $porAlumno;
     }
 
 /**

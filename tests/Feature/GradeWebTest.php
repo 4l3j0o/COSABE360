@@ -90,7 +90,7 @@ class GradeWebTest extends TestCase
 
         $response = $this->delete("/grados/{$grade->id}");
         $response->assertRedirect('/grados');
-        $this->assertDatabaseMissing('grades', ['id' => $grade->id]);
+        $this->assertDatabaseHas('grades', ['id' => $grade->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_grade_validation_fails_without_required_fields(): void

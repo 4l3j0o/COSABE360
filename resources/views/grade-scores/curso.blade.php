@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('titulo', 'Calificaciones - ' . $course->nombre)
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')
@@ -27,21 +27,21 @@
 
     <div class="bg-card border border-border rounded-xl p-4 mb-4">
         <form method="GET" action="{{ route('courses.calificaciones', $course) }}" class="flex flex-wrap items-end gap-3">
-            <div class="flex flex-col gap-1 min-w-[180px]">
+            <div class="w-full min-w-0 sm:min-w-[180px] flex flex-col gap-1">
                 <label for="materia" class="text-xs font-medium text-muted-foreground">Materia</label>
-                <select name="materia" id="materia" class="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+                <select name="materia" id="materia" class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
                     <option value="">Todas</option>
                     @foreach($materias as $mat)
                         <option value="{{ $mat->id }}" @selected((string) $materia === (string) $mat->id)>{{ $mat->nombre }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex flex-col gap-1 min-w-[140px]">
-                <label for="bimestre" class="text-xs font-medium text-muted-foreground">Trimestre</label>
-                <select name="bimestre" id="bimestre" class="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+            <div class="w-full min-w-0 sm:min-w-[140px] flex flex-col gap-1">
+                <label for="bimestre" class="text-xs font-medium text-muted-foreground">Bimestre</label>
+                <select name="bimestre" id="bimestre" class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
                     <option value="">Todos</option>
                     @for($b = 1; $b <= 4; $b++)
-                        <option value="{{ $b }}" @selected((string) $bimestre === (string) $b)>{{ $b }}º trimestre</option>
+                        <option value="{{ $b }}" @selected((string) $bimestre === (string) $b)>{{ $b }}º Bimestre</option>
                     @endfor
                 </select>
             </div>

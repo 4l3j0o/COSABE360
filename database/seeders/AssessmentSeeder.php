@@ -12,9 +12,10 @@ use Illuminate\Support\Carbon;
 class AssessmentSeeder extends Seeder
 {
     /**
-     * Genera 4 evaluaciones por cada curso-materia (course_subject) con pesos que
-     * suman 1 por bimestre y fechas que caen en los días de clase del paralelo
-     * (regla aplicada por AssessmentController::guardarCurso).
+     * Genera 2 evaluaciones por bimestre (Parcial + Bimestral) para cada curso-materia
+     * (course_subject), cubriendo los 4 bimestres de la gestión (bimestre 1 a 4).
+     * Los pesos de cada bimestre suman 1.00 y las fechas caen en los días de clase
+     * del paralelo (regla aplicada por AssessmentController::guardarCurso).
      */
     public function run(): void
     {
@@ -28,12 +29,30 @@ class AssessmentSeeder extends Seeder
 
         $anio = (int) substr($gestion->fecha_inicio, 0, 4);
 
+        // Por bimestre: una evaluación Parcial (40%) y una Bimestral (60%).
         $plantillas = [
-            ['nombre' => 'Examen Parcial',      'tipo' => 'Examen',           'bimestre' => 1, 'peso' => 0.20, 'mes' => 4],
-            ['nombre' => 'Examen Bimestral',    'tipo' => 'Examen',           'bimestre' => 1, 'peso' => 0.30, 'mes' => 5],
-            ['nombre' => 'Trabajo Práctico',    'tipo' => 'Trabajo Práctico', 'bimestre' => 2, 'peso' => 0.15, 'mes' => 8],
-            ['nombre' => 'Examen Bimestral II', 'tipo' => 'Examen',           'bimestre' => 2, 'peso' => 0.35, 'mes' => 9],
+            // Bimestre 1
+            ['nombre' => 'Examen Parcial I',    'tipo' => 'Parcial',   'bimestre' => 1, 'peso' => 0.40, 'mes' => 2],
+            ['nombre' => 'Examen Bimestral I',  'tipo' => 'Bimestral', 'bimestre' => 1, 'peso' => 0.60, 'mes' => 3],
+            // Bimestre 2
+            ['nombre' => 'Examen Parcial II',   'tipo' => 'Parcial',   'bimestre' => 2, 'peso' => 0.40, 'mes' => 5],
+            ['nombre' => 'Examen Bimestral II', 'tipo' => 'Bimestral', 'bimestre' => 2, 'peso' => 0.60, 'mes' => 6],
+            // Bimestre 3
+            ['nombre' => 'Examen Parcial III',  'tipo' => 'Parcial',   'bimestre' => 3, 'peso' => 0.40, 'mes' => 8],
+            ['nombre' => 'Examen Bimestral III','tipo' => 'Bimestral', 'bimestre' => 3, 'peso' => 0.60, 'mes' => 9],
+            // Bimestre 4
+            ['nombre' => 'Examen Parcial IV',   'tipo' => 'Parcial',   'bimestre' => 4, 'peso' => 0.40, 'mes' => 10],
+            ['nombre' => 'Examen Bimestral IV', 'tipo' => 'Bimestral', 'bimestre' => 4, 'peso' => 0.60, 'mes' => 11],
         ];
+
+        // Limpiar evaluaciones por curso generadas por este seeder (evita restos de
+        // versiones previas al re-ejecutar). Las registradas manualmente se conservan.
+        Assessment::whereNotNull('course_subject_id')
+            ->where(function ($q) {
+                $q->where('nombre', 'like', 'Examen Parcial%')
+                    ->orWhere('nombre', 'like', 'Examen Bimestral%');
+            })
+            ->delete();
 
         $cursoMaterias = CourseSubject::with(['subject', 'course'])->get();
 
@@ -52,12 +71,12 @@ class AssessmentSeeder extends Seeder
                     [
                         'course_subject_id' => $cs->id,
                         'nombre'            => $plantilla['nombre'],
+                        'bimestre'          => $plantilla['bimestre'],
                     ],
                     [
                         'subject_id'       => $cs->subject_id,
                         'academic_year_id' => $gestion->id,
                         'tipo'             => $plantilla['tipo'],
-                        'bimestre'         => $plantilla['bimestre'],
                         'peso'             => $plantilla['peso'],
                         'fecha'            => $this->fechaPara($dias, $anio, $plantilla['mes']),
                         'descripcion'      => $descripcion,
@@ -67,7 +86,7 @@ class AssessmentSeeder extends Seeder
             }
         }
 
-        $this->command->info('Evaluaciones por curso generadas con fechas en días de clase.');
+        $this->command->info('Evaluaciones por curso generadas: Parcial y Bimestral en los 4 bimestres.');
     }
 
     private function fechaPara($dias, int $anio, int $mes): string

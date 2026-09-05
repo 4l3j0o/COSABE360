@@ -1,0 +1,13 @@
+@if(auth()->user()->hasRole('Director'))
+    @include('dashboard.partials._sidebar-director')
+@elseif(auth()->user()->hasRole('Secretaría'))
+    @include('dashboard.partials._sidebar-secretaria')
+@elseif(auth()->user()->hasRole('Docente'))
+    @include('dashboard.partials._sidebar-docente')
+@elseif(auth()->user()->hasRole('Padre/Tutor'))
+    @include('dashboard.partials._sidebar-tutor')
+@elseif(auth()->user()->hasRole('Estudiante'))
+    @include('dashboard.partials._sidebar-estudiante')
+@else
+    @include('dashboard.partials._sidebar-admin')
+@endif

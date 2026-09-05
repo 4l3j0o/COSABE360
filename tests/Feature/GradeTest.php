@@ -238,7 +238,7 @@ class GradeTest extends TestCase
         $response = $this->deleteJson("/grados/{$grade->id}");
 
         $response->assertOk();
-        $this->assertDatabaseMissing('grades', ['id' => $grade->id]);
+        $this->assertDatabaseHas('grades', ['id' => $grade->id, 'estado' => 'ELIMINADO']);
     }
 
     public function test_lista_grados_filtrando_por_nivel(): void

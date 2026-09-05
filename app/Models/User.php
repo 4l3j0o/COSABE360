@@ -25,6 +25,8 @@ class User extends Authenticatable
         'intentos_fallidos',
         'bloqueado_hasta',
         'ultimo_acceso',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [

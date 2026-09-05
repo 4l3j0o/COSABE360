@@ -90,7 +90,7 @@ class HistorialAsistenciaTest extends TestCase
         $datos = $this->crearDatos();
         $this->actingAs($datos['userDocente']);
 
-        $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id . '&desde=2026-04-02&hasta=2026-04-03');
+        $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id . '&desde=2026-04-02&hasta=2026-04-30');
         $response->assertStatus(200);
         $response->assertSee('falta');
         $response->assertSee('atraso');
