@@ -14,6 +14,11 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'nombre',
         'apellido',
@@ -29,11 +34,21 @@ class User extends Authenticatable
         'avatar',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -72,15 +87,42 @@ class User extends Authenticatable
     {
         return $this->bloqueado_hasta !== null && $this->bloqueado_hasta->isFuture();
     }
-// HU05 compat: helpers de permisos
+
+    /**
+     * HU05: Verifica si el usuario tiene un rol específico
+     */
     public function hasRole(string $role): bool
     {
         return $this->rol && $this->rol->nombre === $role;
     }
 
+    /**
+     * HU05: Verifica si el usuario tiene alguno de los roles dados
+     * Acepta string separado por comas o array
+     */
     public function hasAnyRole(string|array $roles): bool
     {
         $roles = is_string($roles) ? array_map('trim', explode(',', $roles)) : $roles;
         return $this->rol && in_array($this->rol->nombre, $roles, true);
+    }
+
+    /**
+     * HU05: Verifica permiso a un módulo según config/permisos.php
+     */
+    public function canAccess(string $modulo): bool
+    {
+        $permisos = config('permisos.roles', []);
+        $rol = $this->rol?->nombre;
+
+        if (!$rol) {
+            return false;
+        }
+
+        // Administrador tiene acceso total
+        if (isset($permisos[$rol]) && in_array('*', $permisos[$rol], true)) {
+            return true;
+        }
+
+        return isset($permisos[$rol]) && in_array($modulo, $permisos[$rol], true);
     }
 }
