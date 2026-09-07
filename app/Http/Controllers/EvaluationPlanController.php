@@ -123,41 +123,50 @@ class EvaluationPlanController extends Controller
     }
 
     /**
-     * Registra/actualiza las notas de todos los estudiantes en una actividad.
+     * Registra/actualiza las notas de todos los estudiantes en una o varias actividades
+     * de un criterio (formato notas[activity_id][student_id] = valor).
      */
     public function guardarNotas(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $courseSubject);
 
         $validated = $request->validate([
-            'evaluation_activity_id' => ['required', 'integer', 'exists:evaluation_activities,id'],
             'notas' => ['required', 'array'],
-            'notas.*' => ['nullable', 'numeric', 'min:0'],
+            'notas.*' => ['array'],
+            'notas.*.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $activity = $plan->criteria()
-            ->with('activities')
-            ->get()
-            ->flatMap->activities
-            ->firstWhere('id', $validated['evaluation_activity_id']);
-
-        abort_unless($activity, 404);
-
         $service = app(EvaluationService::class);
+        $contador = 0;
 
-        foreach ($validated['notas'] as $studentId => $nota) {
-            if ($nota === null || $nota === '') {
-                continue;
-            }
+        // Notas por actividad (formato: notas[activity_id][student_id])
+        if (isset($validated['notas']) && is_array($validated['notas'])) {
+            foreach ($validated['notas'] as $activityId => $notasEstudiante) {
+                $activity = $plan->criteria()
+                    ->with('activities')
+                    ->get()
+                    ->flatMap->activities
+                    ->firstWhere('id', (int) $activityId);
 
-            $student = Student::find($studentId);
-            if ($student) {
-                $service->registrarNota($activity, $student, (float) $nota, null, $request->user()->id);
+                if (! $activity) {
+                    continue;
+                }
+
+                foreach ($notasEstudiante as $studentId => $nota) {
+                    if ($nota === null || $nota === '') {
+                        continue;
+                    }
+                    $student = Student::find($studentId);
+                    if ($student) {
+                        $service->registrarNota($activity, $student, (float) $nota, null, $request->user()->id);
+                        $contador++;
+                    }
+                }
             }
         }
 
         return redirect()->route('evaluations.show', [$courseSubject, $plan])
-            ->with('success', 'Notas registradas en la actividad.');
+            ->with('success', 'Notas registradas ('.$contador.' calificaciones guardadas).');
     }
 
     /**
