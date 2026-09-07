@@ -36,6 +36,7 @@ use App\Http\Controllers\ElectronicInvoiceController;
 use App\Http\Controllers\InvoiceDetailController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\RcIvaWithholdingController;
+use App\Http\Controllers\RegenteController;
 use App\Http\Controllers\SignificantEventController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\TeacherController;
@@ -412,6 +413,14 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
     // HU-49: reportes de evaluación por curso y trimestre (aprobados/reprobados, mejores notas, asistencia)
     Route::get('/reportes-evaluacion', [EvaluationReportController::class, 'index'])->name('evaluation-reports.index');
     Route::get('/reportes-evaluacion/exportar', [EvaluationReportController::class, 'export'])->name('evaluation-reports.export');
+});
+
+// HU-50: Regente - gestión de listas de asistencia, permisos y licencias
+Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->prefix('regente')->group(function () {
+    Route::get('/', [RegenteController::class, 'cursos'])->name('regente.cursos');
+    Route::get('/{course}', [RegenteController::class, 'verCurso'])->name('regente.curso');
+    Route::post('/{course}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
+    Route::post('/{course}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
 });
 
 // HU-TRIB-04: Formulario RUDE RM 0031/2025 completo (Secciones I-V) + export MinEdu

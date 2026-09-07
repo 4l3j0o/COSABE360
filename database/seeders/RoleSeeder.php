@@ -16,6 +16,7 @@ class RoleSeeder extends Seeder
             ['nombre' => 'Docente', 'descripcion' => 'Registro de grades_scores y asistencia'],
             ['nombre' => 'Padre/Tutor', 'descripcion' => 'Consulta de información de sus hijos'],
             ['nombre' => 'Estudiante', 'descripcion' => 'Consulta de información propia'],
+            ['nombre' => 'Regente', 'descripcion' => 'Gestiona listas de asistencia, permisos y licencias (HU-50)'],
         ];
 
         foreach ($roles as $rol) {

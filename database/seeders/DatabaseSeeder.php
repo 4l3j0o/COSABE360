@@ -34,6 +34,9 @@ class DatabaseSeeder extends Seeder
             // Materias, docentes y asignaciones 2026
             Docentes2026Seeder::class,
 
+            // Cuentas de usuario @cosabe.edu.bo de los docentes (rol Docente)
+            DocenteUsuariosSeeder::class,
+
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,
 
