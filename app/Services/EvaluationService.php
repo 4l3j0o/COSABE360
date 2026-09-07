@@ -7,7 +7,9 @@ use App\Models\EvaluationActivity;
 use App\Models\EvaluationActivityGrade;
 use App\Models\EvaluationCriterion;
 use App\Models\EvaluationPlan;
+use App\Models\EvaluationSecondAttempt;
 use App\Models\Student;
+use Illuminate\Support\Collection;
 
 /**
  * Cálculo de evaluación según R.M. 473/2021 / R.M. 001/2022 (Ministerio de Educación de Bolivia)
@@ -134,6 +136,81 @@ class EvaluationService
         }
 
         return (float) $total; // suma de enteros (criterios) -> nota de trimestre 0-100
+    }
+
+    /**
+     * Nota final del trimestre considerando la segunda instancia (R.M. 473/2021).
+     * Si el estudiante aprobó la recuperación (>=51), se usa la nota de recuperación;
+     * de lo contrario se mantiene la nota original del trimestre.
+     */
+    public function notaFinalTrimestre(EvaluationPlan $plan, Student $student): ?float
+    {
+        $notaOriginal = $this->notaTrimestre($plan, $student);
+        if ($notaOriginal === null) {
+            return null;
+        }
+
+        $segunda = EvaluationSecondAttempt::where('evaluation_plan_id', $plan->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if ($segunda && $segunda->nota_recuperacion !== null && $segunda->nota_recuperacion >= 51) {
+            return (float) round((float) $segunda->nota_recuperacion);
+        }
+
+        return $notaOriginal;
+    }
+
+    /**
+     * Lista los estudiantes reprobados (nota trimestre < 51) que tienen derecho a segunda instancia.
+     */
+    public function reprobadosParaSegundaInstancia(EvaluationPlan $plan): Collection
+    {
+        $plan->load('criteria.activities');
+        $students = $plan->courseSubject->course->students()
+            ->where('students.estado', 'ACTIVO')
+            ->orderBy('students.apellidos')
+            ->get();
+
+        return $students->filter(function (Student $student) use ($plan) {
+            $nota = $this->notaTrimestre($plan, $student);
+
+            return $nota !== null && $nota < 51;
+        })->values();
+    }
+
+    /**
+     * Habilita (o actualiza) el registro de segunda instancia de un estudiante reprobado.
+     */
+    public function habilitarSegundaInstancia(EvaluationPlan $plan, Student $student, ?int $userId = null): EvaluationSecondAttempt
+    {
+        $notaOriginal = $this->notaTrimestre($plan, $student);
+
+        return EvaluationSecondAttempt::updateOrCreate(
+            ['evaluation_plan_id' => $plan->id, 'student_id' => $student->id],
+            [
+                'nota_original' => $notaOriginal,
+                'estado' => 'HABILITADO',
+                'registered_by_user_id' => $userId ?? auth()->id(),
+            ]
+        );
+    }
+
+    /**
+     * Registra la nota de recuperación de la segunda instancia y recalcula el estado.
+     */
+    public function registrarSegundaInstancia(EvaluationSecondAttempt $attempt, float $nota, ?string $fecha = null, ?int $userId = null): EvaluationSecondAttempt
+    {
+        $aprobado = $nota >= 51;
+
+        $attempt->update([
+            'nota_recuperacion' => round($nota, 2),
+            'estado' => $aprobado ? 'APROBADO' : 'REPROBADO',
+            'fecha' => $fecha ?? now()->toDateString(),
+            'registered_by_user_id' => $userId ?? auth()->id(),
+        ]);
+
+        return $attempt;
     }
 
     /**

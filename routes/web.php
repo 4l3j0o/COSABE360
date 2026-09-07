@@ -25,6 +25,7 @@ use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SegundaInstanciaController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
@@ -265,6 +266,8 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
     Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/notas', [EvaluationPlanController::class, 'guardarNotas'])->name('evaluations.grades');
     Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'descargarPlantilla'])->name('evaluations.template-download');
     Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'subirPlantilla'])->name('evaluations.template-upload');
+    Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}/segunda-instancia', [SegundaInstanciaController::class, 'index'])->name('segunda-instancia.index');
+    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/segunda-instancia', [SegundaInstanciaController::class, 'registrar'])->name('segunda-instancia.store');
 
     // Evaluaciones de un curso + materia específicos
     Route::get('/{courseSubject}/evaluaciones', [AssessmentController::class, 'porCurso'])->name('docente.evaluaciones');
