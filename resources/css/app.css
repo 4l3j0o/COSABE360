@@ -398,6 +398,12 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    transition: width 0.2s ease, margin 0.2s ease;
+}
+
+/* Sidebar colapsado (botón hamburguesa en desktop) */
+#sidebar-desktop.sidebar-hidden {
+    display: none !important;
 }
 
 .app-sidebar nav::-webkit-scrollbar {
@@ -451,6 +457,10 @@ body {
 
     #sidebar-mobile-wrap {
         display: none !important;
+    }
+
+    #btn-menu {
+        display: flex;
     }
 
     .app-main {

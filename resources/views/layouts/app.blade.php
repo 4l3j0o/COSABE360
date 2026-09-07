@@ -46,8 +46,15 @@
 
     <script>
         function openSidebar() {
-            document.getElementById('sidebar-mobile-wrap').classList.add('open');
-            document.getElementById('sidebar-backdrop').classList.add('open');
+            var desktop = document.getElementById('sidebar-desktop');
+            var mobile = document.getElementById('sidebar-mobile-wrap');
+            if (window.innerWidth >= 768) {
+                // Desktop: toggle ocultar/mostrar sidebar
+                desktop.classList.toggle('sidebar-hidden');
+            } else {
+                mobile.classList.add('open');
+                document.getElementById('sidebar-backdrop').classList.add('open');
+            }
         }
         function closeSidebar() {
             document.getElementById('sidebar-mobile-wrap').classList.remove('open');
