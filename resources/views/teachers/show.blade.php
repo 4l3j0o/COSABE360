@@ -49,10 +49,6 @@
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Datos Personales</h3>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                         <div>
-                            <dt class="text-muted-foreground">Código</dt>
-                            <dd class="font-mono text-xs text-muted-foreground">{{ $teacher->codigo }}</dd>
-                        </div>
-                        <div>
                             <dt class="text-muted-foreground">Nombres</dt>
                             <dd class="text-foreground font-medium">{{ $teacher->nombres }}</dd>
                         </div>

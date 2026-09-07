@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ContingencyQueueController;
 use App\Http\Controllers\DailyCufdController;
+use App\Http\Controllers\DiscountTypeController;
 use App\Http\Controllers\EducationalServiceController;
 use App\Http\Controllers\ElectronicInvoiceController;
 use App\Http\Controllers\InvoiceDetailController;
@@ -399,7 +400,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
     Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
 });
 
-// HU-TRIB-04: Formulario RUDE RM 0684/2025 completo (Secciones I-VI) + export MinEdu
+// HU-TRIB-04: Formulario RUDE RM 0031/2025 completo (Secciones I-V) + export MinEdu
 Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
     Route::get('/rude', [RudeController::class, 'index'])->name('rude.index');
     Route::get('/rude/export/list', [RudeController::class, 'exportList'])->name('rude.exportList');
@@ -470,6 +471,12 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     Route::get('servicios/{educationalService}', [EducationalServiceController::class, 'show'])->name('educational-services.show');
     Route::put('servicios/{educationalService}', [EducationalServiceController::class, 'update'])->name('educational-services.update');
     Route::delete('servicios/{educationalService}', [EducationalServiceController::class, 'destroy'])->name('educational-services.destroy');
+
+    // Tipos de descuento / becas de la mensualidad
+    Route::get('descuentos', [DiscountTypeController::class, 'index'])->name('discount-types.index');
+    Route::post('descuentos', [DiscountTypeController::class, 'store'])->name('discount-types.store');
+    Route::put('descuentos/{discountType}', [DiscountTypeController::class, 'update'])->name('discount-types.update');
+    Route::delete('descuentos/{discountType}', [DiscountTypeController::class, 'destroy'])->name('discount-types.destroy');
 
     // Secuencias de numeración
     Route::get('secuencias', [InvoiceSequenceController::class, 'index'])->name('invoice-sequences.index');

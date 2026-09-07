@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class AuthController extends Controller
 {
@@ -96,7 +97,7 @@ class AuthController extends Controller
     public function redirectToGoogle()
     {
         return Socialite::driver('google')
-            ->redirectUrl(url('/auth/google/callback'))
+            ->redirectUrl(config('services.google.redirect'))
             ->with(['hd' => config('services.google.hd', self::GOOGLE_HD)])
             ->redirect();
     }
@@ -121,8 +122,10 @@ class AuthController extends Controller
         }
 
         try {
-            $googleUser = Socialite::driver('google')->user();
-        } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
+            $googleUser = Socialite::driver('google')
+                ->redirectUrl(config('services.google.redirect'))
+                ->user();
+        } catch (InvalidStateException $e) {
             Log::error('HU-36 InvalidState (sesión/host)', ['query' => $request->except('code')]);
 
             return redirect()->route('login')

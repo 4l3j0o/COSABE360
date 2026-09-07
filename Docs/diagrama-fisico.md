@@ -170,6 +170,10 @@ CREATE TABLE operation_histories (
 
 # 4. `students`
 
+> `codigo` almacena el **código interno del estudiante** (columna `Codigo` del Excel de
+> inscripciones), sin prefijo. Para el RUDE oficial se usa `codigo_rude` (columna `Rude` del Excel)
+> y `codigo_sie_ue` = `81730184` (SIE de la Unidad Educativa).
+
 ```sql
 CREATE TABLE students (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -272,11 +276,13 @@ CREATE TABLE student_parent (
 
 # 7. `teachers`
 
+> La columna `codigo` fue eliminada (los docentes no requieren código interno).
+> Migración `2026_09_04_200000_remove_codigo_from_teachers_table.php`.
+
 ```sql
 CREATE TABLE teachers (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NULL,
-    codigo VARCHAR(20) NOT NULL UNIQUE,
     nombres VARCHAR(150) NOT NULL,
     apellidos VARCHAR(150) NOT NULL,
     especialidad VARCHAR(150) NULL,
@@ -1125,12 +1131,82 @@ CREATE TABLE rc_iva_withholdings (
 
 # 35. `student_rude_records`
 
+> Actualizada para el RUDE oficial 2025 (RM 0031/2025). Columnas de las secciones I, III y IV
+> agregadas por la migración `2026_09_04_191411_expand_student_rude_records_oficial.php`.
+> Las selecciones múltiples se almacenan como JSON.
+
 ```sql
 CREATE TABLE student_rude_records (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     student_id BIGINT UNSIGNED NOT NULL,
     codigo_rude VARCHAR(20) NULL,
     codigo_sie_ue VARCHAR(20) NULL,
+    -- SECCIÓN I: DATOS DE LA UNIDAD EDUCATIVA
+    fecha_registro DATE NULL,
+    ue_localidad VARCHAR(150) NULL,
+    ue_nombres VARCHAR(150) NULL,
+    ue_apellido_paterno VARCHAR(100) NULL,
+    ue_apellido_materno VARCHAR(100) NULL,
+    ue_pais VARCHAR(100) NULL,
+    ue_departamento VARCHAR(100) NULL,
+    ue_provincia VARCHAR(100) NULL,
+    ue_municipio VARCHAR(100) NULL,
+    ue_comunidad VARCHAR(150) NULL,
+    ue_zona VARCHAR(150) NULL,
+    ue_calle VARCHAR(150) NULL,
+    ue_nro_vivienda VARCHAR(50) NULL,
+    ue_telefono VARCHAR(50) NULL,
+    ue_celular VARCHAR(50) NULL,
+    -- SECCIÓN II (2.9): REGISTRO DE DISCAPACIDAD IBC
+    nro_registro_discapacidad VARCHAR(100) NULL,
+    -- SECCIÓN III: DIRECCIÓN ACTUAL DEL ESTUDIANTE
+    dir_departamento VARCHAR(100) NULL,
+    dir_provincia VARCHAR(100) NULL,
+    dir_municipio VARCHAR(100) NULL,
+    dir_comunidad VARCHAR(150) NULL,
+    dir_zona VARCHAR(150) NULL,
+    dir_calle VARCHAR(150) NULL,
+    dir_nro_vivienda VARCHAR(50) NULL,
+    dir_telefono VARCHAR(50) NULL,
+    dir_celular VARCHAR(50) NULL,
+    -- SECCIÓN IV.1: IDIOMA Y AUTOIDENTIFICACIÓN CULTURAL
+    idioma_aprendio VARCHAR(100) NULL,
+    idiomas_uso_frecuente JSON NULL,
+    autoidentificacion_cultural VARCHAR(150) NULL,
+    -- SECCIÓN IV.2: SALUD
+    salud_centro_cercano TINYINT(1) NULL,
+    salud_atendido_anio TINYINT(1) NULL,
+    salud_veces SMALLINT UNSIGNED NULL,
+    salud_seguro VARCHAR(100) NULL,
+    -- SECCIÓN IV.3: SERVICIOS BÁSICOS
+    serv_agua_red TINYINT(1) NULL,
+    serv_bano VARCHAR(100) NULL,
+    serv_alcantarillado TINYINT(1) NULL,
+    serv_electricidad TINYINT(1) NULL,
+    serv_recojo_basura TINYINT(1) NULL,
+    serv_vivienda_tipo VARCHAR(100) NULL,
+    -- SECCIÓN IV.4: INTERNET
+    internet_lugares JSON NULL,
+    internet_frecuencia VARCHAR(100) NULL,
+    -- SECCIÓN IV.5: ACTIVIDAD LABORAL
+    laboral_trabajo TINYINT(1) NULL,
+    laboral_actividad VARCHAR(150) NULL,
+    laboral_turnos JSON NULL,
+    laboral_frecuencia VARCHAR(100) NULL,
+    laboral_recibio_pago TINYINT(1) NULL,
+    -- SECCIÓN IV.6: TRANSPORTE
+    transporte_medio VARCHAR(100) NULL,
+    transporte_tiempo VARCHAR(100) NULL,
+    -- SECCIÓN IV.7: ABANDONO ESCOLAR
+    abandono_escolar TINYINT(1) NULL,
+    abandono_razones JSON NULL,
+    -- SECCIÓN IV.8: CARACTERÍSTICAS PARTICULARES
+    discapacidad_tipos JSON NULL,
+    discapacidad_grado VARCHAR(100) NULL,
+    dificultad_aprendizaje JSON NULL,
+    -- SECCIÓN V.1: CON QUIÉN VIVE
+    convive_con JSON NULL,
+    -- LEGADO
     turno ENUM('MANANA', 'TARDE', 'NOCTURNO') NULL,
     transporte TINYINT(1) DEFAULT 0,
     zona_residencial ENUM('URBANA', 'RURAL', 'PERIFERIA') NULL,
@@ -1183,6 +1259,30 @@ CREATE TABLE medical_records (
         ON DELETE CASCADE,
 
     UNIQUE KEY uk_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 37. `discount_types`
+
+> Tipos de descuento / becas de la mensualidad. Códigos únicos por porcentaje
+> (ej. `BECA3HER70`). Migración `2026_09_04_210000_create_discount_types_table.php`.
+
+```sql
+CREATE TABLE discount_types (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(20) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    tipo_aplicacion ENUM('PORCENTAJE', 'IMPORTE_FIJO', 'IMPORTE_MANUAL') DEFAULT 'PORCENTAJE',
+    porcentaje DECIMAL(5,2) NULL,
+    importe_fijo DECIMAL(10,2) NULL,
+    orden INT UNSIGNED DEFAULT 1,
+    estado ENUM('ACTIVO', 'INACTIVO') DEFAULT 'ACTIVO',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_codigo (codigo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 

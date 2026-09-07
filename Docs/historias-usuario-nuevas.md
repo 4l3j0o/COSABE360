@@ -150,7 +150,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 | Sprint 7 | HU-36, HU-37, HU-38 — Identidad Google | 16 | Finalizado |
 | Sprint 8 | HU-39, HU-40 — Navegación (HU-41 en rama panel-docente) | 13 | HU-39/40 Finalizado |
 | Sprint 9 | HU-42, HU-43, HU-44 — Evaluaciones, lista y reportes | 18 | Finalizado |
-| Sprint 10 | HU-45, HU-46 — RUDE oficial | 11 | Por iniciar |
+| Sprint 10 | HU-45, HU-46 — RUDE oficial | 11 | Finalizado |
 | **Total** | **11 historias** | **63** | |
 
 ## 6. Trazabilidad
@@ -221,3 +221,28 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **HU-42** — Ya existía: `docente.evaluaciones` crea evaluaciones dentro del curso heredando materia y gestión (validación de día de clase y peso). Sin cambios.
 - **HU-43** — Ya existía: `AttendanceController@create/store` registra asistencia por curso con los 5 estados (RB17) y upsert sin duplicados. Sin cambios.
 - **HU-44** — Nuevo `AttendanceReportController` con `index` y `export`: filtros por rango (día/semana/mes/trimestre), fecha base, curso y materia; conteos por estado y % de asistencia; exportación PDF (DomPDF) y Excel/CSV. Rutas `reportes.asistencia.index/export`, accesible a Docente/Secretaría/Director/Admin. Enlaces añadidos en los sidebars docente, admin y director.
+
+### RUDE oficial Bolivia (Épica 15, HU-45 y HU-46)
+
+- **HU-45** — Nuevo documento `Docs/rude-mapeo-oficial.md`: levantamiento campo por campo del formulario oficial RUDE 2025 (Resolución Ministerial Nº 0031/2025, formato Regular) con el mapeo capturar / ya existe en `Student` / nuevo en `student_rude_records`.
+- **HU-46** — Ampliación completa del módulo RUDE para capturar las secciones I-V oficiales:
+  - **Migración nueva** `2026_09_04_191411_expand_student_rude_records_oficial.php`: agrega Sección I (Unidad Educativa), Sección III (Dirección actual), Sección IV (socioeconómico) y campo 2.9 (Registro de discapacidad IBC). Las selecciones múltiples se guardan como JSON. `down()` elimina solo las columnas añadidas (rollback seguro, datos previos intactos).
+  - **Modelo** `StudentRudeRecord` — nuevas constantes de opciones oficiales (idiomas, autoidentificación, seguro salud, baño, vivienda, internet, actividades laborales, transporte, razones de abandono, tipos/grados de discapacidad, dificultades de aprendizaje, convivencia) + casts `array`/`boolean` + helper `listar()`.
+  - **Controlador** `RudeController@update` — valida y persiste todas las secciones; CI 7-8 dígitos + complemento, certificado completo (si uno, todos), SIE 8 dígitos.
+  - **Vistas** `rude/form`, `rude/show`, `rude/index` — formulario y detalle con las secciones I-V y estado.
+  - **Export** — alineado al formato oficial MinEdu RM 0031/2025 (secciones I-V), incluyendo datos de padre/madre/tutor desde `parent_guardians`.
+  - **SIE de la UE** — constante `StudentRudeRecord::SIE_UE = '81730184'`; se usa como valor por defecto de `codigo_sie_ue` y se aplicó a los 1145 registros RUDE existentes.
+  - **Código interno del estudiante** — el campo `students.codigo` pasa a almacenar el código interno de la columna `Codigo` del Excel de inscripciones (sin prefijo `EST-`); el RUDE oficial usa `codigo_rude` (columna `Rude` del Excel). Se actualizaron los 1512 estudiantes por match de CI.
+  - **Docentes sin código** — migración `2026_09_04_200000_remove_codigo_from_teachers_table.php` elimina la columna `codigo` de `teachers`; se limpiaron controlador, vistas y seeders.
+  - **Navegación** — el RUDE ya no está en el menú lateral; se accede desde el detalle del estudiante (botón "RUDE").
+
+### Mensualidad y descuentos (configuración)
+
+- **Mensualidad base** — actualizada a **Bs 785.50**: `TaxConfiguration.monto_mensualidad` y las 1512 matrículas (`registrations.monto_mensual`).
+- **Tipos de descuento / becas** — nuevo módulo `DiscountType`:
+  - Migración `2026_09_04_210000_create_discount_types_table.php` (tabla `discount_types`).
+  - Modelo `DiscountType` con `tipo_aplicacion` (`PORCENTAJE` / `IMPORTE_FIJO` / `IMPORTE_MANUAL`), `porcentaje`, `importe_fijo`, `orden` y método `montoDescuento($base)`.
+  - Controlador `DiscountTypeController` con CRUD (index/store/update/destroy) y validaciones.
+  - Vistas `discount-types/index` (tabla + modal crear/editar + eliminar).
+  - Rutas bajo `facturacion/descuentos` (Admin/Secretaría/Director) y enlace en el sidebar de Configuración.
+  - Seeder `DiscountTypeSeeder` carga los **18 descuentos** con códigos únicos por porcentaje (BECAEX100, CREDITO, BECA3HER70/100/80, BECAFUN60/30/40/55/70, BECASOCIO100/80/60, BECAESP50/70/100/20/80).

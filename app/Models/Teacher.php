@@ -13,7 +13,6 @@ class Teacher extends Model
 
     protected $fillable = [
         'user_id',
-        'codigo',
         'nombres',
         'apellidos',
         'especialidad',
@@ -60,32 +59,5 @@ class Teacher extends Model
     public function nombreCompleto(): string
     {
         return trim($this->nombres.' '.$this->apellidos);
-    }
-
-    /**
-     * Genera código único autoincremental tipo DOC-0001
-     */
-    public static function generarCodigo(): string
-    {
-        $last = static::orderByDesc('id')->value('id') ?? 0;
-        $next = $last + 1;
-        $codigo = 'DOC-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
-
-        // Evitar colisión si hay códigos preexistentes
-        while (static::where('codigo', $codigo)->exists()) {
-            $next++;
-            $codigo = 'DOC-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
-        }
-
-        return $codigo;
-    }
-
-    protected static function booted(): void
-    {
-        static::creating(function (Teacher $teacher) {
-            if (empty($teacher->codigo)) {
-                $teacher->codigo = static::generarCodigo();
-            }
-        });
     }
 }

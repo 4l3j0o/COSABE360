@@ -14,7 +14,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Docentes</h1>
-            <p class="text-sm text-muted-foreground">Registro y gestión de docentes con código único</p>
+            <p class="text-sm text-muted-foreground">Registro y gestión de docentes</p>
         </div>
         @if($esAdmin)
         <button onclick="openModal('modal-create-teacher')" title="Nuevo Docente" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
@@ -29,7 +29,7 @@
 
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('teachers.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
-            <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, código o documento..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre o documento..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 <option value="">Todos los estados</option>
                 <option value="ACTIVO" {{ request('estado') === 'ACTIVO' ? 'selected' : '' }}>activo</option>
@@ -50,7 +50,6 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-border bg-muted/50">
-                            <th class="text-left px-4 py-3 font-semibold text-foreground">Código</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Nombre</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Especialidad</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Documento</th>
@@ -62,7 +61,6 @@
                     <tbody>
                         @foreach($teachers as $teacher)
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                                <td class="px-4 py-3 font-mono text-xs text-muted-foreground">{{ $teacher->codigo }}</td>
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-foreground">{{ $teacher->apellidos }} {{ $teacher->nombres }}</div>
                                 </td>

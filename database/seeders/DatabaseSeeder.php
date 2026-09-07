@@ -51,6 +51,9 @@ class DatabaseSeeder extends Seeder
 
             // Facturación SFE (HU-TRIB-02/03) - catálogo SIN
             EducationalServiceSeeder::class,
+
+            // Configuración de mensualidad
+            DiscountTypeSeeder::class,
         ]);
     }
 }

@@ -21,7 +21,7 @@ class StudentRudeRecordSeeder extends Seeder
                 ['student_id' => $student->id],
                 [
                     'codigo_rude'        => $this->codigoRude($student->id),
-                    'codigo_sie_ue'      => 'SIE-0001',
+                    'codigo_sie_ue'      => '81730184',
                     'turno'              => 'MANANA',
                     'transporte'         => false,
                     'zona_residencial'   => 'URBANA',

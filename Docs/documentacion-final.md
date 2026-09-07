@@ -175,7 +175,7 @@ Para la toma de requerimientos se utilizó como técnica principal la entrevista
 - Se requiere almacenar información personal y académica de los estudiantes.
 - El RUDE constituye información importante dentro del registro estudiantil.
 - Se requiere almacenar documentación para los procesos de inscripción.
-- El costo aproximado de matrícula indicado fue de Bs. 770.
+- El costo aproximado de matrícula indicado fue de Bs. 785.50.
 - Las mensualidades se gestionan principalmente entre febrero y noviembre.
 - Los pagos pendientes deben registrarse como deuda.
 - Los horarios se organizan manualmente.
@@ -413,7 +413,7 @@ Cada requisito funcional deberá considerar validaciones de entrada, secuencia d
 
 ### 3.3. Reglas del negocio
 
-- **RB01 — Código único del estudiante.** El sistema generará automáticamente un código único para cada estudiante al momento de su registro.
+- **RB01 — Código interno del estudiante.** El campo `codigo` del estudiante almacena el código interno proveniente de la columna `Codigo` del Excel de inscripciones (sin prefijo). El código RUDE oficial se guarda en `codigo_rude`.
 - **RB02 — Documento de identidad no duplicado.** No se permitirá registrar personas con un documento de identidad duplicado cuando corresponda al mismo tipo de persona.
 - **RB03 — Correo no duplicado.** El correo electrónico de un usuario deberá ser único.
 - **RB04 — Un rol por usuario.** Cada usuario tendrá un único rol dentro del sistema.
@@ -623,8 +623,8 @@ El diagrama de objetos representa instancias concretas de las clases en un momen
 - `padre: PadreTutor` — nombres = "Roberto", apellidos = "Pérez", documentoIdentidad = "2345678", tipoRelacion = "PADRE".
 - `vinculo: Relación` — estudiante = "EST2026-0001", padreTutor = "padre", esPrincipal = 1.
 - `inscripcion: Inscripcion` — estudiante = "EST2026-0001", fecha = "01/02/2026", estado = "COMPLETADA".
-- `matricula: Matricula` — estudiante = "EST2026-0001", curso = "4to Sec. A", montoMensual = 770, estado = "ACTIVA".
-- `pago: PagoMensualidad` — matricula = "matricula", mes = 2, anio = 2026, monto = 770, estado = "PAGADO".
+- `matricula: Matricula` — estudiante = "EST2026-0001", curso = "4to Sec. A", montoMensual = 785.50, estado = "ACTIVA".
+- `pago: PagoMensualidad` — matricula = "matricula", mes = 2, anio = 2026, monto = 785.50, estado = "PAGADO".
 
 ## 6. Diseño de base de datos
 
@@ -663,7 +663,7 @@ El modelo conceptual representa las principales entidades del sistema y sus rela
 | students | id | user_id | codigo, nombres, apellidos, documento |
 | parent_guardians | id | user_id | nombres, apellidos, documento |
 | student_parent | id | student_id, parent_guardian_id | tipo_relacion, es_principal |
-| teachers | id | user_id | codigo, nombres, especialidad |
+| teachers | id | user_id | nombres, especialidad |
 | academic_years | id | — | nombre, fecha_inicio, fecha_fin |
 | levels | id | — | nombre, descripcion, orden |
 | grades | id | level_id | nombre, orden |
@@ -675,6 +675,7 @@ El modelo conceptual representa las principales entidades del sistema y sus rela
 | registrations | id | enrollment_id, course_id | fecha, monto_mensual, estado |
 | student_documents | id | student_id | tipo_documento, archivo, estado |
 | monthly_payments | id | registration_id, electronic_invoice_id | mes, año, monto, estado |
+| discount_types | id | — | código, nombre, tipo_aplicación, porcentaje, importe_fijo, orden, estado |
 | assessments | id | course_subject_id, subject_id, academic_year_id | nombre, tipo, peso |
 | grade_scores | id | assessment_id, student_id, registered_by_user_id | nota, promedio |
 | attendances | id | student_id, course_id, registered_by_user_id | fecha, estado |
@@ -1023,7 +1024,7 @@ Nota: Debido a que el Scrum Master y el Product Owner participaron activamente e
 | HU-TRIB-01 | Como administrador, quiero configurar los datos y parámetros tributarios de la institución, para cumplir con los requerimientos del Sistema de Facturación Electrónica (SFE). | Alta | 5 | 1 |
 | HU-TRIB-02 | Como personal administrativo, quiero generar facturas EXENTAS por matrícula, mensualidad y transporte, asociadas al padre/tutor. | Alta | 5 | 6 |
 | HU-TRIB-03 | Como administrador, quiero contar con un mecanismo de contingencia para generar y reenviar facturas cuando el SFE no esté disponible. | Alta | 5 | 6 |
-| HU-TRIB-04 | Como secretaría, quiero completar el formulario RUDE RM 0684/2025 completo (secciones I-VI) con validaciones CI, certificado de nacimiento y código SIE UE, y exportar el formato oficial MinEdu. | Alta | 6 | 2 |
+| HU-TRIB-04 | Como secretaría, quiero completar el formulario RUDE oficial RM 0031/2025 (secciones I-V) con validaciones CI, certificado de nacimiento y código SIE UE, y exportar el formato oficial MinEdu. | Alta | 6 | 2 |
 
 ### 8.2. Product Goal
 
@@ -1155,7 +1156,7 @@ El Sprint Backlog detalla las historias de usuario y tareas técnicas selecciona
 
 - HU-06: Registrar estudiantes.
   - El sistema debe permitir registrar estudiantes con: nombres, apellidos, fecha de nacimiento, lugar de nacimiento, sexo, documento de identidad, dirección, teléfono.
-  - El sistema debe generar automáticamente un código único para cada estudiante.
+  - El sistema debe almacenar el código interno del estudiante (columna `Codigo` del Excel de inscripciones).
   - Los campos obligatorios deben estar marcados y el sistema no debe permitir guardar si están vacíos.
   - El sistema debe validar que el documento de identidad no esté duplicado.
 - HU-07: Modificar y consultar estudiantes.
@@ -1172,7 +1173,7 @@ El Sprint Backlog detalla las historias de usuario y tareas técnicas selecciona
   - El sistema debe mostrar la información del tutor asociado en el perfil del estudiante.
 - HU-10: Registrar docentes.
   - El sistema debe permitir registrar docentes con: nombres, apellidos, especialidad, documento de identidad, teléfono, correo.
-  - El sistema debe generar automáticamente un código único para cada docente.
+  - Los docentes no requieren código interno.
   - El sistema debe permitir activar o desactivar docentes.
 
 Épica 3: Configuración Académica.
@@ -1315,7 +1316,7 @@ El Sprint Backlog detalla las historias de usuario y tareas técnicas selecciona
   - Las facturas en contingencia deben reenviarse automáticamente al recuperar conexión.
   - El sistema debe mantener un log de todas las transacciones en contingencia.
 - HU-TRIB-04: Formulario RUDE.
-  - El sistema debe capturar todos los campos del formulario RUDE RM 0684/2025 (secciones I-VI).
+  - El sistema debe capturar todos los campos del formulario RUDE oficial RM 0031/2025 (secciones I-V).
   - El sistema debe validar el CI boliviano con dígito verificador.
   - El sistema debe permitir exportar el formulario RUDE en formato oficial MinEdu (PDF/Excel).
 
@@ -1506,12 +1507,33 @@ La gestión de riesgos permitirá identificar anticipadamente situaciones que pu
 
 **Tabla student_rude_records.**
 
+> Formulario RUDE oficial 2025 (RM 0031/2025). Solo se listan los campos clave; el esquema
+> completo (secciones I, III, IV y campo 2.9) está documentado en `Docs/diagrama-fisico.md`.
+> El SIE de la Unidad Educativa es `81730184` (constante `StudentRudeRecord::SIE_UE`), usado
+> como valor por defecto de `codigo_sie_ue`. El acceso al RUDE está dentro del detalle del
+> estudiante (botón "RUDE"), ya no en el menú lateral.
+
 | Campo | Tipo | Descripción | Restricción |
 |---|---|---|---|
 | id | BIGINT UNSIGNED | Identificador | PK |
 | student_id | BIGINT UNSIGNED | Estudiante | FK, UNIQUE |
 | codigo_rude | VARCHAR(20) | Código RUDE | UNIQUE |
 | codigo_sie_ue | VARCHAR(20) | Código SIE UE | NULL |
+| fecha_registro | DATE | Fecha de llenado (Sec. I) | NULL |
+| ue_nombres | VARCHAR(150) | Nombre(s) UE (Sec. I) | NULL |
+| ue_departamento | VARCHAR(100) | Departamento UE (Sec. I) | NULL |
+| dir_departamento | VARCHAR(100) | Departamento dir. actual (Sec. III) | NULL |
+| dir_calle | VARCHAR(150) | Calle dir. actual (Sec. III) | NULL |
+| idioma_aprendio | VARCHAR(100) | Idioma inicial (Sec. IV.1) | NULL |
+| idiomas_uso_frecuente | JSON | Idiomas de uso (Sec. IV.1) | NULL |
+| salud_seguro | VARCHAR(100) | Seguro de salud (Sec. IV.2) | NULL |
+| serv_agua_red | BOOLEAN | Agua por red (Sec. IV.3) | NULL |
+| internet_lugares | JSON | Acceso internet (Sec. IV.4) | NULL |
+| laboral_actividad | VARCHAR(150) | Actividad laboral (Sec. IV.5) | NULL |
+| transporte_medio | VARCHAR(100) | Medio transporte (Sec. IV.6) | NULL |
+| abandono_razones | JSON | Razones abandono (Sec. IV.7) | NULL |
+| discapacidad_tipos | JSON | Tipos discapacidad (Sec. IV.8) | NULL |
+| convive_con | JSON | Con quién vive (Sec. V) | NULL |
 | turno | ENUM | Turno | NULL |
 | estado | ENUM | Estado RUDE | DEFAULT PENDIENTE |
 
