@@ -49,14 +49,10 @@
                         </div>
                     @endif
 
-                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-5 gap-2">
+                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-4 gap-2">
                         <a href="{{ route('evaluations.index', $curso) }}" title="Evaluaciones por trimestre (HU-47)"
                             class="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        </a>
-                        <a href="{{ route('docente.evaluaciones', $curso) }}" title="Evaluaciones"
-                            class="inline-flex items-center justify-center p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                         </a>
                         <a href="{{ route('asistencias.create', ['course_id' => $curso->course_id, 'fecha' => now()->toDateString()]) }}" title="Pasar lista"
                             class="inline-flex items-center justify-center p-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">

@@ -117,7 +117,7 @@
                                 </th>
                             @endforeach
                         @endif
-                        @if($criterion->tipo === 'ACTIVIDADES')
+                        @if($criterion->tipo === 'ACTIVIDADES' || $criterion->codigo === 'SE' || $criterion->codigo === 'AU')
                             <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-primary-50 text-primary-700 min-w-[70px]">Prom {{ $criterion->codigo }}</th>
                         @endif
                     @endforeach
@@ -166,7 +166,7 @@
                                     </td>
                                 @endforeach
                             @endif
-                            @if($criterion->tipo === 'ACTIVIDADES')
+                            @if($criterion->tipo === 'ACTIVIDADES' || $criterion->codigo === 'SE' || $criterion->codigo === 'AU')
                                 <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ $fila[$criterion->codigo] ?? '—' }}</td>
                             @endif
                         @endforeach
