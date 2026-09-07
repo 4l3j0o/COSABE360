@@ -8,6 +8,7 @@ use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BoletinController;
 use App\Http\Controllers\HistorialAcademicoController;
+use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
@@ -432,6 +433,13 @@ Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->
     Route::get('/{course}', [RegenteController::class, 'verCurso'])->name('regente.curso');
     Route::post('/{course}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
     Route::post('/{course}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
+});
+
+// HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/inclusion/{student}', [InclusionController::class, 'show'])->name('inclusion.show');
+    Route::post('/inclusion/{student}', [InclusionController::class, 'store'])->name('inclusion.store');
+    Route::delete('/inclusion/{student}/{adaptation}', [InclusionController::class, 'destroy'])->name('inclusion.destroy');
 });
 
 // HU-53: libreta electrónica / boletín oficial SIE
