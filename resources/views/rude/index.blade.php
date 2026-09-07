@@ -10,7 +10,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">RUDE - Registro Único de Estudiantes</h1>
-            <p class="text-sm text-muted-foreground mt-1">RM 0684/2025 — Secciones I-VI — Ley 070 Art.68</p>
+            <p class="text-sm text-muted-foreground mt-1">RM 0031/2025 — Secciones I-V — Ley 070 Art.68</p>
         </div>
         <a href="{{ route('rude.exportList') }}" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Exportar Listado (MinEdu)</a>
     </div>
@@ -64,7 +64,7 @@
                             </td>
                             <td class="px-4 py-3 text-right flex justify-end gap-2">
                                 <a href="{{ route('rude.show', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">Ver</a>
-                                <a href="{{ route('rude.form', $est) }}" class="px-2 py-1 bg-primary text-primary-foreground rounded-lg text-xs hover:bg-primary/90">Form I-VI</a>
+                                <a href="{{ route('rude.form', $est) }}" class="px-2 py-1 bg-primary text-primary-foreground rounded-lg text-xs hover:bg-primary/90">Form I-V</a>
                                 <a href="{{ route('rude.export', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">Export</a>
                             </td>
                         </tr>

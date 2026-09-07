@@ -20,9 +20,8 @@ class TeacherController extends Controller
             $buscar = addcslashes($request->buscar, '%_');
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombres', 'like', "%{$buscar}%")
-                  ->orWhere('apellidos', 'like', "%{$buscar}%")
-                  ->orWhere('codigo', 'like', "%{$buscar}%")
-                  ->orWhere('numero_documento', 'like', "%{$buscar}%");
+                    ->orWhere('apellidos', 'like', "%{$buscar}%")
+                    ->orWhere('numero_documento', 'like', "%{$buscar}%");
             });
         }
 
@@ -32,6 +31,7 @@ class TeacherController extends Controller
 
         $teachers = $query->orderBy('apellidos')->orderBy('nombres')
             ->paginate(10)->withQueryString();
+
         return view('teachers.index', compact('teachers'));
     }
 
@@ -54,7 +54,6 @@ class TeacherController extends Controller
         ]);
 
         $validated['complemento'] = $validated['complemento'] ?? '';
-        $validated['codigo'] = Teacher::generarCodigo();
 
         // Validar documento+complemento único
         if (Teacher::where('numero_documento', $validated['numero_documento'])->where('complemento', $validated['complemento'])->exists()) {
@@ -82,7 +81,7 @@ class TeacherController extends Controller
             }
         });
 
-        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Código: ' . $validated['codigo'] . ' | Usuario creado con email y contraseña por defecto: password123');
+        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Usuario creado con email y contraseña por defecto: password123');
     }
 
     public function edit(Teacher $teacher)
@@ -93,6 +92,7 @@ class TeacherController extends Controller
     public function show(Teacher $teacher)
     {
         $teacher->load('user.rol');
+
         return view('teachers.show', compact('teacher'));
     }
 
@@ -156,12 +156,14 @@ class TeacherController extends Controller
         $nuevo = $teacher->estaActivo() ? 'INACTIVO' : 'ACTIVO';
         $teacher->update(['estado' => $nuevo]);
         $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
+
         return redirect()->route('teachers.index')->with('success', "Docente {$accion} correctamente.");
     }
 
     public function destroy(Teacher $teacher)
     {
         $teacher->update(['estado' => 'ELIMINADO']);
+
         return redirect()->route('teachers.index')->with('success', 'Docente eliminado correctamente.');
     }
 }

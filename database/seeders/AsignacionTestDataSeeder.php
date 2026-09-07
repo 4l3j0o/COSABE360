@@ -53,7 +53,7 @@ class AsignacionTestDataSeeder extends Seeder
         Teacher::firstOrCreate(
             ['numero_documento' => '12345678'],
             [
-                'codigo' => 'DOC001', 'nombres' => 'Pedro', 'apellidos' => 'García',
+                'nombres' => 'Pedro', 'apellidos' => 'García',
                 'especialidad' => 'Matemáticas', 'tipo_documento' => 'CI', 'complemento' => '',
                 'telefono' => '70000000', 'email' => 'docente1@sanber.edu.bo', 'estado' => 'ACTIVO',
             ]
@@ -62,7 +62,7 @@ class AsignacionTestDataSeeder extends Seeder
         Teacher::firstOrCreate(
             ['numero_documento' => '87654321'],
             [
-                'codigo' => 'DOC002', 'nombres' => 'Ana', 'apellidos' => 'Rojas',
+                'nombres' => 'Ana', 'apellidos' => 'Rojas',
                 'especialidad' => 'Lenguaje', 'tipo_documento' => 'CI', 'complemento' => '',
                 'telefono' => '70000001', 'email' => 'docente2@sanber.edu.bo', 'estado' => 'ACTIVO',
             ]
