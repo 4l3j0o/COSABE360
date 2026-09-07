@@ -23,6 +23,28 @@
 </div>
 
 @if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
+@if(session('error')) <div class="bg-error/10 border border-error/30 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div> @endif
+
+{{-- Plantillas Excel (HU-48) --}}
+<div class="bg-card border border-border rounded-xl p-5 mb-5">
+    <h3 class="font-semibold text-foreground mb-2">Plantilla Excel de notas</h3>
+    <p class="text-xs text-muted-foreground mb-3">Descargue la plantilla, llénela con las notas de cada estudiante por actividad y vuelva a subirla para actualizar el sistema. Cada columna corresponde a una actividad del criterio.</p>
+    <div class="flex flex-wrap gap-3">
+        <a href="{{ route('evaluations.template-download', [$courseSubject, $plan]) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+            Descargar plantilla (.xlsx)
+        </a>
+        <form method="POST" action="{{ route('evaluations.template-upload', [$courseSubject, $plan]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+            @csrf
+            <input type="file" name="archivo" accept=".xlsx" required class="text-sm text-muted-foreground file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Subir plantilla
+            </button>
+        </form>
+    </div>
+    @error('archivo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
+</div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     @foreach($plan->criteria as $criterion)

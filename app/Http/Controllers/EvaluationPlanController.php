@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\CourseSubject;
 use App\Models\EvaluationCriterion;
 use App\Models\EvaluationPlan;
-use App\Models\Student;
 use App\Services\EvaluationService;
+use App\Services\EvaluationTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EvaluationPlanController extends Controller
 {
@@ -156,6 +158,50 @@ class EvaluationPlanController extends Controller
 
         return redirect()->route('evaluations.show', [$courseSubject, $plan])
             ->with('success', 'Notas registradas en la actividad.');
+    }
+
+    /**
+     * Descarga la plantilla Excel de la evaluación del trimestre (HU-48).
+     */
+    public function descargarPlantilla(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): StreamedResponse
+    {
+        $this->autorizar($request, $courseSubject);
+
+        $contenido = app(EvaluationTemplateService::class)->exportar($plan->load('criteria.activities'));
+
+        $nombre = 'evaluacion_trim'.$plan->trimestre.'_'.$courseSubject->id.'_'.now()->format('Ymd').'.xlsx';
+
+        return response()->streamDownload(function () use ($contenido) {
+            echo $contenido;
+        }, $nombre, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
+    /**
+     * Sube una plantilla Excel completada y actualiza actividades/notas (HU-48).
+     */
+    public function subirPlantilla(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): RedirectResponse
+    {
+        $this->autorizar($request, $courseSubject);
+
+        $validated = $request->validate([
+            'archivo' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
+        ]);
+
+        $ruta = $request->file('archivo')->storeAs('temp', 'plantilla_'.$plan->id.'.xlsx', 'local');
+
+        try {
+            $resultado = app(EvaluationTemplateService::class)->importar($plan, Storage::disk('local')->path($ruta));
+        } finally {
+            Storage::disk('local')->delete($ruta);
+        }
+
+        $mensaje = 'Plantilla procesada: '.$resultado['estudiantes'].' estudiantes, '.$resultado['notas'].' notas registradas.';
+        if (! empty($resultado['errores'])) {
+            $mensaje .= ' Errores: '.implode(' | ', array_slice($resultado['errores'], 0, 5));
+        }
+
+        return redirect()->route('evaluations.show', [$courseSubject, $plan])
+            ->with($resultado['errores'] ? 'error' : 'success', $mensaje);
     }
 
     private function autorizar(Request $request, CourseSubject $courseSubject): void

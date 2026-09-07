@@ -261,6 +261,8 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
     Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}', [EvaluationPlanController::class, 'show'])->name('evaluations.show');
     Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/actividad', [EvaluationPlanController::class, 'agregarActividad'])->name('evaluations.activity');
     Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/notas', [EvaluationPlanController::class, 'guardarNotas'])->name('evaluations.grades');
+    Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'descargarPlantilla'])->name('evaluations.template-download');
+    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'subirPlantilla'])->name('evaluations.template-upload');
 
     // Evaluaciones de un curso + materia específicos
     Route::get('/{courseSubject}/evaluaciones', [AssessmentController::class, 'porCurso'])->name('docente.evaluaciones');
