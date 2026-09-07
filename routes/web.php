@@ -20,6 +20,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\EvaluationReportController;
+use App\Http\Controllers\ExpedienteController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeScoreController;
@@ -449,6 +450,13 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(fu
     Route::get('/inclusion/{student}', [InclusionController::class, 'show'])->name('inclusion.show');
     Route::post('/inclusion/{student}', [InclusionController::class, 'store'])->name('inclusion.store');
     Route::delete('/inclusion/{student}/{adaptation}', [InclusionController::class, 'destroy'])->name('inclusion.destroy');
+});
+
+// HU-56: requisitos de inscripción y expediente documental (R.M. 001/2022 Art. 12)
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/expediente/{student}', [ExpedienteController::class, 'show'])->name('expediente.show');
+    Route::post('/expediente/{student}/documento', [ExpedienteController::class, 'store'])->name('expediente.store');
+    Route::post('/expediente/{student}/{documentoId}/estado', [ExpedienteController::class, 'status'])->name('expediente.status');
 });
 
 // HU-53: libreta electrónica / boletín oficial SIE
