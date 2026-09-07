@@ -43,6 +43,38 @@
     @error('archivo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
 </div>
 
+{{-- Crear actividades (aparecen como nuevas columnas en la matriz) --}}
+<div class="bg-card border border-border rounded-xl p-4 mb-5">
+    <h3 class="font-semibold text-foreground mb-3">Crear actividades</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        @foreach($plan->criteria as $criterion)
+            <div class="border border-border rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-bold text-foreground text-sm">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 text-primary text-xs font-extrabold mr-1">{{ $criterion->codigo }}</span>
+                        {{ $criterion->nombre }}
+                        <span class="text-xs text-muted-foreground">({{ $criterion->porcentaje }}%)</span>
+                    </h4>
+                    <span class="text-[10px] text-muted-foreground">{{ $criterion->activities->count() }} act.</span>
+                </div>
+                <form method="POST" action="{{ route('evaluations.activity', [$courseSubject, $plan]) }}" class="flex gap-1.5">
+                    @csrf
+                    <input type="hidden" name="evaluation_criteria_id" value="{{ $criterion->id }}">
+                    <input type="text" name="nombre" placeholder="Ej: Examen, Tarea..." required maxlength="200" class="flex-1 px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <button type="submit" title="Agregar actividad" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 cursor-pointer">+</button>
+                </form>
+                @if($criterion->activities->isNotEmpty())
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        @foreach($criterion->activities as $act)
+                            <span class="inline-flex px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">{{ $act->nombre }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</div>
+
 {{-- Matriz de calificaciones tipo Excel --}}
 @if(count($students) > 0)
 <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -125,8 +157,8 @@
     </div>
 </div>
 
-{{-- Botones de guardar por criterio + formulario para agregar actividad --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5">
+{{-- Botones de guardar por criterio --}}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
     @foreach($plan->criteria as $criterion)
         <div class="bg-card border border-border rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
@@ -142,18 +174,12 @@
                 <form id="form-criterio-{{ $criterion->id }}" method="POST" action="{{ route('evaluations.grades', [$courseSubject, $plan]) }}">
                     @csrf
                 </form>
-                <button type="submit" form="form-criterio-{{ $criterion->id }}" class="w-full mb-3 px-4 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 cursor-pointer">
+                <button type="submit" form="form-criterio-{{ $criterion->id }}" class="w-full px-4 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 cursor-pointer">
                     Guardar notas {{ $criterion->codigo }}
                 </button>
+            @else
+                <p class="text-xs text-muted-foreground">Sin actividades. Cree una en el bloque superior.</p>
             @endif
-
-            {{-- Agregar nueva actividad (aparece como nueva columna) --}}
-            <form method="POST" action="{{ route('evaluations.activity', [$courseSubject, $plan]) }}" class="flex gap-1.5">
-                @csrf
-                <input type="hidden" name="evaluation_criteria_id" value="{{ $criterion->id }}">
-                <input type="text" name="nombre" placeholder="Nueva actividad" required maxlength="200" class="flex-1 px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer">+</button>
-            </form>
         </div>
     @endforeach
 </div>

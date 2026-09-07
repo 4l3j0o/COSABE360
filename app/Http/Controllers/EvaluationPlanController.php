@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CourseSubject;
 use App\Models\EvaluationCriterion;
 use App\Models\EvaluationPlan;
+use App\Models\Student;
 use App\Services\EvaluationService;
 use App\Services\EvaluationTemplateService;
 use Illuminate\Http\RedirectResponse;
