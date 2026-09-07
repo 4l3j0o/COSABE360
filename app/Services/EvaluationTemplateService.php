@@ -124,35 +124,39 @@ class EvaluationTemplateService
         $sheetN->setTitle('Notas');
         $estudiantes = $this->estudiantes($cs);
 
-        // Metadatos (filas 2-7), como en la planilla oficial
-        $sheetN->setCellValue('E2', $this->colegio.' - '.$plan->nombre);
-        $sheetN->mergeCells('E2:N2');
-        $sheetN->setCellValue('E4', 'DOCENTE:');
-        $sheetN->mergeCells('E4:G4');
-        $sheetN->setCellValue('H4', $cs->teacher?->nombreCompleto() ?? '');
-        $sheetN->setCellValue('E5', 'CURSO:');
-        $sheetN->mergeCells('E5:G5');
-        $sheetN->setCellValue('H5', $cs->course->nombre);
-        $sheetN->setCellValue('E6', 'MATERIA:');
-        $sheetN->mergeCells('E6:G6');
-        $sheetN->setCellValue('H6', $cs->subject->nombre);
-        $sheetN->setCellValue('E7', 'EVALUACIÓN:');
-        $sheetN->mergeCells('E7:G7');
-        $sheetN->setCellValue('H7', $plan->trimestre);
+        // Metadatos (filas 1-7): título en D1, DOCENTE/CURSO/MATERIA/TRIMESTRE en filas 4-7
+        $sheetN->setCellValue('D1', $this->colegio.' - '.$plan->nombre);
+        $sheetN->mergeCells('D1:H3');
+        $sheetN->setCellValue('D4', 'DOCENTE:');
+        $sheetN->mergeCells('D4:E4');
+        $sheetN->setCellValue('F4', $cs->teacher?->nombreCompleto() ?? '');
+        $sheetN->mergeCells('F4:H4');
+        $sheetN->setCellValue('D5', 'CURSO:');
+        $sheetN->mergeCells('D5:E5');
+        $sheetN->setCellValue('F5', $cs->course->nombre);
+        $sheetN->mergeCells('F5:H5');
+        $sheetN->setCellValue('D6', 'MATERIA:');
+        $sheetN->mergeCells('D6:E6');
+        $sheetN->setCellValue('F6', $cs->subject->nombre);
+        $sheetN->mergeCells('F6:H6');
+        $sheetN->setCellValue('D7', 'TRIMESTRE:');
+        $sheetN->mergeCells('D7:E7');
+        $sheetN->setCellValue('F7', $plan->trimestre);
+        $sheetN->mergeCells('F7:H7');
 
-        // Encabezados de columna (filas 9 y 10)
-        $filaC = 9;   // fila de criterios (SE, SA, HA, AU)
-        $filaA = 10;  // fila de actividades + PROMEDIO
-        $filaDatos = 11;
+        // Encabezados de columna (filas 8 y 9)
+        $filaC = 8;   // fila de criterios (SE, SA, HA, AU)
+        $filaA = 9;   // fila de actividades + PROMEDIO
+        $filaDatos = 10;
 
-        // Columna A=código, B=N.º, C=ESTUDIANTES (merge C:D)
-        $sheetN->setCellValue('B'.$filaC, 'No');
-        $sheetN->mergeCells('B'.$filaC.':B'.$filaA);
-        $sheetN->setCellValue('C'.$filaC, 'ESTUDIANTES');
-        $sheetN->mergeCells('C'.$filaC.':D'.$filaA);
+        // Columna A=N.º, B=ESTUDIANTES (merge B:C), C=separador
+        $sheetN->setCellValue('A'.$filaC, 'No');
+        $sheetN->mergeCells('A'.$filaC.':A'.$filaA);
+        $sheetN->setCellValue('B'.$filaC, 'ESTUDIANTES');
+        $sheetN->mergeCells('B'.$filaC.':C'.$filaA);
 
-        // Columnas de criterios
-        $col = 5; // E
+        // Columnas de criterios (desde columna D = col 4)
+        $col = 4;
         $promCols = [];
         foreach ($criterios as $criterion) {
             $inicio = $col;
@@ -165,14 +169,14 @@ class EvaluationTemplateService
             $promCols[$criterion->codigo] = $col;
             $sheetN->setCellValue($this->colLetter($col).$filaA, 'PROMEDIO');
             $col++;
-            // Merge del encabezado del criterio en la fila 9
+            // Merge del encabezado del criterio en la fila 8
             $fin = $col - 1;
             if ($inicio <= $fin) {
                 $sheetN->mergeCells($this->colLetter($inicio).$filaC.':'.$this->colLetter($fin).$filaC);
                 $sheetN->setCellValue($this->colLetter($inicio).$filaC, $criterion->codigo.' ('.$criterion->porcentaje.'%)');
             }
         }
-        // Columna final: promedio evaluación (merge filas 9:10)
+        // Columna final: promedio evaluación (merge filas 8:9)
         $colTotal = $col;
         $sheetN->setCellValue($this->colLetter($colTotal).$filaC, 'PROMEDIO EVALUACIÓN '.$plan->trimestre);
         $sheetN->mergeCells($this->colLetter($colTotal).$filaC.':'.$this->colLetter($colTotal).$filaA);
@@ -180,12 +184,11 @@ class EvaluationTemplateService
 
         // Filas de estudiantes con FÓRMULAS (réplica exacta de la planilla oficial)
         foreach ($estudiantes as $i => $student) {
-            $sheetN->setCellValue('A'.$filaDatos, $student->codigo);
-            $sheetN->setCellValue('B'.$filaDatos, $i + 1);
-            $sheetN->setCellValue('C'.$filaDatos, '. '.$student->apellidos.' '.$student->nombres);
-            $sheetN->mergeCells('C'.$filaDatos.':D'.$filaDatos);
+            $sheetN->setCellValue('A'.$filaDatos, $i + 1);
+            $sheetN->setCellValue('B'.$filaDatos, '. '.$student->apellidos.' '.$student->nombres);
+            $sheetN->mergeCells('B'.$filaDatos.':C'.$filaDatos);
 
-            $col = 5;
+            $col = 4;
             foreach ($criterios as $criterion) {
                 $inicio = $col;
                 $nAct = $criterion->activities->count();
@@ -207,7 +210,7 @@ class EvaluationTemplateService
                 }
                 $col++; // pasa la columna de promedio
             }
-            // Fórmula total: =SUM(F,K,P,R)
+            // Fórmula total: =SUM de los promedios de los criterios
             $refs = collect($criterios)->map(fn ($c) => $this->colLetter($promCols[$c->codigo]).$filaDatos)->toArray();
             $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=SUM('.implode(',', $refs).')');
             $filaDatos++;
@@ -243,12 +246,12 @@ class EvaluationTemplateService
         // Fuente base
         $sheet->getStyle('A'.$filaC.':'.$letraUlt.$ultimaFila)->getFont()->setName('Calibri')->setSize(10);
 
-        // Metadatos: negrita en las etiquetas, centrado del título
-        $sheet->getStyle('E2:N2')->getFont()->setBold(true)->setSize(13)->getColor()->setARGB(self::COLOR_TITULO);
-        $sheet->getStyle('E2:N2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('E4:E7')->getFont()->setBold(true);
+        // Metadatos: título centrado, etiquetas en negrita
+        $sheet->getStyle('D1:H3')->getFont()->setBold(true)->setSize(13)->getColor()->setARGB(self::COLOR_TITULO);
+        $sheet->getStyle('D1:H3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('D4:D7')->getFont()->setBold(true);
 
-        // Cabecera (filas 9 y 10): fondo gris + negrita, como la planilla oficial
+        // Cabecera (filas 8 y 9): fondo gris + negrita, como la planilla oficial
         $sheet->getStyle('A'.$filaC.':'.$letraUlt.$filaA)->getFill()
             ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('CCCCCC');
         $sheet->getStyle('A'.$filaC.':'.$letraUlt.$filaA)->getFont()->setBold(true);
@@ -260,23 +263,22 @@ class EvaluationTemplateService
         $sheet->getStyle('A'.$filaC.':'.$letraUlt.$ultimaFila)->getBorders()->getAllBorders()->applyFromArray($thin);
 
         // Alineación: nombres a la izquierda, notas y promedios centrados
-        $sheet->getStyle('C'.$filaC.':C'.$ultimaFila)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('B'.$filaC.':B'.$ultimaFila)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
         $sheet->getStyle('A'.($filaA + 1).':'.$letraUlt.$ultimaFila)->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Anchos de columna
-        $sheet->getColumnDimension('A')->setWidth(9);
-        $sheet->getColumnDimension('B')->setWidth(5);
-        $sheet->getColumnDimension('C')->setWidth(34);
-        $sheet->getColumnDimension('D')->setWidth(6);
-        for ($c = 5; $c <= $ultimaCol; $c++) {
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(34);
+        $sheet->getColumnDimension('C')->setWidth(6);
+        for ($c = 4; $c <= $ultimaCol; $c++) {
             $ancho = in_array($c, $promCols, true) ? 10 : 12;
             $sheet->getColumnDimension($this->colLetter($c))->setWidth($ancho);
         }
         $sheet->getColumnDimension($letraTotal)->setWidth(14);
 
-        // Congelar paneles (columna C + fila 10) y zoom
-        $sheet->freezePane('E'.($filaA + 1));
+        // Congelar paneles (columna B + fila 9) y zoom
+        $sheet->freezePane('D'.($filaA + 1));
         $sheet->getSheetView()->setZoomScale(90);
     }
 
@@ -305,9 +307,9 @@ class EvaluationTemplateService
         $notasRegistradas = 0;
         $errores = [];
 
-        // Los datos de estudiantes inician en la fila 11 (filas 9-10 = encabezados de criterio/actividad)
-        for ($fila = 11; $fila <= $highestRow; $fila++) {
-            $nombre = trim((string) $sheetN->getCell('C'.$fila)->getValue());
+        // Los datos de estudiantes inician en la fila 10 (filas 8-9 = encabezados de criterio/actividad)
+        for ($fila = 10; $fila <= $highestRow; $fila++) {
+            $nombre = trim((string) $sheetN->getCell('B'.$fila)->getValue());
             $nombre = preg_replace('/^\.\s*/', '', $nombre);
             if ($nombre === '') {
                 continue;
@@ -319,7 +321,7 @@ class EvaluationTemplateService
                 continue;
             }
 
-            $col = 5; // columna E = primera actividad (A=código, B=N.º, C=D=estudiante)
+            $col = 4; // columna D = primera actividad (A=N.º, B:C=estudiante)
             foreach ($this->criteriosOrdenados($plan) as $criterion) {
                 foreach ($criterion->activities as $activity) {
                     $valor = $sheetN->getCell($this->colLetter($col).$fila)->getValue();
