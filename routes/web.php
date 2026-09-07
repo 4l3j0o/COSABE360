@@ -408,6 +408,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::get('/rude/{student}/form', [RudeController::class, 'form'])->name('rude.form');
     Route::put('/rude/{student}', [RudeController::class, 'update'])->name('rude.update');
     Route::get('/rude/{student}/export', [RudeController::class, 'export'])->name('rude.export');
+    Route::get('/rude/{student}/export/pdf', [RudeController::class, 'exportPdf'])->name('rude.export-pdf');
 });
 
 // HU-30: Crear y publicar comunicados - solo Administrador y Director (pulido: nombres announcements.* para AnnouncementTest - 7 rutas)

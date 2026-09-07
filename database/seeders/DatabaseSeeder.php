@@ -6,6 +6,18 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed reproducible de la BD completa (entornos privados con datos reales).
+     *
+     * Orden:
+     *  1. Base del sistema (roles, admin, configuración tributaria).
+     *  2. Estructura académica oficial (niveles, grados, paralelos, cursos).
+     *  3. Materias, docentes y asignaciones curso-materia-docente (docentes 2026).
+     *  4. Tipos de descuento / becas de la mensualidad.
+     *  5. Datos reales de estudiantes, tutores, matrículas y RUDE (PII).
+     *
+     * Para un entorno demo SIN datos personales, comentar EstudiantesRealesSeeder.
+     */
     public function run(): void
     {
         $this->call([
@@ -14,50 +26,22 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             TaxConfigurationSeeder::class,
 
-            // Estructura académica
+            // Estructura académica oficial
             AcademicYearSeeder::class,
-            GradoSeeder::class,
-            SectionSeeder::class,
-            SubjectSeeder::class,
+            EstructuraAcademicaSeeder::class,
 
-            // Personas
-            ParentGuardianSeeder::class,
-            StudentSeeder::class,
-            TeacherSeeder::class,
+            // Materias, docentes y asignaciones 2026
+            Docentes2026Seeder::class,
 
-            // Cursos y asignación curricular
-            CourseSeeder::class,
-            CourseSubjectSeeder::class,
-            ScheduleSeeder::class,
+            // Descuentos / becas de la mensualidad
+            DiscountTypeSeeder::class,
 
-            // Datos reales de estudiantes, tutores, matrículas y RUDE 2026
-            // (PII — solo en entornos privados). Comentar para un entorno demo.
+            // Datos reales de estudiantes 2026 (PII — solo entornos privados)
+            // Incluye estudiantes, tutores, matrículas y registros RUDE reales.
             EstudiantesRealesSeeder::class,
 
-            // Académico: inscripción y matrícula + cuotas
-            EnrollmentRegistrationSeeder::class,
-
-            // Académico: evaluaciones por curso, notas y asistencia
-            AssessmentSeeder::class,
-            GradeScoreSeeder::class,
-            AttendanceSeeder::class,
-
-            // Expediente del estudiante
-            StudentRudeRecordSeeder::class,
-            MedicalRecordSeeder::class,
-            StudentDocumentSeeder::class,
-
-            // Bitácora del sistema
-            OperationHistorySeeder::class,
-
-            // Comunicados para distintos destinatarios (roles y curso específico)
-            AnnouncementSeeder::class,
-
-            // Facturación SFE (HU-TRIB-02/03) - catálogo SIN
+            // Facturación SFE — catálogo SIN
             EducationalServiceSeeder::class,
-
-            // Configuración de mensualidad
-            DiscountTypeSeeder::class,
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\StudentRudeRecord;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -426,5 +427,19 @@ class RudeController extends Controller
             }
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Exporta el formulario RUDE de un estudiante en PDF (formato oficial RM 0031/2025).
+     */
+    public function exportPdf(Student $student)
+    {
+        $student->load(['rudeRecord', 'parentGuardians', 'user']);
+        $rude = $student->rudeRecord;
+
+        $pdf = Pdf::loadView('rude.pdf', compact('student', 'rude'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('RUDE_'.$student->codigo.'_'.now()->format('Ymd').'.pdf');
     }
 }

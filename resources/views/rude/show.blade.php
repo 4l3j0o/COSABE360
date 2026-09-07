@@ -22,6 +22,7 @@
         <div class="flex gap-2">
             <a href="{{ route('rude.form', $student) }}" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Editar Form I-V</a>
             <a href="{{ route('rude.export', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Exportar MinEdu</a>
+            <a href="{{ route('rude.export-pdf', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">PDF</a>
             <a href="{{ route('rude.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Volver</a>
         </div>
     </div>

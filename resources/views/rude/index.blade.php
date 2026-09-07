@@ -66,6 +66,7 @@
                                 <a href="{{ route('rude.show', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">Ver</a>
                                 <a href="{{ route('rude.form', $est) }}" class="px-2 py-1 bg-primary text-primary-foreground rounded-lg text-xs hover:bg-primary/90">Form I-V</a>
                                 <a href="{{ route('rude.export', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">Export</a>
+                                <a href="{{ route('rude.export-pdf', $est) }}" class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent">PDF</a>
                             </td>
                         </tr>
                     @empty
