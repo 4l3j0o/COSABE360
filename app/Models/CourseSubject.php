@@ -30,6 +30,11 @@ class CourseSubject extends Model
         return $this->hasMany(Assessment::class, 'course_subject_id');
     }
 
+    public function evaluationPlans(): HasMany
+    {
+        return $this->hasMany(EvaluationPlan::class, 'course_subject_id');
+    }
+
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class, 'subject_id', 'subject_id')

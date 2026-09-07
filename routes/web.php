@@ -15,6 +15,7 @@ use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeScoreController;
@@ -254,6 +255,12 @@ Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
 // Mis Cursos del docente - evaluaciones por curso/paralelo (course_subject)
 Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
     Route::get('/', [TeacherCourseController::class, 'index'])->name('docente.cursos');
+    // Evaluaciones por trimestre y criterios (HU-47)
+    Route::get('/{courseSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'index'])->name('evaluations.index');
+    Route::post('/{courseSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'guardar'])->name('evaluations.store');
+    Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}', [EvaluationPlanController::class, 'show'])->name('evaluations.show');
+    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/actividad', [EvaluationPlanController::class, 'agregarActividad'])->name('evaluations.activity');
+    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/notas', [EvaluationPlanController::class, 'guardarNotas'])->name('evaluations.grades');
 
     // Evaluaciones de un curso + materia específicos
     Route::get('/{courseSubject}/evaluaciones', [AssessmentController::class, 'porCurso'])->name('docente.evaluaciones');
