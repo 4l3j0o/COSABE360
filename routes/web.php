@@ -6,6 +6,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BoletinController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
@@ -431,6 +432,12 @@ Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->
     Route::get('/{course}', [RegenteController::class, 'verCurso'])->name('regente.curso');
     Route::post('/{course}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
     Route::post('/{course}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
+});
+
+// HU-53: libreta electrónica / boletín oficial SIE
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Padre/Tutor'])->group(function () {
+    Route::get('/boletin/{student}', [BoletinController::class, 'show'])->name('boletin.show');
+    Route::get('/boletin/{student}/pdf', [BoletinController::class, 'pdf'])->name('boletin.pdf');
 });
 
 // HU-TRIB-04: Formulario RUDE RM 0031/2025 completo (Secciones I-V) + export MinEdu
