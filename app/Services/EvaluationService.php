@@ -215,7 +215,7 @@ class EvaluationService
 
     /**
      * Promedio final anual de un course_subject para un estudiante:
-     * promedio de las notas de los 3 trimestres. Se redondea al entero (escala oficial 1-100).
+     * promedio de las notas finales (con segunda instancia) de los 3 trimestres, redondeado a entero.
      */
     public function promedioAnual(CourseSubject $courseSubject, Student $student): ?float
     {
@@ -230,7 +230,7 @@ class EvaluationService
                 continue;
             }
 
-            $nota = $this->notaTrimestre($plan, $student);
+            $nota = $this->notaFinalTrimestre($plan, $student);
             if ($nota !== null) {
                 $notas[] = $nota;
             }

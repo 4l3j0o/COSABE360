@@ -13,6 +13,7 @@ use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
+use App\Http\Controllers\CierreGestionController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
@@ -416,6 +417,12 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
     // HU-49: reportes de evaluación por curso y trimestre (aprobados/reprobados, mejores notas, asistencia)
     Route::get('/reportes-evaluacion', [EvaluationReportController::class, 'index'])->name('evaluation-reports.index');
     Route::get('/reportes-evaluacion/exportar', [EvaluationReportController::class, 'export'])->name('evaluation-reports.export');
+});
+
+// HU-52: cierre de gestión - escala de valoración y promoción/retención (Secretaría/Director/Admin)
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/cierre-gestion', [CierreGestionController::class, 'index'])->name('cierre-gestion.index');
+    Route::get('/cierre-gestion/exportar', [CierreGestionController::class, 'export'])->name('cierre-gestion.export');
 });
 
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
