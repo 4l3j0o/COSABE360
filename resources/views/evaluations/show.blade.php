@@ -6,14 +6,14 @@
 @php
     $nombresTrim = [1 => 'Primer Trimestre', 2 => 'Segundo Trimestre', 3 => 'Tercer Trimestre'];
 
-    // Colores por criterio (cabecera de matriz y tarjetas)
+    // Colores por criterio (dentro de la colorimetria del sistema: info=azul, warning=ambar, success=verde, muted=gris)
     $colorCriterio = [
-        'SE' => ['badge' => 'bg-blue-100 text-blue-700', 'head' => 'bg-blue-50', 'head2' => 'bg-blue-100/70', 'chip' => 'bg-blue-50 text-blue-700 border-blue-200', 'btn' => 'bg-blue-600 hover:bg-blue-700'],
-        'SA' => ['badge' => 'bg-amber-100 text-amber-700', 'head' => 'bg-amber-50', 'head2' => 'bg-amber-100/70', 'chip' => 'bg-amber-50 text-amber-700 border-amber-200', 'btn' => 'bg-amber-600 hover:bg-amber-700'],
-        'HA' => ['head' => 'bg-emerald-50', 'head2' => 'bg-emerald-100/70', 'chip' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'btn' => 'bg-emerald-600 hover:bg-emerald-700', 'badge' => 'bg-emerald-100 text-emerald-700'],
-        'AU' => ['head' => 'bg-violet-50', 'head2' => 'bg-violet-100/70', 'chip' => 'bg-violet-50 text-violet-700 border-violet-200', 'btn' => 'bg-violet-600 hover:bg-violet-700', 'badge' => 'bg-violet-100 text-violet-700'],
+        'SE' => ['badge' => 'bg-blue-100 text-blue-800', 'head' => 'bg-blue-50', 'head2' => 'bg-blue-100', 'chip' => 'bg-blue-50 text-blue-700 border-blue-200', 'btn' => 'bg-blue-600 hover:bg-blue-700', 'cell' => 'bg-blue-50'],
+        'SA' => ['badge' => 'bg-amber-100 text-amber-800', 'head' => 'bg-amber-50', 'head2' => 'bg-amber-100', 'chip' => 'bg-amber-50 text-amber-700 border-amber-200', 'btn' => 'bg-amber-600 hover:bg-amber-700', 'cell' => 'bg-amber-50'],
+        'HA' => ['head' => 'bg-green-50', 'head2' => 'bg-green-100', 'chip' => 'bg-green-50 text-green-700 border-green-200', 'btn' => 'bg-green-600 hover:bg-green-700', 'badge' => 'bg-green-100 text-green-800', 'cell' => 'bg-green-50'],
+        'AU' => ['head' => 'bg-neutral-100', 'head2' => 'bg-neutral-200', 'chip' => 'bg-neutral-100 text-neutral-700 border-neutral-200', 'btn' => 'bg-neutral-600 hover:bg-neutral-700', 'badge' => 'bg-neutral-200 text-neutral-800', 'cell' => 'bg-neutral-100'],
     ];
-    $c = fn($codigo) => $colorCriterio[$codigo] ?? ['badge'=>'bg-muted text-muted-foreground','head'=>'bg-muted/30','head2'=>'bg-muted/50','chip'=>'bg-muted text-muted-foreground','btn'=>'bg-primary hover:bg-primary/90'];
+    $c = fn($codigo) => $colorCriterio[$codigo] ?? ['badge'=>'bg-muted text-muted-foreground','head'=>'bg-muted/30','head2'=>'bg-muted/50','chip'=>'bg-muted text-muted-foreground','btn'=>'bg-primary hover:bg-primary/90','cell'=>'bg-muted/30'];
 @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
@@ -118,10 +118,10 @@
                             @endforeach
                         @endif
                         @if($criterion->tipo === 'ACTIVIDADES')
-                            <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-cyan-100 text-cyan-700 min-w-[70px]">Prom {{ $criterion->codigo }}</th>
+                            <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-primary-50 text-primary-700 min-w-[70px]">Prom {{ $criterion->codigo }}</th>
                         @endif
                     @endforeach
-                    <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-cyan-200 text-cyan-800 min-w-[70px]">Nota Trim</th>
+                    <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-primary-100 text-primary-800 min-w-[70px]">Nota Trim</th>
                 </tr>
                 {{-- Fila 2: código del criterio + ponderación --}}
                 <tr>
@@ -153,24 +153,24 @@
                         @foreach($plan->criteria as $criterion)
                             @php $cc = $c($criterion->codigo); @endphp
                             @if($criterion->activities->isEmpty())
-                                <td class="px-1 py-1 text-center text-xs text-muted-foreground bg-{{ $cc['head'] }}">—</td>
+                                <td class="px-1 py-1 text-center text-xs text-muted-foreground {{ $cc['cell'] }}">—</td>
                             @else
                                 @foreach($criterion->activities as $activity)
-                                    <td class="px-1 py-1 text-center {{ $cc['head'] }}">
+                                    <td class="px-1 py-1 text-center {{ $cc['cell'] }}">
                                         <input type="number" step="0.01" min="0" max="{{ $criterion->porcentaje }}"
                                             name="notas[{{ $activity->id }}][{{ $student->id }}]"
                                             value="{{ $activity->notaDe($student) }}"
                                             form="form-criterio-{{ $criterion->id }}"
                                             placeholder="—"
-                                            class="w-16 px-1 py-0.5 border border-input rounded-md bg-background text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30">
+                                            class="w-16 px-1 py-0.5 border border-input rounded-md bg-white text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30">
                                     </td>
                                 @endforeach
                             @endif
                             @if($criterion->tipo === 'ACTIVIDADES')
-                                <td class="px-2 py-1 text-center font-bold bg-cyan-50/50 text-cyan-700">{{ $fila[$criterion->codigo] ?? '—' }}</td>
+                                <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ $fila[$criterion->codigo] ?? '—' }}</td>
                             @endif
                         @endforeach
-                        <td class="px-2 py-1 text-center font-bold bg-cyan-100 text-cyan-800">{{ $notaTrim ?? '—' }}</td>
+                        <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $notaTrim ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
