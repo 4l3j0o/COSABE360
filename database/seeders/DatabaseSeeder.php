@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             // Base del sistema
             RoleSeeder::class,
             AdminUserSeeder::class,
+            UsuariosRealesSeeder::class,
             TaxConfigurationSeeder::class,
 
             // Estructura académica oficial
