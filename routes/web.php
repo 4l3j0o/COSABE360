@@ -16,6 +16,7 @@ use App\Http\Controllers\CourseSubjectController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
+use App\Http\Controllers\EvaluationReportController;
 use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeScoreController;
@@ -407,6 +408,10 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
     Route::get('/reportes-asistencia', [AttendanceReportController::class, 'index'])->name('reportes.asistencia.index');
     Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
+
+    // HU-49: reportes de evaluación por curso y trimestre (aprobados/reprobados, mejores notas, asistencia)
+    Route::get('/reportes-evaluacion', [EvaluationReportController::class, 'index'])->name('evaluation-reports.index');
+    Route::get('/reportes-evaluacion/exportar', [EvaluationReportController::class, 'export'])->name('evaluation-reports.export');
 });
 
 // HU-TRIB-04: Formulario RUDE RM 0031/2025 completo (Secciones I-V) + export MinEdu
