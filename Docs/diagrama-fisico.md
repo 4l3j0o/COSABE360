@@ -1288,6 +1288,196 @@ CREATE TABLE discount_types (
 
 ---
 
+# 38. `evaluation_plans`
+
+> Épica 16 (HU-47): plan/evaluación de un trimestre por curso-materia-docente.
+> Migración `2026_09_07_000000_create_evaluation_trimestres_tables.php`.
+
+```sql
+CREATE TABLE evaluation_plans (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    course_subject_id BIGINT UNSIGNED NOT NULL,
+    trimestre TINYINT UNSIGNED NOT NULL,           -- 1-3
+    nombre VARCHAR(150) NULL,
+    fecha_inicio DATE NULL,
+    fecha_fin DATE NULL,
+    estado ENUM('BORRADOR','ACTIVO','CERRADO') DEFAULT 'ACTIVO',
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (course_subject_id) REFERENCES course_subjects(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_plan_cs_trimestre (course_subject_id, trimestre),
+    INDEX idx_trimestre (trimestre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 39. `evaluation_criteria`
+
+> Los 4 criterios oficiales de cada plan (SE/SER, SA/SABER, HA/HACER, AU/AUTOEVALUACIÓN).
+
+```sql
+CREATE TABLE evaluation_criteria (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    evaluation_plan_id BIGINT UNSIGNED NOT NULL,
+    codigo VARCHAR(10) NOT NULL,                   -- SE, SA, HA, AU
+    nombre VARCHAR(100) NOT NULL,
+    porcentaje TINYINT UNSIGNED NOT NULL,           -- 10/45/40/5
+    tipo ENUM('VALOR_UNICO','ACTIVIDADES') DEFAULT 'ACTIVIDADES',
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (evaluation_plan_id) REFERENCES evaluation_plans(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_criteria_plan_codigo (evaluation_plan_id, codigo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 40. `evaluation_activities`
+
+> Actividades dentro de un criterio (SABER/HACER) o valor único (SER/AUTOEVALUACIÓN).
+
+```sql
+CREATE TABLE evaluation_activities (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    evaluation_criteria_id BIGINT UNSIGNED NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    orden INT UNSIGNED DEFAULT 1,
+    fecha DATE NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (evaluation_criteria_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE,
+    INDEX idx_criteria_id (evaluation_criteria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 41. `evaluation_activity_grades`
+
+> Nota por estudiante y actividad.
+
+```sql
+CREATE TABLE evaluation_activity_grades (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    evaluation_activity_id BIGINT UNSIGNED NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    nota DECIMAL(5,2) NOT NULL,
+    observaciones TEXT NULL,
+    registered_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (evaluation_activity_id) REFERENCES evaluation_activities(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (registered_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uk_grade_activity_student (evaluation_activity_id, student_id),
+    INDEX idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 42. `evaluation_second_attempts`
+
+> HU-51: segunda instancia / examen de recuperación de reprobados (R.M. 473/2021).
+> Migración `2026_09_07_150000_create_evaluation_second_attempts_table.php`.
+
+```sql
+CREATE TABLE evaluation_second_attempts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    evaluation_plan_id BIGINT UNSIGNED NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    nota_original DECIMAL(5,2) NULL,
+    nota_recuperacion DECIMAL(5,2) NULL,
+    estado ENUM('HABILITADO','RENDIDO','APROBADO','REPROBADO') DEFAULT 'HABILITADO',
+    fecha DATE NULL,
+    registered_by_user_id BIGINT UNSIGNED NULL,
+    observaciones TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (evaluation_plan_id) REFERENCES evaluation_plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (registered_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uk_second_attempt_plan_student (evaluation_plan_id, student_id),
+    INDEX idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 43. `student_curricular_adaptations`
+
+> HU-54: educación inclusiva (Ley 070). Migración `2026_09_07_160000_create_student_curricular_adaptations_table.php`.
+
+```sql
+CREATE TABLE student_curricular_adaptations (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    condicion ENUM('DISCAPACIDAD','DIFICULTAD_APRENDIZAJE','TALENTO_EXTRAORDINARIO') DEFAULT 'DIFICULTAD_APRENDIZAJE',
+    tipo_discapacidad VARCHAR(150) NULL,
+    grado VARCHAR(100) NULL,
+    descripcion TEXT NULL,
+    plan_adaptacion TEXT NULL,
+    modalidad VARCHAR(100) NULL,
+    evaluacion_diferenciada TINYINT(1) DEFAULT 0,
+    estado ENUM('ACTIVO','INACTIVO') DEFAULT 'ACTIVO',
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_adaptation_student_condicion (student_id, condicion),
+    INDEX idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 44. `data_consents`
+
+> HU-55: consentimiento informado de tratamiento de datos personales.
+> Migración `2026_09_07_170000_create_data_consents_arco_requests_tables.php`.
+
+```sql
+CREATE TABLE data_consents (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    titular_type VARCHAR(255) NOT NULL,             -- Student o ParentGuardian (morph)
+    titular_id BIGINT UNSIGNED NOT NULL,
+    finalidad VARCHAR(200) NOT NULL,
+    consentimiento TINYINT(1) DEFAULT 0,
+    fecha_consentimiento DATE NULL,
+    fecha_revocacion DATE NULL,
+    registrado_por VARCHAR(150) NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY uk_consent_titular_finalidad (titular_type, titular_id, finalidad)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+# 45. `arco_requests`
+
+> HU-55: solicitudes ARCO (Acceso, Rectificación, Cancelación, Oposición).
+
+```sql
+CREATE TABLE arco_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    titular_type VARCHAR(255) NOT NULL,
+    titular_id BIGINT UNSIGNED NOT NULL,
+    tipo ENUM('ACCESO','RECTIFICACION','CANCELACION','OPOSICION') NOT NULL,
+    detalle TEXT NULL,
+    estado ENUM('RECIBIDA','EN_PROCESO','RESUELTA','RECHAZADA') DEFAULT 'RECIBIDA',
+    fecha_solicitud DATE NULL,
+    fecha_resolucion DATE NULL,
+    resolucion TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    INDEX idx_titular (titular_type, titular_id),
+    INDEX idx_estado (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
 # RESUMEN DE CONVENCIONES
 
 ```text

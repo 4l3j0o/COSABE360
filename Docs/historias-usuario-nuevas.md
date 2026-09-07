@@ -246,3 +246,63 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   - Vistas `discount-types/index` (tabla + modal crear/editar + eliminar).
   - Rutas bajo `facturacion/descuentos` (Admin/Secretaría/Director) y enlace en el sidebar de Configuración.
   - Seeder `DiscountTypeSeeder` carga los **18 descuentos** con códigos únicos por porcentaje (BECAEX100, CREDITO, BECA3HER70/100/80, BECAFUN60/30/40/55/70, BECASOCIO100/80/60, BECAESP50/70/100/20/80).
+
+## Épica 16 — Evaluación por Trimestres y Criterios (Bolivia) + Regente y Comunicados
+
+> Alineado a R.M. 473/2021 / R.M. 001/2022 y a la plantilla real del colegio (`S6C-CE_LELO_TRIM2.xlsx`).
+> Criterios oficiales: **SE (SER 10%), SA (SABER 45%), HA (HACER 40%), AU (AUTOEVALUACIÓN 5%)**.
+
+### Registro de implementación — HU-47 a HU-50
+
+- **HU-47 — Modelo de evaluación por trimestres y criterios.**
+  - Migración `2026_09_07_000000_create_evaluation_trimestres_tables.php`: tablas `evaluation_plans`, `evaluation_criteria` (SE/SA/HA/AU), `evaluation_activities`, `evaluation_activity_grades`.
+  - `EvaluationService`: nota de criterio (promedio redondeado a entero), nota de trimestre (suma de criterios, 0-100), promedio anual (promedio de 3 trimestres) y escala ED/DA/DO/DP (mínimo 51). Validado contra la plantilla real (trimestre=68, anual=76).
+  - Interfaz en "Mis Cursos": `EvaluationPlanController` (index/guardar/show/agregarActividad/guardarNotas), rutas `mis-cursos/{courseSubject}/evaluaciones-trimestre`, vistas `evaluations/*`.
+
+- **HU-48 — Plantillas Excel de actividades (descargar y subir).**
+  - Dependencia `phpoffice/phpspreadsheet`.
+  - `EvaluationTemplateService`: exporta plantilla (.xlsx) con hojas Criterios y Notas (estudiantes × actividades por criterio); importa y actualiza actividades + notas.
+  - Rutas `evaluations.template-download/upload` y botones en la vista.
+
+- **HU-49 — Reportes del docente.**
+  - `EvaluationReportController`: filtros por curso/materia y trimestre; notas por criterio, nota de trimestre, valoración, estado aprobado/reprobado, % asistencia, top calificaciones. Export PDF (DomPDF) y Excel.
+
+- **HU-50 — Rol Regente + comunicados automáticos de licencia.**
+  - Rol **Regente** (RoleSeeder) asignado a `ecamacho@cosabe.edu.bo`.
+  - Estado **LICENCIA** en asistencia (migración reconstruye `attendances` con CHECK ampliado).
+  - `RegenteController`: lista cursos, modifica listas a su criterio, registra licencias.
+  - Al registrar una licencia se crea un comunicado **PUBLICADO** dirigido (`CURSO_ESPECIFICO` por user_id) **solo a los docentes del curso del estudiante**.
+  - `DocenteUsuariosSeeder`: crea cuentas `@cosabe.edu.bo` (rol Docente) y las vincula a los 55 docentes reales.
+
+## Épica 17 — Cumplimiento normativo educativo boliviano
+
+### Registro de implementación — HU-51 a HU-56
+
+- **HU-51 — Segunda instancia / examen de recuperación.**
+  - Migración `2026_09_07_150000_create_evaluation_second_attempts_table.php` (nota original, nota recuperación, estado).
+  - `EvaluationService`: `notaFinalTrimestre`, `reprobadosParaSegundaInstancia`, habilitar/registrar. `SegundaInstanciaController` + vista.
+
+- **HU-52 — Escala de valoración y promoción/retención.**
+  - `promedioAnual` usa `notaFinalTrimestre` (con segunda instancia).
+  - `CierreGestionController`: promedio anual por materia, valoración ED/DA/DO/DP, promovido/retenido (retiene si alguna área < 51, Art. 51). Vista + export PDF/Excel.
+
+- **HU-53 — Libreta electrónica / boletín oficial SIE.**
+  - `BoletinController`: boletín por estudiante con notas por área, valoración y promedio. Acceso a Secretaría/Director/Admin y Padre/Tutor de su hijo. Vista + PDF.
+
+- **HU-54 — Educación inclusiva (Ley 070).**
+  - Migración `2026_09_07_160000_create_student_curricular_adaptations_table.php`.
+  - `InclusionController`: CRUD de adaptaciones curriculares por estudiante (condición, tipo, grado, plan, modalidad, evaluación diferenciada). Vista `inclusion/show`.
+
+- **HU-55 — Protección de datos personales y derechos ARCO.**
+  - Migración `2026_09_07_170000_create_data_consents_arco_requests_tables.php` (`data_consents` + `arco_requests`).
+  - `DataProtectionController`: consentimientos y solicitudes ARCO (Acceso/Rectificación/Cancelación/Oposición). Vista `data-protection`.
+
+- **HU-56 — Requisitos de inscripción y expediente documental.**
+  - Requisitos por nivel (R.M. 001/2022 Art. 12): Inicial (certificado nacimiento + vacunas); Primaria/Secundaria (libreta + documento).
+  - `ExpedienteController`: checklist por estudiante según nivel. Migración `student_documents.archivo` nullable. Vista `expediente/show`.
+
+## Resumen de estado
+
+**Épicas completadas e integradas en `develop`:**
+- **Épica 16** (HU-47 a HU-50) ✅
+- **Épica 17** (HU-51 a HU-56) ✅

@@ -676,6 +676,14 @@ El modelo conceptual representa las principales entidades del sistema y sus rela
 | student_documents | id | student_id | tipo_documento, archivo, estado |
 | monthly_payments | id | registration_id, electronic_invoice_id | mes, año, monto, estado |
 | discount_types | id | — | código, nombre, tipo_aplicación, porcentaje, importe_fijo, orden, estado |
+| evaluation_plans | id | course_subject_id | trimestre, nombre, estado |
+| evaluation_criteria | id | evaluation_plan_id | código (SE/SA/HA/AU), porcentaje, tipo |
+| evaluation_activities | id | evaluation_criteria_id | nombre, orden, fecha |
+| evaluation_activity_grades | id | evaluation_activity_id, student_id | nota |
+| evaluation_second_attempts | id | evaluation_plan_id, student_id | nota_original, nota_recuperación, estado |
+| student_curricular_adaptations | id | student_id | condición, tipo, grado, plan, evaluación diferenciada |
+| data_consents | id | titular (morph) | finalidad, consentimiento, fecha, revocación |
+| arco_requests | id | titular (morph) | tipo, estado, fecha_solicitud, resolución |
 | assessments | id | course_subject_id, subject_id, academic_year_id | nombre, tipo, peso |
 | grade_scores | id | assessment_id, student_id, registered_by_user_id | nota, promedio |
 | attendances | id | student_id, course_id, registered_by_user_id | fecha, estado |
@@ -1384,6 +1392,12 @@ Durante la Sprint Review se presenta al Product Owner el trabajo terminado.
 | 4 | Evaluaciones, notas, asistencia y horarios | Validado |
 | 5 | Comunicados, reportes y auditoría | Validado |
 | 6 | Facturación y contingencia | Validado |
+| 7 | Épica 12: Acceso Google, navegación | Validado |
+| 8 | Épica 13-14: Navegación y panel docente | Validado |
+| 9 | Épica 14: Evaluaciones, lista y reportes | Validado |
+| 10 | Épica 15: RUDE oficial Bolivia | Validado |
+| 11 | Épica 16: Evaluación por trimestres y criterios (HU-47 a HU-50) | Validado |
+| 12 | Épica 17: Cumplimiento normativo (HU-51 a HU-56) | Validado |
 
 ### 9.4. Sprint Retrospective
 
