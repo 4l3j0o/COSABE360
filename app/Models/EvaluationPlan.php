@@ -37,7 +37,9 @@ class EvaluationPlan extends Model
 
     public function criteria(): HasMany
     {
-        return $this->hasMany(EvaluationCriterion::class, 'evaluation_plan_id');
+        // Orden lógico oficial: SER (SE), SABER (SA), HACER (HA), AUTOEVALUACIÓN (AU)
+        return $this->hasMany(EvaluationCriterion::class, 'evaluation_plan_id')
+            ->orderByRaw("CASE codigo WHEN 'SE' THEN 1 WHEN 'SA' THEN 2 WHEN 'HA' THEN 3 WHEN 'AU' THEN 4 ELSE 99 END");
     }
 
     /**
