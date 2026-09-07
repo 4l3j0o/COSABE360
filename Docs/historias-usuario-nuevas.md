@@ -278,12 +278,10 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 ### Registro de implementación — HU-51 a HU-56
 
-- **HU-51 — Segunda instancia / examen de recuperación.**
-  - Migración `2026_09_07_150000_create_evaluation_second_attempts_table.php` (nota original, nota recuperación, estado).
-  - `EvaluationService`: `notaFinalTrimestre`, `reprobadosParaSegundaInstancia`, habilitar/registrar. `SegundaInstanciaController` + vista.
+- ~~**HU-51 — Segunda instancia / examen de recuperación.**~~ **Retirado.** La tabla `evaluation_second_attempts`, el `SegundaInstanciaController`, su vista y rutas fueron eliminados.
 
 - **HU-52 — Escala de valoración y promoción/retención.**
-  - `promedioAnual` usa `notaFinalTrimestre` (con segunda instancia).
+  - `promedioAnual` usa `notaTrimestre` (sin segunda instancia).
   - `CierreGestionController`: promedio anual por materia, valoración ED/DA/DO/DP, promovido/retenido (retiene si alguna área < 51, Art. 51). Vista + export PDF/Excel.
 
 - **HU-53 — Libreta electrónica / boletín oficial SIE.**

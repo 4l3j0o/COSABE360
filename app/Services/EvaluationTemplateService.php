@@ -8,7 +8,9 @@ use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
@@ -28,6 +30,21 @@ class EvaluationTemplateService
 
     /** Orden lógico de los criterios (SE, SA, HA, AU). */
     private const ORDEN_CRITERIOS = ['SE' => 1, 'SA' => 2, 'HA' => 3, 'AU' => 4];
+
+    /**
+     * Paleta de colores por criterio (relleno de encabezado + texto), similar a la colorimetría del sistema.
+     * SE=azul, SA=ámbar, HA=verde, AU=gris.
+     */
+    private const COLORES_CRITERIO = [
+        'SE' => ['fill' => 'DCE6F1', 'font' => '1F4E79'], // azul claro / azul oscuro
+        'SA' => ['fill' => 'FCE8D1', 'font' => '9C4A00'], // ámbar claro / ámbar oscuro
+        'HA' => ['fill' => 'D9EAD3', 'font' => '1E6B34'], // verde claro / verde oscuro
+        'AU' => ['fill' => 'E7E6E6', 'font' => '595959'], // gris claro / gris oscuro
+    ];
+
+    private const COLOR_FILA_ALTERNA = 'F7F9FC'; // azul muy tenue para filas alternas
+    private const COLOR_BORDE = 'B7C4D6';        // gris azulado para bordes
+    private const COLOR_TITULO = '2E9E3A';        // verde institucional para títulos
 
     /**
      * Criterios de un plan ordenados lógicamente (SE, SA, HA, AU),
@@ -52,6 +69,7 @@ class EvaluationTemplateService
     {
         $plan->load(['courseSubject.subject', 'courseSubject.course.grade', 'courseSubject.course.section', 'criteria.activities']);
         $cs = $plan->courseSubject;
+        $service = app(EvaluationService::class);
 
         $spreadsheet = new Spreadsheet;
 
@@ -95,93 +113,225 @@ class EvaluationTemplateService
         $sheetC->getColumnDimension('C')->setWidth(12);
         $sheetC->getColumnDimension('D')->setWidth(14);
         $sheetC->getColumnDimension('E')->setWidth(40);
+        $sheetC->getStyle('A8:E8')->getFont()->setBold(true);
+        $sheetC->getStyle('A8:E8')->getFill()
+            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::COLOR_TITULO);
+        $sheetC->getStyle('A8:E8')->getFont()->getColor()->setARGB('FFFFFF');
 
         // --- Hoja Notas ---
         $sheetN = $spreadsheet->createSheet();
         $sheetN->setTitle('Notas');
         $estudiantes = $this->estudiantes($cs);
 
-        // Encabezado
-        $sheetN->setCellValue('A1', 'N.º');
-        $sheetN->setCellValue('B1', 'ESTUDIANTES');
-        $col = 3; // columna C
-        $headerMap = []; // columna => ['codigo'=>..., 'id'=>activityId]
+        // Encabezado de título (fila 1) y de criterio/actividad (fila 2-3)
+        $ultimaColTitle = $this->columnaDerechaTotal($plan);
+        $sheetN->setCellValue('A1', 'COLEGIO SAN BERNARDO DE TARIJA — EVALUACIÓN POR TRIMESTRE');
+        $sheetN->mergeCells('A1:' . $this->colLetter($ultimaColTitle) . '1');
+        $sheetN->setCellValue('A2', $cs->course->nombre.' | '.$cs->subject->nombre.' | Docente: '.($cs->teacher?->nombreCompleto() ?? ''));
+        $sheetN->mergeCells('A2:' . $this->colLetter($ultimaColTitle) . '2');
 
+        $filaEncabezado = 4; // los títulos de columnas van en la fila 4
+        $col = 1;
+        $sheetN->setCellValue($this->colLetter($col).$filaEncabezado, 'N.º'); $col++;
+        $sheetN->setCellValue($this->colLetter($col).$filaEncabezado, 'ESTUDIANTES'); $col++;
+
+        $headerMap = [];
+        $promCols = [];
         foreach ($this->criteriosOrdenados($plan) as $criterion) {
             $inicio = $col;
             foreach ($criterion->activities as $activity) {
-                $letra = $this->colLetter($col);
-                $sheetN->setCellValue("{$letra}1", $activity->nombre);
-                $sheetN->setCellValue("{$letra}2", $criterion->codigo.' ('.$criterion->porcentaje.'%)');
-                $headerMap[$col] = ['activity' => $activity];
+                $sheetN->setCellValue($this->colLetter($col).$filaEncabezado, $activity->nombre);
+                $headerMap[$col] = ['activity' => $activity, 'codigo' => $criterion->codigo];
                 $col++;
             }
             // Columna de promedio del criterio
-            $letraProm = $this->colLetter($col);
-            $sheetN->setCellValue("{$letraProm}1", 'PROMEDIO '.$criterion->codigo);
-            $sheetN->setCellValue("{$letraProm}2", $criterion->codigo);
+            $sheetN->setCellValue($this->colLetter($col).$filaEncabezado, 'PROM. '.$criterion->codigo);
+            $promCols[$criterion->codigo] = $col;
             $col++;
         }
-        // Columna nota trimestre
-        $letraTrim = $this->colLetter($col);
-        $sheetN->setCellValue("{$letraTrim}1", 'NOTA TRIMESTRE');
-        $sheetN->setCellValue("{$letraTrim}2", 'TRIM '.$plan->trimestre);
+        $sheetN->setCellValue($this->colLetter($col).$filaEncabezado, 'NOTA TRIMESTRE');
         $colNotaTrim = $col;
+        $ultimaCol = $col;
 
-        $col = 3;
-        foreach ($this->criteriosOrdenados($plan) as $criterion) {
-            foreach ($criterion->activities as $activity) {
-                $col++;
-            }
-            $col++; // promedio
+        // Segunda fila de encabezado: código del criterio (fila 5)
+        $filaCodigo = $filaEncabezado + 1;
+        foreach ($headerMap as $colIndex => $info) {
+            $sheetN->setCellValue($this->colLetter($colIndex).$filaCodigo, $info['codigo'].' ('.$this->criterioPorCodigo($plan, $info['codigo'])->porcentaje.'%)');
         }
-        $ultimaLetra = $this->colLetter($col);
+        foreach ($promCols as $codigo => $colIndex) {
+            $sheetN->setCellValue($this->colLetter($colIndex).$filaCodigo, 'Promedio '.$codigo);
+        }
+        $sheetN->setCellValue($this->colLetter($colNotaTrim).$filaCodigo, 'TRIM '.$plan->trimestre);
 
-        // Filas de estudiantes
-        $fila = 3;
-        $service = app(EvaluationService::class);
+        // Filas de estudiantes con FÓRMULAS
+        $fila = $filaCodigo + 1;
         foreach ($estudiantes as $i => $student) {
-            $sheetN->setCellValue('A'.$fila, $i + 1);
-            $sheetN->setCellValue('B'.$fila, $student->apellidos.' '.$student->nombres);
+            $sheetN->setCellValue($this->colLetter(1).$fila, $i + 1);
+            $sheetN->setCellValue($this->colLetter(2).$fila, $student->apellidos.' '.$student->nombres);
 
             $col = 3;
             $criteriosNota = [];
             foreach ($this->criteriosOrdenados($plan) as $criterion) {
-                $notaCriterio = $service->notaCriterio($criterion, $student);
-                $criteriosNota[$criterion->codigo] = $notaCriterio;
+                $inicio = $col;
+                $criteriosNota[$criterion->codigo] = [];
                 foreach ($criterion->activities as $activity) {
                     $nota = $activity->notaDe($student);
                     if ($nota !== null) {
                         $sheetN->setCellValue($this->colLetter($col).$fila, $nota);
+                        $criteriosNota[$criterion->codigo][] = $this->colLetter($col).$fila;
                     }
                     $col++;
                 }
-                // promedio criterio
-                if ($notaCriterio !== null) {
-                    $sheetN->setCellValue($this->colLetter($col).$fila, $notaCriterio);
+                // Fórmula de promedio del criterio (suma de actividades / total de actividades del criterio)
+                $promCol = $this->colLetter($promCols[$criterion->codigo]).$fila;
+                $actividadesCriterio = $criterion->activities->count();
+                if ($actividadesCriterio > 0) {
+                    $rango = $this->colLetter($inicio).$fila.':'.$this->colLetter($inicio + $actividadesCriterio - 1).$fila;
+                    // promedio = suma / número total de actividades (los vacíos cuentan como 0)
+                    $sheetN->setCellValue($promCol, "=ROUND(SUM($rango)/$actividadesCriterio,0)");
                 }
                 $col++;
             }
-            $notaTrim = $service->notaTrimestre($plan, $student);
-            if ($notaTrim !== null) {
-                $sheetN->setCellValue($this->colLetter($colNotaTrim).$fila, $notaTrim);
-            }
+
+            // Fórmula de nota trimestre = SUMA de los promedios de los 4 criterios
+            $criteriosCodigo = $this->criteriosOrdenados($plan)->pluck('codigo')->map(fn ($c) => $this->colLetter($promCols[$c]).$fila)->toArray();
+            $sheetN->setCellValue($this->colLetter($colNotaTrim).$fila, '=ROUND(SUM('.implode(',', $criteriosCodigo).'),0)');
+
             $fila++;
         }
+        $ultimaFila = $fila - 1;
 
-        // Estilo encabezado
-        $sheetN->getStyle('A1:'.$ultimaLetra.'2')->getFont()->setBold(true);
-        $sheetN->getStyle('A1:'.$ultimaLetra.'2')->getFill()
-            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('D9EAD3');
-        $sheetN->getStyle('A1:'.$ultimaLetra.'2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);
-        $sheetN->getColumnDimension('A')->setWidth(5);
-        $sheetN->getColumnDimension('B')->setWidth(34);
+        $this->estilizarHojaNotas($sheetN, $ultimaCol, $filaEncabezado, $filaCodigo, $ultimaFila, $plan, $promCols, $colNotaTrim);
 
         $writer = new Xlsx($spreadsheet);
         ob_start();
         $writer->save('php://output');
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * Aplica colores, bordes y anchos a la hoja Notas, estilo "planilla Excel" con
+     * encabezado coloreado por criterio, filas alternas y líneas visibles.
+     */
+    private function estilizarHojaNotas(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        int $ultimaCol,
+        int $filaEncabezado,
+        int $filaCodigo,
+        int $ultimaFila,
+        EvaluationPlan $plan,
+        array $promCols,
+        int $colNotaTrim
+    ): void {
+        $rangoEncabezado = 'A'.$filaEncabezado.':'.$this->colLetter($ultimaCol).$filaEncabezado;
+        $rangoCodigo = 'A'.$filaCodigo.':'.$this->colLetter($ultimaCol).$filaCodigo;
+        $rangoDatos = 'A'.$filaEncabezado.':'.$this->colLetter($ultimaCol).$ultimaFila;
+
+        // Fuente base
+        $sheet->getStyle($rangoDatos)->getFont()->setName('Calibri')->setSize(10);
+
+        // Título
+        $sheet->getStyle('A1:A2')->getFont()->setBold(true);
+        $sheet->getStyle('A1')->getFont()->setSize(14)->getColor()->setARGB(self::COLOR_TITULO);
+        $sheet->getStyle('A2')->getFont()->getColor()->setARGB('595959');
+
+        // Colorear columnas por criterio (encabezado de nombre + código + promedio)
+        foreach ($this->criteriosOrdenados($plan) as $criterion) {
+            $color = self::COLORES_CRITERIO[$criterion->codigo] ?? ['fill' => 'F2F2F2', 'font' => '000000'];
+            [$inicio, $fin] = $this->rangoColumnasCriterio($plan, $criterion->codigo);
+
+            $rangoCol = $this->colLetter($inicio).$filaEncabezado.':'.$this->colLetter($fin).$filaCodigo;
+            $sheet->getStyle($rangoCol)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($color['fill']);
+            $sheet->getStyle($rangoCol)->getFont()->getColor()->setARGB($color['font']);
+            $sheet->getStyle($rangoCol)->getFont()->setBold(true);
+            // Fondo del encabezado del criterio (código)
+            $sheet->getStyle($this->colLetter($inicio).$filaCodigo.':'.$this->colLetter($fin).$filaCodigo)
+                ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB($color['fill']);
+        }
+
+        // Columna NOTA TRIMESTRE: encabezado destacado
+        $sheet->getStyle($this->colLetter($colNotaTrim).$filaEncabezado.':'.$this->colLetter($colNotaTrim).$filaCodigo)
+            ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2CC'); // ámbar claro
+        $sheet->getStyle($this->colLetter($colNotaTrim).$filaEncabezado.':'.$this->colLetter($colNotaTrim).$filaCodigo)
+            ->getFont()->getColor()->setARGB('9C4A00');
+
+        // Encabezado "Estudiante" / "N.º"
+        $sheet->getStyle('A'.$filaEncabezado.':B'.$filaCodigo)
+            ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::COLOR_TITULO);
+        $sheet->getStyle('A'.$filaEncabezado.':B'.$filaCodigo)->getFont()->getColor()->setARGB('FFFFFF');
+
+        // Bordes visibles en todo el rango
+        $thin = ['style' => Border::BORDER_THIN, 'color' => ['argb' => self::COLOR_BORDE]];
+        $medium = ['style' => Border::BORDER_MEDIUM, 'color' => ['argb' => '9AA7B8']];
+        $sheet->getStyle($rangoDatos)->getBorders()->getAllBorders()->applyFromArray($thin);
+        $sheet->getStyle('A'.$filaEncabezado.':'.$this->colLetter($ultimaCol).$filaCodigo)->getBorders()->getAllBorders()->applyFromArray($medium);
+
+        // Filas alternas (bandas)
+        for ($r = $filaCodigo + 2; $r <= $ultimaFila; $r += 2) {
+            $sheet->getStyle('A'.$r.':'.$this->colLetter($ultimaCol).$r)
+                ->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB(self::COLOR_FILA_ALTERNA);
+        }
+
+        // Centrar celdas numéricas
+        $sheet->getStyle('A'.$filaEncabezado.':'.$this->colLetter($ultimaCol).$ultimaFila)
+            ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('B'.$filaEncabezado.':B'.$ultimaFila)
+            ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle($rangoEncabezado)->getAlignment()->setWrapText(true);
+
+        // Anchos de columna
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(36);
+        for ($c = 3; $c <= $ultimaCol; $c++) {
+            if ($c === $colNotaTrim) {
+                $sheet->getColumnDimension($this->colLetter($c))->setWidth(14);
+            } elseif (in_array($c, $promCols, true)) {
+                $sheet->getColumnDimension($this->colLetter($c))->setWidth(12);
+            } else {
+                $sheet->getColumnDimension($this->colLetter($c))->setWidth(10);
+            }
+        }
+
+        // Congelar paneles (filas de encabezado + columna de estudiante)
+        $sheet->freezePane($this->colLetter(3).($filaCodigo + 1));
+        $sheet->getSheetView()->setZoomScale(90);
+    }
+
+    /** Criterio por código (para el encabezado de ponderación). */
+    private function criterioPorCodigo(EvaluationPlan $plan, string $codigo)
+    {
+        return $this->criteriosOrdenados($plan)->first(fn ($c) => $c->codigo === $codigo);
+    }
+
+    /** Columna derecha total de la hoja Notas (para el merge del título). */
+    private function columnaDerechaTotal(EvaluationPlan $plan): int
+    {
+        $col = 3; // C (después de N.º y ESTUDIANTES)
+        foreach ($this->criteriosOrdenados($plan) as $criterion) {
+            $col += max(1, $criterion->activities->count()); // actividades
+            $col++; // promedio del criterio
+        }
+        $col++; // nota trimestre
+
+        return $col;
+    }
+
+    /** Rango [inicio, fin] de columnas (actividades + promedio) de un criterio en la hoja Notas. */
+    private function rangoColumnasCriterio(EvaluationPlan $plan, string $codigo): array
+    {
+        $col = 3;
+        foreach ($this->criteriosOrdenados($plan) as $criterion) {
+            $inicio = $col;
+            $fin = $col + max(1, $criterion->activities->count()); // actividades + promedio
+            if ($criterion->codigo === $codigo) {
+                return [$inicio, $fin];
+            }
+            $col = $fin + 1;
+        }
+
+        return [3, 3];
     }
 
     /**
@@ -209,8 +359,8 @@ class EvaluationTemplateService
         $notasRegistradas = 0;
         $errores = [];
 
-        // Para cada fila de estudiante
-        for ($fila = 3; $fila <= $highestRow; $fila++) {
+        // Los datos de estudiantes inician en la fila 6 (fila 4 = encabezado, fila 5 = código de criterio)
+        for ($fila = 6; $fila <= $highestRow; $fila++) {
             $nombre = trim((string) $sheetN->getCell('B'.$fila)->getValue());
             if ($nombre === '') {
                 continue;
