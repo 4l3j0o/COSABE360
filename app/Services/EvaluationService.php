@@ -98,16 +98,20 @@ class EvaluationService
             return $nota === null ? null : (float) round((float) $nota);
         }
 
-        // ACTIVIDADES: promedio simple de las notas registradas, redondeado al entero
-        $notas = $activities->map(fn (EvaluationActivity $a) => $a->notaDe($student))
-            ->filter(fn ($n) => $n !== null)
-            ->values();
+        // ACTIVIDADES: promedio = suma de notas / TOTAL de actividades del criterio.
+        // Las actividades sin nota registrada cuentan como 0.
+        $totalActividades = $activities->count();
+        $suma = 0.0;
+        foreach ($activities as $activity) {
+            $nota = $activity->notaDe($student);
+            $suma += $nota === null ? 0.0 : (float) $nota;
+        }
 
-        if ($notas->isEmpty()) {
+        if ($totalActividades === 0) {
             return null;
         }
 
-        return (float) round((float) $notas->avg());
+        return (float) round($suma / $totalActividades);
     }
 
     /**
