@@ -30,6 +30,10 @@ class DatabaseSeeder extends Seeder
             CourseSubjectSeeder::class,
             ScheduleSeeder::class,
 
+            // Datos reales de estudiantes, tutores, matrículas y RUDE 2026
+            // (PII — solo en entornos privados). Comentar para un entorno demo.
+            EstudiantesRealesSeeder::class,
+
             // Académico: inscripción y matrícula + cuotas
             EnrollmentRegistrationSeeder::class,
 
