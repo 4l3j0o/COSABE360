@@ -10,6 +10,10 @@ use App\Models\Registration;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceReportController extends Controller
 {
@@ -70,12 +74,13 @@ class AttendanceReportController extends Controller
         }
 
         // Estudiantes matriculados (ACTIVA) del curso (o todos si no se elige curso)
+        // Registration -> enrollment -> estudiante (no existe relación directa `student`)
         $studentsQuery = Registration::where('estado', 'ACTIVA')
-            ->with('student')
+            ->with('enrollment.estudiante')
             ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
-            ->whereHas('student', fn ($q) => $q->where('estado', 'ACTIVO'));
+            ->whereHas('enrollment.estudiante', fn ($q) => $q->where('estado', 'ACTIVO'));
 
-        $students = $studentsQuery->get()->pluck('student')->unique('id')->values();
+        $students = $studentsQuery->get()->map(fn ($r) => $r->enrollment?->estudiante)->filter()->unique('id')->values();
 
         // Asistencias dentro del rango, opcional por materia
         $attendanceQuery = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
@@ -186,33 +191,63 @@ class AttendanceReportController extends Controller
         return $pdf->download('reporte-asistencia-'.$resultado['desde'].'.pdf');
     }
 
-    private function exportExcel(array $resultado)
+    private function exportExcel(array $resultado): StreamedResponse
     {
-        $filename = 'reporte-asistencia-'.$resultado['desde'].'.csv';
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Asistencia');
 
-        $cabecera = ['Código', 'Estudiante', 'Presente', 'Falta', 'Atraso', 'Permiso', 'Justificado', 'Total', 'Asistencia (%)'];
+        $titulo = 'Reporte de Asistencia - '.$resultado['curso'];
+        if ($resultado['materia']) {
+            $titulo .= ' - '.$resultado['materia'];
+        }
+        $titulo .= ' ('.$resultado['desde'].' al '.$resultado['hasta'].')';
 
-        $callback = function () use ($resultado, $cabecera) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, $cabecera, ';');
-            foreach ($resultado['filas'] as $fila) {
-                fputcsv($out, [
-                    $fila['codigo'],
-                    $fila['nombre'],
-                    $fila['conteo']['PRESENTE'],
-                    $fila['conteo']['FALTA'],
-                    $fila['conteo']['ATRASO'],
-                    $fila['conteo']['PERMISO'],
-                    $fila['conteo']['JUSTIFICADO'],
-                    $fila['total'],
-                    $fila['porcentaje'],
-                ], ';');
-            }
-            fclose($out);
-        };
+        $sheet->setCellValue('A1', $titulo);
 
-        return response()->streamDownload($callback, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        $cabecera = ['N.º', 'Código', 'Estudiante', 'Presente', 'Falta', 'Atraso', 'Permiso', 'Justificado', 'Total', 'Asistencia (%)'];
+        $filaCabecera = 3;
+        foreach ($cabecera as $i => $texto) {
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($i + 1).$filaCabecera, $texto);
+        }
+
+        $fila = $filaCabecera + 1;
+        foreach ($resultado['filas'] as $i => $filaDatos) {
+            $col = 1;
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $i + 1);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['codigo']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['nombre']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['PRESENTE']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['FALTA']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['ATRASO']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['PERMISO']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['JUSTIFICADO']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['total']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['porcentaje']);
+            $fila++;
+        }
+
+        $ultimaLetra = Coordinate::stringFromColumnIndex(count($cabecera));
+        $sheet->getStyle('A'.$filaCabecera.':'.$ultimaLetra.$filaCabecera)->getFont()->setBold(true);
+        foreach (range(1, count($cabecera)) as $c) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+
+        $filename = 'reporte-asistencia-'.str_replace('/', '-', $resultado['desde']).'.xlsx';
+
+        return response()->streamDownload(
+            fn () => print (ob_get_clean()),
+            $filename,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
+    }
+
+    private function colLetter(int $index): string
+    {
+        return Coordinate::stringFromColumnIndex($index);
     }
 }

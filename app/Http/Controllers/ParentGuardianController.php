@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -138,7 +139,7 @@ class ParentGuardianController extends Controller
         }
 
         $mensaje = $hayTutor
-            ? 'Padre/tutor registrado correctamente. Se creó su usuario con email y contraseña por defecto: password123'
+            ? 'Padre/tutor registrado correctamente. Se creó su cuenta de usuario (acceso con Google).'
             : 'Padre/tutor registrado correctamente.';
 
         return redirect()->route('tutores.index')->with('success', $mensaje);
@@ -184,7 +185,7 @@ class ParentGuardianController extends Controller
         }
 
         $mensaje = $hayTutor
-            ? 'Padre/tutor actualizado correctamente. Usuario con acceso de tutor verificado (contraseña por defecto: password123).'
+            ? 'Padre/tutor actualizado correctamente. Cuenta de usuario verificada (acceso con Google).'
             : 'Padre/tutor actualizado correctamente.';
 
         return redirect()->route('tutores.show', $parentGuardian)->with('success', $mensaje);
@@ -301,7 +302,7 @@ class ParentGuardianController extends Controller
                 'nombre'   => $padre->nombres,
                 'apellido' => $padre->apellidos,
                 'email'    => $padre->email,
-                'password' => 'password123',
+                'password' => Str::random(32),
                 'role_id'  => $rolPadre->id,
                 'telefono' => $padre->telefono,
                 'estado'   => 'ACTIVO',

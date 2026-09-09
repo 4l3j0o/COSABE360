@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
@@ -71,7 +72,8 @@ class TeacherController extends Controller
                         'nombre' => $validated['nombres'],
                         'apellido' => $validated['apellidos'],
                         'email' => $validated['email'],
-                        'password' => Hash::make('password123'),
+                        // Acceso vía Google: contraseña aleatoria sin uso.
+                        'password' => Hash::make(Str::random(32)),
                         'role_id' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',
                     ]);
@@ -81,7 +83,7 @@ class TeacherController extends Controller
             }
         });
 
-        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Usuario creado con email y contraseña por defecto: password123');
+        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Se creó su cuenta de usuario (acceso con Google).');
     }
 
     public function edit(Teacher $teacher)
@@ -139,7 +141,7 @@ class TeacherController extends Controller
                         'nombre' => $validated['nombres'],
                         'apellido' => $validated['apellidos'],
                         'email' => $validated['email'],
-                        'password' => Hash::make('password123'),
+                        'password' => Hash::make(Str::random(32)),
                         'role_id' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',
                     ]);

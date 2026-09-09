@@ -159,11 +159,13 @@
                             <input name="email" type="email" value="{{ old('email', $user->email) }}" required class="{{ $claseInput }}">
                             @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
+                        @if(strtolower($user->email) === strtolower(config('app.emergency_admin_email')))
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener)</span></label>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener, solo emergencia)</span></label>
                             <input name="password" type="password" class="{{ $claseInput }}">
                             @error('password') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
+                        @endif
                     </div>
                 </div>
 

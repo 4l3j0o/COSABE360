@@ -43,11 +43,8 @@
                                class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-error">*</span></label>
-                        <input name="password" type="password" required
-                               class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                        @error('password') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    <div class="flex items-end">
+                        <p class="text-xs text-muted-foreground">El acceso es con Google Workspace (@cosabe.edu.bo). No se requiere contraseña.</p>
                     </div>
                 </div>
             </div>

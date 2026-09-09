@@ -9,7 +9,7 @@
     <div class="max-w-2xl mx-auto">
         <div class="mb-6">
             <h1 class="text-xl font-bold text-foreground">Editar usuario</h1>
-            <p class="text-sm text-muted-foreground mt-1">Actualiza la información. Deja la contraseña vacía para mantenerla.</p>
+            <p class="text-sm text-muted-foreground mt-1">Actualiza la información. El acceso es con Google Workspace.</p>
         </div>
 
         <form method="POST" action="{{ route('users.update', $user) }}"
@@ -44,12 +44,18 @@
                                class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
+                    @if(strtolower($user->email) === strtolower(config('app.emergency_admin_email')))
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener)</span></label>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Contraseña <span class="text-muted-foreground font-normal">(vacío = mantener, solo cuenta de emergencia)</span></label>
                         <input name="password" type="password"
                                class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                         @error('password') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
+                    @else
+                    <div class="flex items-end">
+                        <p class="text-xs text-muted-foreground">El acceso es con Google Workspace. No se usa contraseña.</p>
+                    </div>
+                    @endif
                 </div>
             </div>
 

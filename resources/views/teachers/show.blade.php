@@ -220,7 +220,7 @@
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Correo Electrónico</label>
                             <input type="email" name="email" class="{{ $claseInput }}" value="{{ old('email', $teacher->email) }}" maxlength="150">
-                            <p class="text-[11px] text-muted-foreground mt-1">Si se asigna un correo se crea (o se vincula) la cuenta de usuario docente con contraseña por defecto <strong>password123</strong>.</p>
+                            <p class="text-[11px] text-muted-foreground mt-1">Si se asigna un correo se crea (o se vincula) la cuenta de usuario docente (acceso con Google).</p>
                             @error('email') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>

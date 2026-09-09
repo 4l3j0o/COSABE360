@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -45,14 +46,20 @@ class UserController extends Controller
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:150', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
+            // Acceso vía Google Workspace: la contraseña ya no se pide en el formulario.
+            // Solo la cuenta de emergencia la usa; al resto se le asigna una aleatoria sin uso.
+            'password' => ['nullable', 'string', 'min:8'],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
+        if (empty($validated['password'])) {
+            $validated['password'] = Str::random(32);
+        }
+
         User::create($validated);
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente. El acceso es con Google Workspace.');
     }
 
     public function edit(User $user)
@@ -93,6 +100,13 @@ class UserController extends Controller
 
         if (empty($validated['password'])) {
             unset($validated['password']);
+        } else {
+            // Solo la cuenta de emergencia usa contraseña; el resto entra con Google.
+            $esEmergencia = strtolower($user->email) === strtolower((string) config('app.emergency_admin_email'))
+                || strtolower($validated['email']) === strtolower((string) config('app.emergency_admin_email'));
+            if (! $esEmergencia) {
+                unset($validated['password']);
+            }
         }
 
         $user->update($validated);
