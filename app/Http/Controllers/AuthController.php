@@ -92,13 +92,16 @@ class AuthController extends Controller
     }
 
     /**
-     * HU-36: redirige a Google para autenticar con cuenta @cosabe.edu.bo.
+     * HU-36: redirige a Google mostrando el selector de cuentas.
+     * No se restringe el dominio aquí: el usuario puede elegir cualquiera de
+     * sus cuentas (Gmail, Workspace, etc.) y el callback valida que sea del
+     * dominio permitido y que esté registrada en el sistema.
      */
     public function redirectToGoogle()
     {
         return Socialite::driver('google')
             ->redirectUrl(config('services.google.redirect'))
-            ->with(['hd' => config('services.google.hd', self::GOOGLE_HD)])
+            ->with(['prompt' => 'select_account'])
             ->redirect();
     }
 

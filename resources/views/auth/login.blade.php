@@ -57,8 +57,8 @@
                     </div>
 
                     <p class="mt-8 text-[11px] text-gray-400 font-medium text-center leading-relaxed">
-                        Inicie sesión con su cuenta institucional <br />
-                        <span class="text-gray-900">@cosabe.edu.bo</span>
+                        Elija su cuenta de Google para continuar. <br />
+                        Solo las cuentas <span class="text-gray-900">@cosabe.edu.bo</span> registradas tienen acceso.
                     </p>
                 </div>
 
