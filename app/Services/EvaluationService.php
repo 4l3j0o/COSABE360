@@ -78,39 +78,22 @@ class EvaluationService
 
     /**
      * Nota de un estudiante en un criterio (0..porcentaje del criterio).
-     * - VALOR_UNICO: usa la (única) actividad del criterio.
-     * - ACTIVIDADES: promedio simple de las actividades con nota.
-     * El promedio del criterio se redondea al entero (coincide con la plantilla del colegio).
-     * Devuelve null si no hay ninguna nota.
+     * Promedio de las actividades que tengan nota registrada; las actividades
+     * aún sin calificar se ignoran, igual que AVERAGE en la planilla oficial.
+     * El promedio se redondea al entero (coincide con la plantilla del colegio).
+     * Devuelve null si no hay ninguna nota registrada.
      */
     public function notaCriterio(EvaluationCriterion $criterion, Student $student): ?float
     {
-        $activities = $criterion->activities()->get();
+        $notas = $criterion->activities()->get()
+            ->map(fn (EvaluationActivity $activity) => $activity->notaDe($student))
+            ->filter(fn ($nota) => $nota !== null);
 
-        if ($activities->isEmpty()) {
+        if ($notas->isEmpty()) {
             return null;
         }
 
-        if ($criterion->tipo === 'VALOR_UNICO') {
-            $nota = $activities->first()->notaDe($student);
-
-            return $nota === null ? null : (float) round((float) $nota);
-        }
-
-        // ACTIVIDADES: promedio = suma de notas / TOTAL de actividades del criterio.
-        // Las actividades sin nota registrada cuentan como 0.
-        $totalActividades = $activities->count();
-        $suma = 0.0;
-        foreach ($activities as $activity) {
-            $nota = $activity->notaDe($student);
-            $suma += $nota === null ? 0.0 : (float) $nota;
-        }
-
-        if ($totalActividades === 0) {
-            return null;
-        }
-
-        return (float) round($suma / $totalActividades);
+        return (float) round((float) $notas->avg());
     }
 
     /**

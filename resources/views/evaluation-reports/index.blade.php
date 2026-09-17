@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('titulo', 'Reportes de Evaluación')
-@section('sidebar') @include('dashboard.partials._sidebar-docente') @endsection
+@section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
 
 @section('contenido')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -19,6 +19,7 @@
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
         <select name="course_subject_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+            <option value="">Seleccionar curso…</option>
             @foreach($courseSubjects as $cs)
                 <option value="{{ $cs->id }}" {{ request('course_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
                     {{ $cs->course->nombre }} - {{ $cs->subject->nombre }}
@@ -34,22 +35,21 @@
             @endforeach
         </select>
     </div>
-    <div>
-        <label class="block text-xs font-semibold text-muted-foreground mb-1">Asistencia (período)</label>
-        <select name="rango_asistencia" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            @foreach(['trimestre' => 'Trimestre', 'mes' => 'Mes', 'semana' => 'Semana'] as $val => $label)
-                <option value="{{ $val }}" {{ request('rango_asistencia', 'trimestre') == $val ? 'selected' : '' }}>{{ $label }}</option>
-            @endforeach
-        </select>
-    </div>
-    <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Filtrar</button>
+    <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Ver reporte</button>
+    @if($resultado['curso'])
     <div class="flex gap-2 ml-auto">
         <a href="{{ route('evaluation-reports.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">PDF</a>
         <a href="{{ route('evaluation-reports.export', array_merge(request()->query(), ['format' => 'excel'])) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">Excel</a>
     </div>
+    @endif
 </form>
 
-@if($resultado['curso'])
+@if(! $resultado['curso'])
+    <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+        <p class="font-medium text-foreground">Primero selecciona el curso y la materia.</p>
+        <p class="text-sm text-muted-foreground mt-1">Elige arriba el curso del que deseas ver aprobados, reprobados, mejores calificaciones y asistencia del trimestre.</p>
+    </div>
+@else
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <div class="bg-card border border-border rounded-xl p-4 text-center">
             <p class="text-2xl font-bold text-success">{{ $resultado['resumen']['aprobados'] }}</p>
@@ -100,7 +100,7 @@
                         <th class="px-4 py-3 text-center font-semibold text-foreground">NOTA</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">Valoración</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">Estado</th>
-                        <th class="px-4 py-3 text-center font-semibold text-foreground">% Asist</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">% Asist. trim.</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -125,17 +125,24 @@ class EvaluationPlanController extends Controller
 
         $service = app(EvaluationService::class);
         $contador = 0;
+        $errores = [];
+
+        // Actividades del plan indexadas por id, con el tope de su criterio (10/45/40/5)
+        $actividades = collect();
+        $maxPorActividad = [];
+        foreach ($plan->criteria()->with('activities')->get() as $criterion) {
+            foreach ($criterion->activities as $activity) {
+                $actividades->put($activity->id, $activity);
+                $maxPorActividad[$activity->id] = $criterion->porcentaje;
+            }
+        }
 
         // Notas por actividad (formato: notas[activity_id][student_id])
         if (isset($validated['notas']) && is_array($validated['notas'])) {
             foreach ($validated['notas'] as $activityId => $notasEstudiante) {
-                $activity = $plan->criteria()
-                    ->with('activities')
-                    ->get()
-                    ->flatMap->activities
-                    ->firstWhere('id', (int) $activityId);
-
-                if (! $activity) {
+                $activity = $actividades->get((int) $activityId);
+                $max = $maxPorActividad[(int) $activityId] ?? null;
+                if (! $activity || $max === null) {
                     continue;
                 }
 
@@ -143,17 +150,28 @@ class EvaluationPlanController extends Controller
                     if ($nota === null || $nota === '') {
                         continue;
                     }
+                    $valor = (float) $nota;
+                    if ($valor < 0 || $valor > $max) {
+                        $errores[] = 'Nota '.$valor.' fuera de rango (0-'.$max.') en "'.$activity->nombre.'"';
+
+                        continue;
+                    }
                     $student = Student::find($studentId);
                     if ($student) {
-                        $service->registrarNota($activity, $student, (float) $nota, null, $request->user()->id);
+                        $service->registrarNota($activity, $student, $valor, null, $request->user()->id);
                         $contador++;
                     }
                 }
             }
         }
 
-        return redirect()->route('evaluations.show', [$courseSubject, $plan])
-            ->with('success', 'Notas registradas ('.$contador.' calificaciones guardadas).');
+        $redirect = redirect()->route('evaluations.show', [$courseSubject, $plan]);
+
+        if (! empty($errores)) {
+            return $redirect->with('error', 'Se guardaron '.$contador.' notas, pero se omitieron valores fuera de rango: '.implode(' | ', array_slice($errores, 0, 3)).(count($errores) > 3 ? ' (+'.(count($errores) - 3).' más)' : ''));
+        }
+
+        return $redirect->with('success', 'Notas registradas ('.$contador.' calificaciones guardadas).');
     }
 
     /**
