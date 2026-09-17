@@ -13,16 +13,6 @@
         $montoMensual = (float) ($inscripcion?->registration?->monto_mensual ?? $pagos->first()?->monto ?? 0);
     @endphp
 
-    @if(session('mensaje'))
-        <div class="mb-4 bg-success/10 border border-success/30 text-success px-4 py-3 rounded-xl text-sm flex items-start gap-3">
-            <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div class="flex-1">{!! session('mensaje') !!} <a href="{{ route('comunicados.bandeja') }}" class="underline font-bold ml-2">Ver en Comunicados →</a></div>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-xl text-sm">{{ session('error') }}</div>
-    @endif
-
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             @if(auth()->user()->hasRole('Padre/Tutor'))

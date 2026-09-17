@@ -8,12 +8,6 @@
 
 @section('contenido')
 
-    @if(session('mensaje'))
-        <div class="mb-4 bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm">
-            {{ session('mensaje') }}
-        </div>
-    @endif
-
     <div class="flex items-center justify-between mb-6">
         <div class="min-w-0">
         </div>

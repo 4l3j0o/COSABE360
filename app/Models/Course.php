@@ -32,6 +32,23 @@ class Course extends Model
         return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
+    /**
+     * Código corto del paralelo para vista (Ej: I1A, P2C, S5A).
+     * Usa Section.codigo; si no existe, cae al nombre completo.
+     */
+    public function codigoCorto(): string
+    {
+        $codigo = $this->section?->codigo;
+
+        if (! empty($codigo)) {
+            $gestion = $this->gestion?->nombre;
+
+            return $gestion ? $codigo.' · '.$gestion : $codigo;
+        }
+
+        return (string) $this->nombre;
+    }
+
     public function courseSubjects(): HasMany
     {
         return $this->hasMany(CourseSubject::class, 'course_id');

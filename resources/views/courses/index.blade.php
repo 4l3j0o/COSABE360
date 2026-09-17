@@ -18,13 +18,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="bg-error/10 border border-error/20 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div>
-    @endif
-
     @if(!$activo)
         <div class="bg-warning/10 border border-warning/20 text-warning rounded-xl px-4 py-3 mb-6 text-sm">
             No hay un período académico activo. Los cursos se muestran por gestión activa.

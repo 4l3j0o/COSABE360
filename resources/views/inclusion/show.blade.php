@@ -16,8 +16,6 @@
     </div>
 </div>
 
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
-
 @if($student->discapacidad || $student->rudeRecord?->discapacidad_tipos || $student->curricularAdaptations->isNotEmpty())
 <div class="bg-card border border-border rounded-xl p-5 mb-5">
     <h3 class="font-semibold text-foreground mb-3">Condición registrada</h3>

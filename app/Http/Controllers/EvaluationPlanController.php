@@ -42,28 +42,14 @@ class EvaluationPlanController extends Controller
 
         $validated = $request->validate([
             'trimestre' => ['required', 'integer', 'in:1,2,3'],
-            'nombre' => ['nullable', 'string', 'max:150'],
-            'fecha_inicio' => ['nullable', 'date'],
-            'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
         ]);
 
         $service = app(EvaluationService::class);
-        $service->obtenerOCrearPlan(
-            $courseSubject,
-            $validated['trimestre'],
-            $validated['nombre'] ?? null
-        );
+        $service->obtenerOCrearPlan($courseSubject, $validated['trimestre']);
 
         $plan = EvaluationPlan::where('course_subject_id', $courseSubject->id)
             ->where('trimestre', $validated['trimestre'])
             ->first();
-
-        if (! empty($validated['fecha_inicio'])) {
-            $plan->update([
-                'fecha_inicio' => $validated['fecha_inicio'],
-                'fecha_fin' => $validated['fecha_fin'] ?? null,
-            ]);
-        }
 
         return redirect()->route('evaluations.show', [$courseSubject, $plan])
             ->with('success', 'Evaluación del trimestre '.$validated['trimestre'].' creada.');
@@ -205,9 +191,22 @@ class EvaluationPlanController extends Controller
             Storage::disk('local')->delete($ruta);
         }
 
+        if (! empty($resultado['formato_invalido'])) {
+            return redirect()->route('evaluations.show', [$courseSubject, $plan])
+                ->with('error', 'Formato no válido: el archivo no es una plantilla de evaluación del sistema. Descargue la plantilla con el botón «Descargar (.xlsx)» y cargue las notas sobre ese archivo.');
+        }
+
         $mensaje = 'Plantilla procesada: '.$resultado['estudiantes'].' estudiantes, '.$resultado['notas'].' notas registradas.';
         if (! empty($resultado['errores'])) {
-            $mensaje .= ' Errores: '.implode(' | ', array_slice($resultado['errores'], 0, 5));
+            if ($resultado['estudiantes'] === 0) {
+                $mensaje = 'No se registró ninguna nota: ningún nombre del archivo coincide con los estudiantes de este curso. Verifique que la plantilla sea de este curso y trimestre ('.count($resultado['errores']).' filas omitidas).';
+            } else {
+                $total = count($resultado['errores']);
+                $mensaje .= ' Errores: '.implode(' | ', array_slice($resultado['errores'], 0, 3));
+                if ($total > 3) {
+                    $mensaje .= ' (+'.($total - 3).' más)';
+                }
+            }
         }
 
         return redirect()->route('evaluations.show', [$courseSubject, $plan])

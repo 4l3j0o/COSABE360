@@ -196,26 +196,6 @@ class AttendanceTest extends TestCase
         $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-05')->assertStatus(403);
     }
 
-    public function test_historial_requiere_auth(): void
-    {
-        $this->get('/asistencias/historial')->assertRedirect('/login');
-    }
-
-    public function test_historial_muestra_estadisticas(): void
-    {
-        $datos = $this->crearCursoConEstudiantes(1);
-        $this->actingAs($datos['userDocente']);
-
-        Attendance::create(['student_id' => $datos['estudiantes'][0]->id, 'course_id' => $datos['curso']->id, 'fecha' => '2026-04-10', 'estado' => 'PRESENTE', 'registered_by_user_id' => $datos['userDocente']->id]);
-        Attendance::create(['student_id' => $datos['estudiantes'][0]->id, 'course_id' => $datos['curso']->id, 'fecha' => '2026-04-11', 'estado' => 'FALTA', 'justificacion' => 'Enfermo', 'registered_by_user_id' => $datos['userDocente']->id]);
-
-        $response = $this->get('/asistencias/historial?course_id=' . $datos['curso']->id);
-        $response->assertStatus(200);
-        $response->assertSee('Historial de Asistencia');
-        $response->assertSee('presente');
-        $response->assertSee('falta');
-    }
-
     public function test_docente_ve_asistencia_de_su_curso(): void
     {
         $datos = $this->crearCursoConEstudiantes(2);
@@ -449,5 +429,67 @@ class AttendanceTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'subject_id' => $datos['courseSubject']->subject_id, 'fecha' => '2026-03-10 00:00:00', 'estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde']);
+    }
+
+    public function test_ahora_lleva_a_clase_actual_segun_horario(): void
+    {
+        $datos = $this->crearCursoConEstudiantes();
+        $ahora = \Illuminate\Support\Carbon::now('America/La_Paz');
+        $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES'];
+        $dia = $dias[$ahora->dayOfWeekIso] ?? null;
+
+        if ($dia) {
+            \App\Models\Schedule::create([
+                'course_id' => $datos['curso']->id,
+                'subject_id' => $datos['courseSubject']->subject_id,
+                'teacher_id' => $datos['teacher']->id,
+                'dia' => $dia,
+                'hora_inicio' => '00:00:00',
+                'hora_fin' => '23:59:59',
+                'aula' => 'Aula Test',
+                'estado' => 'ACTIVO',
+            ]);
+        }
+
+        $this->actingAs($datos['userDocente']);
+        $respuesta = $this->get(route('asistencias.ahora'));
+
+        if ($dia) {
+            $respuesta->assertRedirect(route('asistencias.create', [
+                'course_id' => $datos['curso']->id,
+                'subject_id' => $datos['courseSubject']->subject_id,
+            ]));
+        } else {
+            $respuesta->assertRedirect(route('docente.cursos'));
+        }
+    }
+
+    public function test_ahora_sin_clase_redirige_a_mis_cursos(): void
+    {
+        $datos = $this->crearCursoConEstudiantes();
+        $ahora = \Illuminate\Support\Carbon::now('America/La_Paz');
+        $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES'];
+        // Bloque en un día distinto a hoy (o fin de semana si hoy es hábil sin bloques).
+        $otroDia = 'SABADO';
+        foreach ($dias as $d) {
+            if ($d !== ($dias[$ahora->dayOfWeekIso] ?? null)) {
+                $otroDia = $d;
+                break;
+            }
+        }
+        \App\Models\Schedule::create([
+            'course_id' => $datos['curso']->id,
+            'subject_id' => $datos['courseSubject']->subject_id,
+            'teacher_id' => $datos['teacher']->id,
+            'dia' => $otroDia,
+            'hora_inicio' => '07:20:00',
+            'hora_fin' => '08:05:00',
+            'aula' => 'Aula Test',
+            'estado' => 'ACTIVO',
+        ]);
+
+        $this->actingAs($datos['userDocente']);
+        $this->get(route('asistencias.ahora'))
+            ->assertRedirect(route('docente.cursos'));
     }
 }

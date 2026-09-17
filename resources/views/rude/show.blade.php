@@ -27,10 +27,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm mb-4">{{ session('success') }}</div>
-    @endif
-
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="bg-card border border-border rounded-xl p-5">
             <h3 class="font-semibold text-foreground text-sm mb-3">Sección I - Unidad Educativa</h3>

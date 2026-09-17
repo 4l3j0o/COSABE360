@@ -29,9 +29,13 @@
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
                 <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                    <option value="">Todos los cursos</option>
+                    @if(auth()->user()->hasAnyRole(['Administrador', 'Director']))
+                        <option value="">Todos los cursos</option>
+                    @else
+                        <option value="">Seleccionar curso…</option>
+                    @endif
                     @foreach($cursos as $course)
-                        <option value="{{ $course->id }}" {{ ($filtros['course_id'] ?? '') == $course->id ? 'selected' : '' }}>{{ $course->nombre }}</option>
+                        <option value="{{ $course->id }}" {{ ($filtros['course_id'] ?? '') == $course->id ? 'selected' : '' }}>{{ $course->codigoCorto() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -39,11 +43,9 @@
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia</label>
                 <select name="subject_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                     <option value="">Todas las materias</option>
-                    @if($cursos->isNotEmpty())
-                        @foreach(\App\Models\CourseSubject::with('subject')->whereIn('course_id', $cursos->pluck('id'))->get()->unique('subject_id') as $cs)
-                            <option value="{{ $cs->subject_id }}" {{ ($filtros['subject_id'] ?? '') == $cs->subject_id ? 'selected' : '' }}>{{ $cs->subject->nombre }}</option>
-                        @endforeach
-                    @endif
+                    @foreach($materias as $cs)
+                        <option value="{{ $cs->subject_id }}" {{ ($filtros['subject_id'] ?? '') == $cs->subject_id ? 'selected' : '' }}>{{ $cs->subject->nombre }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="flex items-end gap-2">
@@ -52,7 +54,13 @@
         </form>
     </div>
 
-    @if($resultado['filas']->isEmpty())
+    @if($resultado['requiere_curso'] ?? false)
+        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+            <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-foreground text-sm font-medium">Selecciona un curso para generar el reporte.</p>
+            <p class="text-muted-foreground text-sm mt-1">Elige el curso (y la materia si quieres) y pulsa Generar.</p>
+        </div>
+    @elseif($resultado['filas']->isEmpty())
         <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
             <svg class="w-12 h-12 text-muted-foreground mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <p class="text-muted-foreground text-sm">Sin registros de asistencia en el rango seleccionado.</p>

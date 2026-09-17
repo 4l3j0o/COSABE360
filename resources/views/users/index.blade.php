@@ -21,13 +21,6 @@
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="mb-4 bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm">{{ session('error') }}</div>
-    @endif
-
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('users.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
             <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, correo, teléfono o rol..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">

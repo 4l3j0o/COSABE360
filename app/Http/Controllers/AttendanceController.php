@@ -65,6 +65,45 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Lleva al docente directo a pasar lista del curso que está dictando ahora,
+     * según su horario (día + bloque horario en hora de Bolivia).
+     * Sin clase en curso, redirige a Mis Cursos para elegir.
+     */
+    public function ahora(): RedirectResponse
+    {
+        $teacher = auth()->user()->teacher
+            ?? Teacher::where('user_id', auth()->id())->first();
+
+        abort_unless($teacher, 403);
+
+        $ahora = Carbon::now('America/La_Paz');
+        $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES'];
+        $dia = $dias[$ahora->dayOfWeekIso] ?? null;
+
+        if ($dia) {
+            $hora = $ahora->format('H:i:s');
+            $bloque = \App\Models\Schedule::where('teacher_id', $teacher->id)
+                ->where('dia', $dia)
+                ->where('estado', 'ACTIVO')
+                ->orderBy('hora_inicio')
+                ->get()
+                ->first(fn ($s) => $s->hora_inicio && $s->hora_fin
+                    && $s->hora_inicio->format('H:i:s') <= $hora
+                    && $hora <= $s->hora_fin->format('H:i:s'));
+
+            if ($bloque) {
+                return redirect()->route('asistencias.create', [
+                    'course_id' => $bloque->course_id,
+                    'subject_id' => $bloque->subject_id,
+                ]);
+            }
+        }
+
+        return redirect()->route('docente.cursos')
+            ->with('mensaje', 'No tienes clases en este momento según tu horario. Elige el curso para llamar lista.');
+    }
+
+    /**
      * Formulario de registro diario para un curso.
      */
     public function create(Request $request): View
@@ -159,186 +198,6 @@ class AttendanceController extends Controller
         }
 
         return redirect()->route('asistencias.index')->with('success', 'Asistencia registrada correctamente para ' . $fechaNormalizada);
-    }
-
-    /**
-     * Historial (usado también por HU-27, pero expuesto aquí para reutilizar).
-     */
-    public function historial(Request $request): View
-    {
-        $user = auth()->user();
-        $materiaFiltro = $request->query('materia');
-        $studentId = $request->query('student_id');
-        $fechaDesde = $request->query('desde');
-        $fechaHasta = $request->query('hasta');
-        $bimestre = $request->query('bimestre');
-
-        // Estudiantes a los que el usuario tiene acceso (según rol)
-        $estudiantesDisponibles = collect();
-
-        if ($user->hasRole('Docente')) {
-            $teacher = Teacher::where('user_id', $user->id)->first();
-            if ($teacher) {
-                $cursoIds = CourseSubject::where('teacher_id', $teacher->id)->pluck('course_id')->unique();
-                $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
-                    ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('course_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
-                    ->orderBy('apellidos')->orderBy('nombres')->get();
-            }
-        } elseif ($user->hasRole('Estudiante')) {
-            $estudiantesDisponibles = Student::where('user_id', $user->id)->where('estado', 'ACTIVO')->get();
-        } elseif ($user->hasRole('Padre/Tutor') || $user->hasAnyRole('Padre/Tutor')) {
-            $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
-            $estudiantesDisponibles = $parent
-                ? $parent->students()->where('students.estado', 'ACTIVO')->orderBy('apellidos')->orderBy('nombres')->get()
-                : collect();
-        } else {
-            $estudiantesDisponibles = Student::where('estado', 'ACTIVO')
-                ->orderBy('apellidos')->orderBy('nombres')->get();
-        }
-
-        // Forzar selección dentro de los estudiantes permitidos
-        $permitidos = $estudiantesDisponibles->pluck('id');
-        $studentSeleccionado = $studentId && $permitidos->contains((int) $studentId)
-            ? $estudiantesDisponibles->firstWhere('id', (int) $studentId)
-            : $estudiantesDisponibles->first();
-
-        $query = Attendance::with(['student', 'course.grade', 'course.section', 'subject'])
-            ->whereIn('student_id', $permitidos)
-            ->orderByDesc('fecha');
-
-        // Filtro por rol base: siempre restringe a los estudiantes permitidos
-        if ($studentSeleccionado) {
-            $query->where('student_id', $studentSeleccionado->id);
-        }
-        if ($materiaFiltro) {
-            if ($materiaFiltro === 'General') {
-                $query->whereNull('subject_id');
-            } else {
-                $query->whereHas('subject', fn ($q) => $q->where('nombre', $materiaFiltro));
-            }
-        }
-        if ($fechaDesde) {
-            $query->where('fecha', '>=', $fechaDesde);
-        }
-        if ($fechaHasta) {
-            $query->where('fecha', '<=', $fechaHasta);
-        }
-        if ($bimestre) {
-            $periodo = $this->rangoBimestre((int) $bimestre);
-            $query->whereBetween('fecha', $periodo);
-        }
-
-        $asistencias = $query->paginate(10)->withQueryString();
-
-        // Materias del estudiante seleccionado (de sus cursos activos)
-        $materias = collect();
-        if ($studentSeleccionado) {
-            $cursoIdsEst = $studentSeleccionado->registrations()
-                ->where('registrations.estado', 'ACTIVA')
-                ->pluck('course_id');
-            if ($cursoIdsEst->isNotEmpty()) {
-                $materias = Subject::whereIn('id', CourseSubject::whereIn('course_id', $cursoIdsEst)->pluck('subject_id'))
-                    ->orderBy('nombre')->get();
-            }
-        }
-
-        // Estadísticas: mismas restricciones de rol y filtros, sobre los estudiantes permitidos
-        $estadisticasQuery = Attendance::query()
-            ->whereIn('student_id', $permitidos)
-            ->when($studentSeleccionado, fn ($q) => $q->where('student_id', $studentSeleccionado->id))
-            ->when($materiaFiltro, function ($q) use ($materiaFiltro) {
-                $materiaFiltro === 'General'
-                    ? $q->whereNull('subject_id')
-                    : $q->whereHas('subject', fn ($sq) => $sq->where('nombre', $materiaFiltro));
-            })
-            ->when($fechaDesde, fn ($q) => $q->where('fecha', '>=', $fechaDesde))
-            ->when($fechaHasta, fn ($q) => $q->where('fecha', '<=', $fechaHasta))
-            ->when($bimestre, fn ($q) => $q->whereBetween('fecha', $this->rangoBimestre((int) $bimestre)));
-
-        $estadisticas = $estadisticasQuery
-            ->selectRaw("estado, COUNT(*) as total")
-            ->groupBy('estado')
-            ->pluck('total', 'estado');
-
-        // Resumen de asistencia por hijo y por bimestre (usado por Padre/Tutor).
-        $resumenPorHijo = $user->hasRole('Padre/Tutor')
-            ? $this->resumenAsistenciaPorHijo($estudiantesDisponibles)
-            : collect();
-
-        return view('attendances.historial', compact(
-            'asistencias',
-            'estudiantesDisponibles',
-            'studentSeleccionado',
-            'materias',
-            'estadisticas',
-            'resumenPorHijo',
-            'materiaFiltro',
-            'studentId',
-            'fechaDesde',
-            'fechaHasta',
-            'bimestre'
-        ));
-    }
-
-    /**
-     * Rango de fechas (inicio/fin) de un bimestre según la gestión académica activa.
-     * Cada bimestre abarca 3 meses desde la fecha de inicio de la gestión.
-     */
-    private function rangoBimestre(int $bimestre): array
-    {
-        $gestion = AcademicYear::where('estado', 'ACTIVA')->first();
-        $inicio = $gestion && $gestion->fecha_inicio
-            ? Carbon::parse($gestion->fecha_inicio)
-            : Carbon::create(Carbon::now()->year, 2, 1);
-
-        $b = max(1, min(4, $bimestre));
-        $ini = $inicio->copy()->addMonths(($b - 1) * 3)->startOfMonth();
-        $fin = $inicio->copy()->addMonths($b * 3)->startOfMonth()->subDay();
-
-        return [$ini->format('Y-m-d'), $fin->format('Y-m-d')];
-    }
-
-    /**
-     * Resumen de asistencia de cada estudiante agrupado por bimestre (1-4).
-     * Devuelve una colección indexada por student_id con, por bimestre, el conteo
-     * de cada estado y el porcentaje de asistencia (presente/permiso/atraso/justificado).
-     */
-    private function resumenAsistenciaPorHijo($estudiantes)
-    {
-        $estados = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO'];
-
-        $porAlumno = collect();
-        foreach ($estudiantes as $est) {
-            $rangos = [];
-            foreach ([1, 2, 3, 4] as $b) {
-                $rangos[$b] = $this->rangoBimestre($b);
-            }
-
-            $bimestres = collect();
-            $asistencias = Attendance::where('student_id', $est->id)->get();
-
-            foreach ([1, 2, 3, 4] as $b) {
-                [$ini, $fin] = $rangos[$b];
-                $registros = $asistencias->filter(fn ($a) =>
-                    $a->fecha->format('Y-m-d') >= $ini && $a->fecha->format('Y-m-d') <= $fin
-                )->values();
-
-                $conteos = [];
-                foreach ($estados as $e) {
-                    $conteos[$e] = $registros->where('estado', $e)->count();
-                }
-                $asistio = $conteos['PRESENTE'] + $conteos['PERMISO'] + $conteos['ATRASO'] + $conteos['JUSTIFICADO'];
-                $total = $registros->count();
-                $conteos['total'] = $total;
-                $conteos['pct'] = $total > 0 ? round(($asistio / $total) * 100) : 0;
-
-                $bimestres->put($b, $conteos);
-            }
-
-            $porAlumno->put($est->id, $bimestres);
-        }
-
-        return $porAlumno;
     }
 
 /**

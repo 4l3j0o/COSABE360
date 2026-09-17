@@ -10,8 +10,6 @@
     </div>
 </div>
 
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
-
 @if($cursos->isEmpty())
     <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
         <p class="text-sm text-muted-foreground">No hay cursos registrados.</p>

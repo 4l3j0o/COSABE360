@@ -6,8 +6,10 @@ use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSubject;
+use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Schedule;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -29,12 +31,18 @@ class AttendanceReportController extends Controller
 
         $cursos = $this->cursosPermitidos($user);
 
+        // Con un solo curso permitido se preselecciona directo
+        if (! $request->query('course_id') && $cursos->count() === 1) {
+            $request->merge(['course_id' => $cursos->first()->id]);
+        }
+
         $filtros = $request->only(['rango', 'fecha', 'course_id', 'subject_id']);
 
         $resultado = $this->build($request, $user, $cursos);
 
         return view('attendance-reports.index', [
             'cursos' => $cursos,
+            'materias' => $resultado['materias'],
             'filtros' => $filtros,
             'resultado' => $resultado,
         ]);
@@ -47,6 +55,16 @@ class AttendanceReportController extends Controller
     {
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
+
+        if ($this->requiereCurso($user) && ! $request->query('course_id')) {
+            return back()->with('error', 'Selecciona un curso para generar el reporte.');
+        }
+
+        // Con un solo curso permitido se preselecciona directo
+        if (! $request->query('course_id') && $cursos->count() === 1) {
+            $request->merge(['course_id' => $cursos->first()->id]);
+        }
+
         $resultado = $this->build($request, $user, $cursos);
 
         $formato = $request->query('format', 'pdf');
@@ -73,6 +91,32 @@ class AttendanceReportController extends Controller
             abort(403, 'No tiene acceso a ese curso.');
         }
 
+        // Materias del curso elegido (o de todos los permitidos si no hay curso fijo)
+        $materias = CourseSubject::with('subject')
+            ->when($courseId,
+                fn ($q) => $q->where('course_id', $courseId),
+                fn ($q) => $q->whereIn('course_id', $cursos->pluck('id')))
+            ->get()
+            ->unique('subject_id')
+            ->values();
+
+        // Docente y tutor trabajan siempre sobre un curso concreto
+        if ($this->requiereCurso($user) && ! $courseId) {
+            return [
+                'fecha' => $fecha->format('d/m/Y'),
+                'rango' => $rango,
+                'desde' => $desde->format('d/m/Y'),
+                'hasta' => $hasta->format('d/m/Y'),
+                'curso' => null,
+                'materia' => null,
+                'diasClase' => collect(),
+                'filas' => collect(),
+                'estados' => self::ESTADOS,
+                'materias' => $materias,
+                'requiere_curso' => true,
+            ];
+        }
+
         // Estudiantes matriculados (ACTIVA) del curso (o todos si no se elige curso)
         // Registration -> enrollment -> estudiante (no existe relación directa `student`)
         $studentsQuery = Registration::where('estado', 'ACTIVA')
@@ -81,6 +125,11 @@ class AttendanceReportController extends Controller
             ->whereHas('enrollment.estudiante', fn ($q) => $q->where('estado', 'ACTIVO'));
 
         $students = $studentsQuery->get()->map(fn ($r) => $r->enrollment?->estudiante)->filter()->unique('id')->values();
+
+        // El estudiante solo ve su propia fila
+        if ($user->hasRole('Estudiante') && $user->student) {
+            $students = $students->where('id', $user->student->id)->values();
+        }
 
         // Asistencias dentro del rango, opcional por materia
         $attendanceQuery = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
@@ -120,7 +169,7 @@ class AttendanceReportController extends Controller
 
         $curso = null;
         if ($course) {
-            $curso = $course->nombre;
+            $curso = $course->codigoCorto();
         } elseif ($courseId) {
             $curso = 'Curso #'.$courseId;
         } else {
@@ -129,7 +178,9 @@ class AttendanceReportController extends Controller
 
         $materia = null;
         if ($subjectId) {
-            $materia = CourseSubject::find($subjectId)?->subject?->nombre ?? 'Materia #'.$subjectId;
+            $materia = Subject::where('id', $subjectId)
+                ->whereIn('id', $materias->pluck('subject_id'))
+                ->value('nombre') ?? 'Materia #'.$subjectId;
         }
 
         return [
@@ -142,6 +193,8 @@ class AttendanceReportController extends Controller
             'diasClase' => $diasClase,
             'filas' => $filas,
             'estados' => self::ESTADOS,
+            'materias' => $materias,
+            'requiere_curso' => false,
         ];
     }
 
@@ -171,7 +224,36 @@ class AttendanceReportController extends Controller
                 ->values();
         }
 
+        if ($user->hasRole('Estudiante') && $user->student) {
+            $curso = $user->student->activeCourse();
+
+            return $curso ? collect([$curso]) : collect();
+        }
+
+        if ($user->hasRole('Padre/Tutor')) {
+            $guardian = ParentGuardian::where('user_id', $user->id)->first();
+            $hijosIds = $guardian ? $guardian->students()->pluck('students.id') : collect();
+            $courseIds = Registration::where('estado', 'ACTIVA')
+                ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $hijosIds)->where('estado', 'COMPLETADA'))
+                ->pluck('course_id')
+                ->unique()
+                ->values();
+
+            return Course::with(['grade', 'section', 'gestion'])
+                ->whereIn('id', $courseIds)
+                ->orderBy('nombre')
+                ->get();
+        }
+
         return collect();
+    }
+
+    /**
+     * Docente, tutor y estudiante siempre reportan sobre un curso concreto (nada de "todos").
+     */
+    private function requiereCurso($user): bool
+    {
+        return $user->hasRole('Docente') || $user->hasRole('Padre/Tutor') || $user->hasRole('Estudiante');
     }
 
     private function permiteCurso($user, int $courseId, $cursos): bool

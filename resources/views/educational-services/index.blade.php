@@ -6,7 +6,7 @@
   <h1 class="text-xl font-bold">Catálogo Servicios / Productos SIN (RF29)</h1>
   <span class="text-sm text-muted-foreground">{{ $services->total() }} registros</span>
 </div>
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
+
 <div class="bg-card border border-border rounded-xl overflow-hidden">
   <div class="overflow-x-auto">
     <table class="w-full text-sm">

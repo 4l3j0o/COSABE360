@@ -26,9 +26,9 @@
                     @endif
                 </p>
             </div>
-            <a href="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Registrar Calificaciones
+            <a href="{{ route('asistencias.ahora') }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Llamar lista
             </a>
         </div>
     </div>
@@ -40,7 +40,7 @@
         <a href="{{ route('schedules.mi-horario') }}">
             <x-ui.stat-card label="Clases de mi horario" :value="$miHorario" color="info" />
         </a>
-        <a href="{{ route('evaluaciones.index') }}">
+        <a href="{{ route('docente.cursos') }}">
             <x-ui.stat-card label="Evaluaciones" :value="$misEvaluaciones" color="success" />
         </a>
         <a href="{{ route('comunicados.bandeja') }}">
@@ -59,7 +59,7 @@
                         <p class="text-xs text-muted-foreground">Gestionar evaluaciones por curso</p>
                     </div>
                 </a>
-                <a href="{{ route('asistencias.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+                <a href="{{ route('asistencias.ahora') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
                     <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v2h4a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm14 14H6m12-2H6m6-12v6m0 0l-2-2m2 2l2-2"/></svg>
                     <div>
                         <span class="font-medium text-foreground">Tomar Asistencia</span>
@@ -90,12 +90,8 @@
                     <span class="font-medium text-foreground">Registrar calificaciones de mis cursos</span>
                     <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
-                <a href="{{ route('asistencias.historial') }}" class="flex items-center justify-between p-4 rounded-lg border border-border text-sm">
+                <a href="{{ route('reportes.asistencia.index') }}" class="flex items-center justify-between p-4 rounded-lg border border-border text-sm">
                     <span class="font-medium text-foreground">Historial de asistencias</span>
-                    <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="{{ route('calificaciones.index') }}" class="flex items-center justify-between p-4 rounded-lg border border-border text-sm">
-                    <span class="font-medium text-foreground">Consulta de calificaciones</span>
                     <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
                 <a href="{{ route('historial.index') }}" class="flex items-center justify-between p-4 rounded-lg border border-border text-sm">

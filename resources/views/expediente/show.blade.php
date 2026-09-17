@@ -18,8 +18,6 @@
     </div>
 </div>
 
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
-
 <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm mb-5">
     <div class="px-5 py-4 border-b border-border">
         <h3 class="font-semibold text-foreground">Checklist de requisitos de inscripción</h3>

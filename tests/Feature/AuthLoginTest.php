@@ -11,14 +11,29 @@ class AuthLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $usuario;
+    private User $usuarioNormal;
+
+    private User $emergencia;
+
+    private string $emergencyEmail = 'admin@csb360.local';
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->usuario = User::factory()->create([
+        config()->set('app.emergency_admin_email', $this->emergencyEmail);
+        config()->set('app.emergency_login_enabled', true);
+
+        $this->usuarioNormal = User::factory()->create([
             'email' => 'docente@sanber.edu.bo',
+            'password' => Hash::make('secret1234'),
+            'estado' => 'ACTIVO',
+            'intentos_fallidos' => 0,
+            'bloqueado_hasta' => null,
+        ]);
+
+        $this->emergencia = User::factory()->create([
+            'email' => $this->emergencyEmail,
             'password' => Hash::make('secret1234'),
             'estado' => 'ACTIVO',
             'intentos_fallidos' => 0,
@@ -30,52 +45,65 @@ class AuthLoginTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Iniciar');
+            ->assertSee('Continuar con Google');
     }
 
-    public function test_login_correcto_redirige_al_dashboard(): void
+    public function test_login_password_usuarios_normales_redirige_a_google(): void
+    {
+        $respuesta = $this->post(route('login.attempt'), [
+            'email' => 'docente@sanber.edu.bo',
+            'password' => 'secret1234',
+        ]);
+
+        $respuesta->assertRedirect(route('login.google'));
+        $respuesta->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertSame(0, $this->usuarioNormal->fresh()->intentos_fallidos);
+    }
+
+    public function test_login_correcto_emergencia_redirige_al_dashboard(): void
     {
         $this->post(route('login.attempt'), [
-            'email' => 'docente@sanber.edu.bo',
+            'email' => $this->emergencyEmail,
             'password' => 'secret1234',
         ])->assertRedirect(route('dashboard'));
 
-        $this->assertAuthenticatedAs($this->usuario);
+        $this->assertAuthenticatedAs($this->emergencia);
 
-        $this->usuario->refresh();
+        $this->emergencia->refresh();
 
-        $this->assertSame(0, $this->usuario->intentos_fallidos);
-        $this->assertNotNull($this->usuario->ultimo_acceso);
+        $this->assertSame(0, $this->emergencia->intentos_fallidos);
+        $this->assertNotNull($this->emergencia->ultimo_acceso);
     }
 
-    public function test_credenciales_incorrectas_incrementan_intentos(): void
+    public function test_credenciales_incorrectas_emergencia_incrementan_intentos(): void
     {
         $this->post(route('login.attempt'), [
-            'email' => 'docente@sanber.edu.bo',
+            'email' => $this->emergencyEmail,
             'password' => 'incorrecta1',
         ]);
 
         $this->assertGuest();
-        $this->assertSame(1, $this->usuario->fresh()->intentos_fallidos);
+        $this->assertSame(1, $this->emergencia->fresh()->intentos_fallidos);
     }
 
     public function test_bloqueo_tras_cinco_intentos_fallidos(): void
     {
         foreach (range(1, 5) as $i) {
             $this->post(route('login.attempt'), [
-                'email' => 'docente@sanber.edu.bo',
+                'email' => $this->emergencyEmail,
                 'password' => "incorrecta{$i}",
             ]);
         }
 
-        $this->usuario->refresh();
+        $this->emergencia->refresh();
 
-        $this->assertNotNull($this->usuario->bloqueado_hasta);
-        $this->assertTrue($this->usuario->estaBloqueado());
+        $this->assertNotNull($this->emergencia->bloqueado_hasta);
+        $this->assertTrue($this->emergencia->estaBloqueado());
         $this->assertGuest();
 
         $respuesta = $this->post(route('login.attempt'), [
-            'email' => 'docente@sanber.edu.bo',
+            'email' => $this->emergencyEmail,
             'password' => 'secret1234',
         ]);
 
@@ -85,10 +113,10 @@ class AuthLoginTest extends TestCase
 
     public function test_usuario_inactivo_no_ingresa(): void
     {
-        $this->usuario->update(['estado' => 'INACTIVO']);
+        $this->emergencia->update(['estado' => 'INACTIVO']);
 
         $this->post(route('login.attempt'), [
-            'email' => 'docente@sanber.edu.bo',
+            'email' => $this->emergencyEmail,
             'password' => 'secret1234',
         ]);
 
