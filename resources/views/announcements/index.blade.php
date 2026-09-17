@@ -17,13 +17,6 @@
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="bg-error/10 border border-error/20 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div>
-    @endif
-
     <div class="bg-card border border-border rounded-xl mb-6">
         <form method="GET" action="{{ route('announcements.index') }}" class="p-4 flex flex-col sm:flex-row gap-3">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por título o contenido..." class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">

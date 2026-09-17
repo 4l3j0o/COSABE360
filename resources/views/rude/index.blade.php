@@ -15,10 +15,6 @@
         <a href="{{ route('rude.exportList') }}" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Exportar Listado (MinEdu)</a>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm mb-4">{{ session('success') }}</div>
-    @endif
-
     <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div class="w-full sm:flex-1 sm:min-w-[200px] min-w-0">
             <label class="text-xs font-medium text-muted-foreground">Buscar (código, nombre, CI)</label>

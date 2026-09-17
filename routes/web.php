@@ -107,7 +107,7 @@ Route::get('/dashboard', function () {
             ? \App\Models\CourseSubject::where('teacher_id', $teacher->id)->pluck('id')
             : collect();
         $datos['misCursos'] = $courseSubjectIds->count();
-        $datos['misEvaluaciones'] = \App\Models\Assessment::whereIn('course_subject_id', $courseSubjectIds)->count();
+        $datos['misEvaluaciones'] = \App\Models\EvaluationPlan::whereIn('course_subject_id', $courseSubjectIds)->count();
         $datos['miHorario'] = $teacher
             ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count()
             : 0;
@@ -401,17 +401,15 @@ Route::middleware(['auth'])->group(function () {
 // HU-26: Registrar asistencia - solo Docente del curso (5 estados)
 Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
     Route::get('/asistencias', [AttendanceController::class, 'index'])->name('asistencias.index');
+    Route::get('/asistencias/ahora', [AttendanceController::class, 'ahora'])->name('asistencias.ahora');
     Route::get('/asistencias/crear', [AttendanceController::class, 'create'])->name('asistencias.create');
     Route::post('/asistencias', [AttendanceController::class, 'store'])->name('asistencias.store');
 });
 
-// HU-27: Consultar historial de asistencia - todos los roles con filtros
-Route::middleware(['auth'])->group(function () {
-    Route::get('/asistencias/historial', [AttendanceController::class, 'historial'])->name('asistencias.historial');
-});
+// HU-27: retirado — el historial viejo por bimestre se reemplazó por Reportes de Asistencia
 
 // HU-44: Reportes de asistencia (día, semana, mes, trimestre) PDF/Excel
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->group(function () {
     Route::get('/reportes-asistencia', [AttendanceReportController::class, 'index'])->name('reportes.asistencia.index');
     Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
 

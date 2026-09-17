@@ -18,13 +18,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="bg-error/10 border border-error/20 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div>
-    @endif
-
     <div class="bg-card border border-border rounded-xl p-4 mb-4">
         <form method="GET" action="{{ route('courses.calificaciones', $course) }}" class="flex flex-wrap items-end gap-3">
             <div class="w-full min-w-0 sm:min-w-[180px] flex flex-col gap-1">

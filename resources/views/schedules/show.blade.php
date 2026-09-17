@@ -125,11 +125,6 @@
         </div>
     @endif
 
-    @if(session('mensaje'))
-        <div class="fixed bottom-4 right-4 bg-success text-success-foreground px-4 py-3 rounded-lg shadow-lg z-50">
-            {{ session('mensaje') }}
-        </div>
-    @endif
 @endsection
 
 @push('modals')

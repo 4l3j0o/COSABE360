@@ -3,12 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Assessment;
-use App\Models\GradeScore;
+use App\Models\Course;
+use App\Models\CourseSubject;
+use App\Models\Enrollment;
+use App\Models\Grade;
 use App\Models\Level;
+use App\Models\Registration;
+use App\Models\Role;
+use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\Teacher;
 use App\Models\User;
+use App\Services\EvaluationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -25,10 +32,17 @@ class HistorialAcademicoTest extends TestCase
     private function crearDatosHistorial(): array
     {
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
-        $subject1 = Subject::create(['nombre' => 'Matemáticas', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
-        $subject2 = Subject::create(['nombre' => 'Lenguaje', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
-        $gestion2025 = AcademicYear::create(['nombre' => '2025', 'fecha_inicio' => '2025-02-01', 'fecha_fin' => '2025-11-30', 'estado' => 'CERRADA']);
+        $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Hist Trim', 'orden' => 1, 'estado' => 'ACTIVO']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion2026 = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $gestion2025 = AcademicYear::create(['nombre' => '2025', 'fecha_inicio' => '2025-02-01', 'fecha_fin' => '2025-11-30', 'estado' => 'CERRADA']);
+        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion2026->id, 'nombre' => 'Curso Hist Trim', 'estado' => 'ACTIVO']);
+        $subject = Subject::create(['nombre' => 'Matemáticas Trim', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
+
+        $rolDoc = Role::where('nombre', 'Docente')->first();
+        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Hist', 'email' => 'doc_hist_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
+        $teacher = Teacher::create(['user_id' => $userDoc->id, 'nombres' => 'Doc', 'apellidos' => 'Hist', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
+        $cs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         $student = Student::create([
             'codigo' => 'EST-HIST-001',
@@ -39,16 +53,32 @@ class HistorialAcademicoTest extends TestCase
             'numero_documento' => '9990001',
             'estado' => 'ACTIVO',
         ]);
+        $enrollment = Enrollment::create(['student_id' => $student->id, 'academic_year_id' => $gestion2026->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
-        $eval1 = Assessment::create(['nombre' => 'Examen 1', 'tipo' => 'Examen', 'subject_id' => $subject1->id, 'academic_year_id' => $gestion2025->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
-        $eval2 = Assessment::create(['nombre' => 'Examen 2', 'tipo' => 'Examen', 'subject_id' => $subject1->id, 'academic_year_id' => $gestion2026->id, 'bimestre' => 1, 'peso' => 0.5, 'estado' => 'ACTIVO']);
-        $eval3 = Assessment::create(['nombre' => 'Tarea Lenguaje', 'tipo' => 'Tarea', 'subject_id' => $subject2->id, 'academic_year_id' => $gestion2026->id, 'bimestre' => 2, 'peso' => 1, 'estado' => 'ACTIVO']);
+        // Notas por trimestre: T1=88, T2=92, T3=82 (SE/SA/HA/AU)
+        $service = app(EvaluationService::class);
+        $notas = [1 => [8, 40, 35, 5], 2 => [9, 42, 36, 5], 3 => [7, 38, 33, 4]];
+        foreach ($notas as $trim => $valores) {
+            $plan = $service->obtenerOCrearPlan($cs, $trim);
+            $i = 0;
+            foreach ($plan->criteria as $criterion) {
+                $act = $service->crearActividad($criterion, 'Act ' . $criterion->codigo, null, 1);
+                $service->registrarNota($act, $student, $valores[$i], null, $userDoc->id);
+                $i++;
+            }
+        }
 
-        GradeScore::create(['assessment_id' => $eval1->id, 'student_id' => $student->id, 'nota' => 80]);
-        GradeScore::create(['assessment_id' => $eval2->id, 'student_id' => $student->id, 'nota' => 90]);
-        GradeScore::create(['assessment_id' => $eval3->id, 'student_id' => $student->id, 'nota' => 85]);
+        return compact('student', 'gestion2025', 'gestion2026', 'subject', 'userDoc', 'teacher', 'curso');
+    }
 
-        return compact('student', 'gestion2025', 'gestion2026', 'subject1', 'subject2');
+    private function crearEstudianteUser(Student $student, string $email): User
+    {
+        $rolEst = Role::where('nombre', 'Estudiante')->first();
+        $user = User::create(['nombre' => 'Hist', 'apellido' => 'Est', 'email' => $email, 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $student->update(['user_id' => $user->id]);
+
+        return $user;
     }
 
     public function test_historial_requires_auth(): void
@@ -59,69 +89,60 @@ class HistorialAcademicoTest extends TestCase
     public function test_estudiante_puede_ver_su_historial(): void
     {
         $datos = $this->crearDatosHistorial();
-        $student = $datos['student'];
-
-        // crear usuario estudiante vinculado
-        $rolEst = \App\Models\Role::where('nombre', 'Estudiante')->first();
-        $user = User::create(['nombre' => 'Hist', 'apellido' => 'Est', 'email' => 'hist_est@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
-        $student->update(['user_id' => $user->id]);
+        $user = $this->crearEstudianteUser($datos['student'], 'hist_est@sanber.edu.bo');
 
         $this->actingAs($user);
         $response = $this->get('/historial-academico');
         $response->assertStatus(200);
         $response->assertSee('Historial Académico');
-        $response->assertSee('Matemáticas');
-        $response->assertSee('Lenguaje');
+        $response->assertSee('Matemáticas Trim');
     }
 
-    public function test_estudiante_ve_materias_cursadas_y_promedios(): void
+    public function test_estudiante_ve_trimestres_y_promedio_anual(): void
     {
         $datos = $this->crearDatosHistorial();
-        $student = $datos['student'];
-        $rolEst = \App\Models\Role::where('nombre', 'Estudiante')->first();
-        $user = User::create(['nombre' => 'Hist2', 'apellido' => 'Est', 'email' => 'hist2@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
-        $student->update(['user_id' => $user->id]);
+        $user = $this->crearEstudianteUser($datos['student'], 'hist2@sanber.edu.bo');
 
         $this->actingAs($user);
         $response = $this->get('/historial-academico');
         $response->assertStatus(200);
-        // debe mostrar promedio calculado (80 y 90 -> 85 en 2025/2026 etc)
-        $response->assertSee('Promedio Materia');
+        $response->assertSee('88');
+        $response->assertSee('92');
+        $response->assertSee('82');
+        $response->assertSee('Promedio Anual');
+        $response->assertSee('87');
+        $response->assertSee('DP');
     }
 
     public function test_historial_filtra_por_gestion(): void
     {
         $datos = $this->crearDatosHistorial();
-        $student = $datos['student'];
-        $rolEst = \App\Models\Role::where('nombre', 'Estudiante')->first();
-        $user = User::create(['nombre' => 'Hist3', 'apellido' => 'Est', 'email' => 'hist3@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
-        $student->update(['user_id' => $user->id]);
+        $user = $this->crearEstudianteUser($datos['student'], 'hist3@sanber.edu.bo');
 
         $this->actingAs($user);
+        $response = $this->get('/historial-academico?academic_year_id=' . $datos['gestion2026']->id);
+        $response->assertStatus(200);
+        $response->assertSee('Gestión 2026');
+
         $response = $this->get('/historial-academico?academic_year_id=' . $datos['gestion2025']->id);
         $response->assertStatus(200);
-        $response->assertSee('Gestión 2025');
+        $response->assertSee('No hay evaluaciones por trimestre registradas');
     }
 
-    public function test_padre_puede_ver_historial_de_hijos(): void
+    public function test_docente_ve_historial_de_sus_estudiantes(): void
     {
         $datos = $this->crearDatosHistorial();
-        $student = $datos['student'];
-        $rolPadre = \App\Models\Role::where('nombre', 'Padre/Tutor')->first();
-        $userPadre = User::create(['nombre' => 'Padre', 'apellido' => 'Hist', 'email' => 'padre_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolPadre->id, 'estado' => 'ACTIVO']);
-        $tutor = \App\Models\ParentGuardian::create(['nombres' => 'Padre', 'apellidos' => 'Hist', 'numero_documento' => '1112223', 'user_id' => $userPadre->id, 'estado' => 'ACTIVO']);
-        $tutor->students()->attach($student->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
 
-        $this->actingAs($userPadre);
-        $response = $this->get('/historial-academico');
+        $this->actingAs($datos['userDoc']);
+        $response = $this->get('/historial-academico?student_id=' . $datos['student']->id);
         $response->assertStatus(200);
-        $response->assertSee('Historial Académico');
+        $response->assertSee('Matemáticas Trim');
     }
 
     public function test_director_puede_ver_historial(): void
     {
         $datos = $this->crearDatosHistorial();
-        $rolDir = \App\Models\Role::where('nombre', 'Director')->first() ?? \App\Models\Role::where('nombre', 'Administrador')->first();
+        $rolDir = Role::where('nombre', 'Director')->first() ?? Role::where('nombre', 'Administrador')->first();
         $userDir = User::create(['nombre' => 'Dir', 'apellido' => 'Hist', 'email' => 'dir_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDir->id, 'estado' => 'ACTIVO']);
 
         $this->actingAs($userDir);
@@ -129,6 +150,14 @@ class HistorialAcademicoTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Historial Académico');
     }
+
+    public function test_padre_tutor_ya_no_accede(): void
+    {
+        $datos = $this->crearDatosHistorial();
+        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
+        $userPadre = User::create(['nombre' => 'Padre', 'apellido' => 'Hist', 'email' => 'padre_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolPadre->id, 'estado' => 'ACTIVO']);
+
+        $this->actingAs($userPadre);
+        $this->get('/historial-academico')->assertForbidden();
+    }
 }
-
-

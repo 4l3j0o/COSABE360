@@ -31,6 +31,9 @@ class DatabaseSeeder extends Seeder
             AcademicYearSeeder::class,
             EstructuraAcademicaSeeder::class,
 
+            // Bloques del horario de verano por nivel (base para asignar cursos)
+            BloquesHorarioSeeder::class,
+
             // Materias, docentes y asignaciones 2026
             Docentes2026Seeder::class,
 

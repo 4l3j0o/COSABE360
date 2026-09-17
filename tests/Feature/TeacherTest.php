@@ -27,7 +27,7 @@ class TeacherTest extends TestCase
         ]);
     }
 
-    public function test_registra_docente_con_campos_y_codigo_unico(): void
+    public function test_registra_docente_con_campos_y_documento_unico(): void
     {
         $this->actingAs($this->admin);
 
@@ -53,15 +53,21 @@ class TeacherTest extends TestCase
         $this->assertSame('1234567', $teacher->numero_documento);
         $this->assertSame('71234567', $teacher->telefono);
         $this->assertSame('juan@test.com', $teacher->email);
-        $this->assertSame('DOC-0001', $teacher->codigo, 'Debe generar codigo unico DOC-0001');
         $this->assertSame('ACTIVO', $teacher->estado);
+        // HU-46: la columna `codigo` fue eliminada; la unicidad es documento+complemento.
+        $this->assertArrayNotHasKey('codigo', $teacher->getAttributes());
+
+        $this->post('/docentes', [
+            'nombres' => 'Juan', 'apellidos' => 'Duplicado', 'tipo_documento' => 'CI',
+            'numero_documento' => '1234567', 'complemento' => 'LP', 'email' => 'duplicado@test.com',
+        ])->assertSessionHasErrors('numero_documento');
 
         $segundo = $this->post('/docentes', [
             'nombres' => 'Ana', 'apellidos' => 'Lopez', 'tipo_documento' => 'CI',
             'numero_documento' => '7654321', 'complemento' => '', 'email' => 'ana@test.com',
         ])->assertRedirect();
-        $anaCodigo = \App\Models\Teacher::where('email', 'ana@test.com')->value('codigo');
-        $this->assertSame('DOC-0002', $anaCodigo, 'Codigo debe ser creciente y unico');
+        $ana = \App\Models\Teacher::where('email', 'ana@test.com')->first();
+        $this->assertNotNull($ana, 'Segundo docente debe registrarse');
     }
 
     public function test_activa_y_desactiva_docente(): void
@@ -70,7 +76,7 @@ class TeacherTest extends TestCase
         $teacher = \App\Models\Teacher::create([
             'nombres' => 'Juan', 'apellidos' => 'Perez',
             'tipo_documento' => 'CI', 'numero_documento' => '111', 'complemento' => '',
-            'codigo' => \App\Models\Teacher::generarCodigo(), 'estado' => 'ACTIVO',
+            'estado' => 'ACTIVO',
         ]);
 
         $this->patch("/docentes/{$teacher->id}/alternar")->assertRedirect();

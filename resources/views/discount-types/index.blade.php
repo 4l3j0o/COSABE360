@@ -14,7 +14,7 @@
     </button>
 </div>
 
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
+
 @if($errors->any())
     <div class="bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg text-sm mb-4"><ul class="list-disc list-inside">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
 @endif

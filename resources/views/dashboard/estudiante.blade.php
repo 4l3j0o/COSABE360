@@ -60,7 +60,7 @@
                     <p class="text-muted-foreground text-xs">Consultar tu horario de clases</p>
                 </div>
             </a>
-            <a href="{{ route('asistencias.historial') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+            <a href="{{ route('reportes.asistencia.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
                 <span class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </span>

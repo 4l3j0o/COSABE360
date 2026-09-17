@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Evaluación ' . $plan->nombre)
+@section('titulo', 'Evaluación Trimestre ' . $plan->trimestre)
 @section('sidebar') @include('dashboard.partials._sidebar-docente') @endsection
 
 @section('contenido')
@@ -21,23 +21,15 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Volver a Evaluaciones
         </a>
-        <h1 class="text-xl font-bold text-foreground mt-2">{{ $plan->nombre }} — {{ $nombresTrim[$plan->trimestre] }}</h1>
+        <h1 class="text-xl font-bold text-foreground mt-2">{{ $nombresTrim[$plan->trimestre] }}</h1>
         <div class="mt-2 flex flex-wrap gap-2">
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->nombre }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->codigoCorto() }}</span>
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ count($students) }} estudiante(s)</span>
         </div>
-        <p class="text-xs text-muted-foreground mt-2">Matriz de calificaciones: filas = estudiantes, columnas = actividades por criterio. Cree una actividad y aparecerá como nueva columna. Notas sobre el máximo de cada criterio (SE 10 · SA 45 · HA 40 · AU 5).</p>
     </div>
-</div>
-
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
-@if(session('error')) <div class="bg-error/10 border border-error/30 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div> @endif
-
-{{-- Plantillas Excel (HU-48) --}}
-<div class="bg-card border border-border rounded-xl p-4 mb-5">
-    <div class="flex flex-wrap gap-3 items-center">
-        <span class="text-sm font-semibold text-foreground">Plantilla Excel:</span>
+    {{-- Plantilla Excel (HU-48) --}}
+    <div class="flex flex-wrap gap-2 items-center sm:justify-end">
         <a href="{{ route('evaluations.template-download', [$courseSubject, $plan]) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
             Descargar (.xlsx)
@@ -48,8 +40,8 @@
             <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:opacity-90 cursor-pointer">Subir</button>
         </form>
     </div>
-    @error('archivo') <p class="text-xs text-error mt-2">{{ $message }}</p> @enderror
 </div>
+@error('archivo') <p class="text-xs text-error mb-4">{{ $message }}</p> @enderror
 
 {{-- Crear actividades --}}
 <div class="bg-card border border-border rounded-xl p-4 mb-5">

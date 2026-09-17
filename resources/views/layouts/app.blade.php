@@ -32,15 +32,11 @@
         </header>
 
         <main class="flex-1 p-4 md:p-6">
-            @if(session('mensaje'))
-                <div class="mb-4 bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm">
-                    {{ session('mensaje') }}
-                </div>
-            @endif
-
             @yield('contenido')
         </main>
     </div>
+
+    @include('layouts._toasts')
 
     @stack('scripts')
 

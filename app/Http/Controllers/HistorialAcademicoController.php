@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
-use App\Models\GradeScore;
-use App\Models\ParentGuardian;
+use App\Models\CourseSubject;
+use App\Models\Registration;
 use App\Models\Student;
+use App\Services\EvaluationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class HistorialAcademicoController extends Controller
 {
+    /**
+     * Historial académico por trimestres (sistema de evaluación vigente).
+     * Estudiante: solo el propio. Docente: estudiantes de sus cursos.
+     * Director/Administrador/Secretaría: cualquier estudiante.
+     */
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -19,162 +25,122 @@ class HistorialAcademicoController extends Controller
 
         if ($user->hasRole('Estudiante')) {
             $student = Student::where('user_id', $user->id)->first();
-            if (!$student) {
+            if (! $student) {
                 abort(404, 'Estudiante no encontrado');
             }
-            $historial = $this->obtenerHistorial($student, $academicYearId);
-            $gestiones = $this->gestionesDelEstudiante($student);
 
-            return view('historial.index', [
-                'student' => $student,
-                'estudiantes' => null,
-                'historial' => $historial,
-                'gestiones' => $gestiones,
-                'academic_year_id' => $academicYearId,
-            ]);
+            return $this->vista($student, null, $academicYearId);
         }
 
-        if ($user->hasAnyRole('Padre/Tutor')) {
-            $parent = ParentGuardian::where('user_id', $user->id)->first();
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $cursoIds = CourseSubject::where('teacher_id', $user->teacher->id)->pluck('course_id')->unique();
+            $estudiantes = Student::where('estado', 'ACTIVO')
+                ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('course_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
+                ->orderBy('apellidos')->orderBy('nombres')->get();
+            $student = $studentId ? $estudiantes->firstWhere('id', (int) $studentId) : $estudiantes->first();
 
-            $hijos = $parent ? $parent->students()->where('students.estado', 'ACTIVO')->get() : collect();
-
-            if ($hijos->isEmpty()) {
-                return view('historial.index', [
-                    'student' => null,
-                    'estudiantes' => $hijos,
-                    'historial' => collect(),
-                    'gestiones' => collect(),
-                    'academic_year_id' => $academicYearId,
-                ]);
-            }
-
-            $student = $studentId ? $hijos->firstWhere('id', $studentId) ?? $hijos->first() : $hijos->first();
-            $historial = $this->obtenerHistorial($student, $academicYearId);
-            $gestiones = $this->gestionesDelEstudiante($student);
-
-            return view('historial.index', [
-                'student' => $student,
-                'estudiantes' => $hijos,
-                'historial' => $historial,
-                'gestiones' => $gestiones,
-                'academic_year_id' => $academicYearId,
-            ]);
+            return $this->vista($student, $estudiantes, $academicYearId);
         }
 
         // Director, Administrador, Secretaría pueden consultar cualquier estudiante
-        if ($user->hasAnyRole('Director,Administrador,Secretaría,Docente')) {
+        if ($user->hasAnyRole('Director,Administrador,Secretaría')) {
             $estudiantes = Student::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
             $student = $studentId ? Student::find($studentId) : $estudiantes->first();
 
-            if (!$student) {
-                return view('historial.index', [
-                    'student' => null,
-                    'estudiantes' => $estudiantes,
-                    'historial' => collect(),
-                    'gestiones' => collect(),
-                    'academic_year_id' => $academicYearId,
-                ]);
-            }
-
-            $historial = $this->obtenerHistorial($student, $academicYearId);
-            $gestiones = $this->gestionesDelEstudiante($student);
-
-            return view('historial.index', [
-                'student' => $student,
-                'estudiantes' => $estudiantes,
-                'historial' => $historial,
-                'gestiones' => $gestiones,
-                'academic_year_id' => $academicYearId,
-            ]);
+            return $this->vista($student, $estudiantes, $academicYearId);
         }
 
         abort(403);
     }
 
-    private function obtenerHistorial(Student $student, ?string $academicYearId)
+    private function vista(?Student $student, $estudiantes, ?string $academicYearId): View
     {
-        $query = GradeScore::where('student_id', $student->id)->with([
-            'assessment.subject',
-            'assessment.academicYear',
-            'assessment.courseSubject.subject',
-            'assessment.courseSubject.course.section.grade',
-        ]);
-
-        $scores = $query->get();
-
-        // Filtrar por gestión si se pide
-        if ($academicYearId) {
-            $scores = $scores->filter(function ($s) use ($academicYearId) {
-                $ass = $s->assessment;
-                return $ass && (string) ($ass->academic_year_id ?? $ass->courseSubject?->course?->academic_year_id ?? '') === (string) $academicYearId;
-            });
+        if (! $student) {
+            return view('historial.index', [
+                'student' => null,
+                'estudiantes' => $estudiantes,
+                'historial' => collect(),
+                'gestiones' => collect(),
+                'academic_year_id' => $academicYearId,
+            ]);
         }
 
-        // Agrupar por gestión -> materia -> bimestre
-        $porMateria = $scores->groupBy(function ($s) {
-            $ass = $s->assessment;
-            $materia = $ass?->subject?->nombre
-                ?? $ass?->courseSubject?->subject?->nombre
-                ?? 'Sin materia';
-            $bimestre = $ass?->bimestre ?? 'S/B';
-            $gestion = $ass?->academicYear?->nombre
-                ?? $ass?->courseSubject?->course?->academicYear?->nombre
-                ?? $ass?->academic_year_id
-                ?? 'Sin gestión';
-            return $gestion . '|' . $materia;
-        })->map(function ($group, $key) {
-            [$gestion, $materia] = explode('|', $key, 2);
-            $porBimestre = $group->groupBy(function ($s) {
-                $ass = $s->assessment;
-                return $ass?->bimestre ?? '0';
-            })->map(function ($bGroup) {
-                $assessments = $bGroup->map(fn ($s) => $s->assessment);
-                $sumPesos = $assessments->sum('peso');
-                $promedio = $sumPesos > 0
-                    ? round($bGroup->sum(fn ($s) => $s->nota * ($s->assessment->peso / $sumPesos)), 2)
-                    : round($bGroup->avg('nota'), 2);
-                return [
-                    'bimestre' => $bGroup->first()->assessment?->bimestre ?? 0,
-                    'promedio' => $promedio,
-                    'notas' => $bGroup->map(fn ($s) => [
-                        'nombre' => $s->assessment->nombre,
-                        'tipo' => $s->assessment->tipo,
-                        'nota' => $s->nota,
-                        'peso' => $s->assessment->peso,
-                        'fecha' => $s->assessment->fecha?->format('d/m/Y'),
-                    ])->values(),
-                ];
-            })->sortBy('bimestre')->values();
+        return view('historial.index', [
+            'student' => $student,
+            'estudiantes' => $estudiantes,
+            'historial' => $this->obtenerHistorial($student, $academicYearId),
+            'gestiones' => $this->gestionesDelEstudiante($student),
+            'academic_year_id' => $academicYearId,
+        ]);
+    }
 
-            $promedioMateria = $porBimestre->avg('promedio');
-            return [
-                'gestion' => $gestion,
-                'materia' => $materia,
-                'por_bimestre' => $porBimestre,
-                'promedio_materia' => round($promedioMateria, 2),
-                'cantidad_notas' => $group->count(),
-            ];
-        })->values()
-        ->sortBy([['gestion', 'asc'], ['materia', 'asc']])
-        ->values();
+    /**
+     * Notas por gestión -> materia -> trimestre + promedio anual y valoración oficial.
+     */
+    private function obtenerHistorial(Student $student, ?string $academicYearId)
+    {
+        $service = app(EvaluationService::class);
 
-        return $porMateria;
+        $regs = Registration::where('estado', 'ACTIVA')
+            ->whereHas('enrollment', fn ($q) => $q->where('student_id', $student->id)->where('estado', 'COMPLETADA'))
+            ->with('course.gestion', 'course.grade', 'course.section')
+            ->get();
+
+        if ($academicYearId) {
+            $regs = $regs->filter(fn ($r) => (string) $r->course->academic_year_id === (string) $academicYearId)->values();
+        }
+
+        return $regs
+            ->groupBy(fn ($r) => $r->course->gestion?->nombre ?? 'Sin gestión')
+            ->map(function ($regsGestion, $gestion) use ($service, $student) {
+                $materias = $regsGestion
+                    ->flatMap(fn ($r) => $r->course->courseSubjects()->with(['subject', 'evaluationPlans'])->get())
+                    ->groupBy(fn ($cs) => $cs->subject?->nombre ?? 'Sin materia')
+                    ->map(function ($css, $materia) use ($service, $student) {
+                        $trimestres = [];
+                        foreach ([1, 2, 3] as $t) {
+                            $notas = [];
+                            foreach ($css as $cs) {
+                                $plan = $cs->evaluationPlans->firstWhere('trimestre', $t);
+                                if ($plan) {
+                                    $nota = $service->notaTrimestre($plan, $student);
+                                    if ($nota !== null) {
+                                        $notas[] = $nota;
+                                    }
+                                }
+                            }
+                            $trimestres[$t] = $notas ? (int) round(array_sum($notas) / count($notas)) : null;
+                        }
+
+                        $validos = array_filter($trimestres, fn ($v) => $v !== null);
+                        $anual = count($validos) === 3 ? (int) round(array_sum($validos) / 3) : null;
+
+                        return [
+                            'materia' => $materia,
+                            'trimestres' => $trimestres,
+                            'anual' => $anual,
+                            'valoracion' => $anual !== null ? EvaluationService::valoracion($anual) : null,
+                        ];
+                    })->values();
+
+                return ['gestion' => $gestion, 'materias' => $materias];
+            })->values()
+            ->sortBy('gestion')->values();
     }
 
     private function gestionesDelEstudiante(Student $student)
     {
-        $scores = GradeScore::where('student_id', $student->id)->with(['assessment.academicYear'])->get();
+        $ids = Registration::where('estado', 'ACTIVA')
+            ->whereHas('enrollment', fn ($q) => $q->where('student_id', $student->id)->where('estado', 'COMPLETADA'))
+            ->with('course')
+            ->get()
+            ->map(fn ($r) => $r->course->academic_year_id)
+            ->filter()->unique()->values();
 
-        $gestionIds = $scores->map(function ($s) {
-            $ass = $s->assessment;
-            return $ass?->academic_year_id;
-        })->filter()->unique()->values();
-
-        if ($gestionIds->isEmpty()) {
+        if ($ids->isEmpty()) {
             return AcademicYear::orderByDesc('nombre')->get();
         }
 
-        return AcademicYear::whereIn('id', $gestionIds)->orderByDesc('nombre')->get();
+        return AcademicYear::whereIn('id', $ids)->orderByDesc('nombre')->get();
     }
 }

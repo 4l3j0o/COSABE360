@@ -27,6 +27,8 @@ return [
 
     'emergency_admin_email' => env('EMERGENCY_ADMIN_EMAIL', 'admin@csb360.local'),
 
+    'emergency_login_enabled' => env('EMERGENCY_LOGIN_ENABLED', env('APP_ENV') === 'local'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -39,13 +39,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="bg-error/10 border border-error/20 text-error rounded-lg px-4 py-3 mb-4 text-sm">{{ session('error') }}</div>
-    @endif
-
     <div id="info-tutor">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-6">

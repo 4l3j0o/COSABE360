@@ -16,14 +16,10 @@
         <h1 class="text-xl font-bold text-foreground mt-2">Evaluaciones por Trimestre</h1>
         <div class="mt-2 flex flex-wrap gap-2">
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->nombre }}</span>
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Paralelo {{ $courseSubject->course->section->nombre ?? '—' }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->codigoCorto() }}</span>
         </div>
-        <p class="text-sm text-muted-foreground mt-3">Criterios oficiales (R.M. 473/2021): SER 10% · SABER 45% · HACER 40% · AUTOEVALUACIÓN 5%.</p>
     </div>
 </div>
-
-@if(session('success')) <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div> @endif
 
 <div class="bg-card border border-border rounded-xl p-5 mb-5">
     <h3 class="text-sm font-semibold text-foreground mb-3">Crear / abrir evaluación de un trimestre</h3>
@@ -36,18 +32,6 @@
                     <option value="{{ $t }}">{{ $t }}° — {{ $nombresTrim[$t] }}</option>
                 @endforeach
             </select>
-        </div>
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nombre</label>
-            <input type="text" name="nombre" placeholder="Ej: TRIM 2" class="px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
-        </div>
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Inicio</label>
-            <input type="date" name="fecha_inicio" class="px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-        </div>
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fin</label>
-            <input type="date" name="fecha_fin" class="px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
         </div>
         <button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer">Crear / Abrir</button>
     </form>
@@ -65,8 +49,6 @@
                 <thead>
                     <tr class="border-b border-border bg-muted/50 text-left">
                         <th class="px-4 py-3 font-semibold text-foreground">Trimestre</th>
-                        <th class="px-4 py-3 font-semibold text-foreground">Nombre</th>
-                        <th class="px-4 py-3 font-semibold text-foreground">Período</th>
                         <th class="px-4 py-3 font-semibold text-foreground">Criterios</th>
                         <th class="px-4 py-3 font-semibold text-foreground">Estado</th>
                         <th class="px-4 py-3 text-right font-semibold text-foreground">Acción</th>
@@ -75,13 +57,7 @@
                 <tbody>
                     @foreach($plans as $plan)
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                            <td class="px-4 py-3 font-bold text-foreground">{{ $plan->trimestre }}°</td>
-                            <td class="px-4 py-3">{{ $plan->nombre }}</td>
-                            <td class="px-4 py-3 text-muted-foreground text-xs">
-                                @if($plan->fecha_inicio)
-                                    {{ $plan->fecha_inicio->format('d/m/Y') }} @if($plan->fecha_fin) – {{ $plan->fecha_fin->format('d/m/Y') }} @endif
-                                @else — @endif
-                            </td>
+                            <td class="px-4 py-3 font-bold text-foreground">{{ $plan->trimestre }}° — {{ $nombresTrim[$plan->trimestre] ?? '' }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $plan->criteria_count }} criterios</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estilosEstado[$plan->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $plan->estado }}</span>

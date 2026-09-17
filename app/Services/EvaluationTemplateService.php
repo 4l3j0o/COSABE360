@@ -291,8 +291,17 @@ class EvaluationTemplateService
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($rutaArchivo);
 
-        // Hoja Notas
-        $sheetN = $spreadsheet->getSheetByName('Notas') ?? $spreadsheet->getActiveSheet();
+        // Hoja Notas: firma de la plantilla del sistema. Sin ella, el archivo
+        // no es una plantilla válida (ej. planilla oficial u otro Excel).
+        $sheetN = $spreadsheet->getSheetByName('Notas');
+        if (! $sheetN) {
+            return [
+                'estudiantes' => 0,
+                'notas' => 0,
+                'errores' => [],
+                'formato_invalido' => true,
+            ];
+        }
         $highestRow = $sheetN->getHighestRow();
         $highestCol = $sheetN->getHighestColumn();
 
@@ -340,6 +349,7 @@ class EvaluationTemplateService
             'estudiantes' => $actualizadas,
             'notas' => $notasRegistradas,
             'errores' => $errores,
+            'formato_invalido' => false,
         ];
     }
 

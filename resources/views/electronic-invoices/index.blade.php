@@ -10,16 +10,6 @@
   <span class="inline-flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-full px-3 py-1.5 bg-card">{{ $invoices->total() }} facturas • {{ $invoices->total() >0 ? 'A4 • QR + CUF' : '—' }}</span>
 </div>
 
-@if(session('success'))
-  <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm flex items-start gap-2">
-    <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <span>{!! session('success') !!}</span>
-  </div>
-@endif
-@if(session('mensaje'))
-  <div class="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg text-sm mb-4">{!! session('mensaje') !!}</div>
-@endif
-
 <div class="bg-card border border-border rounded-xl p-3 mb-4 flex flex-col lg:flex-row gap-3">
   <form method="GET" action="{{ route('electronic-invoices.index') }}" class="flex flex-1 flex-col sm:flex-row gap-2">
     <div class="flex-1 relative">

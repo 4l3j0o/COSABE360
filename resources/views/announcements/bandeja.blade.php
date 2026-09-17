@@ -15,10 +15,6 @@
         <p class="text-sm text-muted-foreground">Comunicados publicados para ti</p>
     </div>
 
-    @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-lg px-4 py-3 mb-4 text-sm">{{ session('success') }}</div>
-    @endif
-
     @if($total > 0)
         <div class="flex items-center gap-4 mb-5 bg-card border border-border rounded-xl px-4 py-3">
             <div class="flex items-center gap-3">

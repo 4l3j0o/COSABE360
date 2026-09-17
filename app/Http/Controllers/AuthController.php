@@ -27,7 +27,7 @@ class AuthController extends Controller
     {
         // HU-38: el acceso por contraseña queda restringido a la cuenta de emergencia.
         $emergencyEmail = (string) config('app.emergency_admin_email');
-        $emergencyEnabled = env('EMERGENCY_LOGIN_ENABLED', app()->environment('local'));
+        $emergencyEnabled = (bool) config('app.emergency_login_enabled', false);
 
         if (! $emergencyEnabled || strtolower((string) $request->input('email')) !== strtolower($emergencyEmail)) {
             return redirect()->route('login.google')

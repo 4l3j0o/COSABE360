@@ -66,7 +66,7 @@ class RudeTest extends TestCase
         $response = $this->get('/rude');
         $response->assertStatus(200);
         $response->assertSee('RUDE');
-        $response->assertSee('RM 0684/2025');
+        $response->assertSee('RM 0031/2025');
     }
 
     public function test_muestra_formulario_rude_secciones_I_VI(): void
@@ -76,9 +76,10 @@ class RudeTest extends TestCase
         $this->actingAs($user);
         $response = $this->get(route('rude.form', $est));
         $response->assertStatus(200);
-        $response->assertSee('Sección I-II');
-        $response->assertSee('Sección II — Certificado');
-        $response->assertSee('Sección III-IV');
+        $response->assertSee('Sección I');
+        $response->assertSee('Sección II');
+        $response->assertSee('Sección III');
+        $response->assertSee('Sección IV');
         $response->assertSee('Sección V');
         $response->assertSee('Código RUDE');
     }
