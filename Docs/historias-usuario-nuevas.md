@@ -1,4 +1,4 @@
-# Nuevas Historias de Usuario — Segunda Iteración (HU-36 a HU-46)
+# Nuevas Historias de Usuario — Segunda Iteración (HU-36 a HU-57)
 
 > Documento de trabajo. Rama base: `develop`. Continúa a [documentacion-final.md](./documentacion-final.md).
 
@@ -172,6 +172,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 | `HU-39-40-navegacion-modulos` | Épica 13 completa |
 | `HU-41-44-panel-docente` | Épica 14 completa |
 | `HU-45-46-rude-completo` | Épica 15 completa |
+| `HU-57-Arreglar_Reportes_De_Evaluacion` | Épica 18: correcciones de lógica y reportes de evaluación |
 
 Flujo por rama: trabajar → PR contra `develop` → merge al cerrar la fase (orden A → B → C → D).
 
@@ -261,11 +262,14 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 - **HU-48 — Plantillas Excel de actividades (descargar y subir).**
   - Dependencia `phpoffice/phpspreadsheet`.
-  - `EvaluationTemplateService`: exporta plantilla (.xlsx) con hojas Criterios y Notas (estudiantes × actividades por criterio); importa y actualiza actividades + notas.
+  - `EvaluationTemplateService`: exporta plantilla (.xlsx) con hojas Criterios y Notas (estudiantes × actividades por criterio); importa y actualiza las **notas** de las actividades existentes (las actividades se administran desde la web).
   - Rutas `evaluations.template-download/upload` y botones en la vista.
+  - Estilo institucional (HU-57): logo centrado, membrete con membrete/gestión y tarjeta de datos (DOCENTE/CURSO/MATERIA/TRIMESTRE), bloques por criterio con color y columna PROMEDIO.
+  - Al importar se rechazan notas fuera de rango (0..porcentaje del criterio) y se reportan por fila/actividad.
 
 - **HU-49 — Reportes del docente.**
-  - `EvaluationReportController`: filtros por curso/materia y trimestre; notas por criterio, nota de trimestre, valoración, estado aprobado/reprobado, % asistencia, top calificaciones. Export PDF (DomPDF) y Excel.
+  - `EvaluationReportController`: **primero se elige curso/materia** (con una sola asignación se preselecciona), luego trimestre; notas por criterio, nota de trimestre, valoración, estado aprobado/reprobado, % asistencia (del trimestre) y top calificaciones.
+  - Export PDF (DomPDF) y Excel con membrete institucional, logo y estructura por colores.
 
 - **HU-50 — Rol Regente + comunicados automáticos de licencia.**
   - Rol **Regente** (RoleSeeder) asignado a `ecamacho@cosabe.edu.bo`.
@@ -299,8 +303,21 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   - Requisitos por nivel (R.M. 001/2022 Art. 12): Inicial (certificado nacimiento + vacunas); Primaria/Secundaria (libreta + documento).
   - `ExpedienteController`: checklist por estudiante según nivel. Migración `student_documents.archivo` nullable. Vista `expediente/show`.
 
+## Épica 18 — Correcciones de lógica y reportes de evaluación (HU-57)
+
+### Registro de implementación — HU-57
+
+- **HU-57 — Arreglo de Reportes de Evaluación.**
+  - **Flujo curso-primero:** `EvaluationReportController` exige elegir curso/materia antes de generar; con una sola asignación se preselecciona. Se **retiró el filtro "Asistencia (período)"** (la asistencia es siempre del trimestre).
+  - **Lógica de evaluación corregida (`EvaluationService::notaCriterio`):** el promedio del criterio ahora considera **solo las actividades con nota registrada** (ignora las no calificadas), igual que `AVERAGE` de la planilla oficial. Devuelve `null` si no hay ninguna nota (antes devolvía `0`, mostrando "Reprobado" en vez de "Sin nota"). Los criterios `VALOR_UNICO` (SE/AU) promedian todas sus actividades si hay más de una.
+  - **Validación de tope:** al guardar notas (web) y al importar Excel se rechazan valores fuera de `0..porcentaje` del criterio (evita notas de trimestre > 100). `EvaluationPlanController::guardarNotas` reporta las omisiones.
+  - **Exports mejorados:** PDF y Excel del reporte con membrete institucional, **logo centrado y agrandado**, colores y estructura (resumen, zebra, mejores calificaciones, firmas en PDF).
+  - **Plantilla Excel (HU-48):** membrete institucional, tarjeta de información con etiquetas alineadas, logo 110px centrado y **sin el punto inicial** en los nombres de estudiantes.
+  - **Tests:** `EvaluationLogicTest` (8) y `EvaluationReportTest` (6). Suite completa: 274 passed / 2 skipped.
+
 ## Resumen de estado
 
 **Épicas completadas e integradas en `develop`:**
 - **Épica 16** (HU-47 a HU-50) ✅
 - **Épica 17** (HU-51 a HU-56) ✅
+- **Épica 18** (HU-57) ✅

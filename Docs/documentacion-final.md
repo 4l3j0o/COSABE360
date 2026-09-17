@@ -1398,6 +1398,7 @@ Durante la Sprint Review se presenta al Product Owner el trabajo terminado.
 | 10 | Épica 15: RUDE oficial Bolivia | Validado |
 | 11 | Épica 16: Evaluación por trimestres y criterios (HU-47 a HU-50) | Validado |
 | 12 | Épica 17: Cumplimiento normativo (HU-51 a HU-56) | Validado |
+| 13 | Épica 18: Correcciones de lógica y reportes de evaluación (HU-57) | Validado |
 
 ### 9.4. Sprint Retrospective
 
@@ -1677,4 +1678,4 @@ De esta manera, el documento proporciona una visión integral del proyecto y est
 ## Documentos relacionados
 
 - [Diagrama físico de la base de datos](./diagrama-fisico.md)
-- [Nuevas historias de usuario HU-36 a HU-46 (segunda iteración)](./historias-usuario-nuevas.md)
+- [Nuevas historias de usuario HU-36 a HU-57 (segunda iteración)](./historias-usuario-nuevas.md)
