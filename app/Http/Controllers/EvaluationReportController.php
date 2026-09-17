@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * HU-49: reportes del docente (aprobados/reprobados, asistencia, mejores calificaciones/promedios)
  * por curso, materia y trimestre, con exportación PDF/Excel.
+ * HU-57: el reporte exige elegir curso/materia primero (sin autoselección);
+ * se retira el filtro de período de asistencia (siempre trimestre);
+ * exports PDF/Excel con estructura y membrete institucional.
  */
 class EvaluationReportController extends Controller
 {
@@ -28,19 +31,35 @@ class EvaluationReportController extends Controller
     {
         $user = $request->user();
         $courseSubjects = $this->courseSubjectsPermitidos($user);
+
+        // Con una sola asignación se preselecciona directo; si no, el
+        // docente primero elige el curso/materia (HU-57).
+        if (! $request->query('course_subject_id') && $courseSubjects->count() === 1) {
+            $request->merge(['course_subject_id' => $courseSubjects->first()->id]);
+        }
+
         $resultado = $this->build($request, $user, $courseSubjects);
 
         return view('evaluation-reports.index', [
             'courseSubjects' => $courseSubjects,
-            'filtros' => $request->only(['course_subject_id', 'trimestre', 'rango_asistencia']),
+            'filtros' => $request->only(['course_subject_id', 'trimestre']),
             'resultado' => $resultado,
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request)
     {
         $user = $request->user();
         $courseSubjects = $this->courseSubjectsPermitidos($user);
+
+        if (! $request->query('course_subject_id') && $courseSubjects->count() === 1) {
+            $request->merge(['course_subject_id' => $courseSubjects->first()->id]);
+        }
+
+        if (! $request->query('course_subject_id')) {
+            return back()->with('error', 'Primero selecciona el curso y la materia para exportar el reporte.');
+        }
+
         $resultado = $this->build($request, $user, $courseSubjects);
 
         $formato = $request->query('format', 'pdf');
@@ -56,17 +75,29 @@ class EvaluationReportController extends Controller
     {
         $courseSubjectId = $request->query('course_subject_id');
         $trimestre = (int) ($request->query('trimestre') ?: 1);
+        $trimestre = in_array($trimestre, [1, 2, 3], true) ? $trimestre : 1;
 
-        $cs = $courseSubjectId
-            ? CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])->find($courseSubjectId)
-            : $courseSubjects->first();
+        // HU-57: sin curso elegido no se genera nada; la vista pide elegir primero.
+        if (! $courseSubjectId) {
+            return [
+                'filas' => collect(),
+                'curso' => null,
+                'trimestre' => $trimestre,
+                'resumen' => [],
+                'top' => collect(),
+                'requiere_curso' => true,
+            ];
+        }
+
+        $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
+            ->find($courseSubjectId);
 
         if ($cs && ! $courseSubjects->contains('id', $cs->id)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
         if (! $cs) {
-            return ['filas' => collect(), 'curso' => null, 'trimestre' => $trimestre, 'resumen' => [], 'top' => []];
+            return ['filas' => collect(), 'curso' => null, 'trimestre' => $trimestre, 'resumen' => [], 'top' => collect(), 'requiere_curso' => true];
         }
 
         $plan = EvaluationPlan::where('course_subject_id', $cs->id)
@@ -96,8 +127,8 @@ class EvaluationReportController extends Controller
             ];
         });
 
-        // Métricas de asistencia por estudiante (período elegido)
-        $asistencia = $this->asistencia($cs, $students, $request->query('rango_asistencia', 'trimestre'), $trimestre);
+        // Métricas de asistencia del trimestre por estudiante (HU-57: sin filtro de período)
+        $asistencia = $this->asistencia($cs, $students, $trimestre);
         foreach ($filas as $fila) {
             $fila->asistencia = $asistencia[$fila->student->id] ?? ['total' => 0, 'porcentaje' => null, 'detalle' => []];
         }
@@ -133,25 +164,16 @@ class EvaluationReportController extends Controller
     }
 
     /**
-     * Métricas de asistencia por estudiante en un rango/trimestre.
+     * Métricas de asistencia del trimestre por estudiante.
      */
-    private function asistencia(CourseSubject $cs, Collection $students, string $rango, int $trimestre): array
+    private function asistencia(CourseSubject $cs, Collection $students, int $trimestre): array
     {
-        $desde = now()->startOfYear();
+        $desde = match ($trimestre) {
+            2 => now()->startOfYear()->addMonths(3),
+            3 => now()->startOfYear()->addMonths(6),
+            default => now()->startOfYear(),
+        };
         $hasta = now();
-
-        if ($rango === 'trimestre') {
-            $desde = match ($trimestre) {
-                1 => now()->startOfYear(),
-                2 => now()->startOfYear()->addMonths(3),
-                3 => now()->startOfYear()->addMonths(6),
-                default => now()->startOfYear(),
-            };
-        } elseif ($rango === 'mes') {
-            $desde = now()->startOfMonth();
-        } elseif ($rango === 'semana') {
-            $desde = now()->startOfWeek();
-        }
 
         $attendance = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->where('course_id', $cs->course_id)
@@ -194,12 +216,17 @@ class EvaluationReportController extends Controller
 
     private function exportPdf(array $resultado): StreamedResponse
     {
-        $pdf = Pdf::loadView('evaluation-reports.pdf', compact('resultado'))
+        $logoPath = public_path('images/logo-colegio-thumb.png');
+        $logo = is_file($logoPath)
+            ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
+            : null;
+
+        $pdf = Pdf::loadView('evaluation-reports.pdf', compact('resultado', 'logo'))
             ->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
             fn () => print ($pdf->output()),
-            'reporte-evaluacion_'.$resultado['trimestre'].'_'.now()->format('Ymd').'.pdf',
+            $this->exportFileName($resultado, 'pdf'),
             ['Content-Type' => 'application/pdf']
         );
     }
@@ -211,50 +238,175 @@ class EvaluationReportController extends Controller
         $sheet->setTitle('Reporte');
 
         $curso = $resultado['curso'];
-        $sheet->setCellValue('A1', 'Reporte de Evaluación');
-        $sheet->setCellValue('A2', ($curso?->course->nombre ?? '').' - '.($curso?->subject->nombre ?? '').' - Trimestre '.$resultado['trimestre']);
+        $nombreCurso = $curso?->course->nombre ?? '—';
+        $nombreMateria = $curso?->subject->nombre ?? '—';
+        $gestion = $curso?->course->gestion->nombre ?? (string) now()->year;
+        $docente = $curso?->teacher
+            ? trim(($curso->teacher->nombres ?? '').' '.($curso->teacher->apellidos ?? ''))
+            : '—';
 
-        $sheet->setCellValue('A4', 'N.º');
-        $sheet->setCellValue('B4', 'Estudiante');
-        $cols = ['SE', 'SA', 'HA', 'AU'];
-        $colIni = 3;
-        foreach ($cols as $i => $c) {
-            $sheet->setCellValue($this->colLetter($colIni + $i).'4', $c);
+        $ultCol = $this->colLetter(11); // A..K
+
+        // Membrete institucional
+        $sheet->setCellValue('C1', 'UNIDAD EDUCATIVA SAN BERNARDO — TARIJA');
+        $sheet->mergeCells('C1:'.$ultCol.'1');
+        $sheet->setCellValue('C2', 'Reporte de Evaluación — Aprobados, reprobados, mejores calificaciones y asistencia');
+        $sheet->mergeCells('C2:'.$ultCol.'2');
+        $sheet->setCellValue('C3', "Curso: {$nombreCurso}   ·   Materia: {$nombreMateria}   ·   Trimestre {$resultado['trimestre']}   ·   Gestión {$gestion}");
+        $sheet->mergeCells('C3:'.$ultCol.'3');
+        $sheet->setCellValue('C4', 'Docente: '.$docente.'   ·   Generado: '.now()->format('d/m/Y H:i'));
+        $sheet->mergeCells('C4:'.$ultCol.'4');
+
+        $sheet->getStyle('C1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003200');
+        $sheet->getStyle('C2')->getFont()->setBold(true)->setSize(11)->getColor()->setARGB('FF003200');
+        $sheet->getStyle('C3:C4')->getFont()->setSize(10)->getColor()->setARGB('FF33412F');
+
+        // Resumen
+        $r = $resultado['resumen'];
+        $sheet->setCellValue('A6', "Aprobados: {$r['aprobados']}   ·   Reprobados: {$r['reprobados']}   ·   Sin nota: {$r['sin_nota']}   ·   Total: {$r['total']}   ·   Mínimo de aprobación: 51");
+        $sheet->mergeCells('A6:'.$ultCol.'6');
+        $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(10);
+        $sheet->getStyle('A6')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF6FAF6');
+
+        // Cabecera del detalle
+        $cabecera = ['N.º', 'Estudiante', 'SE (10%)', 'SA (45%)', 'HA (40%)', 'AU (5%)', 'Nota trim.', 'Valoración', 'Estado', '% Asist. (trim.)', 'Pres./Falt./Atr.'];
+        $filaCabecera = 8;
+        foreach ($cabecera as $i => $texto) {
+            $sheet->setCellValue($this->colLetter($i + 1).$filaCabecera, $texto);
         }
-        $sheet->setCellValue($this->colLetter($colIni + 4).'4', 'Nota');
-        $sheet->setCellValue($this->colLetter($colIni + 5).'4', 'Valoración');
-        $sheet->setCellValue($this->colLetter($colIni + 6).'4', 'Estado');
-        $sheet->setCellValue($this->colLetter($colIni + 7).'4', '% Asist');
+        $rangoCabecera = 'A'.$filaCabecera.':'.$ultCol.$filaCabecera;
+        $sheet->getStyle($rangoCabecera)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle($rangoCabecera)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003200');
+        $sheet->getStyle($rangoCabecera)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension($filaCabecera)->setRowHeight(30);
 
-        $fila = 5;
+        // Detalle
+        $fila = $filaCabecera + 1;
         foreach ($resultado['filas'] as $i => $f) {
+            $detalle = $f->asistencia['detalle'] ?? [];
+            $asistCorta = 'P:'.($detalle['PRESENTE'] ?? 0).' F:'.($detalle['FALTA'] ?? 0).' A:'.($detalle['ATRASO'] ?? 0);
+
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f->student->apellidos.' '.$f->student->nombres);
-            foreach ($cols as $j => $c) {
-                $sheet->setCellValue($this->colLetter($colIni + $j).$fila, $f->criterios[$c] ?? '');
+            $sheet->setCellValue('C'.$fila, $f->criterios['SE'] ?? '');
+            $sheet->setCellValue('D'.$fila, $f->criterios['SA'] ?? '');
+            $sheet->setCellValue('E'.$fila, $f->criterios['HA'] ?? '');
+            $sheet->setCellValue('F'.$fila, $f->criterios['AU'] ?? '');
+            $sheet->setCellValue('G'.$fila, $f->nota ?? '');
+            $sheet->setCellValue('H'.$fila, $f->codigo);
+            $sheet->setCellValue('I'.$fila, $f->aprobado === null ? 'Sin nota' : ($f->aprobado ? 'Aprobado' : 'Reprobado'));
+            $sheet->setCellValue('J'.$fila, $f->asistencia['porcentaje'] ?? '');
+            $sheet->setCellValue('K'.$fila, $asistCorta);
+
+            if ($f->aprobado === true) {
+                $sheet->getStyle('I'.$fila)->getFont()->setBold(true)->getColor()->setARGB('FF14532D');
+            } elseif ($f->aprobado === false) {
+                $sheet->getStyle('I'.$fila)->getFont()->setBold(true)->getColor()->setARGB('FF7F1D1D');
             }
-            $sheet->setCellValue($this->colLetter($colIni + 4).$fila, $f->nota ?? '');
-            $sheet->setCellValue($this->colLetter($colIni + 5).$fila, $f->codigo);
-            $sheet->setCellValue($this->colLetter($colIni + 6).$fila, $f->aprobado === null ? '' : ($f->aprobado ? 'Aprobado' : 'Reprobado'));
-            $sheet->setCellValue($this->colLetter($colIni + 7).$fila, $f->asistencia['porcentaje'] ?? '');
+
+            // Zebra institucional
+            if ($fila % 2 === 0) {
+                $sheet->getStyle('A'.$fila.':'.$ultCol.$fila)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F6F2');
+            }
+
             $fila++;
         }
 
-        $sheet->getStyle('A4:'.$this->colLetter($colIni + 7).'4')->getFont()->setBold(true);
+        // Mejores calificaciones
+        $fila++;
+        $sheet->setCellValue('A'.$fila, 'Mejores calificaciones del trimestre');
+        $sheet->mergeCells('A'.$fila.':'.$ultCol.$fila);
+        $sheet->getStyle('A'.$fila)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A'.$fila)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003200');
+        $fila++;
+        $sheet->setCellValue('A'.$fila, 'Puesto');
+        $sheet->setCellValue('B'.$fila, 'Estudiante');
+        $sheet->setCellValue('C'.$fila, 'Nota');
+        $sheet->setCellValue('D'.$fila, 'Valoración');
+        $sheet->getStyle('A'.$fila.':D'.$fila)->getFont()->setBold(true);
+        $fila++;
+        foreach ($resultado['top'] as $i => $f) {
+            $sheet->setCellValue('A'.$fila, '#'.($i + 1));
+            $sheet->setCellValue('B'.$fila, $f->student->apellidos.' '.$f->student->nombres);
+            $sheet->setCellValue('C'.$fila, $f->nota);
+            $sheet->setCellValue('D'.$fila, $f->codigo);
+            $fila++;
+        }
+
+        // Bordes + anchos + congelar
+        $sheet->getStyle('A'.$filaCabecera.':'.$ultCol.($fila - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
+        foreach (range(1, count($cabecera)) as $c) {
+            $sheet->getColumnDimension($this->colLetter($c))->setAutoSize(true);
+        }
+        $sheet->freezePane('A'.($filaCabecera + 1));
+        $sheet->getSheetView()->setZoomScale(90);
+
+        // Logo institucional centrado y agrandado (HU-57)
+        $sheet->getColumnDimension('A')->setWidth(5);
+        $sheet->getColumnDimension('B')->setWidth(34);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
 
         $writer = new Xlsx($spreadsheet);
         ob_start();
         $writer->save('php://output');
+        $contenido = (string) ob_get_clean();
 
         return response()->streamDownload(
-            fn () => print (ob_get_clean()),
-            'reporte-evaluacion_'.$resultado['trimestre'].'_'.now()->format('Ymd').'.xlsx',
+            fn () => print ($contenido),
+            $this->exportFileName($resultado, 'xlsx'),
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );
+    }
+
+    /**
+     * Nombre de archivo del export con curso y trimestre.
+     */
+    private function exportFileName(array $resultado, string $extension): string
+    {
+        $base = 'reporte-evaluacion';
+        if ($resultado['curso']) {
+            $codigo = $resultado['curso']->course->section->codigo ?? $resultado['curso']->course->nombre ?? '';
+            $slug = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $codigo), '-'));
+            if ($slug !== '') {
+                $base .= '_'.$slug;
+            }
+            $base .= '_T'.$resultado['trimestre'];
+        }
+
+        return $base.'_'.now()->format('Ymd').'.'.$extension;
     }
 
     private function colLetter(int $index): string
     {
         return Coordinate::stringFromColumnIndex($index);
+    }
+
+    /**
+     * Inserta el logo institucional centrado horizontalmente en un bloque de columnas.
+     */
+    private function insertarLogoCentrado($sheet, string $colIni, string $colFin, int $alturaPx, int $offsetY = 0): void
+    {
+        $path = public_path('images/logo-colegio-thumb.png');
+        if (! is_file($path)) {
+            return;
+        }
+
+        $size = @getimagesize($path);
+        $ratio = ($size && $size[1] > 0) ? $size[0] / $size[1] : 1.975;
+        $anchoPx = (int) round($alturaPx * $ratio);
+
+        $bloquePx = 0;
+        for ($c = Coordinate::columnIndexFromString($colIni); $c <= Coordinate::columnIndexFromString($colFin); $c++) {
+            $bloquePx += (int) round($sheet->getColumnDimension($this->colLetter($c))->getWidth() * 7 + 5);
+        }
+
+        $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+        $drawing->setPath($path);
+        $drawing->setCoordinates($colIni.'1');
+        $drawing->setResizeProportional(true);
+        $drawing->setHeight($alturaPx);
+        $drawing->setOffsetX(max(0, (int) round(($bloquePx - $anchoPx) / 2)));
+        $drawing->setOffsetY($offsetY);
+        $drawing->setWorksheet($sheet);
     }
 }
