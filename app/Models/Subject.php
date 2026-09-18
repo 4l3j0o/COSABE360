@@ -10,6 +10,10 @@ class Subject extends Model
 {
     protected $fillable = [
         'nombre',
+        'codigo',
+        'sigla',
+        'area',
+        'grupo',
         'descripcion',
         'level_id',
         'horas_semanales',

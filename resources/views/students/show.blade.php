@@ -175,6 +175,19 @@
                                         </div>
                                     @endif
                                 </dl>
+                                {{-- HU-59: verificar pago de preinscripción + contrato/anexo --}}
+                                @if($inscripcionPeriodo->estado === 'PENDIENTE' && auth()->user()->hasAnyRole(['Administrador', 'Secretaría', 'Director']))
+                                    <form method="POST" action="{{ route('inscripciones.verificar-pago', $inscripcionPeriodo) }}" onsubmit="return confirm('¿Verificar el pago de inscripción con el código {{ $student->codigo }}? El estudiante pasará a inscrito.')" class="mt-3">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="w-full px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">Verificar pago (contabilidad)</button>
+                                    </form>
+                                @endif
+                                @if(auth()->user()->hasAnyRole(['Administrador', 'Secretaría', 'Director']))
+                                    <div class="flex gap-2 mt-2">
+                                        <a href="{{ route('inscripciones.contrato', $student) }}" class="flex-1 text-center px-3 py-1.5 border border-input rounded-lg text-xs bg-background text-foreground hover:bg-muted">Contrato PDF</a>
+                                        <a href="{{ route('inscripciones.anexo', $student) }}" class="flex-1 text-center px-3 py-1.5 border border-input rounded-lg text-xs bg-background text-foreground hover:bg-muted">Anexo PDF</a>
+                                    </div>
+                                @endif
                             @else
                                 <p class="text-sm text-muted-foreground">Sin inscripción en el período activo.</p>
                             @endif

@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -71,6 +72,36 @@ class User extends Authenticatable
     public function teacher(): HasOne
     {
         return $this->hasOne(Teacher::class, 'user_id');
+    }
+
+    /**
+     * HU-59: niveles que un director tiene a cargo (directores de nivel).
+     * Vacío = sin restricción (aplica a Administrador/Secretaría).
+     */
+    public function nivelesACargo(): BelongsToMany
+    {
+        return $this->belongsToMany(Level::class, 'director_level', 'user_id', 'level_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * HU-59: ¿puede este usuario inscribir en el nivel dado?
+     * Directores solo en sus niveles a cargo; el resto sin restricción.
+     */
+    public function puedeInscribirNivel(int $levelId): bool
+    {
+        if (! $this->hasRole('Director')) {
+            return true;
+        }
+
+        $asignados = $this->nivelesACargo()->pluck('levels.id');
+
+        // Director sin niveles asignados: sin restricción (compatibilidad).
+        if ($asignados->isEmpty()) {
+            return true;
+        }
+
+        return $asignados->contains($levelId);
     }
 
     public function esAdmin(): bool

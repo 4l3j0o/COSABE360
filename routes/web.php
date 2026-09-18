@@ -9,6 +9,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BoletinController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\InclusionController;
+use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
@@ -329,6 +330,22 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(fun
     Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
     Route::patch('/{academicYear}/cerrar', [AcademicYearController::class, 'cerrar'])->name('periodos.cerrar');
     Route::patch('/{academicYear}/abrir', [AcademicYearController::class, 'abrir'])->name('periodos.abrir');
+});
+
+// HU-59: Flujo de inscripción - directores de nivel inscriben en su nivel
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('inscripciones')->group(function () {
+    Route::get('/crear', [InscripcionController::class, 'create'])->name('inscripciones.create');
+    Route::post('/nueva', [InscripcionController::class, 'store'])->name('inscripciones.store');
+    Route::get('/buscar-por-ci', [InscripcionController::class, 'buscarPorCi'])->name('inscripciones.buscar-ci');
+    Route::patch('/verificar-pago/{enrollment}', [InscripcionController::class, 'verificarPago'])->name('inscripciones.verificar-pago');
+    Route::get('/{student}/contrato', [InscripcionController::class, 'contrato'])->name('inscripciones.contrato');
+    Route::get('/{student}/anexo', [InscripcionController::class, 'anexo'])->name('inscripciones.anexo');
+});
+
+// HU-59: Inscripción en Línea - el estudiante sube sus documentos desde su cuenta
+Route::middleware(['auth', 'role:Estudiante'])->group(function () {
+    Route::get('/mi-inscripcion', [InscripcionController::class, 'miInscripcion'])->name('inscripciones.mi-inscripcion');
+    Route::post('/mi-inscripcion/{student}/documento', [InscripcionController::class, 'subirDocumento'])->name('inscripciones.subir-documento');
 });
 
 // HU-17: Registrar inscripciones (desde el modal de la lista de estudiantes)

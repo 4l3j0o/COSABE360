@@ -40,6 +40,12 @@ class DatabaseSeeder extends Seeder
             // Cuentas de usuario @cosabe.edu.bo de los docentes (rol Docente)
             DocenteUsuariosSeeder::class,
 
+            // HU-59: directores de nivel (msuarez Inicial/Primaria, mrodriguez Secundaria)
+            DirectorNivelSeeder::class,
+
+            // HU-59: materias oficiales por nivel y curso (código/sigla/área/grupo)
+            MateriasOficialesSeeder::class,
+
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,
 
