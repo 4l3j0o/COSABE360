@@ -19,17 +19,22 @@ class SubjectController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection|View
     {
-        $subjects = Subject::with('level')->where('estado', '!=', 'ELIMINADO');
+        $subjects = Subject::with('level')->where('subjects.estado', '!=', 'ELIMINADO');
 
         if ($request->filled('level_id')) {
-            $subjects->where('level_id', $request->level_id);
+            $subjects->where('subjects.level_id', $request->level_id);
         }
 
         if ($request->filled('estado')) {
-            $subjects->where('estado', $request->estado);
+            $subjects->where('subjects.estado', $request->estado);
         }
 
-        $subjects->orderBy('level_id')->orderBy('nombre');
+        $subjects->join('levels', 'levels.id', '=', 'subjects.level_id')
+            ->select('subjects.*')
+            ->orderBy('levels.orden')
+            ->orderByRaw('CASE WHEN subjects.sigla IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('subjects.codigo')
+            ->orderBy('subjects.nombre');
 
         if ($request->expectsJson()) {
             return SubjectResource::collection($subjects->get());

@@ -46,6 +46,12 @@ class DatabaseSeeder extends Seeder
             // HU-59: materias oficiales por nivel y curso (código/sigla/área/grupo)
             MateriasOficialesSeeder::class,
 
+            // HU-59: normaliza duplicadas (fusiona con remapeo, elimina sin uso)
+            NormalizarMateriasSeeder::class,
+
+            // HU-59: asignaciones curso-materia-docente desde Excel oficial 2026
+            AsignacionesExcelSeeder::class,
+
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,
 

@@ -378,4 +378,13 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Materias oficiales por nivel y curso** — migración `codigo/sigla/area/grupo` en
   `subjects` + `MateriasOficialesSeeder` (listas NIFC 8, PVC 11, SCP 17 siglas;
   enriquece existentes por nombre normalizado y crea faltantes, idempotente, sin
-  tocar asignaciones). `Docentes2026Seeder` con búsqueda tolerante a renombres.
+  tocar asignaciones).   `Docentes2026Seeder` con búsqueda tolerante a renombres.
+- **Normalización del catálogo** — `NormalizarMateriasSeeder`: fusiona duplicadas en
+  la canónica oficial remapeando course_subjects/assessments/schedules/attendances
+  (ej. Inglés→LE con sus 630 asistencias, Educación Física→EF) y elimina 13 antiguas
+  sin referencias. 51→36 materias, cero huérfanos. `subjects.index` ordenado por
+  nivel+código con columnas Cód/Sigla.
+- **Asignaciones desde Excel oficial** — `database/data/docentes_20261.xlsx` (468 filas)
+  + `AsignacionImportService` + `AsignacionesExcelSeeder` (idempotente, el Excel manda;
+  carga horaria a `course_subjects.horas_semanales`). Huecos reales del Excel: DSAE
+  (Inicial), CFIL (S6A/S6C) y EMP (S6) sin docente.

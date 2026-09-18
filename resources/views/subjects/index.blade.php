@@ -58,6 +58,8 @@
                     <thead>
                         <tr class="border-b border-border bg-muted/50">
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Nivel</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Cód.</th>
+                            <th class="text-left px-4 py-3 font-semibold text-foreground">Sigla</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Nombre</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Descripción</th>
                             <th class="text-left px-4 py-3 font-semibold text-foreground">Horas Sem.</th>
@@ -70,6 +72,13 @@
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $subject->level->nombre }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $subject->codigo ?? '—' }}</td>
+                                <td class="px-4 py-3">
+                                    @if($subject->sigla)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-muted text-foreground">{{ $subject->sigla }}</span>
+                                    @else —
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $subject->nombre }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $subject->descripcion ?? '—' }}</td>
