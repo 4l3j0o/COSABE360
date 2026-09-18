@@ -12,6 +12,7 @@ use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
+use App\Http\Controllers\ReporteCentralController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CourseSubjectController;
@@ -416,6 +417,22 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padr
     // HU-49: reportes de evaluación por curso y trimestre (aprobados/reprobados, mejores notas, asistencia)
     Route::get('/reportes-evaluacion', [EvaluationReportController::class, 'index'])->name('evaluation-reports.index');
     Route::get('/reportes-evaluacion/exportar', [EvaluationReportController::class, 'export'])->name('evaluation-reports.export');
+});
+
+// HU-58: Central de Reportes - todos los reportes en un mismo módulo
+Route::middleware(['auth'])->prefix('reportes')->group(function () {
+    Route::get('/', [ReporteCentralController::class, 'index'])->name('reportes.central.index');
+
+    Route::middleware(['role:Administrador,Director,Secretaría,Docente'])->group(function () {
+        Route::get('/padres', [ReporteCentralController::class, 'padres'])->name('reportes.central.padres');
+        Route::get('/padres/exportar', [ReporteCentralController::class, 'exportPadres'])->name('reportes.central.padres.export');
+        Route::get('/rudes', [ReporteCentralController::class, 'rudes'])->name('reportes.central.rudes');
+        Route::get('/rudes/exportar', [ReporteCentralController::class, 'exportRudes'])->name('reportes.central.rudes.export');
+        Route::get('/centralizador-evaluacion', [ReporteCentralController::class, 'centralizadorEvaluacion'])->name('reportes.central.evaluacion');
+        Route::get('/centralizador-evaluacion/exportar', [ReporteCentralController::class, 'exportCentralizadorEvaluacion'])->name('reportes.central.evaluacion.export');
+        Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');
+        Route::get('/centralizador-trimestre/exportar', [ReporteCentralController::class, 'exportCentralizadorTrimestre'])->name('reportes.central.trimestre.export');
+    });
 });
 
 // HU-52: cierre de gestión - escala de valoración y promoción/retención (Secretaría/Director/Admin)

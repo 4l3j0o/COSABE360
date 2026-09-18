@@ -173,6 +173,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 | `HU-41-44-panel-docente` | Épica 14 completa |
 | `HU-45-46-rude-completo` | Épica 15 completa |
 | `HU-57-Arreglar_Reportes_De_Evaluacion` | Épica 18: correcciones de lógica y reportes de evaluación |
+| `HU-58-llamada_reportes` | Épica 19: Central de Reportes (agrupa todos los reportes + llamado a lista) |
 
 Flujo por rama: trabajar → PR contra `develop` → merge al cerrar la fase (orden A → B → C → D).
 
@@ -321,3 +322,27 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Épica 16** (HU-47 a HU-50) ✅
 - **Épica 17** (HU-51 a HU-56) ✅
 - **Épica 18** (HU-57) ✅
+
+## Épica 19 — Central de Reportes (HU-58, `llamada_reportes`)
+
+> Agrupa todos los reportes del sistema en un único módulo (`/reportes`) y añade los
+> reportes del "llamado a lista". Sin push/merge hasta cerrar la HU.
+
+### Registro de implementación — HU-58
+
+- **Landing `/reportes` (`ReporteCentralController@index`)** — tabla Nombre/Descripción/Parámetros/Ejecutar.
+  Nuevos reportes con formulario GET inline (selectores curso/materia/trimestre); reportes
+  existentes como enlace "Abrir" (asistencia, evaluación, cierre, académicos, administrativos).
+- **Lista de Padres de Familia** — padres y apoderados por estudiante (parentesco, CI,
+  teléfono, email, principal). Parámetros: curso (opcional) / gestión. PDF/Excel.
+- **Lista de RUDEs** — RUDEs del paralelo seleccionado. El curso completo solo es visible
+  para el tutor/encargado (`sections.teacher_id`) o supervisión; otros docentes reciben 403.
+  Parámetro: paralelo (obligatorio). PDF/Excel.
+- **Centralizador por evaluación** — matriz evaluaciones (sistema `assessments` con peso)
+  × estudiantes + nota final ponderada. Parámetro: curso / materia. PDF/Excel.
+- **Centralizador por trimestre** — matriz actividades por criterio (SE/SA/HA/AU)
+  + prom criterios + nota trimestre, valoración y estado (sistema `evaluation_plans`).
+  Parámetros: curso / materia / trimestre. PDF/Excel.
+- **Permisos** — Admin/Director/Secretaría: total. Docente: solo sus cursos/materias.
+  Enlace "Central de Reportes" en sidebars admin, director, secretaría y docente.
+- **Rutas** — `reportes.central.*` bajo prefijo `/reportes`.

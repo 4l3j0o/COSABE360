@@ -1,0 +1,92 @@
+@extends('layouts.app')
+@section('titulo', 'Centralizador por Evaluación')
+@section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
+
+@section('contenido')
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+    <div>
+        <a href="{{ route('reportes.central.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Volver a Central de Reportes
+        </a>
+        <h1 class="text-xl font-bold text-foreground mt-2">Centralizador de Calificaciones por Evaluación</h1>
+        <p class="text-sm text-muted-foreground mt-1">Tabla de evaluaciones, materias y estudiantes con nota final ponderada.</p>
+    </div>
+</div>
+
+<form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
+    <div>
+        <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
+        <select name="course_subject_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+            <option value="">Seleccionar curso / materia…</option>
+            @foreach($courseSubjects as $cs)
+                <option value="{{ $cs->id }}" {{ request('course_subject_id') == $cs->id ? 'selected' : '' }}>{{ $cs->course->nombre }} - {{ $cs->subject->nombre }}</option>
+            @endforeach
+        </select>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Ver reporte</button>
+    @if(! $resultado['requiere_curso'])
+    <div class="flex gap-2 ml-auto">
+        <a href="{{ route('reportes.central.evaluacion.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">PDF</a>
+        <a href="{{ route('reportes.central.evaluacion.export', array_merge(request()->query(), ['format' => 'excel'])) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">Excel</a>
+    </div>
+    @endif
+</form>
+
+@if($resultado['requiere_curso'])
+    <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+        <p class="font-medium text-foreground">Primero selecciona el curso y la materia.</p>
+        <p class="text-sm text-muted-foreground mt-1">Elige arriba la materia del curso del que deseas ver el centralizador de evaluaciones.</p>
+    </div>
+@else
+    <div class="mb-4 flex flex-wrap gap-2">
+        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $resultado['materia'] ?? '—' }}</span>
+        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $resultado['curso'] ?? '—' }}</span>
+        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ count($resultado['filas']) }} estudiante(s)</span>
+    </div>
+
+    @if($resultado['assessments']->isEmpty())
+        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+            <p class="text-sm text-muted-foreground">Esta materia no tiene evaluaciones registradas.</p>
+        </div>
+    @elseif($resultado['filas']->isEmpty())
+        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
+            <p class="text-sm text-muted-foreground">Este curso no tiene estudiantes activos.</p>
+        </div>
+    @else
+        <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50 text-left">
+                            <th class="px-4 py-3 font-semibold text-foreground">#</th>
+                            <th class="px-4 py-3 font-semibold text-foreground">Código</th>
+                            <th class="px-4 py-3 font-semibold text-foreground">Estudiante</th>
+                            @foreach($resultado['assessments'] as $assessment)
+                                <th class="px-4 py-3 text-center font-semibold text-foreground" title="{{ $assessment->nombre }}">
+                                    <div class="max-w-[120px] truncate">{{ $assessment->nombre }}</div>
+                                    <div class="text-[10px] text-muted-foreground font-normal">P{{ $assessment->peso }}</div>
+                                </th>
+                            @endforeach
+                            <th class="px-4 py-3 text-center font-bold text-foreground">Nota Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($resultado['filas'] as $i => $fila)
+                            <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
+                                <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $fila['codigo'] }}</td>
+                                <td class="px-4 py-3 font-medium text-foreground">{{ $fila['apellidos'] }} {{ $fila['nombres'] }}</td>
+                                @foreach($resultado['assessments'] as $assessment)
+                                    <td class="px-4 py-3 text-center">{{ $fila['porEvaluacion'][$assessment->id] ?? '—' }}</td>
+                                @endforeach
+                                <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila['notaFinal'] ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+@endif
+@endsection
