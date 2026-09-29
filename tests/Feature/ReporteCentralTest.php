@@ -127,24 +127,21 @@ class ReporteCentralTest extends TestCase
         $doc = $this->crearDocente('E1');
         $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
-        $assessment = \App\Models\Assessment::create([
-            'course_subject_id' => $cs->id,
-            'subject_id' => $a['subject']->id,
-            'academic_year_id' => $a['gestion']->id,
-            'nombre' => 'Examen RC',
-            'tipo' => 'EXAMEN',
-            'bimestre' => 1,
-            'peso' => 10,
-            'fecha' => '2026-04-01',
-            'estado' => 'ACTIVO',
-        ]);
-        \App\Models\GradeScore::create(['assessment_id' => $assessment->id, 'student_id' => $a['est']->id, 'nota' => 80, 'registered_by_user_id' => $doc['user']->id]);
+        // Planes de los 3 trimestres con nota completa en SE/SA/HA/AU vía service
+        $service = app(\App\Services\EvaluationService::class);
+        foreach ([1, 2, 3] as $t) {
+            $plan = $service->obtenerOCrearPlan($cs, $t);
+            foreach ($plan->criteria as $criterion) {
+                $act = $service->crearActividad($criterion, 'Act ' . $t . $criterion->codigo, '2026-03-10', 1);
+                $service->registrarNota($act, $a['est'], 8, null, $doc['user']->id);
+            }
+        }
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('reportes.central.evaluacion', ['course_subject_id' => $cs->id]));
         $response->assertStatus(200);
-        $response->assertSee('Examen RC');
         $response->assertSee('ApellidoRCE1');
+        $response->assertSee('Prom. Anual');
     }
 
     public function test_centralizador_trimestre_requiere_plan_y_rinde(): void

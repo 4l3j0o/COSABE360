@@ -47,6 +47,7 @@
                 <option value="">Todos los estados académicos</option>
                 <option value="MATRICULADO" {{ request('estado_academico') === 'MATRICULADO' ? 'selected' : '' }}>matriculados</option>
                 <option value="INSCRITO" {{ request('estado_academico') === 'INSCRITO' ? 'selected' : '' }}>inscritos</option>
+                <option value="PREINSCRITO" {{ request('estado_academico') === 'PREINSCRITO' ? 'selected' : '' }}>preinscritos</option>
                 <option value="SIN_INSCRIBIR" {{ request('estado_academico') === 'SIN_INSCRIBIR' ? 'selected' : '' }}>sin inscribir</option>
             </select>
             <select name="estado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
@@ -115,6 +116,10 @@
                                     @elseif($acad === 'INSCRITO')
                                         <a href="{{ route('students.show', ['student' => $student->id, 'matricula' => 1]) }}" title="Matricular" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-info/10 text-info hover:opacity-80 transition-opacity">
                                             inscrito
+                                        </a>
+                                    @elseif($acad === 'PREINSCRITO')
+                                        <a href="{{ route('students.show', $student) }}" title="Verificar pago en contabilidad" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning hover:opacity-80 transition-opacity">
+                                            preinscrito
                                         </a>
                                     @else
                                         <a href="{{ route('students.show', $student) }}" title="Ver" class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success hover:opacity-80 transition-opacity">

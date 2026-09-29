@@ -87,6 +87,12 @@ class StudentController extends Controller
                         ->whereHas('enrollments', $inscritosQuery);
                 } elseif ($request->estado_academico === 'MATRICULADO') {
                     $query->whereHas('enrollments', $matriculadosQuery);
+                } elseif ($request->estado_academico === 'PREINSCRITO') {
+                    // HU-59: preinscripciones pendientes de verificación de pago
+                    $query->whereHas('enrollments', function ($q) use ($periodoActivo) {
+                        $q->where('academic_year_id', $periodoActivo->id)
+                            ->where('estado', 'PENDIENTE');
+                    });
                 }
             } else {
                 $query->whereRaw('1 = 0');
@@ -144,6 +150,9 @@ class StudentController extends Controller
                 $estadoAcademico = 'MATRICULADO';
             } elseif ($insc && $insc->estado === 'COMPLETADA') {
                 $estadoAcademico = 'INSCRITO';
+            } elseif ($insc && $insc->estado === 'PENDIENTE') {
+                // HU-59: preinscripción pendiente de verificación de pago
+                $estadoAcademico = 'PREINSCRITO';
             } else {
                 $estadoAcademico = 'SIN_INSCRIBIR';
             }
@@ -545,13 +554,26 @@ class StudentController extends Controller
         }
 
         try {
-            $registration = $inscripcion->registration()->create([
-                'course_id'          => $curso->id,
-                'fecha'              => $validated['fecha'],
-                'monto_mensual'      => $montoMensual,
-                'observaciones'      => $validated['observaciones'] ?? null,
-                'estado'             => 'ACTIVA',
-            ]);
+            // HU-59: si la preinscripción ya preasignó curso (matrícula INACTIVA),
+            // se activa (con el curso elegido) en lugar de duplicar el registro.
+            $registration = $inscripcion->registration;
+            if ($registration && $registration->estado === 'INACTIVA') {
+                $registration->update([
+                    'course_id' => $curso->id,
+                    'fecha' => $validated['fecha'],
+                    'monto_mensual' => $montoMensual,
+                    'observaciones' => $validated['observaciones'] ?? $registration->observaciones,
+                    'estado' => 'ACTIVA',
+                ]);
+            } else {
+                $registration = $inscripcion->registration()->create([
+                    'course_id'          => $curso->id,
+                    'fecha'              => $validated['fecha'],
+                    'monto_mensual'      => $montoMensual,
+                    'observaciones'      => $validated['observaciones'] ?? null,
+                    'estado'             => 'ACTIVA',
+                ]);
+            }
 
             // HU-19 / CA-19-03: generar las 10 mensualidades (cuotas) pendientes
             // (febrero = 2 hasta noviembre = 11) usando la mensualidad global

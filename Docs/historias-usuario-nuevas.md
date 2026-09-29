@@ -174,6 +174,7 @@ Regla de ejecución: **A → B → C → D**, con merge a `develop` al cerrar ca
 | `HU-45-46-rude-completo` | Épica 15 completa |
 | `HU-57-Arreglar_Reportes_De_Evaluacion` | Épica 18: correcciones de lógica y reportes de evaluación |
 | `HU-58-llamada_reportes` | Épica 19: Central de Reportes (agrupa todos los reportes + llamado a lista) |
+| `HU-59-Flujo_Inscripcion` | Épica 20: Flujo de inscripción de estudiante nuevo (en curso) |
 
 Flujo por rama: trabajar → PR contra `develop` → merge al cerrar la fase (orden A → B → C → D).
 
@@ -346,3 +347,60 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Permisos** — Admin/Director/Secretaría: total. Docente: solo sus cursos/materias.
   Enlace "Central de Reportes" en sidebars admin, director, secretaría y docente.
 - **Rutas** — `reportes.central.*` bajo prefijo `/reportes`.
+
+## Épica 20 — Flujo de Inscripción (HU-59, `Flujo_Inscripcion`, en curso)
+
+> Inscripción de estudiante nuevo por directores de nivel. Sin push/merge hasta cerrar.
+
+### Registro de implementación — HU-59
+
+- **Directores por nivel** — tabla `director_level` + `User::nivelesACargo()` /
+  `puedeInscribirNivel()` + `DirectorNivelSeeder` (msuarez→Inicial/Primaria,
+  mrodriguez→Secundaria). El formulario y el guardado filtran por nivel (403 si no).
+- **Código correlativo** — numérico, máx + 1 sin saltos (`siguienteCodigo()`, recalculado
+  en servidor dentro de la transacción).
+- **Validación por CI** — `GET inscripciones/buscar-por-ci` devuelve código anterior y
+  datos para autocompletar; avisa si ya está inscrito en el período.
+- **Store** — crea estudiante + padre/madre/tutor (principal elegible) + cuenta User
+  Estudiante (email Google) y del tutor principal + Enrollment PENDIENTE
+  (preinscripción) + Registration INACTIVA con curso preasignado + 5 documentos
+  pendientes de Inscripción en Línea.
+- **Inscripción en Línea** — `/mi-inscripcion` (rol Estudiante, solo propio): sube CI
+  anverso/reverso, certificado de nacimiento, CI de papás y comprobante de pago
+  (PDF/JPG/PNG 5MB → ENTREGADO); descarga contrato y anexo.
+- **Contrato + anexo PDF** — generados con los datos del sistema (contratante, estudiante,
+  RUDE, curso/nivel, gestión y montos de `TaxConfiguration`); firma en papel.
+- **Verificación en contabilidad** — `PATCH verificar-pago` (Admin/Secretaría/Director):
+  PENDIENTE→COMPLETADA (inscrito). Botón en la ficha del estudiante.
+- **Matrícula** — reutiliza la INACTIVA preasignada (activa + genera cuotas) sin duplicar.
+- **PREINSCRITO** — badge y filtro en `students.index` (SIN_INSCRIBIR intacto).
+- **Tests** — `InscripcionFlujoTest` (8).
+- **Materias oficiales por nivel y curso** — migración `codigo/sigla/area/grupo` en
+  `subjects` + `MateriasOficialesSeeder` (listas NIFC 8, PVC 11, SCP 17 siglas;
+  enriquece existentes por nombre normalizado y crea faltantes, idempotente, sin
+  tocar asignaciones).   `Docentes2026Seeder` con búsqueda tolerante a renombres.
+- **Normalización del catálogo** — `NormalizarMateriasSeeder`: fusiona duplicadas en
+  la canónica oficial remapeando course_subjects/assessments/schedules/attendances
+  (ej. Inglés→LE con sus 630 asistencias, Educación Física→EF) y elimina 13 antiguas
+  sin referencias. 51→36 materias, cero huérfanos. `subjects.index` ordenado por
+  nivel+código con columnas Cód/Sigla.
+- **Asignaciones desde Excel oficial** — `database/data/docentes_20261.xlsx` (468 filas)
+  + `AsignacionImportService` + `AsignacionesExcelSeeder` (idempotente, el Excel manda;
+  carga horaria a `course_subjects.horas_semanales`). Huecos reales del Excel: DSAE
+  (Inicial), CFIL (S6A/S6C) y EMP (S6) sin docente.
+- **Lista oficial de libretas** — `Subject::resolver()` + mapa legacy; catálogo con
+  nombres de libreta (Primaria 9 áreas con comunicación única, TEC solo S1-2 como
+  TÉCNICA TECNOLÓGICA GENERAL, CN: BIO-GEO/FÍSICA/QUÍMICA, COSMOVISIONES con SICOLOGÍA);
+  `MateriasLibretaSeeder` fusiona LELO/LE→CL y PS→CFIL con remapeo total.
+- **Limpieza de nivel cruzado** — `LimpiarCruceNivelSeeder`: el seeder viejo asignaba
+  por nombre sin filtrar nivel (190 casos en 40 cursos + 630 asistencias); fusiona cada
+  fila cruzada en la correcta del mismo docente/curso y mueve asistencias.
+- **Consolidación HU-58b** — la Central es el módulo único: sección Administrativos con
+  descarga directa (inscripciones/matrículas/pagos/documentación); landings viejas
+  redirigen a central; sidebars solo con Central; retirados exports legacy vacíos
+  (assessments sin datos); fix export Pagos (usa `monto` real).
+- **Restricción Director** — Matrículas y Pagos solo Admin/Secretaría (rutas + central).
+- **Excel real en todos los reportes** — los 6 exports viejos pasaron de CSV con comas
+  a XLSX con columnas y línea visual institucional (RUDE mantiene CSV oficial MinEdu).
+- **Centralizador por evaluación en sistema vigente** — usaba `assessments` (módulo
+  viejo sin datos); ahora muestra T1/T2/T3 + promedio anual por materia (evaluation_plans).

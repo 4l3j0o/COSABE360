@@ -49,22 +49,68 @@ HTML;
         return $pdf->download($filename . '.pdf');
     }
 
+    /**
+     * HU-58b: Excel real (.xlsx) con columnas y línea visual institucional
+     * (nada de CSV con comas). Misma firma que antes para no tocar llamadas.
+     */
     private function excelResponse(string $filename, array $headers, iterable $rows): StreamedResponse
     {
-        $fecha = now()->format('d/m/Y H:i');
-        return response()->streamDownload(function () use ($headers, $rows, $fecha) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "Unidad Educativa San Bernardo\n");
-            fwrite($out, "Fecha de generación: {$fecha}\n\n");
-            fputcsv($out, $headers);
-            foreach ($rows as $row) {
-                fputcsv($out, $row);
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Reporte');
+
+        $ultCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+
+        // Membrete
+        $sheet->setCellValue('A1', 'UNIDAD EDUCATIVA SAN BERNARDO — TARIJA');
+        $sheet->mergeCells('A1:' . $ultCol . '1');
+        $sheet->setCellValue('A2', 'Generado: ' . now()->format('d/m/Y H:i'));
+        $sheet->mergeCells('A2:' . $ultCol . '2');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003200');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setARGB('FF33412F');
+
+        // Cabecera
+        $filaCabecera = 4;
+        foreach ($headers as $i => $texto) {
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1) . $filaCabecera, $texto);
+        }
+        $rangoCabecera = 'A' . $filaCabecera . ':' . $ultCol . $filaCabecera;
+        $sheet->getStyle($rangoCabecera)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle($rangoCabecera)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003200');
+        $sheet->getStyle($rangoCabecera)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Detalle
+        $fila = $filaCabecera + 1;
+        foreach ($rows as $row) {
+            $col = 1;
+            foreach ((array) $row as $valor) {
+                if ($valor instanceof \DateTimeInterface) {
+                    $valor = $valor->format('d/m/Y');
+                }
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col++) . $fila, $valor ?? '');
             }
-            fclose($out);
-        }, $filename . '.csv', [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '.csv"',
-        ]);
+            if ($fila % 2 === 0) {
+                $sheet->getStyle('A' . $fila . ':' . $ultCol . $fila)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F6F2');
+            }
+            $fila++;
+        }
+
+        $sheet->getStyle('A' . $filaCabecera . ':' . $ultCol . ($fila - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
+        foreach (range(1, count($headers)) as $c) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c))->setAutoSize(true);
+        }
+        $sheet->freezePane('A' . ($filaCabecera + 1));
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        $contenido = (string) ob_get_clean();
+
+        return response()->streamDownload(
+            fn () => print ($contenido),
+            $filename . '.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
     }
 
     public function academicoCalificaciones(Request $request)
@@ -177,26 +223,28 @@ HTML;
 
     public function administrativoPagos(Request $request)
     {
-        $query = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.course'])
+        $query = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.course', 'registration.enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('registration.enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
             ->when($request->course_id, fn ($q, $v) => $q->whereHas('registration', fn ($rq) => $rq->where('course_id', $v)))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->limit(500)->get();
 
+        $mesNombre = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
+
         if ($request->query('format') === 'excel') {
-            $headers = ['Estudiante', 'Mes/Año', 'Monto Esperado', 'Monto Pagado', 'Estado'];
+            $headers = ['Estudiante', 'Código', 'Mensualidad', 'Monto', 'Estado'];
             $rows = $query->map(fn ($p) => [
                 $p->registration?->enrollment?->estudiante ? $p->registration->enrollment->estudiante->nombres . ' ' . $p->registration->enrollment->estudiante->apellidos : 'N/A',
-                $p->mes . '/' . $p->anio,
-                $p->monto_esperado,
-                $p->monto_pagado,
+                $p->registration?->enrollment?->estudiante?->codigo ?? '',
+                ($mesNombre[(int) $p->mes] ?? 'Mes ' . $p->mes) . ' ' . ($p->registration?->enrollment?->academicYear?->nombre ?? ''),
+                $p->monto ?? $p->monto_esperado,
                 $p->estado,
             ]);
             return $this->excelResponse('reporte_pagos_' . date('Ymd_His'), $headers, $rows);
         }
 
-        $rowsHtml = $query->map(fn ($p) => '<tr><td>' . e($p->registration?->enrollment?->estudiante?->nombres . ' ' . $p->registration?->enrollment?->estudiante?->apellidos) . '</td><td>' . e($p->mes . '/' . $p->anio) . '</td><td>' . e($p->monto_esperado) . '</td><td>' . e($p->monto_pagado) . '</td><td>' . e($p->estado) . '</td></tr>')->implode('');
-        $body = '<table><thead><tr><th>Estudiante</th><th>Mes/Año</th><th>Monto Esperado</th><th>Monto Pagado</th><th>Estado</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
+        $rowsHtml = $query->map(fn ($p) => '<tr><td>' . e($p->registration?->enrollment?->estudiante?->nombres . ' ' . $p->registration?->enrollment?->estudiante?->apellidos) . '</td><td>' . e(($mesNombre[(int) $p->mes] ?? 'Mes ' . $p->mes) . ' ' . ($p->registration?->enrollment?->academicYear?->nombre ?? '')) . '</td><td>' . e($p->monto ?? $p->monto_esperado) . '</td><td>' . e($p->estado) . '</td></tr>')->implode('');
+        $body = '<table><thead><tr><th>Estudiante</th><th>Mensualidad</th><th>Monto</th><th>Estado</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
         return $this->pdfDownload('Reporte Pagos y Deudas', $body, 'reporte_pagos_' . date('Ymd_His'));
     }
 

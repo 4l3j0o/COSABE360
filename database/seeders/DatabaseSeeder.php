@@ -40,6 +40,24 @@ class DatabaseSeeder extends Seeder
             // Cuentas de usuario @cosabe.edu.bo de los docentes (rol Docente)
             DocenteUsuariosSeeder::class,
 
+            // HU-59: directores de nivel (msuarez Inicial/Primaria, mrodriguez Secundaria)
+            DirectorNivelSeeder::class,
+
+            // HU-59: materias oficiales por nivel y curso (código/sigla/área/grupo)
+            MateriasOficialesSeeder::class,
+
+            // HU-59: normaliza duplicadas (fusiona con remapeo, elimina sin uso)
+            NormalizarMateriasSeeder::class,
+
+            // HU-59: aplica lista oficial de libretas (fusiones CL/CFIL, TEC S1-2)
+            MateriasLibretaSeeder::class,
+
+            // HU-59: asignaciones curso-materia-docente desde Excel oficial 2026
+            AsignacionesExcelSeeder::class,
+
+            // HU-59: fusiona asignaciones con nivel cruzado en la fila correcta
+            LimpiarCruceNivelSeeder::class,
+
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,
 

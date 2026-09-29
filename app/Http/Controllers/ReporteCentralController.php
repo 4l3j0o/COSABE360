@@ -3,13 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
-use App\Models\Assessment;
 use App\Models\Course;
 use App\Models\CourseSubject;
-use App\Models\EvaluationActivity;
-use App\Models\EvaluationCriterion;
 use App\Models\EvaluationPlan;
-use App\Models\GradeScore;
 use App\Models\Student;
 use App\Models\StudentRudeRecord;
 use App\Services\EvaluationService;
@@ -55,8 +51,9 @@ class ReporteCentralController extends Controller
         $courseSubjects = $this->courseSubjectsPermitidos($user);
 
         $reportes = $this->catalogoReportes($user);
+        $gestiones = AcademicYear::orderByDesc('nombre')->get();
 
-        return view('reportes-central.index', compact('cursos', 'courseSubjects', 'reportes'));
+        return view('reportes-central.index', compact('cursos', 'courseSubjects', 'reportes', 'gestiones'));
     }
 
     // -------------------------------------------- Lista de padres de familia
@@ -247,7 +244,7 @@ class ReporteCentralController extends Controller
         ];
     }
 
-    // ------------------------------ Centralizador por evaluación (assessments)
+    // ------------------- Centralizador por evaluación (trimestres + anual)
 
     public function centralizadorEvaluacion(Request $request): View
     {
@@ -289,7 +286,7 @@ class ReporteCentralController extends Controller
             return [
                 'curso' => null,
                 'materia' => null,
-                'assessments' => collect(),
+                'trimestres' => [1, 2, 3],
                 'filas' => collect(),
                 'requiere_curso' => true,
             ];
@@ -303,14 +300,17 @@ class ReporteCentralController extends Controller
             ->find($csId);
 
         if (! $cs) {
-            return ['curso' => null, 'materia' => null, 'assessments' => collect(), 'filas' => collect(), 'requiere_curso' => true];
+            return ['curso' => null, 'materia' => null, 'trimestres' => [1, 2, 3], 'filas' => collect(), 'requiere_curso' => true];
         }
 
-        $assessments = $cs->assessments()
-            ->orderBy('bimestre')
-            ->orderBy('fecha')
-            ->orderBy('id')
-            ->get();
+        // Planes por trimestre del sistema vigente (evaluation_plans)
+        $planes = [];
+        foreach ([1, 2, 3] as $t) {
+            $planes[$t] = EvaluationPlan::where('course_subject_id', $cs->id)
+                ->where('trimestre', $t)
+                ->with('criteria.activities')
+                ->first();
+        }
 
         $students = $cs->course->students()
             ->where('students.estado', 'ACTIVO')
@@ -318,47 +318,32 @@ class ReporteCentralController extends Controller
             ->orderBy('students.nombres')
             ->get();
 
-        $notas = GradeScore::whereIn('assessment_id', $assessments->pluck('id'))
-            ->get()
-            ->groupBy('student_id');
+        $service = app(EvaluationService::class);
 
-        $filas = $students->map(function ($student) use ($assessments, $notas) {
-            $notasEstudiante = $notas->get($student->id, collect());
-            $porEvaluacion = [];
-            $sumaPonderada = 0.0;
-            $sumaPesos = 0.0;
-            $conNota = 0;
-
-            foreach ($assessments as $assessment) {
-                $grade = $notasEstudiante->firstWhere('assessment_id', $assessment->id);
-                $valor = $grade && $grade->nota !== null ? (float) $grade->nota : null;
-                $porEvaluacion[$assessment->id] = $valor;
-
-                if ($valor !== null) {
-                    $peso = (float) $assessment->peso;
-                    $sumaPonderada += $valor * $peso;
-                    $sumaPesos += $peso;
-                    $conNota++;
-                }
+        $filas = $students->map(function ($student) use ($planes, $service, $cs) {
+            $notas = [];
+            foreach ([1, 2, 3] as $t) {
+                $notas[$t] = $planes[$t] ? $service->notaTrimestre($planes[$t], $student) : null;
             }
+            $anual = $service->promedioAnual($cs, $student);
 
             return [
                 'codigo' => $student->codigo,
                 'apellidos' => $student->apellidos,
                 'nombres' => $student->nombres,
-                'porEvaluacion' => $porEvaluacion,
-                'notaFinal' => $sumaPesos > 0 ? round($sumaPonderada / $sumaPesos, 2) : null,
-                'conNota' => $conNota,
-                'totalEvaluaciones' => $assessments->count(),
+                'trimestres' => $notas,
+                'anual' => $anual,
+                'valoracion' => $anual !== null ? EvaluationService::valoracion($anual) : null,
+                'aprobado' => $anual !== null ? EvaluationService::aprobado($anual) : null,
             ];
         });
 
         return [
             'curso' => $cs->course->codigoCorto(),
             'materia' => $cs->subject->nombre,
-            'docente' => $cs->teacher ? trim(($cs->teacher->nombres ?? '').' '.($cs->teacher->apellidos ?? '')) : '—',
+            'docente' => $cs->teacher ? trim(($cs->teacher->nombres ?? '') . ' ' . ($cs->teacher->apellidos ?? '')) : '—',
             'gestion' => $cs->course->gestion?->nombre ?? (string) now()->year,
-            'assessments' => $assessments,
+            'trimestres' => [1, 2, 3],
             'filas' => $filas,
             'requiere_curso' => false,
         ];
@@ -598,7 +583,7 @@ class ReporteCentralController extends Controller
         if ($esSupervisor || $esDocente) {
             $nuevos[] = [
                 'nombre' => 'Centralizador de calificaciones por evaluación',
-                'descripcion' => 'Tabla de evaluaciones, materias y estudiantes con nota final ponderada.',
+                'descripcion' => 'Notas de los 3 trimestres y promedio anual por materia y estudiante.',
                 'parametros' => 'curso / materia',
                 'ruta' => 'reportes.central.evaluacion',
                 'tipo' => 'form',
@@ -647,29 +632,54 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        if ($user->hasAnyRole(['Administrador', 'Director'])) {
-            $existentes[] = [
-                'nombre' => 'Reportes Académicos',
-                'descripcion' => 'Calificaciones y promedios por curso/materia y gestión.',
-                'parametros' => '—',
-                'ruta' => 'reportes.academicos.index',
-                'tipo' => 'link',
-            ];
-        }
+        // HU-58b: administrativos con descarga directa (absorben las páginas
+        // viejas reportes/administrativos; los exports legacy académicos se
+        // retiran por duplicar al centralizador con tablas vacías).
+        $administrativos = [];
 
         if ($esSupervisor) {
-            $existentes[] = [
-                'nombre' => 'Reportes Administrativos',
-                'descripcion' => 'Inscripciones, matrículas, pagos y documentación pendiente.',
-                'parametros' => '—',
-                'ruta' => 'reportes.administrativos.index',
-                'tipo' => 'link',
+            $administrativos[] = [
+                'nombre' => 'Inscripciones',
+                'descripcion' => 'Listado de inscripciones por gestión y estado.',
+                'parametros' => 'gestión / estado',
+                'ruta' => 'reportes.export.administrativo.inscripciones',
+                'tipo' => 'download',
+                'filtros' => ['gestion', 'estado_inscripcion'],
+            ];
+            // HU-58b: Matrículas y Pagos son financieros: sin Director
+            // (también restringido en rutas).
+            if ($user->hasAnyRole(['Administrador', 'Secretaría'])) {
+                $administrativos[] = [
+                    'nombre' => 'Matrículas',
+                    'descripcion' => 'Estudiantes matriculados por curso y gestión.',
+                    'parametros' => 'gestión / estado',
+                    'ruta' => 'reportes.export.administrativo.matriculas',
+                    'tipo' => 'download',
+                    'filtros' => ['gestion', 'estado_matricula'],
+                ];
+                $administrativos[] = [
+                    'nombre' => 'Pagos y Deudas',
+                    'descripcion' => 'Estado de pagos de mensualidades.',
+                    'parametros' => 'gestión / estado',
+                    'ruta' => 'reportes.export.administrativo.pagos',
+                    'tipo' => 'download',
+                    'filtros' => ['gestion', 'estado_pago'],
+                ];
+            }
+            $administrativos[] = [
+                'nombre' => 'Documentación Pendiente',
+                'descripcion' => 'Documentos pendientes de entrega por estudiante.',
+                'parametros' => 'estado',
+                'ruta' => 'reportes.export.administrativo.documentacion',
+                'tipo' => 'download',
+                'filtros' => ['estado_documento'],
             ];
         }
 
         return [
             'nuevos' => $nuevos,
             'existentes' => $existentes,
+            'administrativos' => $administrativos,
         ];
     }
 
@@ -776,31 +786,24 @@ class ReporteCentralController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Centralizador');
 
-        $titulo = 'Centralizador de Calificaciones por Evaluación';
-        $this->escribirMembreteExcel($sheet, $titulo, trim(($resultado['curso'] ?? '').' · '.($resultado['materia'] ?? '')), 6);
+        $titulo = 'Centralizador de Calificaciones por Evaluación (Trimestres + Anual)';
+        $this->escribirMembreteExcel($sheet, $titulo, trim(($resultado['curso'] ?? '') . ' · ' . ($resultado['materia'] ?? '')), 6);
 
-        // Cabecera dinámica: evaluaciones
-        $cabecera = ['N.º', 'Código', 'Estudiante'];
-        foreach ($resultado['assessments'] as $assessment) {
-            $cabecera[] = trim($assessment->nombre.' (P'.$assessment->peso.')');
-        }
-        $cabecera[] = 'Nota Final';
+        $cabecera = ['N.º', 'Código', 'Estudiante', '1er Trim.', '2do Trim.', '3er Trim.', 'Promedio Anual', 'Valoración', 'Estado'];
 
         $this->escribirCabeceraExcel($sheet, $cabecera, 2);
 
         $fila = 3;
         foreach ($resultado['filas'] as $i => $f) {
-            $col = 4;
-            $sheet->setCellValue('A'.$fila, $i + 1);
-            $sheet->setCellValue('B'.$fila, $f['codigo']);
-            $sheet->setCellValue('C'.$fila, $f['apellidos'].' '.$f['nombres']);
-
-            foreach ($resultado['assessments'] as $assessment) {
-                $valor = $f['porEvaluacion'][$assessment->id] ?? null;
-                $sheet->setCellValue($this->colLetter($col++).$fila, $valor ?? '');
-            }
-
-            $sheet->setCellValue($this->colLetter($col).$fila, $f['notaFinal'] ?? '');
+            $sheet->setCellValue('A' . $fila, $i + 1);
+            $sheet->setCellValue('B' . $fila, $f['codigo']);
+            $sheet->setCellValue('C' . $fila, $f['apellidos'] . ' ' . $f['nombres']);
+            $sheet->setCellValue('D' . $fila, $f['trimestres'][1] ?? '');
+            $sheet->setCellValue('E' . $fila, $f['trimestres'][2] ?? '');
+            $sheet->setCellValue('F' . $fila, $f['trimestres'][3] ?? '');
+            $sheet->setCellValue('G' . $fila, $f['anual'] ?? '');
+            $sheet->setCellValue('H' . $fila, $f['valoracion']['codigo'] ?? '—');
+            $sheet->setCellValue('I' . $fila, $f['aprobado'] === null ? 'Sin nota' : ($f['aprobado'] ? 'Aprobado' : 'Reprobado'));
             $fila++;
         }
 

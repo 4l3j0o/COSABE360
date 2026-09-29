@@ -569,6 +569,10 @@ class Docentes2026Seeder extends Seeder
         foreach ($materias as $m) {
             $sid = DB::table('subjects')->where('nombre', $m['nombre'])->value('id');
             if (! $sid) {
+                // HU-59: coincidencia normalizada o nombre legacy -> sigla oficial.
+                $sid = \App\Models\Subject::resolver((int) $m['level_id'], $m['nombre'])?->id;
+            }
+            if (! $sid) {
                 $sid = DB::table('subjects')->insertGetId(['nombre' => $m['nombre'], 'descripcion' => null, 'level_id' => $m['level_id'], 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
             }
             $subjectIds[$m['nombre']] = $sid;

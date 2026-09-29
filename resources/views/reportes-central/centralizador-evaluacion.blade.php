@@ -10,7 +10,7 @@
             Volver a Central de Reportes
         </a>
         <h1 class="text-xl font-bold text-foreground mt-2">Centralizador de Calificaciones por Evaluación</h1>
-        <p class="text-sm text-muted-foreground mt-1">Tabla de evaluaciones, materias y estudiantes con nota final ponderada.</p>
+        <p class="text-sm text-muted-foreground mt-1">Notas de los 3 trimestres y promedio anual por materia y estudiante.</p>
     </div>
 </div>
 
@@ -36,7 +36,7 @@
 @if($resultado['requiere_curso'])
     <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
         <p class="font-medium text-foreground">Primero selecciona el curso y la materia.</p>
-        <p class="text-sm text-muted-foreground mt-1">Elige arriba la materia del curso del que deseas ver el centralizador de evaluaciones.</p>
+        <p class="text-sm text-muted-foreground mt-1">Elige arriba la materia del curso del que deseas ver las notas por trimestre y el promedio anual.</p>
     </div>
 @else
     <div class="mb-4 flex flex-wrap gap-2">
@@ -45,11 +45,7 @@
         <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ count($resultado['filas']) }} estudiante(s)</span>
     </div>
 
-    @if($resultado['assessments']->isEmpty())
-        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
-            <p class="text-sm text-muted-foreground">Esta materia no tiene evaluaciones registradas.</p>
-        </div>
-    @elseif($resultado['filas']->isEmpty())
+    @if($resultado['filas']->isEmpty())
         <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
             <p class="text-sm text-muted-foreground">Este curso no tiene estudiantes activos.</p>
         </div>
@@ -62,13 +58,12 @@
                             <th class="px-4 py-3 font-semibold text-foreground">#</th>
                             <th class="px-4 py-3 font-semibold text-foreground">Código</th>
                             <th class="px-4 py-3 font-semibold text-foreground">Estudiante</th>
-                            @foreach($resultado['assessments'] as $assessment)
-                                <th class="px-4 py-3 text-center font-semibold text-foreground" title="{{ $assessment->nombre }}">
-                                    <div class="max-w-[120px] truncate">{{ $assessment->nombre }}</div>
-                                    <div class="text-[10px] text-muted-foreground font-normal">P{{ $assessment->peso }}</div>
-                                </th>
-                            @endforeach
-                            <th class="px-4 py-3 text-center font-bold text-foreground">Nota Final</th>
+                            <th class="px-4 py-3 text-center font-semibold text-foreground">1er Trim.</th>
+                            <th class="px-4 py-3 text-center font-semibold text-foreground">2do Trim.</th>
+                            <th class="px-4 py-3 text-center font-semibold text-foreground">3er Trim.</th>
+                            <th class="px-4 py-3 text-center font-bold text-foreground">Prom. Anual</th>
+                            <th class="px-4 py-3 text-center font-semibold text-foreground">Valoración</th>
+                            <th class="px-4 py-3 text-center font-semibold text-foreground">Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,10 +72,22 @@
                                 <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $fila['codigo'] }}</td>
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $fila['apellidos'] }} {{ $fila['nombres'] }}</td>
-                                @foreach($resultado['assessments'] as $assessment)
-                                    <td class="px-4 py-3 text-center">{{ $fila['porEvaluacion'][$assessment->id] ?? '—' }}</td>
-                                @endforeach
-                                <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila['notaFinal'] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][1] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][2] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][3] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila['anual'] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if($fila['aprobado'] !== null)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $fila['aprobado'] ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">{{ $fila['valoracion']['codigo'] }}</span>
+                                    @else —
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if($fila['aprobado'] === null) —
+                                    @elseif($fila['aprobado']) <span class="text-success font-medium">Aprobado</span>
+                                    @else <span class="text-error font-medium">Reprobado</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
