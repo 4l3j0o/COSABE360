@@ -55,6 +55,8 @@ class AsignacionImportService
         }
         $stats = ['creadas' => 0, 'actualizadas' => 0, 'existentes' => 0, 'omitidas' => []];
 
+        // Paso 1: parsear y resolver todo el archivo
+        $triples = [];
         $sheet = IOFactory::load($path)->getActiveSheet();
         for ($r = 3; $r <= $sheet->getHighestRow(); $r++) {
             $cursoCod = trim((string) $sheet->getCell('B' . $r)->getValue());
@@ -91,54 +93,61 @@ class AsignacionImportService
                 continue;
             }
 
-            $existente = CourseSubject::where('course_id', $curso->id)
-                ->where('subject_id', $materia->id)
-                ->first();
-
-            if (! $existente) {
-                CourseSubject::create([
-                    'course_id' => $curso->id,
-                    'subject_id' => $materia->id,
-                    'teacher_id' => $docente->id,
-                    'horas_semanales' => $carga > 0 ? $carga : null,
-                ]);
-                $stats['creadas']++;
-
-                continue;
-            }
-
-            if ($existente->teacher_id === $docente->id && (int) $existente->horas_semanales === $carga) {
-                $stats['existentes']++;
-
-                continue;
-            }
-
-            $antes = $existente->teacher_id;
-            if ($antes !== $docente->id) {
-                // El triple destino ya puede existir -> fusionar dependientes
-                $destino = CourseSubject::where('course_id', $curso->id)
-                    ->where('subject_id', $materia->id)
-                    ->where('teacher_id', $docente->id)
-                    ->first();
-
-                if ($destino && $destino->id !== $existente->id) {
-                    \App\Models\Assessment::where('course_subject_id', $existente->id)->update(['course_subject_id' => $destino->id]);
-                    \App\Models\EvaluationPlan::where('course_subject_id', $existente->id)->update(['course_subject_id' => $destino->id]);
-                    $existente->delete();
-                    $destino->update(['horas_semanales' => $carga > 0 ? $carga : $destino->horas_semanales]);
-                    $stats['actualizadas']++;
-                    $stats['omitidas'][] = "F{$r}: {$cursoCod}|{$materia->sigla} fusionada en asignación existente (docente {$docente->id})";
-
-                    continue;
-                }
-
-                $stats['omitidas'][] = "F{$r}: {$cursoCod}|{$materia->sigla} docente {$antes}->{$docente->id} (Excel manda)";
-            }
-            $existente->update([
+            $triples[$curso->id . '-' . $materia->id . '-' . $docente->id] = [
+                'course_id' => $curso->id,
+                'subject_id' => $materia->id,
                 'teacher_id' => $docente->id,
-                'horas_semanales' => $carga > 0 ? $carga : $existente->horas_semanales,
-            ]);
-            $stats['actualizadas']++;
+                'carga' => $carga,
+                'origen' => "F{$r}: {$cursoCod}|{$materia->sigla}",
+            ];
+        }
+
+        // Paso 2: asegurar cada triple oficial (crear o actualizar horas)
+        $filas = [];
+        foreach ($triples as $key => $t) {
+            [$courseId, $subjectId, $teacherId] = array_map('intval', explode('-', $key));
+            $fila = CourseSubject::firstOrCreate(
+                ['course_id' => $courseId, 'subject_id' => $subjectId, 'teacher_id' => $teacherId],
+                ['horas_semanales' => $t['carga'] > 0 ? $t['carga'] : null]
+            );
+            $filas[$key] = $fila;
+
+            if ($fila->wasRecentlyCreated) {
+                $stats['creadas']++;
+            } elseif ($t['carga'] > 0 && (int) $fila->horas_semanales !== $t['carga']) {
+                $fila->update(['horas_semanales' => $t['carga']]);
+                $stats['actualizadas']++;
+            } else {
+                $stats['existentes']++;
+            }
+        }
+
+        // Paso 3: obsoletas (mismo curso+materia, docente fuera del Excel):
+        // fusionar dependientes en el triple oficial si es único, si no reportar.
+        $porPar = [];
+        foreach ($triples as $key => $t) {
+            $porPar[$t['course_id'] . '-' . $t['subject_id']][$t['teacher_id']] = $key;
+        }
+        foreach ($porPar as $par => $docentesPar) {
+            [$courseId, $subjectId] = array_map('intval', explode('-', $par));
+            $docentesExcel = array_keys($docentesPar);
+            $obsoletas = CourseSubject::where('course_id', $courseId)
+                ->where('subject_id', $subjectId)
+                ->whereNotIn('teacher_id', $docentesExcel)
+                ->get();
+
+            foreach ($obsoletas as $vieja) {
+                if (count($docentesExcel) === 1) {
+                    $destino = $filas[$par . '-' . $docentesExcel[0]];
+                    \App\Models\Assessment::where('course_subject_id', $vieja->id)->update(['course_subject_id' => $destino->id]);
+                    \App\Models\EvaluationPlan::where('course_subject_id', $vieja->id)->update(['course_subject_id' => $destino->id]);
+                    $vieja->delete();
+                    $stats['actualizadas']++;
+                    $stats['omitidas'][] = "Par {$par}: obsoleta fusionada (docente {$vieja->teacher_id})";
+                } else {
+                    $stats['omitidas'][] = "Par {$par}: docente {$vieja->teacher_id} fuera del Excel con múltiples oficiales, se conserva.";
+                }
+            }
         }
 
         return $stats;

@@ -126,3 +126,11 @@ php artisan test             # verificar suite verde
 ```
 
 Seguir preguntando al usuario por los puntos pendientes antes de picar código.
+
+## Sesion 2026-09-18/19 (continuacion)
+
+- Ramas: HU-58 mergeada, HU-59 mergeada (flujo inscripcion), HU-60 mergeada (central unica + libreta), HU-61 mergeada (limpieza modulo viejo), HU-62 creada (tutores curso + nomina docente). Todo en develop y pusheado.
+- Suite: 292 passed, 2 skipped.
+- Pendiente usuario: crear o no los 21 docentes ausentes de la nomina; resto P-Z ya cargado (56/77).
+- Servidor: http://127.0.0.1:8000 - usuario squispe@cosabe.edu.bo rol Director.
+

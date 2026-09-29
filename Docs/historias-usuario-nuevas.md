@@ -394,6 +394,9 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   `MateriasLibretaSeeder` fusiona LELO/LE→CL y PS→CFIL con remapeo total.
 - **Tutores de curso** — `TutoresCursoSeeder` (40 paralelos con docente responsable;
   distinto de padres/tutores `parent_guardians`).
+- **Nómina docente oficial** — `DocentesDatosOficialesSeeder` (CI/tel/email por nombre,
+  sync cuenta Google; 56/77, resto ausente pendiente). `Docentes2026Seeder`
+  idempotente por nombre. Importador de asignaciones determinista.
 - **Limpieza de nivel cruzado** — `LimpiarCruceNivelSeeder`: el seeder viejo asignaba
   por nombre sin filtrar nivel (190 casos en 40 cursos + 630 asistencias); fusiona cada
   fila cruzada en la correcta del mismo docente/curso y mueve asistencias.
