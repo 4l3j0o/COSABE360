@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AuthController;
@@ -23,9 +22,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\EvaluationReportController;
 use App\Http\Controllers\ExpedienteController;
-use App\Http\Controllers\FinalGradesController;
 use App\Http\Controllers\GradeController;
-use App\Http\Controllers\GradeScoreController;
 use App\Http\Controllers\LevelController;
 use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
@@ -203,7 +200,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 // Cursos (ver) - todos los autenticados
 Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
-Route::middleware('auth')->get('/cursos/{course}/calificaciones', [GradeScoreController::class, 'cursoAdmin'])->name('courses.calificaciones');
+// HU-61: calificaciones viejas del curso retiradas -> ficha del curso.
+Route::middleware('auth')->get('/cursos/{course}/calificaciones', fn (App\Models\Course $course) => redirect()->route('courses.show', $course))->name('courses.calificaciones');
 
 // Estudiantes: consulta (Administrador, Director y Secretaría) y gestión (solo Administrador)
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
@@ -243,22 +241,47 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
     Route::delete('/{grade}', [GradeController::class, 'destroy'])->name('grados.destroy');
 });
 
-// HU21: Registrar evaluaciones - solo Docente
+// HU-61: módulo viejo de evaluaciones retirado; redirecciones al sistema vigente.
 Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(function () {
-    Route::get('/', [AssessmentController::class, 'index'])->name('evaluaciones.index');
-    Route::get('/crear', [AssessmentController::class, 'create'])->name('evaluaciones.create');
-    Route::post('/', [AssessmentController::class, 'store'])->name('evaluaciones.store');
-    Route::get('/{assessment}/editar', [AssessmentController::class, 'edit'])->name('evaluaciones.edit');
-    Route::put('/{assessment}', [AssessmentController::class, 'update'])->name('evaluaciones.update');
-    Route::delete('/{assessment}', [AssessmentController::class, 'destroy'])->name('evaluaciones.destroy');
+    Route::get('/', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.index');
+    Route::get('/crear', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.create');
+    Route::post('/', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.store');
+    Route::get('/{assessment}/editar', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.edit');
+    Route::put('/{assessment}', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.update');
+    Route::delete('/{assessment}', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.destroy');
 });
 
-// HU22: Registrar calificaciones - Docente registra, Estudiante/Padre consulta (HU23)
+// HU-61: módulo viejo de calificaciones retirado; redirecciones al sistema vigente.
 Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
-    Route::get('/', [GradeScoreController::class, 'index'])->name('calificaciones.index');
-    Route::get('/{assessment}/ver', [GradeScoreController::class, 'ver'])->name('calificaciones.ver');
-    Route::get('/{assessment}', [GradeScoreController::class, 'show'])->name('calificaciones.show');
-    Route::put('/{assessment}', [GradeScoreController::class, 'update'])->name('calificaciones.update');
+    Route::get('/', function () {
+        $u = auth()->user();
+        if ($u->hasRole('Estudiante') && $u->student) {
+            return redirect()->route('boletin.show', $u->student);
+        }
+        if ($u->hasRole('Docente')) {
+            return redirect()->route('asistencias.index');
+        }
+        if ($u->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return redirect()->route('evaluation-reports.index');
+        }
+
+        return redirect()->route('dashboard');
+    })->name('calificaciones.index');
+    Route::get('/{assessment}/ver', function (App\Models\Assessment $assessment) {
+        return $assessment->course_subject_id
+            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+            : redirect()->route('docente.cursos');
+    })->name('calificaciones.ver');
+    Route::get('/{assessment}', function (App\Models\Assessment $assessment) {
+        return $assessment->course_subject_id
+            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+            : redirect()->route('docente.cursos');
+    })->name('calificaciones.show');
+    Route::put('/{assessment}', function (App\Models\Assessment $assessment) {
+        return $assessment->course_subject_id
+            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+            : redirect()->route('docente.cursos');
+    })->name('calificaciones.update');
 });
 
 // Mis Cursos del docente - evaluaciones por curso/paralelo (course_subject)
@@ -273,19 +296,19 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
     Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'descargarPlantilla'])->name('evaluations.template-download');
     Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'subirPlantilla'])->name('evaluations.template-upload');
 
-    // Evaluaciones de un curso + materia específicos
-    Route::get('/{courseSubject}/evaluaciones', [AssessmentController::class, 'porCurso'])->name('docente.evaluaciones');
-    Route::get('/{courseSubject}/evaluaciones/crear', [AssessmentController::class, 'crearCurso'])->name('docente.evaluaciones.create');
-    Route::post('/{courseSubject}/evaluaciones', [AssessmentController::class, 'guardarCurso'])->name('docente.evaluaciones.store');
+    // HU-61: evaluaciones/calificaciones viejas por curso -> sistema vigente.
+    Route::get('/{courseSubject}/evaluaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones');
+    Route::get('/{courseSubject}/evaluaciones/crear', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones.create');
+    Route::post('/{courseSubject}/evaluaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones.store');
 
     // Asistencia del curso: historial por año / bimestre
     Route::get('/{courseSubject}/asistencias', [AttendanceController::class, 'porCurso'])->name('docente.asistencias');
 
-    // Registrar calificaciones de una evaluación de ese curso
-    Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', [GradeScoreController::class, 'porCurso'])->name('docente.calificaciones');
+    // HU-61: calificaciones viejas por curso -> sistema vigente.
+    Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.calificaciones');
 
-    // Vista de calificaciones general por estudiante del curso (matriz de evaluaciones + nota final)
-    Route::get('/{courseSubject}/notas', [GradeScoreController::class, 'notasCurso'])->name('docente.notas-curso');
+    // HU-61: matriz vieja por estudiante -> sistema vigente.
+    Route::get('/{courseSubject}/notas', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.notas-curso');
 });
 
 // HU-13: Administrar paralelos solo Administrador
@@ -405,10 +428,10 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'
         ->name('monthly-payments.aprobar');
 });
 
-// HU24: Notas finales por materia - Estudiante, Padre/Tutor, Director y Administrador
+// HU-61: Notas finales viejas retiradas -> reportes de evaluación vigentes.
 Route::middleware(['auth'])->group(function () {
-    Route::get('/notas-finales', [FinalGradesController::class, 'index'])->name('notas-finales.index');
-    Route::get('/notas-finales/detalle', [FinalGradesController::class, 'show'])->name('notas-finales.show');
+    Route::get('/notas-finales', fn () => redirect()->route('evaluation-reports.index'))->name('notas-finales.index');
+    Route::get('/notas-finales/detalle', fn () => redirect()->route('evaluation-reports.index'))->name('notas-finales.show');
 });
 
 // HU-25: Historial académico - Estudiante/Padre/Director
@@ -488,8 +511,8 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(fu
     Route::post('/expediente/{student}/{documentoId}/estado', [ExpedienteController::class, 'status'])->name('expediente.status');
 });
 
-// HU-53: libreta electrónica / boletín oficial SIE
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Padre/Tutor'])->group(function () {
+// HU-53: libreta electrónica / boletín oficial SIE (+ Estudiante ve el propio HU-61)
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->group(function () {
     Route::get('/boletin/{student}', [BoletinController::class, 'show'])->name('boletin.show');
     Route::get('/boletin/{student}/pdf', [BoletinController::class, 'pdf'])->name('boletin.pdf');
 });
@@ -534,11 +557,9 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
 });
 
 // HU-34: Exportar reportes a PDF/Excel con encabezado
-// Académicos: solo Administrador y Director. Administrativos: Administrador, Director y Secretaría.
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('reportes/export')->group(function () {
-    Route::get('/academico/calificaciones', [ReporteExportController::class, 'academicoCalificaciones'])->name('reportes.export.academico.calificaciones');
-    Route::get('/academico/promedios', [ReporteExportController::class, 'academicoPromedios'])->name('reportes.export.academico.promedios');
-});
+// HU-61: exports académicos viejos retirados (tablas vacías, los cubre el
+// centralizador). Administrativos: Administrador y Secretaría; solo
+// inscripciones/documentación incluyen Director (ver grupos abajo).
 // HU-58b: Administrativos no financieros (inscripciones/documentación).
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');

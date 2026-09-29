@@ -95,6 +95,13 @@ class BoletinController extends Controller
             return;
         }
 
+        // HU-61: Estudiante solo ve su propio boletín
+        if ($user->hasRole('Estudiante')) {
+            abort_if($user->student?->id !== $student->id, 403);
+
+            return;
+        }
+
         abort(403);
     }
 }

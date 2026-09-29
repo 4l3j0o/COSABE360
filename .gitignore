@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# HU-61: credenciales Google fuera del repo
+Docs/priv_google.json

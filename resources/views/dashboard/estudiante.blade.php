@@ -42,15 +42,17 @@
     <div class="bg-card border border-border rounded-xl p-6">
         <h3 class="text-base font-semibold text-foreground mb-4">Accesos rápidos</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <a href="{{ route('calificaciones.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+            @if($estudiante)
+            <a href="{{ route('boletin.show', $estudiante) }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
                 <span class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </span>
                 <div>
-                    <span class="text-foreground font-medium">Mis Calificaciones</span>
+                    <span class="text-foreground font-medium">Mi Boletín</span>
                     <p class="text-muted-foreground text-xs">Consultar notas y promedios</p>
                 </div>
             </a>
+            @endif
             <a href="{{ route('schedules.mi-horario') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
                 <span class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
