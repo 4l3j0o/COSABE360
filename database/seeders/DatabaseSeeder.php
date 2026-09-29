@@ -43,6 +43,9 @@ class DatabaseSeeder extends Seeder
             // HU-59: directores de nivel (msuarez Inicial/Primaria, mrodriguez Secundaria)
             DirectorNivelSeeder::class,
 
+            // HU-59: tutores de curso (docente responsable de cada paralelo)
+            TutoresCursoSeeder::class,
+
             // HU-59: materias oficiales por nivel y curso (código/sigla/área/grupo)
             MateriasOficialesSeeder::class,
 

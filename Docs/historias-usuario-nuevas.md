@@ -392,6 +392,8 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   nombres de libreta (Primaria 9 áreas con comunicación única, TEC solo S1-2 como
   TÉCNICA TECNOLÓGICA GENERAL, CN: BIO-GEO/FÍSICA/QUÍMICA, COSMOVISIONES con SICOLOGÍA);
   `MateriasLibretaSeeder` fusiona LELO/LE→CL y PS→CFIL con remapeo total.
+- **Tutores de curso** — `TutoresCursoSeeder` (40 paralelos con docente responsable;
+  distinto de padres/tutores `parent_guardians`).
 - **Limpieza de nivel cruzado** — `LimpiarCruceNivelSeeder`: el seeder viejo asignaba
   por nombre sin filtrar nivel (190 casos en 40 cursos + 630 asistencias); fusiona cada
   fila cruzada en la correcta del mismo docente/curso y mueve asistencias.
