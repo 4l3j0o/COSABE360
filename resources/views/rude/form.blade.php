@@ -3,7 +3,7 @@
 @section('titulo', 'RUDE Form I-V - ' . $student->codigo)
 
 @section('sidebar')
-    @include('dashboard.partials._sidebar-admin')
+    @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')
@@ -33,74 +33,18 @@
         @csrf
         @method('PUT')
 
-        <!-- Sección I: Unidad Educativa -->
+        <!-- Sección I: Unidad Educativa (solo SIE según formulario oficial) -->
         <div class="bg-card border border-border rounded-xl p-5">
             <h3 class="font-semibold text-foreground text-sm mb-1">Sección I — Datos de la Unidad Educativa</h3>
-            <p class="text-xs text-muted-foreground mb-4">Código SIE UE (8 dígitos) + datos de la unidad educativa.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <p class="text-xs text-muted-foreground mb-4">*) Código SIE de la Unidad Educativa. Fecha de llenado.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Código SIE UE</label>
-                    <input type="text" name="codigo_sie_ue" value="{{ old('codigo_sie_ue', $rude->codigo_sie_ue) }}" placeholder="8 dígitos" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <label class="text-xs font-medium text-muted-foreground">*) Código SIE UE *</label>
+                    <input type="text" name="codigo_sie_ue" value="{{ old('codigo_sie_ue', $rude->codigo_sie_ue) }}" required placeholder="8 dígitos" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Fecha de llenado</label>
-                    <input type="date" name="fecha_registro" value="{{ old('fecha_registro', $rude->fecha_registro?->format('Y-m-d')) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Localidad</label>
-                    <input type="text" name="ue_localidad" value="{{ old('ue_localidad', $rude->ue_localidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Nombre(s)</label>
-                    <input type="text" name="ue_nombres" value="{{ old('ue_nombres', $rude->ue_nombres) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Apellido Paterno</label>
-                    <input type="text" name="ue_apellido_paterno" value="{{ old('ue_apellido_paterno', $rude->ue_apellido_paterno) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Apellido Materno</label>
-                    <input type="text" name="ue_apellido_materno" value="{{ old('ue_apellido_materno', $rude->ue_apellido_materno) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">País</label>
-                    <input type="text" name="ue_pais" value="{{ old('ue_pais', $rude->ue_pais) }}" placeholder="Bolivia" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Departamento</label>
-                    <input type="text" name="ue_departamento" value="{{ old('ue_departamento', $rude->ue_departamento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Provincia</label>
-                    <input type="text" name="ue_provincia" value="{{ old('ue_provincia', $rude->ue_provincia) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Municipio</label>
-                    <input type="text" name="ue_municipio" value="{{ old('ue_municipio', $rude->ue_municipio) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Comunidad</label>
-                    <input type="text" name="ue_comunidad" value="{{ old('ue_comunidad', $rude->ue_comunidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Zona</label>
-                    <input type="text" name="ue_zona" value="{{ old('ue_zona', $rude->ue_zona) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Calle</label>
-                    <input type="text" name="ue_calle" value="{{ old('ue_calle', $rude->ue_calle) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">N.º vivienda</label>
-                    <input type="text" name="ue_nro_vivienda" value="{{ old('ue_nro_vivienda', $rude->ue_nro_vivienda) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Teléfono fijo</label>
-                    <input type="text" name="ue_telefono" value="{{ old('ue_telefono', $rude->ue_telefono) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">Celular de contacto</label>
-                    <input type="text" name="ue_celular" value="{{ old('ue_celular', $rude->ue_celular) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <label class="text-xs font-medium text-muted-foreground">Fecha de llenado *</label>
+                    <input type="date" name="fecha_registro" value="{{ old('fecha_registro', $rude->fecha_registro?->format('Y-m-d')) }}" required class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
             </div>
         </div>
@@ -109,9 +53,27 @@
         <div class="bg-card border border-border rounded-xl p-5">
             <h3 class="font-semibold text-foreground text-sm mb-1">Sección II — Datos de la o el Estudiante</h3>
             <p class="text-xs text-muted-foreground mb-4">CI 7-8 dígitos + complemento; certificado completo (si uno, todos); código RUDE solo lectura (SIE).</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.1 Apellido(s) y Nombre(s)</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm font-medium">{{ $student->apellidos }} {{ $student->nombres }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.2 Lugar de nacimiento</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->lugar_nacimiento ?? '—' }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.4 Fecha de nacimiento</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->fecha_nacimiento?->format('d/m/Y') ?? '—' }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.7 Sexo</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->sexo === 'M' ? 'Masculino' : 'Femenino' }}</p>
+                </div>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Tipo Documento</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.5 Tipo Documento</label>
                     <select name="tipo_documento" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::DOCUMENTOS as $val => $label)
@@ -120,43 +82,57 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">CI / N.º Documento</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.5 CI / N.º Documento</label>
                     <input type="text" name="numero_documento" value="{{ old('numero_documento', $student->numero_documento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Complemento</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.5 Complemento</label>
                     <input type="text" name="complemento" value="{{ old('complemento', $student->complemento) }}" placeholder="Ej: 1A, SC" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
-                <div class="flex items-end">
-                    <p class="text-xs text-muted-foreground">Sexo: {{ $student->sexo }}</p>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Certificado ↓</label>
+                    <p class="text-xs text-muted-foreground mt-1">Oficialía / Libro / Partida / Folio / Año</p>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Oficialía</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Oficialía</label>
                     <input type="text" name="oficialia_nacimiento" value="{{ old('oficialia_nacimiento', $rude->oficialia_nacimiento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Libro</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Libro</label>
                     <input type="text" name="libro_nacimiento" value="{{ old('libro_nacimiento', $rude->libro_nacimiento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Partida</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Partida</label>
                     <input type="text" name="partida_nacimiento" value="{{ old('partida_nacimiento', $rude->partida_nacimiento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Folio</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Folio</label>
                     <input type="text" name="folio_nacimiento" value="{{ old('folio_nacimiento', $rude->folio_nacimiento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Año</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.3 Año</label>
                     <input type="text" name="anio_nacimiento" value="{{ old('anio_nacimiento', $rude->anio_nacimiento) }}" placeholder="YYYY" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Discapacidad</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.8 Discapacidad</label>
                     <input type="text" name="discapacidad" value="{{ old('discapacidad', $student->discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">N.º Registro Discapacidad IBC</label>
+                    <label class="text-xs font-medium text-muted-foreground">2.9 N.º Registro Discapacidad IBC</label>
                     <input type="text" name="nro_registro_discapacidad" value="{{ old('nro_registro_discapacidad', $rude->nro_registro_discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="text-xs font-medium text-muted-foreground">2.5.1 Solo extranjeros: tipo de documento presentado</label>
+                    <select name="tipo_doc_extranjero" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <option value="">—</option>
+                        @foreach($R::DOCUMENTOS_EXTRANJERO as $doc)
+                            <option value="{{ $doc }}" {{ old('tipo_doc_extranjero', $rude->tipo_doc_extranjero) === $doc ? 'selected' : '' }}>{{ $doc }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.5.2 Código del documento (extranjeros)</label>
+                    <input type="text" name="codigo_doc_extranjero" value="{{ old('codigo_doc_extranjero', $rude->codigo_doc_extranjero) }}" placeholder="Adjunte fotocopia" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
             </div>
             <div class="mt-3 bg-muted/30 rounded-lg p-3 text-xs">
@@ -169,9 +145,31 @@
         <div class="bg-card border border-border rounded-xl p-5">
             <h3 class="font-semibold text-foreground text-sm mb-1">Sección III — Dirección Actual del Estudiante</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div><label class="text-xs font-medium text-muted-foreground">Departamento</label><input type="text" name="dir_departamento" value="{{ old('dir_departamento', $rude->dir_departamento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
-                <div><label class="text-xs font-medium text-muted-foreground">Provincia</label><input type="text" name="dir_provincia" value="{{ old('dir_provincia', $rude->dir_provincia) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
-                <div><label class="text-xs font-medium text-muted-foreground">Municipio</label><input type="text" name="dir_municipio" value="{{ old('dir_municipio', $rude->dir_municipio) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">Departamento *</label>
+                    <select name="dir_departamento" id="dir-departamento" required class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <option value="">Seleccionar…</option>
+                        @foreach(array_keys(config('bolivia.departamentos')) as $depto)
+                            <option value="{{ $depto }}" {{ old('dir_departamento', $rude->dir_departamento) === $depto ? 'selected' : '' }}>{{ $depto }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">Provincia *</label>
+                    <select name="dir_provincia" id="dir-provincia" required class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm" data-valor="{{ old('dir_provincia', $rude->dir_provincia) }}">
+                        <option value="">Primero elija departamento…</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">Municipio *</label>
+                    <select name="dir_municipio" id="dir-municipio" required class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm" data-valor="{{ old('dir_municipio', $rude->dir_municipio) }}">
+                        <option value="">Primero elija departamento…</option>
+                    </select>
+                </div>
+                <div id="dir-municipio-otro-wrap" class="hidden">
+                    <label class="text-xs font-medium text-muted-foreground">Otro municipio *</label>
+                    <input type="text" name="dir_municipio_otro" value="{{ old('dir_municipio_otro') }}" maxlength="100" placeholder="Escriba el municipio" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
                 <div><label class="text-xs font-medium text-muted-foreground">Comunidad</label><input type="text" name="dir_comunidad" value="{{ old('dir_comunidad', $rude->dir_comunidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
                 <div><label class="text-xs font-medium text-muted-foreground">Zona/Villa</label><input type="text" name="dir_zona" value="{{ old('dir_zona', $rude->dir_zona) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
                 <div><label class="text-xs font-medium text-muted-foreground">Avenida/Calle</label><input type="text" name="dir_calle" value="{{ old('dir_calle', $rude->dir_calle) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm"></div>
@@ -188,7 +186,7 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.1 Idioma y autoidentificación cultural</h4>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Idioma en el que aprendió a hablar</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.1.1 Idioma en el que aprendió a hablar</label>
                     <select name="idioma_aprendio" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::IDIOMAS as $idioma)
@@ -197,7 +195,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Idioma(s) de uso frecuente</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.1.2 Idioma(s) de uso frecuente</label>
                     <select name="idiomas_uso_frecuente[]" multiple class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         @foreach($R::IDIOMAS as $idioma)
                             <option value="{{ $idioma }}" {{ $check(old('idiomas_uso_frecuente', $rude->idiomas_uso_frecuente), $idioma) ? 'selected' : '' }}>{{ $idioma }}</option>
@@ -205,7 +203,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Autoidentificación cultural</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.1.3 Autoidentificación cultural</label>
                     <select name="autoidentificacion_cultural" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::AUTOIDENTIFICACIONES as $auto)
@@ -218,25 +216,25 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.2 Salud</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Centro de Salud/Posta/Hospital en su comunidad?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.2.1 ¿Centro de Salud/Posta/Hospital en su comunidad?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="salud_centro_cercano" value="1" {{ $sino(old('salud_centro_cercano', $rude->salud_centro_cercano)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="salud_centro_cercano" value="0" {{ old('salud_centro_cercano', $rude->salud_centro_cercano) === 0 || $rude->salud_centro_cercano === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Acudió por problemas de salud el año pasado?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.2.2 ¿Acudió por problemas de salud el año pasado?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="salud_atendido_anio" value="1" {{ $sino(old('salud_atendido_anio', $rude->salud_atendido_anio)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="salud_atendido_anio" value="0" {{ old('salud_atendido_anio', $rude->salud_atendido_anio) === 0 || $rude->salud_atendido_anio === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Cuántas veces fue al Centro de Salud?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.2.3 ¿Cuántas veces fue al Centro de Salud?</label>
                     <input type="number" name="salud_veces" min="0" max="365" value="{{ old('salud_veces', $rude->salud_veces) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Tiene seguro de salud?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.2.4 ¿Tiene seguro de salud?</label>
                     <select name="salud_seguro" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::SEGUROS_SALUD as $seguro)
@@ -249,14 +247,14 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.3 Acceso a servicios básicos</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Agua potable por cañería de red?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.1 ¿Agua potable por cañería de red?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="serv_agua_red" value="1" {{ $sino(old('serv_agua_red', $rude->serv_agua_red)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="serv_agua_red" value="0" {{ old('serv_agua_red', $rude->serv_agua_red) === 0 || $rude->serv_agua_red === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Tiene baño en su vivienda?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.2 ¿Tiene baño en su vivienda?</label>
                     <select name="serv_bano" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::BANOS as $bano)
@@ -265,28 +263,28 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Red de alcantarillado?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.3 ¿Red de alcantarillado?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="serv_alcantarillado" value="1" {{ $sino(old('serv_alcantarillado', $rude->serv_alcantarillado)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="serv_alcantarillado" value="0" {{ old('serv_alcantarillado', $rude->serv_alcantarillado) === 0 || $rude->serv_alcantarillado === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Usa energía eléctrica para alumbrar?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.4 ¿Usa energía eléctrica para alumbrar?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="serv_electricidad" value="1" {{ $sino(old('serv_electricidad', $rude->serv_electricidad)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="serv_electricidad" value="0" {{ old('serv_electricidad', $rude->serv_electricidad) === 0 || $rude->serv_electricidad === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Servicio de recojo de basura?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.5 ¿Servicio de recojo de basura?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="serv_recojo_basura" value="1" {{ $sino(old('serv_recojo_basura', $rude->serv_recojo_basura)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="serv_recojo_basura" value="0" {{ old('serv_recojo_basura', $rude->serv_recojo_basura) === 0 || $rude->serv_recojo_basura === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">La vivienda que ocupa el hogar es:</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.3.6 La vivienda que ocupa el hogar es:</label>
                     <select name="serv_vivienda_tipo" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::TIPOS_VIVIENDA as $tipo)
@@ -299,7 +297,7 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.4 Acceso a internet</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Dónde accede a internet?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.4.1 ¿Dónde accede a internet?</label>
                     <div class="grid grid-cols-2 gap-2 pt-2 text-sm">
                         @foreach(['Su vivienda', 'Lugares públicos', 'La Unidad Educativa', 'Teléfono celular', 'No necesita internet'] as $lugar)
                             <label class="flex items-center gap-2"><input type="checkbox" name="internet_lugares[]" value="{{ $lugar }}" {{ $check(old('internet_lugares', $rude->internet_lugares), $lugar) ? 'checked' : '' }}> {{ $lugar }}</label>
@@ -307,7 +305,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Con qué frecuencia usa internet?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.4.2 ¿Con qué frecuencia usa internet?</label>
                     <select name="internet_frecuencia" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::FRECUENCIAS_INTERNET as $frec)
@@ -320,14 +318,14 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.5 Actividad laboral</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿El estudiante trabajó?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.5.1 ¿El estudiante trabajó?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="laboral_trabajo" value="1" {{ $sino(old('laboral_trabajo', $rude->laboral_trabajo)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="laboral_trabajo" value="0" {{ old('laboral_trabajo', $rude->laboral_trabajo) === 0 || $rude->laboral_trabajo === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿En qué actividad trabajó?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.5.2 ¿En qué actividad trabajó?</label>
                     <select name="laboral_actividad" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::ACTIVIDADES_LABORALES as $act)
@@ -336,7 +334,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿En qué turno(s) trabajó?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.5.3 ¿En qué turno(s) trabajó?</label>
                     <div class="grid grid-cols-3 gap-2 pt-2 text-sm">
                         @foreach(['Mañana', 'Tarde', 'Noche'] as $turno)
                             <label class="flex items-center gap-1"><input type="checkbox" name="laboral_turnos[]" value="{{ $turno }}" {{ $check(old('laboral_turnos', $rude->laboral_turnos), $turno) ? 'checked' : '' }}> {{ $turno }}</label>
@@ -344,7 +342,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Con qué frecuencia trabajó?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.5.4 ¿Con qué frecuencia trabajó?</label>
                     <select name="laboral_frecuencia" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::FRECUENCIAS_LABORAL as $frec)
@@ -353,27 +351,39 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Recibió algún pago?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.5.5 ¿Recibió algún pago?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="laboral_recibio_pago" value="1" {{ $sino(old('laboral_recibio_pago', $rude->laboral_recibio_pago)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="laboral_recibio_pago" value="0" {{ old('laboral_recibio_pago', $rude->laboral_recibio_pago) === 0 || $rude->laboral_recibio_pago === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
+                <div class="sm:col-span-2 lg:col-span-5">
+                    <label class="text-xs font-medium text-muted-foreground">4.5 Meses que trabajó</label>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-2 text-sm">
+                        @foreach($R::MESES as $mes)
+                            <label class="flex items-center gap-1"><input type="checkbox" name="meses_trabajados[]" value="{{ $mes }}" {{ $check(old('meses_trabajados', $rude->meses_trabajados), $mes) ? 'checked' : '' }}> {{ $mes }}</label>
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.6 Medio de transporte</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Cómo llega a la UE?</label>
-                    <select name="transporte_medio" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <label class="text-xs font-medium text-muted-foreground">4.6.1 ¿Cómo llega a la UE?</label>
+                    <select name="transporte_medio" id="transporte-medio" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::MEDIOS_TRANSPORTE as $medio)
                             <option value="{{ $medio }}" {{ old('transporte_medio', $rude->transporte_medio) === $medio ? 'selected' : '' }}>{{ $medio }}</option>
                         @endforeach
                     </select>
                 </div>
+                <div id="transporte-otro-wrap" class="hidden">
+                    <label class="text-xs font-medium text-muted-foreground">Otro medio (especifique) *</label>
+                    <input type="text" name="transporte_otro" value="{{ old('transporte_otro', $rude->transporte_otro) }}" maxlength="150" placeholder="Ej: micro" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Tiempo máximo de llegada</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.6.2 Tiempo máximo de llegada</label>
                     <select name="transporte_tiempo" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::TIEMPOS_TRANSPORTE as $tiempo)
@@ -386,14 +396,14 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.7 Abandono escolar</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">¿Abandonó la UE el año pasado?</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.7.1 ¿Abandonó la UE el año pasado?</label>
                     <div class="flex gap-4 pt-2 text-sm">
                         <label class="flex items-center gap-1"><input type="radio" name="abandono_escolar" value="1" {{ $sino(old('abandono_escolar', $rude->abandono_escolar)) ? 'checked' : '' }}> Sí</label>
                         <label class="flex items-center gap-1"><input type="radio" name="abandono_escolar" value="0" {{ old('abandono_escolar', $rude->abandono_escolar) === 0 || $rude->abandono_escolar === false ? 'checked' : '' }}> No</label>
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Razones del abandono escolar</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.7.2 Razones del abandono escolar</label>
                     <div class="grid grid-cols-2 gap-2 pt-2 text-sm">
                         @foreach($R::RAZONES_ABANDONO as $razon)
                             <label class="flex items-center gap-2"><input type="checkbox" name="abandono_razones[]" value="{{ $razon }}" {{ $check(old('abandono_razones', $rude->abandono_razones), $razon) ? 'checked' : '' }}> {{ $razon }}</label>
@@ -405,7 +415,7 @@
             <h4 class="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">4.8 Características particulares</h4>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Tipos de discapacidad</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.8.1 Tipos de discapacidad</label>
                     <div class="grid grid-cols-2 gap-2 pt-2 text-sm">
                         @foreach($R::TIPOS_DISCAPACIDAD as $tipo)
                             <label class="flex items-center gap-2"><input type="checkbox" name="discapacidad_tipos[]" value="{{ $tipo }}" {{ $check(old('discapacidad_tipos', $rude->discapacidad_tipos), $tipo) ? 'checked' : '' }}> {{ $tipo }}</label>
@@ -413,7 +423,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Grado de discapacidad</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.8.1 Grado de discapacidad</label>
                     <select name="discapacidad_grado" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                         <option value="">—</option>
                         @foreach($R::GRADOS_DISCAPACIDAD as $grado)
@@ -422,7 +432,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">Dificultades en el aprendizaje</label>
+                    <label class="text-xs font-medium text-muted-foreground">4.8.2 Dificultades en el aprendizaje</label>
                     <div class="grid grid-cols-1 gap-2 pt-2 text-sm">
                         @foreach($R::DIFICULTADES_APRENDIZAJE as $dif)
                             <label class="flex items-center gap-2"><input type="checkbox" name="dificultad_aprendizaje[]" value="{{ $dif }}" {{ $check(old('dificultad_aprendizaje', $rude->dificultad_aprendizaje), $dif) ? 'checked' : '' }}> {{ $dif }}</label>
@@ -440,7 +450,65 @@
                     <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="convive_con[]" value="{{ $opc }}" {{ $check(old('convive_con', $rude->convive_con), $opc) ? 'checked' : '' }}> {{ $i + 1 }}. {{ $opc }}</label>
                 @endforeach
             </div>
-            <p class="text-xs text-muted-foreground mt-4">Los datos de padre, madre y tutor(a) se gestionan desde el módulo de Padres/Tutores del estudiante y se incluyen en el export oficial.</p>
+            <div id="centro-acogida-wrap" class="hidden mt-3">
+                <label class="text-xs font-medium text-muted-foreground">6. En tutela extraordinaria — Nombre del centro de acogida *</label>
+                <input type="text" name="centro_acogida" value="{{ old('centro_acogida', $rude->centro_acogida) }}" maxlength="200" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+            </div>
+            <p class="text-xs text-muted-foreground mt-4">Si completa un bloque, el CI + nombres + apellidos son obligatorios. Los datos se guardan en Padres/Tutores del estudiante.</p>
+        </div>
+
+        <!-- Sección V: datos del padre, madre y tutor(a) -->
+        <div class="bg-card border border-border rounded-xl p-5">
+            <h3 class="font-semibold text-foreground text-sm mb-1">Sección V — Datos del Padre, Madre o Tutor(a)</h3>
+            <p class="text-xs text-muted-foreground mb-4">Cédula/DNI, apellidos, nombres, ocupación, fecha de nacimiento, teléfono, idioma y grado de instrucción.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                @foreach(['padre' => '5.2 Datos del Padre', 'madre' => '5.3 Datos de la Madre', 'tutor' => '5.4 Datos del Tutor(a)'] as $grupo => $titulo)
+                @php $fam = $familiar[$grupo] ?? null; @endphp
+                <div class="border border-border rounded-lg p-3">
+                    <h4 class="font-bold text-foreground text-sm mb-2">{{ $titulo }}</h4>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="{{ $grupo }}_num_doc" value="{{ old($grupo.'_num_doc', $fam?->numero_documento) }}" placeholder="CI / DNI" maxlength="20" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                            <input type="text" name="{{ $grupo }}_complemento" value="{{ old($grupo.'_complemento', $fam?->complemento) }}" placeholder="Comp." maxlength="5" class="w-20 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        </div>
+                        <input type="text" name="{{ $grupo }}_apellido_paterno" value="{{ old($grupo.'_apellido_paterno', $fam?->apellido_paterno ?? $fam?->apellidos) }}" placeholder="Apellido Paterno" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="{{ $grupo }}_apellido_materno" value="{{ old($grupo.'_apellido_materno', $fam?->apellido_materno) }}" placeholder="Apellido Materno" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="{{ $grupo }}_nombres" value="{{ old($grupo.'_nombres', $fam?->nombres) }}" placeholder="Nombre(s)" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="{{ $grupo }}_ocupacion" value="{{ old($grupo.'_ocupacion', $fam?->ocupacion) }}" placeholder="Ocupación laboral actual" maxlength="100" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="date" name="{{ $grupo }}_fecha_nacimiento" value="{{ old($grupo.'_fecha_nacimiento', $fam?->fecha_nacimiento?->format('Y-m-d')) }}" title="Fecha de nacimiento" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="{{ $grupo }}_telefono" value="{{ old($grupo.'_telefono', $fam?->telefono) }}" placeholder="Teléfono / Celular" maxlength="50" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <select name="{{ $grupo }}_idioma" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                            <option value="">Idioma que habla…</option>
+                            @foreach($R::IDIOMAS as $idioma)
+                                <option value="{{ $idioma }}" {{ old($grupo.'_idioma', $fam?->idioma) === $idioma ? 'selected' : '' }}>{{ $idioma }}</option>
+                            @endforeach
+                        </select>
+                        <select name="{{ $grupo }}_grado_instruccion" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                            <option value="">Grado de instrucción…</option>
+                            @foreach(\App\Models\ParentGuardian::GRADOS_INSTRUCCION as $grado)
+                                <option value="{{ $grado }}" {{ old($grupo.'_grado_instruccion', $fam?->grado_instruccion) === $grado ? 'selected' : '' }}>{{ $grado }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                @endforeach
+                @php $famEx = ($familiar['tutor_extra'] ?? null); @endphp
+                <div class="border border-border rounded-lg p-3">
+                    <h4 class="font-bold text-foreground text-sm mb-2">5.5 Datos del Tutor(a) Extraordinario(a)</h4>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="tutor_extra_num_doc" value="{{ old('tutor_extra_num_doc', $famEx?->numero_documento) }}" placeholder="CI / DNI" maxlength="20" class="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                            <input type="text" name="tutor_extra_complemento" value="{{ old('tutor_extra_complemento', $famEx?->complemento) }}" placeholder="Comp." maxlength="5" class="w-20 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        </div>
+                        <input type="text" name="tutor_extra_apellido_paterno" value="{{ old('tutor_extra_apellido_paterno', $famEx?->apellido_paterno) }}" placeholder="Apellido Paterno" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="tutor_extra_apellido_materno" value="{{ old('tutor_extra_apellido_materno', $famEx?->apellido_materno) }}" placeholder="Apellido Materno" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="tutor_extra_nombres" value="{{ old('tutor_extra_nombres', $famEx?->nombres) }}" placeholder="Nombre(s)" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="tutor_extra_ocupacion" value="{{ old('tutor_extra_ocupacion', $famEx?->ocupacion) }}" placeholder="Ocupación laboral actual" maxlength="100" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="tutor_extra_cargo_actual" value="{{ old('tutor_extra_cargo_actual', $famEx?->cargo_actual) }}" placeholder="Cargo actual" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <input type="text" name="tutor_extra_nombre_institucion" value="{{ old('tutor_extra_nombre_institucion', $famEx?->nombre_institucion) }}" placeholder="Nombre de la Institución" maxlength="200" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Estado -->
@@ -467,4 +535,69 @@
             <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">Guardar RUDE</button>
         </div>
     </form>
+
+<script>
+const RUDE_UBICACION = @json(config('bolivia.departamentos'));
+function rudeLlenar(sel, opciones, placeholder, valor) {
+    sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = placeholder;
+    sel.appendChild(ph);
+    opciones.forEach(function (o) {
+        const opt = document.createElement('option');
+        opt.value = o; opt.textContent = o;
+        if (o === valor) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+function rudeCascada(ids) {
+    const selDepto = document.getElementById(ids.depto);
+    const selProv = document.getElementById(ids.prov);
+    const selMuni = document.getElementById(ids.muni);
+    const otraWrap = document.getElementById(ids.otro);
+    if (!selDepto || !selProv || !selMuni) return;
+    function prov() {
+        const d = RUDE_UBICACION[selDepto.value];
+        rudeLlenar(selProv, d ? d.provincias : [], 'Seleccionar provincia…', selProv.dataset.valor || '');
+        selProv.dataset.valor = '';
+        muni();
+    }
+    function muni() {
+        const d = RUDE_UBICACION[selDepto.value];
+        const lista = (d ? d.municipios.slice() : []);
+        lista.push('Otro');
+        rudeLlenar(selMuni, lista, 'Seleccionar municipio…', selMuni.dataset.valor || '');
+        selMuni.dataset.valor = '';
+        if (otraWrap) otraWrap.classList.toggle('hidden', selMuni.value !== 'Otro');
+    }
+    selDepto.addEventListener('change', prov);
+    selProv.addEventListener('change', muni);
+    selMuni.addEventListener('change', function () {
+        if (otraWrap) otraWrap.classList.toggle('hidden', selMuni.value !== 'Otro');
+    });
+    if (selDepto.value) prov();
+}
+document.addEventListener('DOMContentLoaded', function () {
+    rudeCascada({ depto: 'dir-departamento', prov: 'dir-provincia', muni: 'dir-municipio', otro: 'dir-municipio-otro-wrap' });
+
+    var selTrans = document.getElementById('transporte-medio');
+    var otroTrans = document.getElementById('transporte-otro-wrap');
+    function toggleTrans() { if (otroTrans) otroTrans.classList.toggle('hidden', !selTrans || selTrans.value !== 'Otro'); }
+    if (selTrans) { selTrans.addEventListener('change', toggleTrans); toggleTrans(); }
+
+    function toggleAcogida() {
+        var wrap = document.getElementById('centro-acogida-wrap');
+        if (!wrap) return;
+        var marcada = false;
+        document.querySelectorAll('input[name="convive_con[]"]').forEach(function (c) {
+            if (c.checked && c.value === 'En tutela extraordinaria') marcada = true;
+        });
+        wrap.classList.toggle('hidden', !marcada);
+    }
+    document.querySelectorAll('input[name="convive_con[]"]').forEach(function (c) {
+        c.addEventListener('change', toggleAcogida);
+    });
+    toggleAcogida();
+});
+</script>
 @endsection

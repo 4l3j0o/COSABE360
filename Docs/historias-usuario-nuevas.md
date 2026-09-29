@@ -394,6 +394,11 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   `MateriasLibretaSeeder` fusiona LELO/LE→CL y PS→CFIL con remapeo total.
 - **Tutores de curso** — `TutoresCursoSeeder` (40 paralelos con docente responsable;
   distinto de padres/tutores `parent_guardians`).
+- **Inscripción en Línea 5 pasos (HU-59)** — reserva de código correlativo (30 min,
+  sin choques, se libera si no se concreta); paso 1 RUDE propio; paso 2 domicilio
+  con mapa + foto fachada; paso 3 documentos por vínculo/nivel + anexos Docs;
+  paso 4 contrato en línea (NIT/razón/ACEPTO); paso 5 revisión + consentimiento y
+  bloqueo de cambios.
 - **Nómina docente oficial** — `DocentesDatosOficialesSeeder` (CI/tel/email por nombre,
   sync cuenta Google; 56/77, resto ausente pendiente). `Docentes2026Seeder`
   idempotente por nombre. Importador de asignaciones determinista.
@@ -410,7 +415,24 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   redirigen a central; sidebars solo con Central; retirados exports legacy vacíos
   (assessments sin datos); fix export Pagos (usa `monto` real).
 - **Restricción Director** — Matrículas y Pagos solo Admin/Secretaría (rutas + central).
+- **Dashboards unificados** — una sola tarjeta Central de Reportes (admin/director/secretaría).
 - **Excel real en todos los reportes** — los 6 exports viejos pasaron de CSV con comas
   a XLSX con columnas y línea visual institucional (RUDE mantiene CSV oficial MinEdu).
 - **Centralizador por evaluación en sistema vigente** — usaba `assessments` (módulo
   viejo sin datos); ahora muestra T1/T2/T3 + promedio anual por materia (evaluation_plans).
+- **Filtros en cascada** — centralizadores filtran primero por paralelo y luego se
+  habilita la materia del paralelo (parcial compartido; compat con course_subject_id).
+- **Panel estudiante** — email + paralelo, tabla INFORMACIÓN ECONÓMICA (cuotas con
+  vencimiento, importes, pagos y factura); asistencia con curso bloqueado; boletín
+  exige estar al día (si no, redirige a pagos recordando meses pendientes).
+- **RUDE oficial completo (HU-45/46)** — municipios por departamento + cascadas I/III
+  (con Otro), precarga UE San Bernardo, bloques padre/madre/tutor (CI, apellidos,
+  ocupación, fecha nac, idioma, grado instrucción) con validación total, núcleo
+  obligatorio, PDF formato oficial RM 0031/2025 (checks, firmas, QR).
+- **RUDE fiel al formulario real** — Sección I solo SIE; 2.5.1/2.5.2 extranjeros,
+  meses trabajados, transporte-otro, centro de acogida y tutor extraordinario
+  (cargo/institución) con validación y PDF.
+- **Export trimestre formato planilla** — el centralizador por trimestre vuelve al
+  formato de ejemplo (logo 110, tarjeta DOCENTE/CURSO/MATERIA/TRIMESTRE, bloques por
+  criterio con colores, PROMEDIO por criterio y total); reutiliza la hoja Notas del
+  servicio de plantillas con valores calculados en vez de fórmulas.

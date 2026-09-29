@@ -45,7 +45,7 @@
                     <table class="w-full text-sm">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
-                                <th class="text-left px-4 py-3 font-medium text-muted-foreground">Curso</th>
+                                <th class="text-left px-4 py-3 font-medium text-muted-foreground">Paralelo</th>
                                 <th class="text-left px-4 py-3 font-medium text-muted-foreground">Aula</th>
                                 <th class="text-right px-4 py-3 font-medium text-muted-foreground">Acción</th>
                             </tr>
@@ -53,7 +53,7 @@
                         <tbody class="divide-y divide-border">
                             @foreach($cursosRegistro as $curso)
                                 <tr class="hover:bg-muted/20">
-                                    <td class="px-4 py-3 font-medium text-foreground">{{ $curso->nombre }}</td>
+                                    <td class="px-4 py-3 font-medium text-foreground">{{ $curso->section?->codigoCompleto() ?? $curso->nombre }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $curso->aula ?? '—' }}</td>
                                     <td class="px-4 py-3 text-right">
                                         <form method="GET" action="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2">

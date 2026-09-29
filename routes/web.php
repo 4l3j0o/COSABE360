@@ -129,6 +129,12 @@ Route::get('/dashboard', function () {
             $curso = $student->activeCourse();
             $datos['curso'] = $curso;
             $datos['materias'] = $curso ? $curso->courseSubjects()->count() : 0;
+
+            // HU-59b: información económica del estudiante (mensualidades)
+            $regActiva = $student->activeRegistration();
+            $datos['pagos'] = $regActiva
+                ? $regActiva->monthlyPayments()->with(['electronicInvoice', 'registration.enrollment.academicYear'])->orderBy('mes')->get()
+                : collect();
         }
     }
 
@@ -369,6 +375,21 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
 Route::middleware(['auth', 'role:Estudiante'])->group(function () {
     Route::get('/mi-inscripcion', [InscripcionController::class, 'miInscripcion'])->name('inscripciones.mi-inscripcion');
     Route::post('/mi-inscripcion/{student}/documento', [InscripcionController::class, 'subirDocumento'])->name('inscripciones.subir-documento');
+    // Paso 1: actualizar su propio RUDE
+    Route::get('/mi-rude', [RudeController::class, 'formPropio'])->name('rude.form-propio');
+    Route::put('/mi-rude', [RudeController::class, 'updatePropio'])->name('rude.update-propio');
+    // Paso 2: domicilio y fachada
+    Route::get('/mi-inscripcion/domicilio', [InscripcionController::class, 'domicilio'])->name('inscripciones.domicilio');
+    Route::post('/mi-inscripcion/domicilio', [InscripcionController::class, 'guardarDomicilio'])->name('inscripciones.domicilio.guardar');
+    // Paso 4: contrato en línea
+    Route::get('/mi-inscripcion/contrato', [InscripcionController::class, 'contratoLinea'])->name('inscripciones.contrato-linea');
+    Route::post('/mi-inscripcion/contrato', [InscripcionController::class, 'aceptarContrato'])->name('inscripciones.contrato.aceptar');
+    // Paso 5: finalización
+    Route::get('/mi-inscripcion/finalizar', [InscripcionController::class, 'finalizar'])->name('inscripciones.finalizar');
+    Route::post('/mi-inscripcion/finalizar', [InscripcionController::class, 'confirmarFinalizacion'])->name('inscripciones.finalizar.confirmar');
+    // Anexos oficiales para imprimir y firmar
+    Route::get('/mi-inscripcion/anexo-conformidad', [InscripcionController::class, 'descargarAnexo'])->name('inscripciones.anexo.descargar');
+    Route::get('/mi-inscripcion/consentimiento-inicial', [InscripcionController::class, 'descargarConsentimiento'])->name('inscripciones.consentimiento.descargar');
 });
 
 // HU-17: Registrar inscripciones (desde el modal de la lista de estudiantes)

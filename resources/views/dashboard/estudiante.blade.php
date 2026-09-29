@@ -23,10 +23,14 @@
                 <p class="text-sm text-muted-foreground mt-1">
                     {{ $estudiante ? $estudiante->nombres . ' ' . $estudiante->apellidos : auth()->user()->nombre }}
                 </p>
+                @if($estudiante?->email)
+                    <p class="text-xs text-muted-foreground mt-0.5">{{ $estudiante->email }}</p>
+                @endif
             </div>
             @if($curso)
-                <div class="border border-border rounded-lg px-4 py-2">
-                    <span class="text-sm font-medium text-foreground">{{ $curso->nombre }}</span>
+                <div class="border border-border rounded-lg px-4 py-2 text-center">
+                    <p class="text-[10px] uppercase tracking-wider text-muted-foreground">Paralelo</p>
+                    <span class="text-sm font-medium text-foreground">{{ $curso->codigoCorto() }}</span>
                 </div>
             @endif
         </div>
@@ -38,6 +42,59 @@
         <x-ui.stat-card label="Materias" :value="$materias" color="info" />
         <x-ui.stat-card label="Comunicados sin leer" :value="$noLeidos" color="warning" />
     </div>
+
+    {{-- HU-59b: Información económica --}}
+    @php
+        $pagos = $pagos ?? collect();
+        $meses = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
+    @endphp
+    @if($pagos->isNotEmpty())
+    <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm mb-6">
+        <div class="px-4 py-3 border-b border-border">
+            <h3 class="text-base font-semibold text-foreground">Información Económica</h3>
+            <p class="text-xs text-muted-foreground">Cuota · Concepto · Vence · Importe Base · Tipo · Descuento · Total Descontado · Importe Pagado · Fecha de Pago · Factura</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border bg-muted/50 text-left">
+                        <th class="px-3 py-2 font-semibold text-foreground">Cuota</th>
+                        <th class="px-3 py-2 font-semibold text-foreground">Concepto</th>
+                        <th class="px-3 py-2 font-semibold text-foreground">Vence</th>
+                        <th class="px-3 py-2 text-right font-semibold text-foreground">Importe Base</th>
+                        <th class="px-3 py-2 font-semibold text-foreground">Tipo</th>
+                        <th class="px-3 py-2 text-right font-semibold text-foreground">Descuento</th>
+                        <th class="px-3 py-2 text-right font-semibold text-foreground">Total Descontado</th>
+                        <th class="px-3 py-2 text-right font-semibold text-foreground">Importe Pagado</th>
+                        <th class="px-3 py-2 font-semibold text-foreground">Fecha de Pago</th>
+                        <th class="px-3 py-2 font-semibold text-foreground">Factura</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($pagos as $p)
+                        @php
+                            $pagado = in_array($p->estado, ['PAGADO', 'PAGADA'], true);
+                            $gestion = $p->registration?->enrollment?->academicYear?->nombre ?? now()->year;
+                            $vence = '06/' . str_pad((string) $p->mes, 2, '0', STR_PAD_LEFT) . '/' . $gestion;
+                        @endphp
+                        <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
+                            <td class="px-3 py-2 text-muted-foreground">{{ $p->mes - 1 }}</td>
+                            <td class="px-3 py-2 text-foreground">MENSUALIDAD</td>
+                            <td class="px-3 py-2 text-muted-foreground">{{ $vence }}</td>
+                            <td class="px-3 py-2 text-right">{{ number_format((float) ($p->monto ?? 0), 2) }}</td>
+                            <td class="px-3 py-2 text-muted-foreground">—</td>
+                            <td class="px-3 py-2 text-right text-muted-foreground">—</td>
+                            <td class="px-3 py-2 text-right">0.00</td>
+                            <td class="px-3 py-2 text-right font-medium {{ $pagado ? 'text-success' : '' }}">{{ number_format($pagado ? (float) ($p->monto ?? 0) : 0, 2) }}</td>
+                            <td class="px-3 py-2 text-muted-foreground">{{ $p->fecha ? $p->fecha->format('d/m/Y') : '—' }}</td>
+                            <td class="px-3 py-2 text-muted-foreground">{{ $p->electronicInvoice?->nro_factura ? str_pad((string) $p->electronicInvoice->nro_factura, 5, '0', STR_PAD_LEFT) : '—' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     <div class="bg-card border border-border rounded-xl p-6">
         <h3 class="text-base font-semibold text-foreground mb-4">Accesos rápidos</h3>

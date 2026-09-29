@@ -164,6 +164,42 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('Puntualidad');
     }
 
+    public function test_export_trimestre_formato_planilla(): void
+    {
+        $a = $this->crearCurso('PX1');
+        $doc = $this->crearDocente('PX1');
+        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+
+        $service = app(EvaluationService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+        $sa = $plan->criterio('SA');
+        $act = $service->crearActividad($sa, 'Examen', '2026-03-10', 1);
+        $service->registrarNota($act, $a['est'], 40, null, $doc['user']->id);
+
+        $this->actingAs($doc['user']);
+        $response = $this->get(route('reportes.central.trimestre.export', ['course_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'excel']));
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        // Formato planilla oficial: hoja Centralizador, logo, tarjeta y bloques
+        $tmp = tempnam(sys_get_temp_dir(), 'cent').'.xlsx';
+        file_put_contents($tmp, $response->streamedContent());
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tmp);
+        $sheet = $spreadsheet->getSheetByName('Centralizador');
+        $this->assertNotNull($sheet);
+        $this->assertStringContainsString('SAN BERNARDO', (string) $sheet->getCell('D1')->getValue());
+        $this->assertStringContainsString('CENTRALIZADOR', (string) $sheet->getCell('D2')->getValue());
+        $this->assertCount(1, $sheet->getDrawingCollection());
+        // Valores calculados (no fórmulas): nombre y actividad presentes
+        $texto = '';
+        foreach ($sheet->toArray() as $fila) {
+            $texto .= implode(' ', array_map('strval', $fila))."\n";
+        }
+        @unlink($tmp);
+        $this->assertStringContainsString('ApellidoRCPX1', $texto);
+        $this->assertStringContainsString('Examen', $texto);
+    }
+
     public function test_exports_padres_pdf_y_excel(): void
     {
         $a = $this->crearCurso('X1');
@@ -177,6 +213,30 @@ class ReporteCentralTest extends TestCase
         $response = $this->get(route('reportes.central.padres.export', ['course_id' => $a['curso']->id, 'format' => 'excel']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_centralizador_acepta_curso_y_materia_en_cascada(): void
+    {
+        $a = $this->crearCurso('C1');
+        $doc = $this->crearDocente('C1');
+        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+
+        $this->actingAs($doc['user']);
+        $response = $this->get(route('reportes.central.evaluacion', [
+            'course_id' => $a['curso']->id,
+            'subject_id' => $a['subject']->id,
+        ]));
+        $response->assertStatus(200);
+        $response->assertSee('ApellidoRCC1');
+
+        // Materia de otro curso -> 403
+        $b = $this->crearCurso('C2');
+        $response = $this->get(route('reportes.central.trimestre', [
+            'course_id' => $b['curso']->id,
+            'subject_id' => $a['subject']->id,
+            'trimestre' => 1,
+        ]));
+        $response->assertStatus(403);
     }
 
     public function test_docente_no_accede_a_materia_ajena_en_centralizadores(): void

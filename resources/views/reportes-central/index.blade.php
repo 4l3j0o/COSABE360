@@ -50,20 +50,12 @@
                                     <span class="text-[10px]">(obligatorio) Curso / paralelo</span>
                                 </div>
                             @elseif($reporte['ruta'] === 'reportes.central.evaluacion')
-                                <select name="course_subject_id" form="form-{{ $reporte['ruta'] }}" required class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                    <option value="">Seleccionar curso / materia…</option>
-                                    @foreach($courseSubjects as $cs)
-                                        <option value="{{ $cs->id }}">{{ $cs->course->nombre }} - {{ $cs->subject->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="flex items-center gap-2">
+                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'land-eval', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
+                                </div>
                             @elseif($reporte['ruta'] === 'reportes.central.trimestre')
                                 <div class="flex items-center gap-2">
-                                    <select name="course_subject_id" form="form-{{ $reporte['ruta'] }}" required class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                        <option value="">Curso / materia…</option>
-                                        @foreach($courseSubjects as $cs)
-                                            <option value="{{ $cs->id }}">{{ $cs->course->nombre }} - {{ $cs->subject->nombre }}</option>
-                                        @endforeach
-                                    </select>
+                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'land-trim', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
                                     <select name="trimestre" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
                                         @foreach([1, 2, 3] as $t)
                                             <option value="{{ $t }}" {{ $t == 1 ? 'selected' : '' }}>{{ $t }}° Trim.</option>

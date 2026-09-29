@@ -26,6 +26,10 @@
 ---
 
 ## I. DATOS DE LA UNIDAD EDUCATIVA
+> **Corrección (revisión contra formulario real): la Sección I oficial trae
+> ÚNICAMENTE el Código SIE.** El formulario y el PDF solo piden SIE + fecha.
+> Las columnas `ue_*` se conservan en BD por compatibilidad pero ya no se capturan.
+
 La Unidad Educativa es un dato institucional. En CSB 360 se configura a nivel de
 institución/empresa (tabla `empresas`) y se replica en el RUDE al momento de la carga.
 Se incluyen columnas de respaldo en `student_rude_records` para exportación fiel del formato.
@@ -163,7 +167,7 @@ Destino: `convive_con` (JSON de opciones) en `student_rude_records`.
 ### 5.2 / 5.3 / 5.4 / 5.5 Datos del Padre, Madre, Tutor(a) y Tutor(a) Extraordinario(a)
 Cada bloque repite el mismo set de campos. Se almacenan en la tabla pivote
 `student_parent` (`parent_guardians`) con `tipo_relacion` = `PADRE`, `MADRE`, `TUTOR`,
-`TUTOR_EXTRAORDINARIO`.
+`TUTOR_EXTRAORDINARIO`. El extraordinario suma `cargo_actual` y `nombre_institucion`.
 
 | Campo oficial | Tipo | Destino (tabla `parent_guardians`) |
 |---|---|---|

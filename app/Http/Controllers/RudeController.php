@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
+use App\Models\ParentGuardian;
 use App\Models\StudentRudeRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -48,23 +50,41 @@ class RudeController extends Controller
 
     public function form(Student $student): View
     {
-        $student->load(['rudeRecord']);
+        $student->load(['rudeRecord', 'parentGuardians']);
         $rude = $student->rudeRecord
             ?? new StudentRudeRecord([
                 'student_id' => $student->id,
                 'estado' => 'PENDIENTE',
                 'codigo_sie_ue' => StudentRudeRecord::SIE_UE,
+                // Precarga institucional UE San Bernardo (Tarija)
+                'ue_pais' => 'Bolivia',
+                'ue_departamento' => 'Tarija',
+                'ue_provincia' => 'Cercado',
+                'ue_municipio' => 'Tarija',
+                'ue_localidad' => 'Tarija',
+                'ue_calle' => 'Calle Alejandro Corrado',
+                'fecha_registro' => now()->toDateString(),
             ]);
 
-        return view('rude.form', compact('student', 'rude'));
+        // Familiares por relación para la sección V (padre/madre/tutor/extraordinario)
+        $familiar = [];
+        foreach (['PADRE' => 'padre', 'MADRE' => 'madre', 'TUTOR' => 'tutor', 'TUTOR_EXTRAORDINARIO' => 'tutor_extra'] as $rel => $grupo) {
+            $familiar[$grupo] = $student->parentGuardians->first(fn ($pg) => $pg->pivot?->tipo_relacion === $rel);
+        }
+
+        $R = StudentRudeRecord::class;
+
+        return view('rude.form', compact('student', 'rude', 'familiar', 'R'));
     }
 
     public function update(Request $request, Student $student): RedirectResponse
     {
+        $deptos = array_keys(config('bolivia.departamentos'));
+
         $validated = $request->validate([
-            // Sección I: Unidad Educativa
-            'codigo_sie_ue' => ['nullable', 'string', 'regex:/^\d{8}$/'],
-            'fecha_registro' => ['nullable', 'date'],
+            // Sección I: Unidad Educativa (núcleo obligatorio + cascada)
+            'codigo_sie_ue' => ['required', 'string', 'regex:/^\d{8}$/'],
+            'fecha_registro' => ['required', 'date'],
             'ue_localidad' => ['nullable', 'string', 'max:150'],
             'ue_nombres' => ['nullable', 'string', 'max:150'],
             'ue_apellido_paterno' => ['nullable', 'string', 'max:100'],
@@ -73,6 +93,7 @@ class RudeController extends Controller
             'ue_departamento' => ['nullable', 'string', 'max:100'],
             'ue_provincia' => ['nullable', 'string', 'max:100'],
             'ue_municipio' => ['nullable', 'string', 'max:100'],
+            'ue_municipio_otro' => ['nullable', 'string', 'max:100'],
             'ue_comunidad' => ['nullable', 'string', 'max:150'],
             'ue_zona' => ['nullable', 'string', 'max:150'],
             'ue_calle' => ['nullable', 'string', 'max:150'],
@@ -91,11 +112,14 @@ class RudeController extends Controller
             'folio_nacimiento' => ['nullable', 'string', 'max:50'],
             'anio_nacimiento' => ['nullable', 'string', 'max:10', 'regex:/^\d{4}$/'],
             'nro_registro_discapacidad' => ['nullable', 'string', 'max:100'],
+            'tipo_doc_extranjero' => ['nullable', 'string', Rule::in(StudentRudeRecord::DOCUMENTOS_EXTRANJERO)],
+            'codigo_doc_extranjero' => ['nullable', 'string', 'max:100', 'required_with:tipo_doc_extranjero'],
 
-            // Sección III: dirección actual
-            'dir_departamento' => ['nullable', 'string', 'max:100'],
-            'dir_provincia' => ['nullable', 'string', 'max:100'],
-            'dir_municipio' => ['nullable', 'string', 'max:100'],
+            // Sección III: dirección actual (núcleo obligatorio + cascada)
+            'dir_departamento' => ['required', 'string', Rule::in($deptos)],
+            'dir_provincia' => ['required', 'string', 'max:100'],
+            'dir_municipio' => ['required', 'string', 'max:100'],
+            'dir_municipio_otro' => ['nullable', 'string', 'max:100', 'required_if:dir_municipio,Otro'],
             'dir_comunidad' => ['nullable', 'string', 'max:150'],
             'dir_zona' => ['nullable', 'string', 'max:150'],
             'dir_calle' => ['nullable', 'string', 'max:150'],
@@ -133,12 +157,15 @@ class RudeController extends Controller
             'laboral_actividad' => ['nullable', 'string', 'max:150'],
             'laboral_turnos' => ['nullable', 'array'],
             'laboral_turnos.*' => ['string', 'max:50'],
+            'meses_trabajados' => ['nullable', 'array'],
+            'meses_trabajados.*' => ['string', Rule::in(StudentRudeRecord::MESES)],
             'laboral_frecuencia' => ['nullable', 'string', 'max:100'],
             'laboral_recibio_pago' => ['nullable', 'boolean'],
 
             // Sección IV.6: Transporte
             'transporte_medio' => ['nullable', 'string', 'max:100'],
             'transporte_tiempo' => ['nullable', 'string', 'max:100'],
+            'transporte_otro' => ['nullable', 'string', 'max:150', 'required_if:transporte_medio,Otro'],
 
             // Sección IV.7: Abandono escolar
             'abandono_escolar' => ['nullable', 'boolean'],
@@ -152,9 +179,52 @@ class RudeController extends Controller
             'dificultad_aprendizaje' => ['nullable', 'array'],
             'dificultad_aprendizaje.*' => ['string', 'max:100'],
 
-            // Sección V.1: Con quién vive
-            'convive_con' => ['nullable', 'array'],
+            // Sección V.1: Con quién vive (obligatorio al menos 1)
+            'convive_con' => ['required', 'array', 'min:1'],
             'convive_con.*' => ['string', 'max:100'],
+            'centro_acogida' => ['nullable', 'string', 'max:200'],
+            'tutor_extra_nombres' => ['nullable', 'string', 'max:150'],
+
+            // Sección V.2/3/4: padre, madre, tutor(a). Si se llena el bloque,
+            // el CI + nombres + apellidos son obligatorios y validados.
+            'padre_nombres' => ['nullable', 'string', 'max:150'],
+            'padre_apellido_paterno' => ['nullable', 'string', 'max:150', 'required_with:padre_nombres'],
+            'padre_apellido_materno' => ['nullable', 'string', 'max:150'],
+            'padre_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:padre_nombres'],
+            'padre_complemento' => ['nullable', 'string', 'max:5'],
+            'padre_ocupacion' => ['nullable', 'string', 'max:100'],
+            'padre_fecha_nacimiento' => ['nullable', 'date', 'before:today'],
+            'padre_telefono' => ['nullable', 'string', 'max:50'],
+            'padre_idioma' => ['nullable', 'string', 'max:100'],
+            'padre_grado_instruccion' => ['nullable', 'string', 'max:100'],
+            'madre_nombres' => ['nullable', 'string', 'max:150'],
+            'madre_apellido_paterno' => ['nullable', 'string', 'max:150', 'required_with:madre_nombres'],
+            'madre_apellido_materno' => ['nullable', 'string', 'max:150'],
+            'madre_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:madre_nombres'],
+            'madre_complemento' => ['nullable', 'string', 'max:5'],
+            'madre_ocupacion' => ['nullable', 'string', 'max:100'],
+            'madre_fecha_nacimiento' => ['nullable', 'date', 'before:today'],
+            'madre_telefono' => ['nullable', 'string', 'max:50'],
+            'madre_idioma' => ['nullable', 'string', 'max:100'],
+            'madre_grado_instruccion' => ['nullable', 'string', 'max:100'],
+            'tutor_nombres' => ['nullable', 'string', 'max:150'],
+            'tutor_apellido_paterno' => ['nullable', 'string', 'max:150', 'required_with:tutor_nombres'],
+            'tutor_apellido_materno' => ['nullable', 'string', 'max:150'],
+            'tutor_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:tutor_nombres'],
+            'tutor_complemento' => ['nullable', 'string', 'max:5'],
+            'tutor_ocupacion' => ['nullable', 'string', 'max:100'],
+            'tutor_fecha_nacimiento' => ['nullable', 'date', 'before:today'],
+            'tutor_telefono' => ['nullable', 'string', 'max:50'],
+            'tutor_idioma' => ['nullable', 'string', 'max:100'],
+            'tutor_grado_instruccion' => ['nullable', 'string', 'max:100'],
+            // 5.5 Tutor(a) extraordinario(a)
+            'tutor_extra_apellido_paterno' => ['nullable', 'string', 'max:150', 'required_with:tutor_extra_nombres'],
+            'tutor_extra_apellido_materno' => ['nullable', 'string', 'max:150'],
+            'tutor_extra_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:tutor_extra_nombres'],
+            'tutor_extra_complemento' => ['nullable', 'string', 'max:5'],
+            'tutor_extra_ocupacion' => ['nullable', 'string', 'max:100'],
+            'tutor_extra_cargo_actual' => ['nullable', 'string', 'max:150'],
+            'tutor_extra_nombre_institucion' => ['nullable', 'string', 'max:200'],
 
             // Legado académico (turno / procedencia)
             'turno' => ['nullable', 'in:MANANA,TARDE,NOCTURNO'],
@@ -181,6 +251,11 @@ class RudeController extends Controller
             return back()->withErrors(['oficialia_nacimiento' => 'Si completa el certificado de nacimiento, debe llenar oficialía, libro, partida, folio y año.'])->withInput();
         }
 
+        // Tutela extraordinaria exige nombre del centro de acogida
+        if (in_array('En tutela extraordinaria', $validated['convive_con'] ?? [], true) && empty($validated['centro_acogida'])) {
+            return back()->withErrors(['centro_acogida' => 'Si vive en tutela extraordinaria, indique el nombre del centro de acogida.'])->withInput();
+        }
+
         // Validar CI con complemento (solo si se envió documento tipo CI)
         $complemento = $validated['complemento'] ?? null;
         if (! empty($validated['numero_documento']) && ! StudentRudeRecord::validarCI($validated['numero_documento'], $complemento)) {
@@ -190,6 +265,26 @@ class RudeController extends Controller
         // Validar SIE si está presente
         if (! empty($validated['codigo_sie_ue']) && ! StudentRudeRecord::validarCodigoSIE($validated['codigo_sie_ue'])) {
             return back()->withErrors(['codigo_sie_ue' => 'Código SIE UE inválido (8 dígitos).'])->withInput();
+        }
+
+        // Validar cascadas de ubicación (provincia y municipio del departamento)
+        foreach (['ue' => 'Unidad Educativa', 'dir' => 'dirección actual'] as $pref => $etiqueta) {
+            $depto = $validated[$pref . '_departamento'] ?? null;
+            $prov = $validated[$pref . '_provincia'] ?? null;
+            $muni = $validated[$pref . '_municipio'] ?? null;
+            $ojo = config('bolivia.departamentos')[$depto] ?? null;
+            if ($ojo && $prov && ! in_array($prov, $ojo['provincias'], true)) {
+                return back()->withErrors([$pref . '_provincia' => "La provincia no pertenece a {$depto} ({$etiqueta})."])->withInput();
+            }
+            if ($ojo && $muni && $muni !== 'Otro' && ! in_array($muni, $ojo['municipios'], true)) {
+                return back()->withErrors([$pref . '_municipio' => "El municipio no pertenece a {$depto} ({$etiqueta})."])->withInput();
+            }
+        }
+        // Resolver "Otro" con el texto libre
+        foreach (['ue_municipio', 'dir_municipio'] as $campo) {
+            if (($validated[$campo] ?? null) === 'Otro') {
+                $validated[$campo] = trim((string) ($validated[$campo . '_otro'] ?? ''));
+            }
         }
 
         // Actualizar datos del estudiante (CI / documento)
@@ -204,6 +299,7 @@ class RudeController extends Controller
             'idiomas_uso_frecuente',
             'internet_lugares',
             'laboral_turnos',
+            'meses_trabajados',
             'abandono_razones',
             'discapacidad_tipos',
             'dificultad_aprendizaje',
@@ -251,7 +347,73 @@ class RudeController extends Controller
             $rude = StudentRudeRecord::create($rudeData);
         }
 
-        return redirect()->route('rude.show', $student)->with('success', 'Formulario RUDE actualizado correctamente. Estado: '.$rude->estado);
+        // Sección V.2/3/4/5: guardar datos de padre, madre, tutor(a) y extraordinario
+        $this->guardarFamiliarRude($student, $validated, 'padre', 'PADRE');
+        $this->guardarFamiliarRude($student, $validated, 'madre', 'MADRE');
+        $this->guardarFamiliarRude($student, $validated, 'tutor', 'TUTOR');
+        $this->guardarFamiliarRude($student, $validated, 'tutor_extra', 'TUTOR_EXTRAORDINARIO', [
+            'cargo_actual' => $validated['tutor_extra_cargo_actual'] ?? null,
+            'nombre_institucion' => $validated['tutor_extra_nombre_institucion'] ?? null,
+        ]);
+
+        $destino = request()->user()->hasRole('Estudiante')
+            ? redirect()->route('inscripciones.mi-inscripcion')
+            : redirect()->route('rude.show', $student);
+
+        return $destino->with('success', 'Formulario RUDE actualizado correctamente. Estado: '.$rude->estado);
+    }
+
+    /**
+     * Crea o actualiza el familiar del bloque (padre/madre/tutor) y lo vincula
+     * al estudiante. Solo actúa si el bloque trae nombres.
+     */
+    private function guardarFamiliarRude(Student $student, array $v, string $grupo, string $relacion, array $extras = []): void
+    {
+        $nombres = trim((string) ($v[$grupo . '_nombres'] ?? ''));
+        if ($nombres === '') {
+            return;
+        }
+
+        $numDoc = trim((string) ($v[$grupo . '_num_doc'] ?? ''));
+        $complemento = trim((string) ($v[$grupo . '_complemento'] ?? ''));
+
+        $pg = null;
+        if ($numDoc !== '') {
+            $pg = ParentGuardian::where('numero_documento', $numDoc)->where('complemento', $complemento)->first();
+        }
+        if (! $pg) {
+            $pg = $student->parentGuardians()
+                ->wherePivot('tipo_relacion', $relacion)
+                ->orderByDesc('student_parent.es_principal')
+                ->first();
+        }
+
+        $datos = [
+            'nombres' => $nombres,
+            'apellidos' => trim(trim((string) ($v[$grupo . '_apellido_paterno'] ?? '')) . ' ' . trim((string) ($v[$grupo . '_apellido_materno'] ?? ''))),
+            'apellido_paterno' => trim((string) ($v[$grupo . '_apellido_paterno'] ?? '')),
+            'apellido_materno' => trim((string) ($v[$grupo . '_apellido_materno'] ?? '')),
+            'tipo_documento' => 'CI',
+            'numero_documento' => $numDoc !== '' ? $numDoc : ($pg?->numero_documento ?? 'SIN-DOC'),
+            'complemento' => $complemento,
+            'ocupacion' => $v[$grupo . '_ocupacion'] ?? $pg?->ocupacion,
+            'fecha_nacimiento' => $v[$grupo . '_fecha_nacimiento'] ?? $pg?->fecha_nacimiento,
+            'telefono' => $v[$grupo . '_telefono'] ?? $pg?->telefono,
+            'idioma' => $v[$grupo . '_idioma'] ?? $pg?->idioma,
+            'grado_instruccion' => $v[$grupo . '_grado_instruccion'] ?? $pg?->grado_instruccion,
+            'estado' => 'ACTIVO',
+        ];
+        $datos = array_merge($datos, array_filter($extras, fn ($x) => $x !== null));
+
+        if ($pg) {
+            $pg->update($datos);
+        } else {
+            $pg = ParentGuardian::create($datos);
+        }
+
+        $student->parentGuardians()->syncWithoutDetaching([
+            $pg->id => ['tipo_relacion' => $relacion, 'es_principal' => false, 'convive' => true],
+        ]);
     }
 
     /**
@@ -437,9 +599,61 @@ class RudeController extends Controller
         $student->load(['rudeRecord', 'parentGuardians', 'user']);
         $rude = $student->rudeRecord;
 
-        $pdf = Pdf::loadView('rude.pdf', compact('student', 'rude'))
+        $qrBase64 = $this->qrRude($student, $rude);
+
+        $pdf = Pdf::loadView('rude.pdf', compact('student', 'rude', 'qrBase64'))
             ->setPaper('a4', 'portrait');
 
         return $pdf->download('RUDE_'.$student->codigo.'_'.now()->format('Ymd').'.pdf');
+    }
+
+    /**
+     * QR de seguridad del formulario (medida RUDE 2026): identifica el registro.
+     */
+    private function qrRude(Student $student, $rude): ?string
+    {
+        try {
+            $payload = sprintf(
+                'RUDE:%s|SIE:%s|EST:%s|%s',
+                $rude?->codigo_rude ?? 'PENDIENTE',
+                $rude?->codigo_sie_ue ?? StudentRudeRecord::SIE_UE,
+                $student->codigo,
+                now()->format('Y-m-d H:i')
+            );
+            $result = \Endroid\QrCode\Builder\Builder::create()
+                ->writer(new \Endroid\QrCode\Writer\PngWriter())
+                ->writerOptions([])
+                ->data($payload)
+                ->encoding(new \Endroid\QrCode\Encoding\Encoding('UTF-8'))
+                ->errorCorrectionLevel(\Endroid\QrCode\ErrorCorrectionLevel::Medium)
+                ->size(220)
+                ->margin(6)
+                ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin)
+                ->validateResult(false)
+                ->build();
+
+            return 'data:image/png;base64,'.base64_encode($result->getString());
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * HU-59: Inscripción en Línea paso 1. El estudiante actualiza su propio RUDE.
+     */
+    public function formPropio(Request $request): View
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+
+        return $this->form($student);
+    }
+
+    public function updatePropio(Request $request): RedirectResponse
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+
+        return $this->update($request, $student);
     }
 }

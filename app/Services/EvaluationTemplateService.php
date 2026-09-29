@@ -116,7 +116,6 @@ class EvaluationTemplateService
     {
         $plan->load(['courseSubject.subject', 'courseSubject.course.grade', 'courseSubject.course.section', 'criteria.activities']);
         $cs = $plan->courseSubject;
-        $service = app(EvaluationService::class);
         $criterios = $this->criteriosOrdenados($plan);
 
         $spreadsheet = new Spreadsheet;
@@ -226,12 +225,56 @@ class EvaluationTemplateService
         // --- Hoja Notas (réplica de la planilla oficial) ---
         $sheetN = $spreadsheet->createSheet();
         $sheetN->setTitle('Notas');
-        $estudiantes = $this->estudiantes($cs);
+        $this->construirHojaNotas($sheetN, $plan, $cs, $criterios, $this->estudiantes($cs), true);
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Centralizador con formato de planilla oficial (HU-58): misma hoja Notas
+     * pero con valores calculados en vez de fórmulas (es reporte, no plantilla).
+     */
+    public function exportarCentralizador(EvaluationPlan $plan): string
+    {
+        $plan->load(['courseSubject.subject', 'courseSubject.course.grade', 'courseSubject.course.section', 'courseSubject.course.gestion', 'criteria.activities']);
+        $cs = $plan->courseSubject;
+
+        $spreadsheet = new Spreadsheet;
+        $sheetN = $spreadsheet->getActiveSheet();
+        $sheetN->setTitle('Centralizador');
+        $this->construirHojaNotas($sheetN, $plan, $cs, $this->criteriosOrdenados($plan), $this->estudiantes($cs), false);
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Construye la hoja de matriz estudiantes x actividades + promedios.
+     * Con $conFormulas=false escribe los valores calculados (centralizador).
+     */
+    private function construirHojaNotas(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheetN,
+        EvaluationPlan $plan,
+        CourseSubject $cs,
+        Collection $criterios,
+        Collection $estudiantes,
+        bool $conFormulas
+    ): void {
+        $service = app(EvaluationService::class);
 
         // Metadatos (filas 1-7): membrete institucional + DOCENTE/CURSO/MATERIA/TRIMESTRE
         $sheetN->setCellValue('D1', 'UNIDAD EDUCATIVA SAN BERNARDO — TARIJA');
         $sheetN->mergeCells('D1:H1');
-        $sheetN->setCellValue('D2', 'PLANILLA DE EVALUACIÓN POR CRITERIOS — TRIMESTRE '.$plan->trimestre);
+        $sheetN->setCellValue('D2', $conFormulas
+            ? 'PLANILLA DE EVALUACIÓN POR CRITERIOS — TRIMESTRE ' . $plan->trimestre
+            : 'CENTRALIZADOR DE CALIFICACIONES POR TRIMESTRE ' . $plan->trimestre . '°');
         $sheetN->mergeCells('D2:H2');
         $sheetN->setCellValue('D3', 'Registro de notas por criterio (SE/SA/HA/AU)  ·  Gestión '.($cs->course->gestion->nombre ?? now()->year));
         $sheetN->mergeCells('D3:H3');
@@ -297,7 +340,7 @@ class EvaluationTemplateService
         $sheetN->mergeCells($this->colLetter($colTotal).$filaC.':'.$this->colLetter($colTotal).$filaA);
         $ultimaCol = $colTotal;
 
-        // Filas de estudiantes con FÓRMULAS (réplica exacta de la planilla oficial)
+        // Filas de estudiantes: con FÓRMULAS (plantilla) o valores (centralizador)
         foreach ($estudiantes as $i => $student) {
             $sheetN->setCellValue('A'.$filaDatos, $i + 1);
             $sheetN->setCellValue('B'.$filaDatos, $student->apellidos.' '.$student->nombres);
@@ -314,32 +357,40 @@ class EvaluationTemplateService
                     }
                     $col++;
                 }
-                // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),0),"")
-                // El rango cubre todas las actividades del criterio (los vacíos los ignora AVERAGE)
                 if ($nAct > 0) {
-                    $rango = $this->colLetter($inicio).$filaDatos.':'.$this->colLetter($inicio + $nAct - 1).$filaDatos;
-                    $sheetN->setCellValue(
-                        $this->colLetter($promCols[$criterion->codigo]).$filaDatos,
-                        "=IFERROR(ROUND(AVERAGE($rango),0),\"\")"
-                    );
+                    if ($conFormulas) {
+                        // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),0),"")
+                        // El rango cubre todas las actividades del criterio (los vacíos los ignora AVERAGE)
+                        $rango = $this->colLetter($inicio).$filaDatos.':'.$this->colLetter($inicio + $nAct - 1).$filaDatos;
+                        $sheetN->setCellValue(
+                            $this->colLetter($promCols[$criterion->codigo]).$filaDatos,
+                            "=IFERROR(ROUND(AVERAGE($rango),0),\"\")"
+                        );
+                    } else {
+                        $notaCrit = $service->notaCriterio($criterion, $student);
+                        if ($notaCrit !== null) {
+                            $sheetN->setCellValue($this->colLetter($promCols[$criterion->codigo]).$filaDatos, $notaCrit);
+                        }
+                    }
                 }
                 $col++; // pasa la columna de promedio
             }
-            // Fórmula total: =SUM de los promedios de los criterios
-            $refs = collect($criterios)->map(fn ($c) => $this->colLetter($promCols[$c->codigo]).$filaDatos)->toArray();
-            $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=SUM('.implode(',', $refs).')');
+            if ($conFormulas) {
+                // Fórmula total: =SUM de los promedios de los criterios
+                $refs = collect($criterios)->map(fn ($c) => $this->colLetter($promCols[$c->codigo]).$filaDatos)->toArray();
+                $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=SUM('.implode(',', $refs).')');
+            } else {
+                $notaTrim = $service->notaTrimestre($plan, $student);
+                if ($notaTrim !== null) {
+                    $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, $notaTrim);
+                }
+            }
             $filaDatos++;
         }
         $ultimaFila = $filaDatos - 1;
 
         $this->estilizarHojaNotas($sheetN, $ultimaCol, $filaC, $filaA, $ultimaFila, $criterios, $promCols, $colTotal, $rangosCriterio);
         $this->insertarLogo($sheetN, 110, 15);
-
-        $writer = new Xlsx($spreadsheet);
-        ob_start();
-        $writer->save('php://output');
-
-        return (string) ob_get_clean();
     }
 
     /**

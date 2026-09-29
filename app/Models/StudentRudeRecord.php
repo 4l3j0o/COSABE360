@@ -24,6 +24,21 @@ class StudentRudeRecord extends Model
         'DECLARACION_JURADA' => 'Declaración Jurada de Buena Fe',
     ];
 
+    /** Documentos válidos solo para extranjeros (2.5.1). */
+    public const DOCUMENTOS_EXTRANJERO = [
+        'Cédula de Identidad de Extranjero',
+        'Cédula de Identidad de Diplomático',
+        'Certificado de Nacimiento',
+        'Documento Nacional de Identidad (DNI)',
+        'Pasaporte',
+        'Declaración Jurada de Buena Fe',
+    ];
+
+    public const MESES = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+
     public const SEXOS = ['MASCULINO', 'FEMENINO'];
 
     public const IDIOMAS = [
@@ -115,6 +130,8 @@ class StudentRudeRecord extends Model
         'ue_telefono',
         'ue_celular',
         'nro_registro_discapacidad',
+        'tipo_doc_extranjero',
+        'codigo_doc_extranjero',
         'dir_departamento',
         'dir_provincia',
         'dir_municipio',
@@ -124,6 +141,9 @@ class StudentRudeRecord extends Model
         'dir_nro_vivienda',
         'dir_telefono',
         'dir_celular',
+        'dir_latitud',
+        'dir_longitud',
+        'foto_fachada',
         'idioma_aprendio',
         'idiomas_uso_frecuente',
         'autoidentificacion_cultural',
@@ -144,14 +164,17 @@ class StudentRudeRecord extends Model
         'laboral_turnos',
         'laboral_frecuencia',
         'laboral_recibio_pago',
+        'meses_trabajados',
         'transporte_medio',
         'transporte_tiempo',
+        'transporte_otro',
         'abandono_escolar',
         'abandono_razones',
         'discapacidad_tipos',
         'discapacidad_grado',
         'dificultad_aprendizaje',
         'convive_con',
+        'centro_acogida',
         'turno',
         'transporte',
         'zona_residencial',
@@ -193,6 +216,7 @@ class StudentRudeRecord extends Model
             'serv_recojo_basura' => 'boolean',
             'laboral_trabajo' => 'boolean',
             'laboral_recibio_pago' => 'boolean',
+            'meses_trabajados' => 'array',
             'abandono_escolar' => 'boolean',
         ];
     }
