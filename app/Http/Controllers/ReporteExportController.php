@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AcademicYear;
-use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\GradeScore;
 use App\Models\MonthlyPayment;
 use App\Models\Registration;
 use App\Models\StudentDocument;
-use App\Models\Subject;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -111,65 +107,6 @@ HTML;
             $filename . '.xlsx',
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );
-    }
-
-    public function academicoCalificaciones(Request $request)
-    {
-        $query = GradeScore::with(['assessment.subject', 'assessment.academicYear', 'assessment.courseSubject.course', 'student'])
-            ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('assessment', fn ($aq) => $aq->where('academic_year_id', $v)))
-            ->when($request->subject_id, fn ($q, $v) => $q->whereHas('assessment', fn ($aq) => $aq->where('subject_id', $v)))
-            ->when($request->course_id, fn ($q, $v) => $q->whereHas('assessment.courseSubject', fn ($cq) => $cq->where('course_id', $v)))
-            ->orderByDesc('id')->limit(500)->get();
-
-        if ($request->query('format') === 'excel') {
-            $headers = ['Estudiante', 'Código', 'Evaluación', 'Materia', 'Curso', 'Nota', 'Gestión'];
-            $rows = $query->map(fn ($s) => [
-                $s->student ? $s->student->nombres . ' ' . $s->student->apellidos : 'N/A',
-                $s->student?->codigo ?? '',
-                $s->assessment?->nombre ?? '',
-                $s->assessment?->subject?->nombre ?? '',
-                $s->assessment?->courseSubject?->course?->nombre ?? '',
-                $s->nota,
-                $s->assessment?->academicYear?->nombre ?? '',
-            ]);
-            return $this->excelResponse('reporte_calificaciones_' . date('Ymd_His'), $headers, $rows);
-        }
-
-        $rowsHtml = $query->map(fn ($s) => '<tr><td>' . e($s->student?->nombres . ' ' . $s->student?->apellidos) . '</td><td>' . e($s->student?->codigo) . '</td><td>' . e($s->assessment?->nombre) . '</td><td>' . e($s->assessment?->subject?->nombre) . '</td><td>' . e($s->assessment?->courseSubject?->course?->nombre) . '</td><td>' . e($s->nota) . '</td><td>' . e($s->assessment?->academicYear?->nombre) . '</td></tr>')->implode('');
-        $body = '<table><thead><tr><th>Estudiante</th><th>Código</th><th>Evaluación</th><th>Materia</th><th>Curso</th><th>Nota</th><th>Gestión</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
-        return $this->pdfDownload('Reporte Calificaciones por Curso/Materia', $body, 'reporte_calificaciones_' . date('Ymd_His'));
-    }
-
-    public function academicoPromedios(Request $request)
-    {
-        $query = GradeScore::with(['assessment.subject', 'student'])
-            ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('assessment', fn ($aq) => $aq->where('academic_year_id', $v)))
-            ->when($request->course_id, fn ($q, $v) => $q->whereHas('assessment.courseSubject', fn ($cq) => $cq->where('course_id', $v)))
-            ->get();
-
-        $promedios = $query->groupBy('student_id')->map(function ($scores) {
-            $s = $scores->first()->student;
-            $porMateria = $scores->groupBy(fn ($x) => $x->assessment?->subject?->nombre ?? 'Sin materia')->map(function ($g) {
-                $sumPesos = $g->sum('assessment.peso');
-                $prom = $sumPesos > 0 ? round($g->sum(fn ($s) => $s->nota * ($s->assessment->peso / $sumPesos)), 2) : round($g->avg('nota'), 2);
-                return ['materia' => $g->first()->assessment?->subject?->nombre ?? 'Sin materia', 'promedio' => $prom];
-            });
-            $promGeneral = round($porMateria->avg('promedio'), 2);
-            return ['estudiante' => $s ? $s->nombres . ' ' . $s->apellidos : 'N/A', 'codigo' => $s?->codigo ?? '', 'promedio' => $promGeneral, 'por_materia' => $porMateria->values()];
-        })->values();
-
-        if ($request->query('format') === 'excel') {
-            $headers = ['Estudiante', 'Código', 'Promedio General'];
-            $rows = $promedios->map(fn ($p) => [$p['estudiante'], $p['codigo'], $p['promedio']]);
-            return $this->excelResponse('reporte_promedios_' . date('Ymd_His'), $headers, $rows);
-        }
-
-        $rowsHtml = $promedios->map(function ($p) {
-            $materias = $p['por_materia']->map(fn ($m) => e($m['materia']) . ': ' . $m['promedio'])->implode(', ');
-            return '<tr><td>' . e($p['estudiante']) . '</td><td>' . e($p['codigo']) . '</td><td>' . e($p['promedio']) . '</td><td>' . $materias . '</td></tr>';
-        })->implode('');
-        $body = '<table><thead><tr><th>Estudiante</th><th>Código</th><th>Promedio</th><th>Por Materia</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
-        return $this->pdfDownload('Reporte Promedios por Estudiante', $body, 'reporte_promedios_' . date('Ymd_His'));
     }
 
     public function administrativoInscripciones(Request $request)

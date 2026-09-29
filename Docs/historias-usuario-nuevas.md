@@ -395,6 +395,11 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Limpieza de nivel cruzado** — `LimpiarCruceNivelSeeder`: el seeder viejo asignaba
   por nombre sin filtrar nivel (190 casos en 40 cursos + 630 asistencias); fusiona cada
   fila cruzada en la correcta del mismo docente/curso y mueve asistencias.
+- **Limpieza HU-61** — retirado el módulo viejo de calificaciones (Assessment/
+  GradeScore/FinalGrades controllers, observer, vistas assessments/grade-scores/
+  calificaciones/notas-finales/reportes, seeders y tests asociados; modelos y tablas
+  se conservan por historial). Rutas redirigen al sistema vigente (boletín, trimestre,
+  reportes); enlaces actualizados en sidebars/dashboards.
 - **Consolidación HU-58b** — la Central es el módulo único: sección Administrativos con
   descarga directa (inscripciones/matrículas/pagos/documentación); landings viejas
   redirigen a central; sidebars solo con Central; retirados exports legacy vacíos

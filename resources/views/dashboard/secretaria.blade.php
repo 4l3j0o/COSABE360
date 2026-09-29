@@ -96,13 +96,13 @@
                     <p class="text-xs text-muted-foreground">Formulario y exportación RUDE</p>
                 </div>
             </a>
-            <a href="{{ route('notas-finales.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+            <a href="{{ route('evaluation-reports.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
                 <span class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-primary shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </span>
                 <div>
-                    <span class="font-medium text-foreground">Notas Finales</span>
-                    <p class="text-xs text-muted-foreground">Consultar notas por estudiante</p>
+                    <span class="font-medium text-foreground">Reportes de Evaluación</span>
+                    <p class="text-xs text-muted-foreground">Consultar notas por curso y trimestre</p>
                 </div>
             </a>
             <a href="{{ route('reportes.administrativos.index') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
