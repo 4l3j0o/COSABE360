@@ -53,12 +53,6 @@ class AsignacionImportService
                 $cursos[$c->section->codigo] = $c;
             }
         }
-
-        $materias = [];
-        foreach (Subject::all() as $s) {
-            $materias[$s->level_id][$this->normalizar($s->nombre)] = $s;
-        }
-
         $stats = ['creadas' => 0, 'actualizadas' => 0, 'existentes' => 0, 'omitidas' => []];
 
         $sheet = IOFactory::load($path)->getActiveSheet();
@@ -82,7 +76,8 @@ class AsignacionImportService
                 continue;
             }
 
-            $materia = $materias[$curso->grade->level_id][$this->normalizar($materiaNom)] ?? null;
+            // HU-59: resolución por nombre exacto o legacy -> sigla oficial.
+            $materia = Subject::resolver($curso->grade->level_id, $materiaNom);
             if (! $materia) {
                 $stats['omitidas'][] = "F{$r}: materia no hallada '{$materiaNom}' ({$cursoCod})";
 

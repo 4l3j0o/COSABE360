@@ -24,8 +24,9 @@ class NormalizarMateriasSeeder extends Seeder
     public function run(): void
     {
         // [nivel, nombre_antiguo, sigla_canonica]
+        // (libreta: Primaria usa comunicación única CL)
         $fusiones = [
-            ['Primaria Comunitaria Vocacional', 'Inglés', 'LE'],
+            ['Primaria Comunitaria Vocacional', 'Inglés', 'CL'],
             ['Inicial en Familia Comunitaria', 'Educación Física', 'EF'],
         ];
 

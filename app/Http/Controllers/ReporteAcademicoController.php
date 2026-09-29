@@ -9,12 +9,12 @@ use Illuminate\Http\Request;
 
 class ReporteAcademicoController extends Controller
 {
+    /**
+     * HU-58b: módulo absorbido por la Central de Reportes.
+     * Se conserva la ruta para no romper enlaces existentes.
+     */
     public function index(Request $request)
     {
-        $academicYears = AcademicYear::orderByDesc('nombre')->get();
-        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
-        $subjects = Subject::orderBy('nombre')->get();
-
-        return view('reportes.academicos.index', compact('academicYears', 'courses', 'subjects'));
+        return redirect()->route('reportes.central.index');
     }
 }

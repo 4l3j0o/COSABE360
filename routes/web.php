@@ -539,11 +539,15 @@ Route::middleware(['auth', 'role:Administrador,Director'])->prefix('reportes/exp
     Route::get('/academico/calificaciones', [ReporteExportController::class, 'academicoCalificaciones'])->name('reportes.export.academico.calificaciones');
     Route::get('/academico/promedios', [ReporteExportController::class, 'academicoPromedios'])->name('reportes.export.academico.promedios');
 });
+// HU-58b: Administrativos no financieros (inscripciones/documentación).
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');
+    Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
+});
+// HU-58b: Administrativos financieros (matrículas/pagos): sin Director.
+Route::middleware(['auth', 'role:Administrador,Secretaría'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/matriculas', [ReporteExportController::class, 'administrativoMatriculas'])->name('reportes.export.administrativo.matriculas');
     Route::get('/administrativo/pagos', [ReporteExportController::class, 'administrativoPagos'])->name('reportes.export.administrativo.pagos');
-    Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
 });
 
 // HU-35: Historial de auditoría - solo Administrador, no editable/eliminable

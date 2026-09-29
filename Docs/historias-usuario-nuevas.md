@@ -388,3 +388,19 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   + `AsignacionImportService` + `AsignacionesExcelSeeder` (idempotente, el Excel manda;
   carga horaria a `course_subjects.horas_semanales`). Huecos reales del Excel: DSAE
   (Inicial), CFIL (S6A/S6C) y EMP (S6) sin docente.
+- **Lista oficial de libretas** — `Subject::resolver()` + mapa legacy; catálogo con
+  nombres de libreta (Primaria 9 áreas con comunicación única, TEC solo S1-2 como
+  TÉCNICA TECNOLÓGICA GENERAL, CN: BIO-GEO/FÍSICA/QUÍMICA, COSMOVISIONES con SICOLOGÍA);
+  `MateriasLibretaSeeder` fusiona LELO/LE→CL y PS→CFIL con remapeo total.
+- **Limpieza de nivel cruzado** — `LimpiarCruceNivelSeeder`: el seeder viejo asignaba
+  por nombre sin filtrar nivel (190 casos en 40 cursos + 630 asistencias); fusiona cada
+  fila cruzada en la correcta del mismo docente/curso y mueve asistencias.
+- **Consolidación HU-58b** — la Central es el módulo único: sección Administrativos con
+  descarga directa (inscripciones/matrículas/pagos/documentación); landings viejas
+  redirigen a central; sidebars solo con Central; retirados exports legacy vacíos
+  (assessments sin datos); fix export Pagos (usa `monto` real).
+- **Restricción Director** — Matrículas y Pagos solo Admin/Secretaría (rutas + central).
+- **Excel real en todos los reportes** — los 6 exports viejos pasaron de CSV con comas
+  a XLSX con columnas y línea visual institucional (RUDE mantiene CSV oficial MinEdu).
+- **Centralizador por evaluación en sistema vigente** — usaba `assessments` (módulo
+  viejo sin datos); ahora muestra T1/T2/T3 + promedio anual por materia (evaluation_plans).

@@ -29,7 +29,7 @@ class MateriasOficialesSeeder extends Seeder
         }
 
         $pvc = 'PVCP1,PVCP2-P4,PCPP5,PCPP6';
-        $scpAlto = 'SCPS3-5,SCPS6ABC';
+        $scp = 'SCPS1-2,SCPS3-5,SCPS6ABC';
 
         $catalogo = [
             // NIFC — Inicial en Familia Comunitaria (cualitativo)
@@ -42,49 +42,31 @@ class MateriasOficialesSeeder extends Seeder
             [$inicial->id, '08', 'TECNOLOGÍA', 'TEC', 'EDUCACIÓN TECNOLÓGICA', 'NIFC'],
             [$inicial->id, '09', 'INGLÉS', 'ING', 'EDUCACIÓN EN IDIOMAS', 'NIFC'],
 
-            // PVC — Primaria (P1, P2-P4, P5, P6 comparten la lista)
-            [$primaria->id, '01', 'COMUNICACIÓN Y LENGUAJES', 'CL', 'COMUNIDAD Y SOCIEDAD', $pvc],
-            [$primaria->id, '01.01', 'Lengua española', 'LELO', 'COMUNIDAD Y SOCIEDAD', $pvc],
-            [$primaria->id, '01.02', 'Lengua extranjera', 'LE', 'COMUNIDAD Y SOCIEDAD', $pvc],
+            // PVC — Primaria 1ro-6to (libreta oficial: 9 áreas, comunicación única)
+            [$primaria->id, '01', 'COMUNICACIÓN Y LENGUAJES (CASTELLANA, ORIGINARIA Y LENGUA EXTRANJERA)', 'CL', 'COMUNIDAD Y SOCIEDAD', $pvc],
             [$primaria->id, '02', 'CIENCIAS SOCIALES', 'SOC', 'COMUNIDAD Y SOCIEDAD', $pvc],
             [$primaria->id, '03', 'EDUCACIÓN FÍSICA Y DEPORTES', 'EFD', 'COMUNIDAD Y SOCIEDAD', $pvc],
             [$primaria->id, '04', 'EDUCACIÓN MUSICAL', 'EM', 'COMUNIDAD Y SOCIEDAD', $pvc],
             [$primaria->id, '05', 'ARTES PLÁSTICAS Y VISUALES', 'APLASVI', 'COMUNIDAD Y SOCIEDAD', $pvc],
             [$primaria->id, '06', 'MATEMÁTICA', 'MAT', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', $pvc],
-            [$primaria->id, '07', 'TECNOLOGÍA', 'TEC', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', $pvc],
+            [$primaria->id, '07', 'TÉCNICA TECNOLÓGICA', 'TEC', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', $pvc],
             [$primaria->id, '08', 'CIENCIAS NATURALES', 'CN', 'VIDA TIERRA TERRITORIO', $pvc],
-            [$primaria->id, '09', 'VALORES, ESPIRITUALIDADES Y RELIGIONES', 'VER', 'COSMOS Y PENSAMIENTO', $pvc],
+            [$primaria->id, '09', 'VALORES, ESPIRITUALIDAD Y RELIGIONES', 'VER', 'COSMOS Y PENSAMIENTO', $pvc],
 
-            // SCP S1-S2 — Secundaria
-            [$secundaria->id, '01', 'LENGUA ESPAÑOLA', 'LELO', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '02', 'LENGUA EXTRANJERA', 'LE', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '03', 'CIENCIAS SOCIALES', 'SOC', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '04', 'EDUCACIÓN FÍSICA Y DEPORTES', 'EFD', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '05', 'EDUCACIÓN MUSICAL', 'EM', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '06', 'ARTES PLÁSTICAS Y VISUALES', 'APLASVI', 'COMUNIDAD Y SOCIEDAD', 'SCPS1-2'],
-            [$secundaria->id, '07', 'MATEMÁTICA', 'MAT', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', 'SCPS1-2'],
-            [$secundaria->id, '08', 'TECNOLOGÍA', 'TEC', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', 'SCPS1-2'],
-            [$secundaria->id, '09', 'CIENCIAS NATURALES', 'CN', 'VIDA TIERRA TERRITORIO', 'SCPS1-2'],
-            [$secundaria->id, '09.1', 'BIOLOGIA', 'BIO', 'VIDA TIERRA TERRITORIO', 'SCPS1-2'],
-            [$secundaria->id, '09.2', 'QUÍMICA', 'QUIM', 'VIDA TIERRA TERRITORIO', 'SCPS1-2'],
-            [$secundaria->id, '09.3', 'FÍSICA', 'FIS', 'VIDA TIERRA TERRITORIO', 'SCPS1-2'],
-            [$secundaria->id, '10', 'PSICOLOGÍA', 'PS', 'COSMOS Y PENSAMIENTO', 'SCPS1-2'],
-            [$secundaria->id, '11', 'VALORES, ESPIRITUALIDADES Y RELIGIONES', 'VER', 'COSMOS Y PENSAMIENTO', 'SCPS1-2'],
-
-            // SCP S3-S5 y S6 — Secundaria (INV/EMP solo S6)
-            [$secundaria->id, '01', 'LENGUA ESPAÑOLA', 'LELO', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '02', 'LENGUA EXTRANJERA', 'LE', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '03', 'CIENCIAS SOCIALES', 'SOC', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '04', 'EDUCACIÓN FÍSICA Y DEPORTES', 'EFD', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '05', 'EDUCACIÓN MUSICAL', 'EM', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '06', 'ARTES PLÁSTICAS Y VISUALES', 'APLASVI', 'COMUNIDAD Y SOCIEDAD', $scpAlto],
-            [$secundaria->id, '07', 'MATEMÁTICA', 'MAT', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', $scpAlto],
-            [$secundaria->id, '08', 'BIOLOGIA', 'BIO', 'VIDA TIERRA TERRITORIO', $scpAlto],
-            [$secundaria->id, '09', 'FISICA', 'FIS', 'VIDA TIERRA TERRITORIO', $scpAlto],
-            [$secundaria->id, '10', 'QUIMICA', 'QUIM', 'VIDA TIERRA TERRITORIO', $scpAlto],
-            [$secundaria->id, '11', 'COSMOVISIONES Y FILOSOFÍA', 'CFIL', 'COSMOS Y PENSAMIENTO', $scpAlto],
-            [$secundaria->id, '12', 'VALORES, ESPIRITUALIDADES Y RELIGIONES', 'VER', 'COSMOS Y PENSAMIENTO', $scpAlto],
-            [$secundaria->id, '13', 'TECNOLOGÍA', 'TEC', 'EDUCACIÓN TECNOLÓGICA', $scpAlto],
+            // SCP — Secundaria (libreta oficial; TEC solo S1-S2; INV/EMP solo S6)
+            [$secundaria->id, '01', 'COMUNICACIÓN Y LENGUAJES: LENGUA CASTELLANA Y ORIGINARIA', 'LELO', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '02', 'LENGUA EXTRANJERA', 'LE', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '03', 'CIENCIAS SOCIALES', 'SOC', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '04', 'EDUCACIÓN FÍSICA Y DEPORTES', 'EFD', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '05', 'EDUCACIÓN MUSICAL', 'EM', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '06', 'ARTES PLÁSTICAS Y VISUALES', 'APLASVI', 'COMUNIDAD Y SOCIEDAD', $scp],
+            [$secundaria->id, '07', 'MATEMÁTICA', 'MAT', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', $scp],
+            [$secundaria->id, '08', 'TÉCNICA TECNOLÓGICA GENERAL', 'TEC', 'CIENCIA, TECNOLOGÍA Y PRODUCCIÓN', 'SCPS1-2'],
+            [$secundaria->id, '09.1', 'CIENCIAS NATURALES: BIOLOGÍA - GEOGRAFÍA', 'BIO', 'VIDA TIERRA TERRITORIO', $scp],
+            [$secundaria->id, '09.3', 'CIENCIAS NATURALES: FÍSICA', 'FIS', 'VIDA TIERRA TERRITORIO', $scp],
+            [$secundaria->id, '09.2', 'CIENCIAS NATURALES: QUÍMICA', 'QUIM', 'VIDA TIERRA TERRITORIO', $scp],
+            [$secundaria->id, '11', 'COSMOVISIONES, FILOSOFÍA Y SICOLOGÍA', 'CFIL', 'COSMOS Y PENSAMIENTO', $scp],
+            [$secundaria->id, '12', 'VALORES, ESPIRITUALIDAD Y RELIGIONES', 'VER', 'COSMOS Y PENSAMIENTO', $scp],
             [$secundaria->id, '14', 'INVESTIGACIÓN CIENTÍFICA', 'INV', 'COMPLEMENTARIAS', 'SCPS6ABC'],
             [$secundaria->id, '15', 'EMPRENDIMIENTO', 'EMP', 'COMPLEMENTARIAS', 'SCPS6ABC'],
         ];

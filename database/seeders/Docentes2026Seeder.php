@@ -569,16 +569,8 @@ class Docentes2026Seeder extends Seeder
         foreach ($materias as $m) {
             $sid = DB::table('subjects')->where('nombre', $m['nombre'])->value('id');
             if (! $sid) {
-                // HU-59: la materia pudo normalizarse al nombre oficial
-                // (mayúsculas/sin tildes) por MateriasOficialesSeeder.
-                $norma = self::normalizarNombre($m['nombre']);
-                $candidatos = DB::table('subjects')->where('level_id', $m['level_id'])->pluck('id', 'nombre');
-                foreach ($candidatos as $nombreExistente => $idExistente) {
-                    if (self::normalizarNombre($nombreExistente) === $norma) {
-                        $sid = $idExistente;
-                        break;
-                    }
-                }
+                // HU-59: coincidencia normalizada o nombre legacy -> sigla oficial.
+                $sid = \App\Models\Subject::resolver((int) $m['level_id'], $m['nombre'])?->id;
             }
             if (! $sid) {
                 $sid = DB::table('subjects')->insertGetId(['nombre' => $m['nombre'], 'descripcion' => null, 'level_id' => $m['level_id'], 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
@@ -2948,20 +2940,5 @@ class Docentes2026Seeder extends Seeder
         }
 
         $this->command->info('Docentes 2026 y asignaciones importadas.');
-    }
-
-    /**
-     * HU-59: normaliza nombres para comparar (mayúsculas, sin tildes,
-     * espacios simples). Tolera el renombre oficial de MateriasOficialesSeeder.
-     */
-    private static function normalizarNombre(string $texto): string
-    {
-        $texto = trim($texto);
-        $texto = mb_strtoupper($texto, 'UTF-8');
-        $texto = strtr($texto, [
-            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U', 'Ñ' => 'N',
-        ]);
-
-        return (string) preg_replace('/\s+/', ' ', $texto);
     }
 }

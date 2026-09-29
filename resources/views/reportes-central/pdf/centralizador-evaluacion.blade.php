@@ -22,6 +22,8 @@
   table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; }
   table.grid td.left { text-align: left; }
   table.grid tr.zebra td { background: #f2f6f2; }
+  .aprobado { color: #14532d; font-weight: 800; }
+  .reprobado { color: #7f1d1d; font-weight: 800; }
   .firmas { width: 100%; margin-top: 26px; }
   .firmas td { text-align: center; font-size: 8px; color: #33412f; width: 33%; }
   .linea { border-top: 1px solid #003200; margin: 0 24px; padding-top: 3px; }
@@ -37,7 +39,7 @@
       <td>
         <div class="brand">Unidad Educativa San Bernardo — Tarija</div>
         <div class="brand-sub">Sistema de Gestión Escolar CSB 360</div>
-        <div class="doc-title">Centralizador de Calificaciones por Evaluación</div>
+        <div class="doc-title">Centralizador de Calificaciones por Evaluación (Trimestres + Anual)</div>
         <div class="meta">
           <b>Curso:</b> {{ $resultado['curso'] ?? '—' }}
           · <b>Materia:</b> {{ $resultado['materia'] ?? '—' }}
@@ -53,20 +55,20 @@
   <table class="grid">
     <tr>
       <th style="width:4%">#</th><th style="width:7%">Cód.</th><th class="left">Estudiante</th>
-      @foreach($resultado['assessments'] as $assessment)
-        <th>{{ $assessment->nombre }}<br><small>P{{ $assessment->peso }}</small></th>
-      @endforeach
-      <th style="width:8%">Nota Final</th>
+      <th style="width:9%">1er Trim.</th><th style="width:9%">2do Trim.</th><th style="width:9%">3er Trim.</th>
+      <th style="width:9%">Prom. Anual</th><th style="width:8%">Val.</th><th style="width:10%">Estado</th>
     </tr>
     @foreach($resultado['filas'] as $i => $fila)
       <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
         <td>{{ $i + 1 }}</td>
         <td>{{ $fila['codigo'] }}</td>
         <td class="left">{{ $fila['apellidos'] }} {{ $fila['nombres'] }}</td>
-        @foreach($resultado['assessments'] as $assessment)
-          <td>{{ $fila['porEvaluacion'][$assessment->id] ?? '—' }}</td>
-        @endforeach
-        <td><strong>{{ $fila['notaFinal'] ?? '—' }}</strong></td>
+        <td>{{ $fila['trimestres'][1] ?? '—' }}</td>
+        <td>{{ $fila['trimestres'][2] ?? '—' }}</td>
+        <td>{{ $fila['trimestres'][3] ?? '—' }}</td>
+        <td><strong>{{ $fila['anual'] ?? '—' }}</strong></td>
+        <td>{{ $fila['valoracion']['codigo'] ?? '—' }}</td>
+        <td class="{{ $fila['aprobado'] ? 'aprobado' : 'reprobado' }}">{{ $fila['aprobado'] === null ? '—' : ($fila['aprobado'] ? 'Aprobado' : 'Reprobado') }}</td>
       </tr>
     @endforeach
   </table>
@@ -79,6 +81,6 @@
     </tr>
   </table>
 
-  <div class="foot">Nota final ponderada por peso de cada evaluación. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
+  <div class="foot">Promedio anual = promedio de los 3 trimestres (requiere los 3). Escala (R.M. 473/2021): ED ≤50 · DA 51-68 · DO 69-84 · DP 85-100. Mínimo: 51. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
 </body>
 </html>

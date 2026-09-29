@@ -37,7 +37,8 @@ class NormalizarMateriasTest extends TestCase
     {
         $primaria = Level::where('nombre', 'Primaria Comunitaria Vocacional')->first()->id;
         $ingles = Subject::create(['nombre' => 'Inglés', 'level_id' => $primaria, 'estado' => 'ACTIVO']);
-        $le = Subject::where('level_id', $primaria)->where('sigla', 'LE')->first();
+        // Libreta: Primaria usa comunicación única -> se fusiona en CL
+        $cl = Subject::where('level_id', $primaria)->where('sigla', 'CL')->first();
 
         $grado = Grade::create(['level_id' => $primaria, 'nombre' => 'G', 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
@@ -57,9 +58,9 @@ class NormalizarMateriasTest extends TestCase
 
         // La vieja desaparece, la canónica absorbe todo
         $this->assertNull(Subject::find($ingles->id));
-        $this->assertSame($le->id, $cs->fresh()->subject_id);
-        $this->assertSame($le->id, Attendance::first()->subject_id);
-        $this->assertSame(1, CourseSubject::where('subject_id', $le->id)->count());
+        $this->assertSame($cl->id, $cs->fresh()->subject_id);
+        $this->assertSame($cl->id, Attendance::first()->subject_id);
+        $this->assertSame(1, CourseSubject::where('subject_id', $cl->id)->count());
     }
 
     public function test_elimina_antiguas_sin_referencias(): void

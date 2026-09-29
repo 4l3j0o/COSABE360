@@ -29,8 +29,8 @@ class MateriasOficialesTest extends TestCase
         $secundaria = Level::where('nombre', 'Secundaria Comunitaria Productiva')->first()->id;
 
         $this->assertSame(8, Subject::where('level_id', $inicial)->whereNotNull('sigla')->count());
-        $this->assertSame(11, Subject::where('level_id', $primaria)->whereNotNull('sigla')->count());
-        $this->assertSame(17, Subject::where('level_id', $secundaria)->whereNotNull('sigla')->count());
+        $this->assertSame(9, Subject::where('level_id', $primaria)->whereNotNull('sigla')->count());
+        $this->assertSame(15, Subject::where('level_id', $secundaria)->whereNotNull('sigla')->count());
 
         // Siglas y códigos oficiales
         $mat = Subject::where('level_id', $primaria)->where('sigla', 'MAT')->first();

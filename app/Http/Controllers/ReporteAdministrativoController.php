@@ -7,10 +7,12 @@ use Illuminate\Http\Request;
 
 class ReporteAdministrativoController extends Controller
 {
+    /**
+     * HU-58b: módulo absorbido por la Central de Reportes.
+     * Se conserva la ruta para no romper enlaces existentes.
+     */
     public function index(Request $request)
     {
-        $academicYears = AcademicYear::orderByDesc('nombre')->get();
-
-        return view('reportes.administrativos.index', compact('academicYears'));
+        return redirect()->route('reportes.central.index');
     }
 }
