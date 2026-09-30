@@ -13,15 +13,21 @@
     if (isset($errors) && $errors->any()) {
         $toasts[] = ['tipo' => 'error', 'texto' => $errors->all()];
     }
+    // Colores sólidos por tipo (sin transparencias): error=rojo, éxito=verde, mensaje=verde azulado
+    $estilosToast = [
+        'error'   => 'bg-red-600 text-white ring-red-800',
+        'success' => 'bg-emerald-600 text-white ring-emerald-800',
+        'mensaje' => 'bg-teal-600 text-white ring-teal-800',
+    ];
 @endphp
 @if(count($toasts))
 <div id="toasts" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
     @foreach($toasts as $t)
-    <div class="toast flex items-start gap-2.5 backdrop-blur rounded-xl px-4 py-3 text-sm shadow-xl ring-1 ring-white/10 transition-all duration-500 {{ $t['tipo'] === 'error' ? 'bg-red-950/85 text-red-50' : 'bg-neutral-900/85 text-white' }}" role="status">
+    <div class="toast flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm shadow-2xl ring-1 transition-all duration-500 {{ $estilosToast[$t['tipo']] ?? 'bg-neutral-800 text-white ring-black/20' }}" role="status">
         @if($t['tipo'] === 'error')
-        <svg class="w-5 h-5 mt-px shrink-0 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <svg class="w-5 h-5 mt-px shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         @else
-        <svg class="w-5 h-5 mt-px shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <svg class="w-5 h-5 mt-px shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         @endif
         @php
             $texto = $t['texto'];
