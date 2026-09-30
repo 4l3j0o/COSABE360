@@ -99,7 +99,8 @@
                 <thead>
                     {{-- Fila 1: nombre de cada actividad --}}
                     <tr>
-                        <th rowspan="2" class="px-3 py-2 bg-primary text-primary-foreground text-left min-w-[180px] sticky left-0 z-10">Estudiante</th>
+                        <th rowspan="2" class="px-2 py-2 bg-primary text-primary-foreground text-center w-12 min-w-[48px] sticky left-0 z-10">Nro</th>
+                        <th rowspan="2" class="px-3 py-2 bg-primary text-primary-foreground text-left min-w-[180px] sticky left-[48px] z-10">Estudiante</th>
                         @foreach($plan->criteria as $criterion)
                             @php $cc = $c($criterion->codigo); @endphp
                             @if($criterion->activities->isEmpty())
@@ -134,6 +135,7 @@
                 <tbody>
                     @foreach($students as $student)
                         @php
+                            $nro = $loop->iteration;
                             $fila = [];
                             $completa = true;
                             foreach ($plan->criteria as $criterion) {
@@ -144,7 +146,8 @@
                             $notaTrim = $completa ? $service->notaTrimestre($plan, $student) : null;
                         @endphp
                         <tr class="border-t border-border hover:bg-muted/20">
-                            <td class="px-3 py-1.5 font-medium text-foreground sticky left-0 bg-card whitespace-nowrap">{{ $student->apellidos }} {{ $student->nombres }}</td>
+                            <td class="px-2 py-1.5 text-center text-muted-foreground sticky left-0 bg-card">{{ $nro }}</td>
+                            <td class="px-3 py-1.5 font-medium text-foreground sticky left-[48px] bg-card whitespace-nowrap">{{ $student->apellidos }} {{ $student->nombres }}</td>
                             @foreach($plan->criteria as $criterion)
                                 @php $cc = $c($criterion->codigo); @endphp
                                 @if($criterion->activities->isEmpty())
