@@ -54,6 +54,24 @@ class RudeTest extends TestCase
         ]);
     }
 
+    /**
+     * Núcleo obligatorio del RUDE (SIE, fecha, cascadas I/III, convivencia).
+     */
+    private function basePayload(): array
+    {
+        return [
+            'codigo_sie_ue' => '12345678',
+            'fecha_registro' => '2026-03-01',
+            'ue_departamento' => 'Tarija',
+            'ue_provincia' => 'Cercado',
+            'ue_municipio' => 'Tarija',
+            'dir_departamento' => 'Tarija',
+            'dir_provincia' => 'Cercado',
+            'dir_municipio' => 'Tarija',
+            'convive_con' => ['Padre y Madre'],
+        ];
+    }
+
     public function test_rude_index_requires_auth(): void
     {
         $this->get('/rude')->assertRedirect('/login');
@@ -91,27 +109,24 @@ class RudeTest extends TestCase
         $this->actingAs($user);
 
         // CI con 6 dígitos debe fallar
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '123456',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasErrors('numero_documento');
 
         // CI con 7 dígitos ok
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasNoErrors();
         $response->assertRedirect(route('rude.show', $est));
         $this->assertDatabaseHas('students', ['id' => $est->id, 'numero_documento' => '1234567']);
 
         // CI con 8 dígitos + complemento ok
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '12345678',
             'complemento' => '1A',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('students', ['id' => $est->id, 'numero_documento' => '12345678', 'complemento' => '1A']);
     }
@@ -123,23 +138,21 @@ class RudeTest extends TestCase
         $this->actingAs($user);
 
         // Solo oficialía sin resto debe fallar
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
             'oficialia_nacimiento' => 'Oficialía 1',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasErrors('oficialia_nacimiento');
 
         // Completo 5 campos ok
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
             'oficialia_nacimiento' => 'Oficialía 1',
             'libro_nacimiento' => 'Libro 1',
             'partida_nacimiento' => 'Partida 1',
             'folio_nacimiento' => 'Folio 1',
             'anio_nacimiento' => '2015',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('student_rude_records', [
             'student_id' => $est->id,
@@ -154,16 +167,15 @@ class RudeTest extends TestCase
         $est = $this->crearEstudiante();
         $this->actingAs($user);
 
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
             'codigo_sie_ue' => '12345',
-        ]);
+        ]));
         $response->assertSessionHasErrors('codigo_sie_ue');
 
-        $response = $this->put(route('rude.update', $est), [
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
-            'codigo_sie_ue' => '12345678',
-        ]);
+        ]));
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('student_rude_records', ['student_id' => $est->id, 'codigo_sie_ue' => '12345678']);
     }
@@ -174,7 +186,7 @@ class RudeTest extends TestCase
         $est = $this->crearEstudiante();
         $this->actingAs($user);
 
-        $this->put(route('rude.update', $est), [
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '8765432',
             'complemento' => 'SC',
             'codigo_sie_ue' => '81720394',
@@ -192,7 +204,7 @@ class RudeTest extends TestCase
             'anio_nacimiento' => '2015',
             'estado' => 'ENVIADO',
             'observaciones' => 'RUDE completo para prueba',
-        ])->assertRedirect(route('rude.show', $est));
+        ]))->assertRedirect(route('rude.show', $est));
 
         $this->assertDatabaseHas('student_rude_records', [
             'student_id' => $est->id,
@@ -227,12 +239,12 @@ class RudeTest extends TestCase
 
         $this->actingAs($user);
         // Intentar sobreescribir codigo_rude via form (no debería estar en fillable del request)
-        $this->put(route('rude.update', $est), [
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
             'numero_documento' => '1234567',
             'codigo_sie_ue' => '87654321',
             // codigo_rude no se envía, pero si se enviara, no debe cambiar
             'codigo_rude' => 'HACKED',
-        ]);
+        ]));
 
         $rude->refresh();
         $this->assertEquals('RUDE123456', $rude->codigo_rude);
@@ -261,5 +273,88 @@ class RudeTest extends TestCase
         $this->actingAs($userDoc);
         $this->get('/rude')->assertRedirect(route('acceso.denegado'));
         $this->get(route('rude.form', $est))->assertRedirect(route('acceso.denegado'));
+    }
+
+    public function test_valida_cascada_ubicacion(): void
+    {
+        $user = $this->secretariaUser();
+        $est = $this->crearEstudiante();
+        $this->actingAs($user);
+
+        // Provincia que no es del departamento -> error
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'dir_provincia' => 'Murillo',
+        ]))->assertSessionHasErrors('dir_provincia');
+
+        // Municipio que no es del departamento -> error
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'dir_municipio' => 'El Alto',
+        ]))->assertSessionHasErrors('dir_municipio');
+
+        // Cascada válida + Otro con texto -> ok
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'dir_departamento' => 'La Paz',
+            'dir_provincia' => 'Murillo',
+            'dir_municipio' => 'Otro',
+            'dir_municipio_otro' => 'Palos Blancos',
+        ]))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('student_rude_records', [
+            'student_id' => $est->id,
+            'dir_municipio' => 'Palos Blancos',
+        ]);
+
+        // Núcleo obligatorio faltante -> error
+        $datos = $this->basePayload();
+        unset($datos['dir_municipio'], $datos['convive_con']);
+        $this->put(route('rude.update', $est), $datos)
+            ->assertSessionHasErrors(['dir_municipio', 'convive_con']);
+    }
+
+    public function test_guarda_datos_padres_con_validacion(): void
+    {
+        $user = $this->secretariaUser();
+        $est = $this->crearEstudiante();
+        $this->actingAs($user);
+
+        // Bloque padre a medias (sin CI) -> error
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'padre_nombres' => 'Juan',
+        ]))->assertSessionHasErrors('padre_num_doc');
+
+        // Bloque completo -> crea y vincula con nuevos campos
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'padre_nombres' => 'Juan',
+            'padre_apellido_paterno' => 'Perez',
+            'padre_apellido_materno' => 'Lopez',
+            'padre_num_doc' => '7654321',
+            'padre_ocupacion' => 'Comerciante',
+            'padre_fecha_nacimiento' => '1980-01-15',
+            'padre_telefono' => '70000000',
+            'padre_idioma' => 'Castellano',
+            'padre_grado_instruccion' => 'Secundaria',
+        ]))->assertSessionHasNoErrors();
+
+        $pg = \App\Models\ParentGuardian::where('numero_documento', '7654321')->first();
+        $this->assertNotNull($pg);
+        $this->assertSame('Comerciante', $pg->ocupacion);
+        $this->assertSame('Secundaria', $pg->grado_instruccion);
+        $this->assertSame('Castellano', $pg->idioma);
+        $this->assertTrue($est->fresh()->parentGuardians()->wherePivot('tipo_relacion', 'PADRE')->exists());
+    }
+
+    public function test_export_pdf_formato_oficial(): void
+    {
+        $user = $this->secretariaUser();
+        $est = $this->crearEstudiante();
+        $this->actingAs($user);
+        $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'padre_nombres' => 'Juan',
+            'padre_apellido_paterno' => 'Perez',
+            'padre_num_doc' => '7654321',
+        ]));
+
+        $response = $this->get(route('rude.export-pdf', $est));
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
     }
 }

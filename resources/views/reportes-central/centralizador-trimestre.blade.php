@@ -25,15 +25,7 @@
 </div>
 
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
-        <select name="course_subject_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <option value="">Seleccionar curso / materia…</option>
-            @foreach($courseSubjects as $cs)
-                <option value="{{ $cs->id }}" {{ request('course_subject_id') == $cs->id ? 'selected' : '' }}>{{ $cs->course->nombre }} - {{ $cs->subject->nombre }}</option>
-            @endforeach
-        </select>
-    </div>
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'trim', 'form' => null, 'cursoSel' => request('course_id'), 'materiaSel' => request('subject_id')])
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
         <select name="trimestre" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
@@ -97,7 +89,6 @@
                                 @endif
                             @endforeach
                             <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold bg-primary-100 text-primary-800 min-w-[70px]">Nota Trim</th>
-                            <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold">Valoración</th>
                             <th rowspan="2" class="px-2 py-2 text-center text-xs font-bold">Estado</th>
                         </tr>
                         <tr>
@@ -133,12 +124,6 @@
                                     @endif
                                 @endforeach
                                 <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $fila['notaTrim'] ?? '—' }}</td>
-                                <td class="px-4 py-1 text-center">
-                                    @if($fila['aprobado'] !== null)
-                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $fila['aprobado'] ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">{{ $fila['valoracion']['codigo'] }}</span>
-                                    @else —
-                                    @endif
-                                </td>
                                 <td class="px-4 py-1 text-center">
                                     @if($fila['aprobado'] === null) —
                                     @elseif($fila['aprobado']) <span class="text-success font-medium">Aprobado</span>

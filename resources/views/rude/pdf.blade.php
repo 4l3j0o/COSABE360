@@ -2,182 +2,166 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>RUDE {{ $student->apellidos }} {{ $student->nombres }}</title>
+<title>RUDE {{ $student->codigo }} — Formulario Oficial</title>
 <style>
-  @page { size: A4 portrait; margin: 12mm 10mm 12mm 10mm; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  @page { size: A4 portrait; margin: 10mm 9mm 10mm 9mm; }
   * { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; box-sizing: border-box; }
-  body { font-size: 8px; color: #1a2e1a; line-height: 1.35; margin:0; padding:0; background:#fff; }
-  .doc-header { border: 1.8px solid #003200; border-radius: 7px; overflow:hidden; margin-bottom: 9px; }
-  .doc-header-top { background: #003200; background: linear-gradient(135deg,#003200 0%,#005100 55%,#006100 100%); color:#fff; padding: 7px 12px; display: table; width:100%; }
-  .doc-header-top .left { display: table-cell; width:72%; vertical-align:middle; }
-  .brand { font-size: 14px; font-weight: 900; letter-spacing: 0.4px; margin:0; text-transform: uppercase; }
-  .subbrand { font-size: 6.8px; opacity: 0.92; margin:3px 0 0 0; text-transform: uppercase; letter-spacing: 0.45px; font-weight:600; }
-  .header-body { padding: 9px 11px; background: #f6faf6; }
-  .header-body table { width:100%; border-collapse:collapse; }
-  .header-body td { vertical-align: top; }
-  .emisor h3 { margin:0; font-size:9.5px; color:#003200; font-weight:900; text-transform:uppercase; line-height:1.2; }
-  .emisor p { margin:2px 0; font-size:7.2px; color:#33412f; }
-  .emisor .sie { font-size:8.5px; font-weight:800; color:#003200; letter-spacing:0.2px; }
-  .section { border:1.2px solid #d1dfd1; border-radius:7px; margin-bottom:7px; overflow:hidden; }
-  .section-title { background:#003200; color:#fff; font-size:7px; font-weight:900; padding:5px 10px; text-transform:uppercase; letter-spacing:0.5px; }
-  .section-body { padding:8px 10px; background:#fff; }
-  table.grid { width:100%; border-collapse:collapse; }
-  table.grid td { padding:3px 4px; vertical-align:top; }
-  .field-label { font-size:6.2px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.25px; }
-  .field-value { font-size:7.6px; color:#0f172a; font-weight:600; }
-  .field-value.strong { font-weight:900; color:#003200; }
-  .divider { border-bottom:1px solid #e2e8f0; margin:6px 0; }
-  .check-list { width:100%; }
-  .check-item { display:inline-block; padding:1.5px 5px; border:1px solid #d1dfd1; border-radius:3px; font-size:6.2px; color:#33412f; margin:1px; }
-  .check-item.on { background:#dcfce7; color:#14532d; border-color:#86efac; font-weight:800; }
-  .sign-row { width:100%; margin-top:12px; }
-  .sign-row td { width:33%; text-align:center; padding:22px 6px 2px 6px; font-size:7px; color:#33412f; border-top:1px solid #94a3b8; vertical-align:bottom; }
-  .estado-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:6px; font-weight:900; text-transform:uppercase; background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
-  .estado-APROBADO { background:#dcfce7; color:#14532d; border-color:#86efac; }
-  .foot-note { font-size:5.8px; color:#64748b; text-align:center; margin-top:6px; line-height:1.35; border-top:1px solid #e2e8f0; padding-top:5px; }
+  body { font-size: 7.5px; color: #111; line-height: 1.35; margin: 0; padding: 0; background: #fff; }
+  .cab { width: 100%; border: 1.5px solid #111; margin-bottom: 6px; }
+  .cab td { vertical-align: middle; padding: 5px 8px; }
+  .cab .t1 { font-size: 11px; font-weight: 900; text-transform: uppercase; }
+  .cab .t2 { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+  .cab .t3 { font-size: 6.5px; color: #333; }
+  .qr { width: 70px; text-align: right; }
+  .qr img { width: 64px; }
+  .sec { border: 1px solid #111; margin-bottom: 5px; }
+  .sec-t { background: #e5e5e5; font-size: 8px; font-weight: 900; padding: 3px 6px; text-transform: uppercase; border-bottom: 1px solid #111; }
+  .sec-b { padding: 5px 6px; }
+  table.g { width: 100%; border-collapse: collapse; }
+  table.g td { padding: 2px 3px; vertical-align: top; }
+  .lab { font-size: 6px; font-weight: 700; color: #444; text-transform: uppercase; }
+  .val { font-size: 7.5px; font-weight: 600; border-bottom: 1px dotted #999; min-height: 10px; display: block; padding-bottom: 1px; }
+  .num { font-weight: 900; }
+  .firmas { width: 100%; margin-top: 14px; }
+  .firmas td { text-align: center; font-size: 7px; width: 50%; padding: 26px 10px 2px 10px; border-top: 1px solid #111; vertical-align: bottom; }
+  .pie { font-size: 6px; color: #555; text-align: center; margin-top: 6px; border-top: 1px solid #999; padding-top: 4px; }
 </style>
 </head>
 <body>
-  <div class="doc-header">
-    <div class="doc-header-top">
-      <div class="left">
-        <p class="brand">U.E. SAN BERNARDO — TARIJA</p>
-        <p class="subbrand">Formulario de Registro Único de Estudiantes (RUDE) &bull; RM Nº 0031/2025 &bull; Ley 070 Art. 68</p>
-      </div>
-    </div>
-    <div class="header-body">
-      <table>
-        <tr>
-          <td class="emisor">
-            <h3>SOCIEDAD EDUCATIVA SAN BERNARDO DE TARIJA S.A.</h3>
-            <p class="sie">Código SIE de la Unidad Educativa: {{ $rude?->codigo_sie_ue ?? \App\Models\StudentRudeRecord::SIE_UE }}</p>
-            <p>Tarija — Bolivia &bull; Código RUDE: {{ $rude?->codigo_rude ?? 'POR GENERAR (SIE)' }}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </div>
+@php
+  $R = \App\Models\StudentRudeRecord::class;
+  $marca = fn ($cond) => $cond ? '☒' : '☐';
+  $pg = ['PADRE' => null, 'MADRE' => null, 'TUTOR' => null];
+  foreach ($student->parentGuardians as $p) {
+      $rel = $p->pivot?->tipo_relacion;
+      if (isset($pg[$rel]) && $pg[$rel] === null) $pg[$rel] = $p;
+  }
+  $firma = function ($p, $campo) { return $p?->$campo ?? ''; };
+@endphp
 
-  <div class="section">
-    <div class="section-title">Sección II — Datos de la o el Estudiante</div>
-    <div class="section-body">
-      <table class="grid">
-        <tr>
-          <td style="width:50%;"><span class="field-label">Apellido(s)</span><br><span class="field-value strong">{{ $student->apellidos }}</span></td>
-          <td><span class="field-label">Nombre(s)</span><br><span class="field-value strong">{{ $student->nombres }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">Fecha de Nacimiento</span><br><span class="field-value">{{ $student->fecha_nacimiento?->format('d/m/Y') }}</span></td>
-          <td><span class="field-label">Lugar de Nacimiento</span><br><span class="field-value">{{ $student->lugar_nacimiento ?? '—' }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">Sexo</span><br><span class="field-value">{{ $student->sexo === 'M' ? 'Masculino' : 'Femenino' }}</span></td>
-          <td><span class="field-label">Documento</span><br><span class="field-value">{{ $student->tipo_documento ?? 'CI' }} {{ $student->numero_documento }} @if($student->complemento) - {{ $student->complemento }} @endif</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">Código RUDE</span><br><span class="field-value strong">{{ $rude?->codigo_rude ?? 'POR GENERAR (SIE)' }}</span></td>
-          <td><span class="field-label">N.º Registro Discapacidad IBC</span><br><span class="field-value">{{ $rude?->nro_registro_discapacidad ?? '—' }}</span></td>
-        </tr>
-        <tr>
-          <td colspan="2"><span class="field-label">Certificado de Nacimiento (Oficialía / Libro / Partida / Folio / Año)</span><br>
-            <span class="field-value">{{ $rude?->oficialia_nacimiento ?? '—' }} / {{ $rude?->libro_nacimiento ?? '—' }} / {{ $rude?->partida_nacimiento ?? '—' }} / {{ $rude?->folio_nacimiento ?? '—' }} / {{ $rude?->anio_nacimiento ?? '—' }}</span></td>
-        </tr>
-      </table>
-    </div>
-  </div>
+<table class="cab"><tr>
+  <td>
+    <div class="t1">Registro Único de Estudiantes (RUDE)</div>
+    <div class="t2">Formulario de Inscripción / Actualización — RM Nº 0031/2025</div>
+    <div class="t3">Ministerio de Educación del Estado Plurinacional de Bolivia &bull; Código RUDE: <strong>{{ $rude?->codigo_rude ?? 'POR GENERAR (SIE)' }}</strong> &bull; Impreso: {{ now()->format('d/m/Y H:i') }}</div>
+  </td>
+  @if(! empty($qrBase64))
+    <td class="qr"><img src="{{ $qrBase64 }}" alt="QR"></td>
+  @endif
+</tr></table>
 
-  <div class="section">
-    <div class="section-title">Sección III — Dirección Actual del Estudiante</div>
-    <div class="section-body">
-      <table class="grid">
-        <tr>
-          <td style="width:33%;"><span class="field-label">Departamento</span><br><span class="field-value">{{ $rude?->dir_departamento ?? '—' }}</span></td>
-          <td style="width:33%;"><span class="field-label">Provincia</span><br><span class="field-value">{{ $rude?->dir_provincia ?? '—' }}</span></td>
-          <td><span class="field-label">Municipio</span><br><span class="field-value">{{ $rude?->dir_municipio ?? '—' }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">Comunidad</span><br><span class="field-value">{{ $rude?->dir_comunidad ?? '—' }}</span></td>
-          <td><span class="field-label">Zona/Villa</span><br><span class="field-value">{{ $rude?->dir_zona ?? '—' }}</span></td>
-          <td><span class="field-label">Calle / N.º</span><br><span class="field-value">{{ $rude?->dir_calle ?? '—' }} {{ $rude?->dir_nro_vivienda ? 'Nº '.$rude?->dir_nro_vivienda : '' }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">Teléfono fijo</span><br><span class="field-value">{{ $rude?->dir_telefono ?? '—' }}</span></td>
-          <td><span class="field-label">Celular de contacto</span><br><span class="field-value">{{ $rude?->dir_celular ?? '—' }}</span></td>
-          <td></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Sección IV — Aspectos Socioeconómicos</div>
-    <div class="section-body">
-      <table class="grid">
-        <tr>
-          <td style="width:33%;"><span class="field-label">4.1 Idioma en que aprendió</span><br><span class="field-value">{{ $rude?->idioma_aprendio ?? '—' }}</span></td>
-          <td style="width:33%;"><span class="field-label">4.1 Idioma de uso frecuente</span><br><span class="field-value">{{ \App\Models\StudentRudeRecord::listar($rude?->idiomas_uso_frecuente) ?: '—' }}</span></td>
-          <td><span class="field-label">4.1 Autoidentificación cultural</span><br><span class="field-value">{{ $rude?->autoidentificacion_cultural ?? '—' }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">4.2 Seguro de salud</span><br><span class="field-value">{{ $rude?->salud_seguro ?? '—' }}</span></td>
-          <td><span class="field-label">4.2 Centro de Salud cercano</span><br><span class="field-value">{{ $rude?->salud_centro_cercano ? 'Sí' : 'No' }}</span></td>
-          <td><span class="field-label">4.2 Veces al Centro</span><br><span class="field-value">{{ $rude?->salud_veces ?? '—' }}</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">4.3 Baño / Vivienda</span><br><span class="field-value">{{ $rude?->serv_bano ?? '—' }} / {{ $rude?->serv_vivienda_tipo ?? '—' }}</span></td>
-          <td><span class="field-label">4.4 Acceso a internet</span><br><span class="field-value">{{ \App\Models\StudentRudeRecord::listar($rude?->internet_lugares) ?: '—' }} @if($rude?->internet_frecuencia) ({{ $rude?->internet_frecuencia }}) @endif</span></td>
-          <td><span class="field-label">4.5 Actividad laboral</span><br><span class="field-value">{{ $rude?->laboral_trabajo ? 'Sí' : 'No' }} @if($rude?->laboral_actividad) — {{ $rude?->laboral_actividad }} @endif</span></td>
-        </tr>
-        <tr>
-          <td><span class="field-label">4.6 Transporte</span><br><span class="field-value">{{ $rude?->transporte_medio ?? '—' }} @if($rude?->transporte_tiempo) ({{ $rude?->transporte_tiempo }}) @endif</span></td>
-          <td><span class="field-label">4.7 Abandono escolar</span><br><span class="field-value">{{ $rude?->abandono_escolar ? 'Sí' : 'No' }} @if($rude?->abandono_razones) — {{ \App\Models\StudentRudeRecord::listar($rude?->abandono_razones) }} @endif</span></td>
-          <td><span class="field-label">4.8 Discapacidad</span><br><span class="field-value">{{ \App\Models\StudentRudeRecord::listar($rude?->discapacidad_tipos) ?: '—' }} @if($rude?->discapacidad_grado) ({{ $rude?->discapacidad_grado }}) @endif</span></td>
-        </tr>
-      </table>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Sección V — Padres, Madres o Tutores</div>
-    <div class="section-body">
-      <table class="grid">
-        <tr>
-          <td style="width:50%;"><span class="field-label">La o el estudiante vive con</span><br><span class="field-value">{{ \App\Models\StudentRudeRecord::listar($rude?->convive_con) ?: '—' }}</span></td>
-          <td><span class="field-label">Estado del trámite</span><br><span class="field-value"><span class="estado-badge estado-{{ $rude?->estado ?? 'PENDIENTE' }}">{{ mb_strtolower($rude?->estado ?? 'PENDIENTE') }}</span></span></td>
-        </tr>
-      </table>
-      <div class="divider"></div>
-      <table class="grid">
-        <tr>
-          <td style="width:25%;"><span class="field-label">Relación</span></td>
-          <td style="width:35%;"><span class="field-label">Nombre(s)</span></td>
-          <td style="width:40%;"><span class="field-label">Documento / Teléfono / Ocupación</span></td>
-        </tr>
-        @forelse($student->parentGuardians as $pg)
-        <tr>
-          <td><span class="field-value strong">{{ $pg->pivot?->tipo_relacion ?? 'Tutor' }}</span></td>
-          <td><span class="field-value">{{ $pg->nombres }} {{ $pg->apellidos }}</span></td>
-          <td><span class="field-value">{{ $pg->numero_documento ?? '—' }} @if($pg->telefono) &bull; {{ $pg->telefono }} @endif @if($pg->ocupacion) &bull; {{ $pg->ocupacion }} @endif</span></td>
-        </tr>
-        @empty
-        <tr><td colspan="3"><span class="field-value">Sin tutores registrados.</span></td></tr>
-        @endforelse
-      </table>
-    </div>
-  </div>
-
-  <table class="sign-row">
+<div class="sec">
+  <div class="sec-t">I. Datos de la Unidad Educativa</div>
+  <div class="sec-b"><table class="g">
     <tr>
-      <td>Firma del Padre / Madre / Tutor(a)</td>
-      <td>Firma del Director(a) de la Unidad Educativa</td>
-      <td>Complemento / Observaciones<br><span style="font-size:6px; font-weight:400;">{{ $rude?->observaciones ?? '—' }}</span></td>
+      <td style="width:50%"><span class="lab">*) Código SIE de la Unidad Educativa</span><span class="val">{{ $rude?->codigo_sie_ue ?? $R::SIE_UE }}</span></td>
+      <td style="width:50%"><span class="lab">Fecha de llenado</span><span class="val">{{ $rude?->fecha_registro?->format('d/m/Y') ?? now()->format('d/m/Y') }}</span></td>
+    </tr>
+  </table></div>
+</div>
+
+<div class="sec">
+  <div class="sec-t">II. Datos de la o el Estudiante</div>
+  <div class="sec-b"><table class="g">
+    <tr>
+      <td style="width:45%"><span class="lab">2.1 Apellido(s) y Nombre(s)</span><span class="val">{{ $student->apellidos }} {{ $student->nombres }}</span></td>
+      <td style="width:30%"><span class="lab">2.2 Lugar de nacimiento (País, Depto., Prov., Localidad)</span><span class="val">{{ $student->lugar_nacimiento ?? '' }}</span></td>
+      <td style="width:25%"><span class="lab">2.4 Fecha de nacimiento</span><span class="val">{{ $student->fecha_nacimiento?->format('d/m/Y') ?? '' }}</span></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="lab">2.3 Certificado de nacimiento (Oficialía / Libro / Partida / Folio / Año)</span><span class="val">{{ $rude?->oficialia_nacimiento ?? '' }} / {{ $rude?->libro_nacimiento ?? '' }} / {{ $rude?->partida_nacimiento ?? '' }} / {{ $rude?->folio_nacimiento ?? '' }} / {{ $rude?->anio_nacimiento ?? '' }}</span></td>
+      <td><span class="lab">2.7 Sexo</span><span class="val">{{ $marca($student->sexo === 'M') }} Masculino &nbsp; {{ $marca($student->sexo === 'F') }} Femenino</span></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="lab">2.5 Documento de identidad</span><span class="val">{{ $marca(in_array($student->tipo_documento, ['CI', null])) }} C.I. Nº {{ $student->numero_documento ?? '' }} @if($student->complemento) Comp. {{ $student->complemento }} @endif &nbsp; {{ $marca($student->tipo_documento === 'PASAPORTE') }} Pasaporte &nbsp; {{ $marca($student->tipo_documento === 'OTRO') }} Otro</span></td>
+      <td><span class="lab">2.6 Código RUDE (automático SIE)</span><span class="val">{{ $rude?->codigo_rude ?? 'POR GENERAR (SIE)' }}</span></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="lab">2.5.1 Solo extranjeros: tipo de documento presentado</span><span class="val">{{ $rude?->tipo_doc_extranjero ?? '' }}</span></td>
+      <td><span class="lab">2.5.2 Código del documento (extranjeros)</span><span class="val">{{ $rude?->codigo_doc_extranjero ?? '' }}</span></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="lab">2.8 Discapacidad (Registro de Discapacidad)</span><span class="val">{{ $student->discapacidad ?? '' }}</span></td>
+      <td><span class="lab">2.9 N.º Registro Discapacidad IBC</span><span class="val">{{ $rude?->nro_registro_discapacidad ?? '' }}</span></td>
+    </tr>
+  </table></div>
+</div>
+
+<div class="sec">
+  <div class="sec-t">III. Dirección actual de la o el Estudiante</div>
+  <div class="sec-b"><table class="g">
+    <tr>
+      <td style="width:25%"><span class="lab">Departamento</span><span class="val">{{ $rude?->dir_departamento ?? '' }}</span></td>
+      <td style="width:25%"><span class="lab">Provincia</span><span class="val">{{ $rude?->dir_provincia ?? '' }}</span></td>
+      <td style="width:25%"><span class="lab">Sección/Municipio</span><span class="val">{{ $rude?->dir_municipio ?? '' }}</span></td>
+      <td style="width:25%"><span class="lab">Localidad/Comunidad</span><span class="val">{{ $rude?->dir_comunidad ?? '' }}</span></td>
+    </tr>
+    <tr>
+      <td><span class="lab">Zona/Villa</span><span class="val">{{ $rude?->dir_zona ?? '' }}</span></td>
+      <td><span class="lab">Avenida/Calle</span><span class="val">{{ $rude?->dir_calle ?? '' }}</span></td>
+      <td><span class="lab">N.º vivienda</span><span class="val">{{ $rude?->dir_nro_vivienda ?? '' }}</span></td>
+      <td><span class="lab">Teléfono / Celular</span><span class="val">{{ $rude?->dir_telefono ?? '' }} {{ $rude?->dir_celular ?? '' }}</span></td>
+    </tr>
+  </table></div>
+</div>
+
+<div class="sec">
+  <div class="sec-t">IV. Aspectos socioeconómicos de la o el Estudiante</div>
+  <div class="sec-b"><table class="g">
+    <tr><td colspan="2"><span class="lab">4.1 Idioma en el que aprendió a hablar / de uso frecuente / Autoidentificación cultural</span><span class="val">{{ $rude?->idioma_aprendio ?? '' }} / {{ $R::listar($rude?->idiomas_uso_frecuente) }} / {{ $rude?->autoidentificacion_cultural ?? '' }}</span></td></tr>
+    <tr><td><span class="lab">4.2 Salud: centro cercano / atendido / veces / seguro</span><span class="val">{{ $marca($rude?->salud_centro_cercano) }} Sí {{ $marca($rude?->salud_centro_cercano === false) }} No / Atendido: {{ $marca($rude?->salud_atendido_anio) }} Sí {{ $marca($rude?->salud_atendido_anio === false) }} No ({{ $rude?->salud_veces ?? '—' }} veces) / {{ $rude?->salud_seguro ?? '' }}</span></td>
+    <td><span class="lab">4.3 Servicios: agua / baño / alcantarillado / luz / basura / vivienda</span><span class="val">{{ $marca($rude?->serv_agua_red) }} Agua / {{ $rude?->serv_bano ?? '' }} / {{ $marca($rude?->serv_alcantarillado) }} Alcant. / {{ $marca($rude?->serv_electricidad) }} Luz / {{ $marca($rude?->serv_recojo_basura) }} Basura / {{ $rude?->serv_vivienda_tipo ?? '' }}</span></td></tr>
+    <tr><td><span class="lab">4.4 Internet: lugares / frecuencia</span><span class="val">{{ $R::listar($rude?->internet_lugares) }} / {{ $rude?->internet_frecuencia ?? '' }}</span></td>
+    <td><span class="lab">4.5 Laboral: trabajó / actividad / turnos / frecuencia / pago / meses</span><span class="val">{{ $marca($rude?->laboral_trabajo) }} Sí {{ $marca($rude?->laboral_trabajo === false) }} No / {{ $rude?->laboral_actividad ?? '' }} / {{ $R::listar($rude?->laboral_turnos) }} / {{ $rude?->laboral_frecuencia ?? '' }} / Pago: {{ $marca($rude?->laboral_recibio_pago) }} Sí {{ $marca($rude?->laboral_recibio_pago === false) }} No / {{ $R::listar($rude?->meses_trabajados) }}</span></td></tr>
+    <tr><td><span class="lab">4.6 Transporte: medio / tiempo</span><span class="val">{{ $rude?->transporte_medio ?? '' }} @if($rude?->transporte_otro) ({{ $rude?->transporte_otro }}) @endif / {{ $rude?->transporte_tiempo ?? '' }}</span></td>
+    <td><span class="lab">4.7 Abandono (gestión anterior): sí/no / razones</span><span class="val">{{ $marca($rude?->abandono_escolar) }} Sí {{ $marca($rude?->abandono_escolar === false) }} No / {{ $R::listar($rude?->abandono_razones) }}</span></td></tr>
+    <tr><td colspan="2"><span class="lab">4.8 Discapacidad: tipos / grado — Dificultades de aprendizaje</span><span class="val">{{ $R::listar($rude?->discapacidad_tipos) }} ({{ $rude?->discapacidad_grado ?? '—' }}) / {{ $R::listar($rude?->dificultad_aprendizaje) }}</span></td></tr>
+  </table></div>
+</div>
+
+<div class="sec">
+  <div class="sec-t">V. Datos del Padre, Madre o Tutor(a)</div>
+  <div class="sec-b"><table class="g">
+    <tr><td colspan="2"><span class="lab">5.1 Vive habitualmente con</span><span class="val">@foreach($R::CONVIVENCIA as $i => $opc) {{ $marca($R::listar($rude?->convive_con) !== '' && in_array($opc, (array) ($rude?->convive_con ?? []))) }} {{ $i + 1 }}.- {{ $opc }} &nbsp; @endforeach @if($rude?->centro_acogida) / Centro: {{ $rude?->centro_acogida }} @endif</span></td></tr>
+  </table>
+  @foreach(['PADRE' => '5.2 Datos del Padre', 'MADRE' => '5.3 Datos de la Madre', 'TUTOR' => '5.4 Datos del Tutor(a)', 'TUTOR_EXTRAORDINARIO' => '5.5 Datos del Tutor(a) Extraordinario(a)'] as $rel => $titulo)
+  @php $p = $pg[$rel] ?? $student->parentGuardians->first(fn ($x) => $x->pivot?->tipo_relacion === $rel); @endphp
+  <table class="g" style="margin-top:4px;">
+    <tr><td colspan="4"><span class="lab">{{ $titulo }}</span></td></tr>
+    <tr>
+      <td style="width:25%"><span class="lab">C.I. / DNI</span><span class="val">{{ $firma($p, 'numero_documento') }} {{ $firma($p, 'complemento') }}</span></td>
+      <td style="width:25%"><span class="lab">Apellido Paterno</span><span class="val">{{ $firma($p, 'apellido_paterno') ?: $firma($p, 'apellidos') }}</span></td>
+      <td style="width:25%"><span class="lab">Apellido Materno</span><span class="val">{{ $firma($p, 'apellido_materno') }}</span></td>
+      <td style="width:25%"><span class="lab">Nombre(s)</span><span class="val">{{ $firma($p, 'nombres') }}</span></td>
+    </tr>
+    <tr>
+      <td><span class="lab">Ocupación laboral actual</span><span class="val">{{ $firma($p, 'ocupacion') }}</span></td>
+      <td><span class="lab">Fecha de nacimiento</span><span class="val">{{ $p?->fecha_nacimiento?->format('d/m/Y') ?? '' }}</span></td>
+      <td><span class="lab">Teléfono / Celular</span><span class="val">{{ $firma($p, 'telefono') }}</span></td>
+      <td><span class="lab">Idioma que habla</span><span class="val">{{ $firma($p, 'idioma') }}</span></td>
+    </tr>
+    <tr>
+      <td colspan="2"><span class="lab">Máximo grado de instrucción alcanzado</span><span class="val">{{ $firma($p, 'grado_instruccion') }}</span></td>
+      @if($rel === 'TUTOR_EXTRAORDINARIO')
+      <td><span class="lab">Cargo actual</span><span class="val">{{ $firma($p, 'cargo_actual') }}</span></td>
+      <td><span class="lab">Nombre de la Institución</span><span class="val">{{ $firma($p, 'nombre_institucion') }}</span></td>
+      @else
+      <td colspan="2"></td>
+      @endif
     </tr>
   </table>
-
-  <div class="foot-note">
-    Formulario de Registro Único de Estudiantes (RUDE) — RM Nº 0031/2025 — Unidad Educativa San Bernardo, Tarija, Bolivia &bull;
-    Generado el {{ now()->format('d/m/Y H:i') }} &bull; El código RUDE es generado por el SIE.
+  @endforeach
   </div>
+</div>
+
+<table class="firmas"><tr>
+  <td>Firma del Padre / Madre / Tutor(a)</td>
+  <td>Firma del Director(a) de la Unidad Educativa</td>
+</tr></table>
+
+<div class="pie">
+  Formulario RUDE — RM Nº 0031/2025 — Unidad Educativa San Bernardo, Tarija, Bolivia &bull;
+  Generado el {{ now()->format('d/m/Y H:i') }} &bull; Declaración jurada — responsabilidad del Director(a) de la UE (Art. 12 RM 0001).
+</div>
 </body>
 </html>

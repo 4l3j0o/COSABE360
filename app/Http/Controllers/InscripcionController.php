@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Models\CodigoReserva;
 use App\Models\Course;
+use App\Models\DataConsent;
 use App\Models\Enrollment;
 use App\Models\Level;
 use App\Models\ParentGuardian;
@@ -40,13 +42,21 @@ class InscripcionController extends Controller
 {
     /**
      * Documentos de la Inscripción en Línea (tipo_documento en student_documents).
+     * Paso 3 del flujo: estudiante, padre, madre, tutor (si no hay padres) y adicionales.
      */
     public const DOCS_LINEA = [
-        'CI_ANVERSO' => 'Carnet de identidad (anverso)',
-        'CI_REVERSO' => 'Carnet de identidad (reverso)',
-        'CERT_NACIMIENTO' => 'Certificado de nacimiento',
-        'CI_PADRES' => 'Carnet de identidad de los padres',
+        'CI_ANVERSO' => 'Estudiante: C.I. anverso',
+        'CI_REVERSO' => 'Estudiante: C.I. reverso',
+        'CERT_NACIMIENTO' => 'Estudiante: Certificado de nacimiento',
+        'PADRE_CI_ANVERSO' => 'Padre: C.I. anverso',
+        'PADRE_CI_REVERSO' => 'Padre: C.I. reverso',
+        'MADRE_CI_ANVERSO' => 'Madre: C.I. anverso',
+        'MADRE_CI_REVERSO' => 'Madre: C.I. reverso',
+        'TUTOR_CI_ANVERSO' => 'Tutor: C.I. anverso (si no hay padres)',
+        'TUTOR_CI_REVERSO' => 'Tutor: C.I. reverso (si no hay padres)',
         'COMPROBANTE_PAGO' => 'Comprobante de pago de la inscripción',
+        'ANEXO_CONFORMIDAD' => 'Anexo de conformidad de contrato (firmado)',
+        'CONSENTIMIENTO_INICIAL' => 'Consentimiento nivel Inicial (firmado, solo Inicial)',
     ];
 
     // ------------------------------------------------------- Formulario
@@ -57,9 +67,27 @@ class InscripcionController extends Controller
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
         $cursos = $this->cursosInscribibles($user, $periodo);
         $niveles = Level::where('estado', 'ACTIVO')->orderBy('orden')->get();
-        $siguienteCodigo = $this->siguienteCodigo();
 
-        return view('inscripciones.create', compact('periodo', 'cursos', 'niveles', 'siguienteCodigo'));
+        // HU-59: reserva del código hasta concretar (evita choques entre
+        // inscripciones simultáneas; expira en 30 minutos si no se concreta).
+        $reserva = CodigoReserva::where('user_id', $user->id)
+            ->where('estado', 'RESERVADO')
+            ->where('expira_en', '>', now())
+            ->latest('id')
+            ->first();
+
+        if (! $reserva) {
+            $reserva = CodigoReserva::create([
+                'codigo' => $this->siguienteCodigoLibre(),
+                'user_id' => $user->id,
+                'expira_en' => now()->addMinutes(CodigoReserva::MINUTOS_VIGENCIA),
+                'estado' => 'RESERVADO',
+            ]);
+        }
+
+        $siguienteCodigo = $reserva->codigo;
+
+        return view('inscripciones.create', compact('periodo', 'cursos', 'niveles', 'siguienteCodigo', 'reserva'));
     }
 
     /**
@@ -94,13 +122,31 @@ class InscripcionController extends Controller
      */
     public function siguienteCodigo(): string
     {
+        return $this->siguienteCodigoLibre();
+    }
+
+    /**
+     * Siguiente código libre: salta usados y reservados vigentes.
+     */
+    private function siguienteCodigoLibre(): string
+    {
+        $ocupados = array_map('intval', array_filter(
+            CodigoReserva::codigosOcupados(),
+            fn ($c) => $c !== '' && ctype_digit((string) $c)
+        ));
+
         $max = Student::pluck('codigo')
             ->map(fn ($c) => trim((string) $c))
             ->filter(fn ($c) => $c !== '' && ctype_digit($c))
             ->map(fn ($c) => (int) $c)
             ->max() ?? 0;
 
-        return (string) ($max + 1);
+        $siguiente = $max + 1;
+        while (in_array($siguiente, $ocupados, true)) {
+            $siguiente++;
+        }
+
+        return (string) $siguiente;
     }
 
     /**
@@ -202,6 +248,7 @@ class InscripcionController extends Controller
             'codigo_rude' => ['nullable', 'string', 'max:50'],
             'course_id' => ['required', 'exists:courses,id'],
             'tutor_principal' => ['required', 'in:padre,madre,tutor'],
+            'reserva_id' => ['nullable', 'integer', 'exists:codigo_reservas,id'],
             // Padre (opcional, pero si se llena nombres se exige apellidos + CI válido)
             'padre_nombres' => ['nullable', 'string', 'max:150'],
             'padre_apellidos' => ['nullable', 'string', 'max:150', 'required_with:padre_nombres'],
@@ -220,10 +267,11 @@ class InscripcionController extends Controller
             'madre_email' => ['nullable', 'email', 'max:150'],
             'madre_direccion' => ['nullable', 'string', 'max:255'],
             'madre_ocupacion' => ['nullable', 'string', 'max:100'],
-            // Tutor / apoderado (obligatorio, todo validado)
-            'tutor_nombres' => ['required', 'string', 'max:150'],
-            'tutor_apellidos' => ['required', 'string', 'max:150'],
-            'tutor_num_doc' => ['required', 'string', 'regex:/^\d{7,8}$/'],
+            // Tutor / apoderado: obligatorio solo si es el tutor principal
+            // (se valida abajo según tutor_principal); el resto valida si se llena.
+            'tutor_nombres' => ['nullable', 'string', 'max:150'],
+            'tutor_apellidos' => ['nullable', 'string', 'max:150', 'required_with:tutor_nombres'],
+            'tutor_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:tutor_nombres'],
             'tutor_complemento' => ['nullable', 'string', Rule::in(config('bolivia.complementos'))],
             'tutor_telefono' => ['nullable', 'string', 'max:20'],
             'tutor_email' => ['nullable', 'email', 'max:150'],
@@ -235,6 +283,23 @@ class InscripcionController extends Controller
             'madre_num_doc.regex' => 'El CI de la madre debe tener 7 u 8 dígitos.',
             'tutor_num_doc.regex' => 'El CI del tutor debe tener 7 u 8 dígitos.',
         ]);
+
+        // El grupo marcado como tutor principal debe estar completo
+        // (nombres, apellidos y CI); los demás son opcionales.
+        $principal = $validated['tutor_principal'];
+        $faltantes = [];
+        foreach (['nombres' => 'nombres', 'apellidos' => 'apellidos', 'num_doc' => 'CI'] as $campo => $etiqueta) {
+            if (trim((string) ($validated["{$principal}_{$campo}"] ?? '')) === '') {
+                $faltantes[] = $etiqueta;
+            }
+        }
+        if ($faltantes !== []) {
+            $quien = ['padre' => 'padre', 'madre' => 'madre', 'tutor' => 'tutor/apoderado'][$principal];
+
+            return back()
+                ->withErrors(["{$principal}_nombres" => "El {$quien} es el tutor principal: complete " . implode(', ', $faltantes) . '.'])
+                ->withInput();
+        }
 
         // La provincia debe pertenecer al departamento elegido
         $provincias = config('bolivia.departamentos')[$validated['nac_departamento']]['provincias'] ?? [];
@@ -258,8 +323,20 @@ class InscripcionController extends Controller
         }
 
         try {
-            $student = DB::transaction(function () use ($validated, $complemento, $periodo, $curso) {
-                $codigo = $this->siguienteCodigo();
+            $student = DB::transaction(function () use ($validated, $complemento, $periodo, $curso, $user) {
+                // Consume la reserva propia vigente; si no, siguiente libre.
+                $reserva = ! empty($validated['reserva_id'])
+                    ? CodigoReserva::where('id', $validated['reserva_id'])
+                        ->where('user_id', $user->id)
+                        ->where('estado', 'RESERVADO')
+                        ->where('expira_en', '>', now())
+                        ->first()
+                    : null;
+
+                $codigo = $reserva?->codigo ?? $this->siguienteCodigoLibre();
+                if ($reserva) {
+                    $reserva->update(['estado' => 'USADO']);
+                }
                 $apellidos = trim($validated['apellido_paterno'] . ' ' . trim((string) ($validated['apellido_materno'] ?? '')));
 
                 // Lugar de nacimiento: Ciudad, Provincia, Departamento
@@ -486,36 +563,37 @@ class InscripcionController extends Controller
      * El estudiante sube desde su cuenta: CI anverso/reverso, certificado,
      * CI de papás y comprobante de pago.
      */
+    /**
+     * Hub de Inscripción en Línea (5 pasos). El estudiante o padre con la
+     * cuenta del estudiante completa: RUDE, domicilio, documentos, contrato
+     * en línea y finalización.
+     */
     public function miInscripcion(Request $request): View
     {
         $student = $request->user()->student;
         abort_if(! $student, 403, 'Sin perfil de estudiante.');
 
-        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.course']);
-        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
-        $inscripcion = $student->enrollments()
-            ->where('academic_year_id', $periodo?->id)
-            ->where('estado', '!=', 'ANULADA')
-            ->latest('fecha')
-            ->first();
+        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.course.grade.level']);
+        $inscripcion = $this->inscripcionActiva($student);
+        $pasos = $this->progreso($student, $inscripcion);
+        $pasos[3]['docs'] = $this->docsPaso3($student, $inscripcion);
 
-        $docs = collect(self::DOCS_LINEA)->map(function ($nombre, $tipo) use ($student) {
-            $doc = $student->documents->firstWhere('tipo_documento', $tipo);
-
-            return ['tipo' => $tipo, 'nombre' => $nombre, 'doc' => $doc];
-        });
-
-        return view('inscripciones.mi-inscripcion', compact('student', 'inscripcion', 'docs', 'periodo'));
+        return view('inscripciones.mi-inscripcion', compact('student', 'inscripcion', 'pasos'));
     }
 
     public function subirDocumento(Request $request, Student $student)
     {
         $user = $request->user();
         abort_if(! $user->hasRole('Estudiante') || $user->student?->id !== $student->id, 403);
+        $this->verificarNoFinalizado($student);
 
         $validated = $request->validate([
             'tipo_documento' => ['required', Rule::in(array_keys(self::DOCS_LINEA))],
             'archivo' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+        ], [
+            'archivo.required' => 'Seleccione un archivo para subir.',
+            'archivo.mimes' => 'El archivo debe ser de tipo: pdf, jpg, jpeg, png.',
+            'archivo.max' => 'El archivo no debe superar los 5 MB.',
         ]);
 
         $ruta = $request->file('archivo')->store('inscripciones/' . $student->id, 'public');
@@ -539,6 +617,257 @@ class InscripcionController extends Controller
         );
 
         return back()->with('mensaje', 'Documento subido correctamente. Queda pendiente de verificación.');
+    }
+
+    // --------------------------------------- Paso 2: domicilio
+
+    public function domicilio(Request $request): View
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $this->verificarNoFinalizado($student);
+
+        $student->load('rudeRecord');
+        $rude = $student->rudeRecord;
+        $pasos = $this->progreso($student, $this->inscripcionActiva($student));
+
+        return view('inscripciones.paso-domicilio', compact('student', 'rude', 'pasos'));
+    }
+
+    public function guardarDomicilio(Request $request)
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $this->verificarNoFinalizado($student);
+
+        $validated = $request->validate([
+            'dir_latitud' => ['required', 'numeric', 'between:-90,90'],
+            'dir_longitud' => ['required', 'numeric', 'between:-180,180'],
+            'foto_fachada' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ], [
+            'dir_latitud.required' => 'Marque la ubicación de su domicilio en el mapa.',
+            'foto_fachada.mimes' => 'La foto debe ser de tipo: jpg, jpeg, png.',
+            'foto_fachada.max' => 'La foto no debe superar los 5 MB.',
+        ]);
+
+        $rude = StudentRudeRecord::firstOrCreate(
+            ['student_id' => $student->id],
+            ['codigo_sie_ue' => StudentRudeRecord::SIE_UE, 'estado' => 'PENDIENTE']
+        );
+
+        $datos = [
+            'dir_latitud' => $validated['dir_latitud'],
+            'dir_longitud' => $validated['dir_longitud'],
+        ];
+
+        if ($request->hasFile('foto_fachada')) {
+            if ($rude->foto_fachada) {
+                Storage::disk('public')->delete($rude->foto_fachada);
+            }
+            $datos['foto_fachada'] = $request->file('foto_fachada')->store('inscripciones/' . $student->id, 'public');
+        }
+
+        $rude->update($datos);
+
+        return redirect()->route('inscripciones.mi-inscripcion')->with('mensaje', 'Ubicación del domicilio guardada correctamente.');
+    }
+
+    // --------------------------------------- Paso 4: contrato en línea
+
+    public function contratoLinea(Request $request): View
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $this->verificarNoFinalizado($student);
+
+        $datos = $this->datosContrato($student);
+        $inscripcion = $this->inscripcionActiva($student);
+        $pasos = $this->progreso($student, $inscripcion);
+
+        return view('inscripciones.paso-contrato', array_merge($datos, compact('inscripcion', 'pasos')));
+    }
+
+    public function aceptarContrato(Request $request)
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $inscripcion = $this->inscripcionActiva($student);
+        abort_if(! $inscripcion, 403, 'Sin inscripción activa.');
+        $this->verificarNoFinalizado($student);
+
+        $validated = $request->validate([
+            'nit_facturacion' => ['required', 'string', 'max:20'],
+            'razon_social_facturacion' => ['required', 'string', 'max:200'],
+            'acepto' => ['accepted'],
+        ], [
+            'nit_facturacion.required' => 'NIT para la facturación no puede estar vacío.',
+            'razon_social_facturacion.required' => 'Razón Social para la facturación no puede estar vacío.',
+            'acepto.accepted' => 'Debe aceptar todas las cláusulas para continuar.',
+        ]);
+
+        $inscripcion->update([
+            'nit_facturacion' => trim($validated['nit_facturacion']),
+            'razon_social_facturacion' => trim($validated['razon_social_facturacion']),
+            'contrato_aceptado_en' => now(),
+        ]);
+
+        return redirect()->route('inscripciones.mi-inscripcion')->with('mensaje', 'Contrato aceptado en línea correctamente.');
+    }
+
+    // --------------------------------------- Paso 5: finalización
+
+    public function finalizar(Request $request): View
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $this->verificarNoFinalizado($student);
+
+        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.course.grade.level']);
+        $inscripcion = $this->inscripcionActiva($student);
+        $pasos = $this->progreso($student, $inscripcion);
+        $docs = $this->docsPaso3($student, $inscripcion);
+
+        return view('inscripciones.paso-finalizar', compact('student', 'inscripcion', 'pasos', 'docs'));
+    }
+
+    public function confirmarFinalizacion(Request $request)
+    {
+        $student = $request->user()->student;
+        abort_if(! $student, 403, 'Sin perfil de estudiante.');
+        $inscripcion = $this->inscripcionActiva($student);
+        abort_if(! $inscripcion, 403, 'Sin inscripción activa.');
+        $this->verificarNoFinalizado($student);
+
+        $request->validate(['consentimiento' => ['accepted']], [
+            'consentimiento.accepted' => 'Debe aceptar el tratamiento de sus datos para finalizar.',
+        ]);
+
+        $pasos = $this->progreso($student, $inscripcion);
+        foreach ([1, 2, 3, 4] as $n) {
+            if (! $pasos[$n]['completo']) {
+                return back()->with('error', 'Complete el paso ' . $n . ' (' . $pasos[$n]['nombre'] . ') antes de finalizar.');
+            }
+        }
+
+        $inscripcion->update(['linea_completada_en' => now()]);
+
+        DataConsent::updateOrCreate(
+            ['titular_type' => Student::class, 'titular_id' => $student->id, 'finalidad' => 'Inscripción en línea'],
+            [
+                'consentimiento' => true,
+                'fecha_consentimiento' => now()->toDateString(),
+                'fecha_revocacion' => null,
+                'registrado_por' => $request->user()->id,
+            ]
+        );
+
+        return redirect()->route('inscripciones.mi-inscripcion')->with('mensaje', 'Inscripción en línea finalizada. Sus datos quedaron registrados.');
+    }
+
+    // --------------------------------------- Descargas de anexos oficiales
+
+    public function descargarAnexo(Request $request)
+    {
+        abort_if(! $request->user()->student, 403);
+
+        return $this->descargarDoc('Anexo_de_conformidad_contrato.pdf', 'ANEXO_CONFORMIDAD.pdf');
+    }
+
+    public function descargarConsentimiento(Request $request)
+    {
+        abort_if(! $request->user()->student, 403);
+
+        return $this->descargarDoc('Consentimiento_nivel_Inicial.pdf', 'CONSENTIMIENTO_INICIAL.pdf');
+    }
+
+    private function descargarDoc(string $archivo, string $descarga)
+    {
+        $ruta = base_path('Docs/' . $archivo);
+        abort_if(! is_file($ruta), 404, 'Documento no disponible.');
+
+        return response()->download($ruta, $descarga);
+    }
+
+    // --------------------------------------- Progreso del wizard
+
+    private function inscripcionActiva(Student $student)
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        return $student->enrollments()
+            ->where('academic_year_id', $periodo?->id)
+            ->where('estado', '!=', 'ANULADA')
+            ->latest('fecha')
+            ->first();
+    }
+
+    private function verificarNoFinalizado(Student $student): void
+    {
+        $inscripcion = $this->inscripcionActiva($student);
+        abort_if($inscripcion?->linea_completada_en, 403, 'La inscripción en línea ya fue finalizada, no admite cambios.');
+    }
+
+    /**
+     * Documentos requeridos del paso 3 según vínculos y nivel.
+     */
+    private function docsPaso3(Student $student, $inscripcion): array
+    {
+        $student->loadMissing(['documents', 'parentGuardians']);
+        $relaciones = $student->parentGuardians->map(fn ($pg) => $pg->pivot?->tipo_relacion)->all();
+        $tienePadre = in_array('PADRE', $relaciones, true);
+        $tieneMadre = in_array('MADRE', $relaciones, true);
+        $esInicial = (int) ($inscripcion?->registration?->course?->grade?->level?->orden ?? 0) === 1;
+
+        $tipos = ['CI_ANVERSO', 'CI_REVERSO', 'CERT_NACIMIENTO', 'COMPROBANTE_PAGO', 'ANEXO_CONFORMIDAD'];
+        if ($tienePadre) {
+            $tipos[] = 'PADRE_CI_ANVERSO';
+            $tipos[] = 'PADRE_CI_REVERSO';
+        }
+        if ($tieneMadre) {
+            $tipos[] = 'MADRE_CI_ANVERSO';
+            $tipos[] = 'MADRE_CI_REVERSO';
+        }
+        if (! $tienePadre && ! $tieneMadre) {
+            $tipos[] = 'TUTOR_CI_ANVERSO';
+            $tipos[] = 'TUTOR_CI_REVERSO';
+        }
+        if ($esInicial) {
+            $tipos[] = 'CONSENTIMIENTO_INICIAL';
+        }
+
+        return collect($tipos)->map(function ($tipo) use ($student) {
+            $doc = $student->documents->firstWhere('tipo_documento', $tipo);
+
+            return [
+                'tipo' => $tipo,
+                'nombre' => self::DOCS_LINEA[$tipo] ?? $tipo,
+                'doc' => $doc,
+                'cargado' => $doc && in_array($doc->estado, ['ENTREGADO', 'VERIFICADO'], true),
+            ];
+        })->all();
+    }
+
+    private function progreso(Student $student, $inscripcion): array
+    {
+        // load() y no loadMissing(): los datos cambian entre pasos y la
+        // instancia puede traer relaciones cacheadas de antes.
+        $student->load(['rudeRecord', 'documents', 'parentGuardians']);
+        $rude = $student->rudeRecord;
+
+        $paso1 = (bool) $rude;
+        $paso2 = (bool) ($rude?->dir_latitud && $rude?->dir_longitud && $rude?->foto_fachada);
+        $docs = $this->docsPaso3($student, $inscripcion);
+        $paso3 = $docs !== [] && collect($docs)->every(fn ($d) => $d['cargado']);
+        $paso4 = (bool) $inscripcion?->contrato_aceptado_en;
+        $paso5 = (bool) $inscripcion?->linea_completada_en;
+
+        return [
+            1 => ['nombre' => 'Actualizar RUDE', 'completo' => $paso1, 'ruta' => 'rude.form-propio'],
+            2 => ['nombre' => 'Domicilio y fachada', 'completo' => $paso2, 'ruta' => 'inscripciones.domicilio'],
+            3 => ['nombre' => 'Documentos', 'completo' => $paso3, 'ruta' => 'inscripciones.mi-inscripcion'],
+            4 => ['nombre' => 'Contrato en línea', 'completo' => $paso4, 'ruta' => 'inscripciones.contrato-linea'],
+            5 => ['nombre' => 'Finalización', 'completo' => $paso5, 'ruta' => 'inscripciones.finalizar'],
+        ];
     }
 
     // --------------------------------------- Contrato y anexo PDF

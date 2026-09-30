@@ -8,18 +8,21 @@
     <p class="text-sm text-muted-foreground mt-1">{{ $student->apellidos }} {{ $student->nombres }} · Código {{ $student->codigo }} · Estado: <strong>{{ $inscripcion?->estado === 'COMPLETADA' ? 'inscrito' : 'preinscripción' }}</strong></p>
 </div>
 
-@if(session('mensaje'))
-    <div class="bg-success/10 border border-success/20 text-success rounded-xl p-4 mb-5 text-sm">{{ session('mensaje') }}</div>
-@endif
-@if($errors->any())
-    <div class="bg-error/10 border border-error/20 text-error rounded-xl p-4 mb-5 text-sm">
-        <ul class="list-disc list-inside">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+@if($inscripcion?->linea_completada_en)
+    <div class="bg-primary/10 border border-primary/20 text-primary rounded-xl p-4 mb-5 text-sm">
+        Inscripción en línea finalizada el {{ $inscripcion->linea_completada_en->format('d/m/Y') }}. Ya no admite cambios.
     </div>
 @endif
+
+{{-- Pasos --}}
+<div class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6">
+    @foreach($pasos as $n => $paso)
+        <a href="{{ route($paso['ruta']) }}" class="bg-card border {{ $paso['completo'] ? 'border-success/40' : 'border-border' }} rounded-xl p-4 text-center hover:shadow-sm transition-shadow">
+            <p class="text-2xl font-bold {{ $paso['completo'] ? 'text-success' : 'text-muted-foreground' }}">{{ $paso['completo'] ? '✓' : $n }}</p>
+            <p class="text-xs font-medium text-foreground mt-1">Paso {{ $n }}<br>{{ $paso['nombre'] }}</p>
+        </a>
+    @endforeach
+</div>
 
 {{-- Contrato y anexo --}}
 <div class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-center">
@@ -33,8 +36,12 @@
     </div>
 </div>
 
-{{-- Documentos --}}
+{{-- Documentos paso 3 --}}
 <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+    <div class="px-4 py-3 border-b border-border">
+        <h3 class="font-semibold text-foreground">Paso 3 — Documentos</h3>
+        <p class="text-xs text-muted-foreground">PDF/JPG/PNG, máx 5MB por archivo.</p>
+    </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
@@ -42,11 +49,11 @@
                     <th class="px-4 py-3 font-semibold text-foreground">Documento</th>
                     <th class="px-4 py-3 font-semibold text-foreground">Estado</th>
                     <th class="px-4 py-3 font-semibold text-foreground">Archivo</th>
-                    <th class="px-4 py-3 text-center font-semibold text-foreground">Subir (PDF/JPG/PNG, máx 5MB)</th>
+                    <th class="px-4 py-3 text-center font-semibold text-foreground">Subir</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($docs as $d)
+                @foreach($pasos[3]['docs'] ?? [] as $d)
                     <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
                         <td class="px-4 py-3 font-medium text-foreground">{{ $d['nombre'] }}</td>
                         <td class="px-4 py-3">
@@ -67,12 +74,14 @@
                             @endif
                         </td>
                         <td class="px-4 py-3">
+                            @if(! $inscripcion?->linea_completada_en)
                             <form method="POST" action="{{ route('inscripciones.subir-documento', $student) }}" enctype="multipart/form-data" class="flex gap-2 justify-center">
                                 @csrf
                                 <input type="hidden" name="tipo_documento" value="{{ $d['tipo'] }}">
                                 <input type="file" name="archivo" accept=".pdf,.jpg,.jpeg,.png" required class="text-xs text-muted-foreground file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
                                 <button type="submit" class="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">Subir</button>
                             </form>
+                            @else <span class="text-xs text-muted-foreground">Finalizado</span> @endif
                         </td>
                     </tr>
                 @endforeach

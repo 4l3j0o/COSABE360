@@ -29,4 +29,22 @@ class Section extends Model
     {
         return $this->estado === 'ACTIVO';
     }
+
+    /**
+     * HU-58b: código con extensión (S5A-BQS). El sufijo vive en el nombre
+     * ("A - BQS"); si no hay, devuelve el código base.
+     */
+    public function codigoCompleto(): string
+    {
+        $codigo = (string) ($this->codigo ?? $this->nombre ?? '');
+
+        if (preg_match('/-\s*([A-Za-z0-9]+)\s*$/', (string) $this->nombre, $m)) {
+            $sufijo = strtoupper($m[1]);
+            if (! str_ends_with(strtoupper($codigo), '-' . $sufijo)) {
+                return $codigo . '-' . $sufijo;
+            }
+        }
+
+        return $codigo;
+    }
 }

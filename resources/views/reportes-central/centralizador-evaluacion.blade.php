@@ -15,15 +15,7 @@
 </div>
 
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
-        <select name="course_subject_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <option value="">Seleccionar curso / materia…</option>
-            @foreach($courseSubjects as $cs)
-                <option value="{{ $cs->id }}" {{ request('course_subject_id') == $cs->id ? 'selected' : '' }}>{{ $cs->course->nombre }} - {{ $cs->subject->nombre }}</option>
-            @endforeach
-        </select>
-    </div>
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'eval', 'form' => null, 'cursoSel' => request('course_id'), 'materiaSel' => request('subject_id')])
     <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Ver reporte</button>
     @if(! $resultado['requiere_curso'])
     <div class="flex gap-2 ml-auto">

@@ -8,15 +8,7 @@
     <p class="text-sm text-muted-foreground mt-1">Período {{ $periodo?->nombre ?? '—' }}. El estudiante queda en preinscripción hasta verificar el pago en contabilidad.</p>
 </div>
 
-@if($errors->any())
-    <div class="bg-error/10 border border-error/20 text-error rounded-xl p-4 mb-5 text-sm">
-        <ul class="list-disc list-inside">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+{{-- Los errores de validación se muestran como tarjetas abajo a la derecha (layouts._toasts). --}}
 
 {{-- Búsqueda por CI --}}
 <div class="bg-card border border-border rounded-xl p-4 mb-5">
@@ -38,10 +30,12 @@
 
 <form method="POST" action="{{ route('inscripciones.store') }}">
     @csrf
+    <input type="hidden" name="reserva_id" value="{{ $reserva->id }}">
 
     {{-- Datos del estudiante --}}
     <div class="bg-card border border-border rounded-xl p-4 mb-5">
         <h3 class="font-semibold text-foreground mb-3">2. Datos del estudiante</h3>
+        <p class="text-xs text-muted-foreground mb-3">Código <strong>{{ $siguienteCodigo }}</strong> reservado para esta inscripción (se libera en 30 min si no se concreta).</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
                 <label class="block text-xs font-semibold text-muted-foreground mb-1">Código (correlativo)</label>
@@ -148,7 +142,7 @@
     {{-- Padre / Madre / Tutor --}}
     <div class="bg-card border border-border rounded-xl p-4 mb-5">
         <h3 class="font-semibold text-foreground mb-1">3. Padre, madre y tutor</h3>
-        <p class="text-xs text-muted-foreground mb-3">El tutor es obligatorio. Marque quién será el tutor principal (firma el contrato).</p>
+        <p class="text-xs text-muted-foreground mb-3">Solo es obligatorio el grupo marcado como tutor principal (firma el contrato). Los demás son opcionales.</p>
         <div class="mb-3 flex flex-wrap gap-4 text-sm">
             <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="tutor_principal" value="padre" {{ old('tutor_principal') === 'padre' ? 'checked' : '' }} class="accent-primary"> Tutor: padre</label>
             <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="tutor_principal" value="madre" {{ old('tutor_principal') === 'madre' ? 'checked' : '' }} class="accent-primary"> Tutor: madre</label>
@@ -156,13 +150,13 @@
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             @foreach(['padre' => 'Padre', 'madre' => 'Madre', 'tutor' => 'Tutor / Apoderado'] as $grupo => $titulo)
-            <div class="border border-border rounded-lg p-3">
-                <h4 class="font-bold text-foreground text-sm mb-2">{{ $titulo }} {{ $grupo === 'tutor' ? '*' : '' }}</h4>
+            <div class="border border-border rounded-lg p-3" id="grupo-{{ $grupo }}">
+                <h4 class="font-bold text-foreground text-sm mb-2">{{ $titulo }} <span class="marca-obligatoria text-error" data-grupo="{{ $grupo }}"></span></h4>
                 <div class="flex flex-col gap-2">
-                    <input type="text" name="{{ $grupo }}_nombres" value="{{ old($grupo.'_nombres') }}" placeholder="Nombres{{ $grupo === 'tutor' ? ' *' : '' }}" maxlength="150" {{ $grupo === 'tutor' ? 'required' : '' }} class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                    <input type="text" name="{{ $grupo }}_apellidos" value="{{ old($grupo.'_apellidos') }}" placeholder="Apellidos{{ $grupo === 'tutor' ? ' *' : '' }}" maxlength="150" {{ $grupo === 'tutor' ? 'required' : '' }} class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <input type="text" name="{{ $grupo }}_nombres" data-obligatorio="{{ $grupo }}" value="{{ old($grupo.'_nombres') }}" placeholder="Nombres" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <input type="text" name="{{ $grupo }}_apellidos" data-obligatorio="{{ $grupo }}" value="{{ old($grupo.'_apellidos') }}" placeholder="Apellidos" maxlength="150" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                     <div class="flex gap-2">
-                        <input type="text" name="{{ $grupo }}_num_doc" value="{{ old($grupo.'_num_doc') }}" placeholder="CI{{ $grupo === 'tutor' ? ' *' : '' }}" maxlength="8" pattern="[0-9]{7,8}" title="7 u 8 dígitos" {{ $grupo === 'tutor' ? 'required' : '' }} class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm flex-1">
+                        <input type="text" name="{{ $grupo }}_num_doc" data-obligatorio="{{ $grupo }}" value="{{ old($grupo.'_num_doc') }}" placeholder="CI" maxlength="8" pattern="[0-9]{7,8}" title="7 u 8 dígitos" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm flex-1">
                         <select name="{{ $grupo }}_complemento" title="Complemento" class="px-2 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-24">
                             <option value="">Comp.</option>
                             @foreach(config('bolivia.complementos') as $comp)
@@ -184,6 +178,22 @@
 </form>
 
 <script>
+// Marca obligatorio (nombres, apellidos, CI) solo el grupo del tutor principal
+function actualizarObligatorios() {
+    var sel = document.querySelector('input[name="tutor_principal"]:checked');
+    var principal = sel ? sel.value : 'tutor';
+    document.querySelectorAll('[data-obligatorio]').forEach(function (input) {
+        input.required = input.dataset.obligatorio === principal;
+    });
+    document.querySelectorAll('.marca-obligatoria').forEach(function (span) {
+        span.textContent = span.dataset.grupo === principal ? '*' : '';
+    });
+}
+document.querySelectorAll('input[name="tutor_principal"]').forEach(function (r) {
+    r.addEventListener('change', actualizarObligatorios);
+});
+actualizarObligatorios();
+
 const UBICACION = @json(config('bolivia.departamentos'));
 const CODIGO_CORRELATIVO = @json($siguienteCodigo);
 const selDepto = document.getElementById('nac-depto');

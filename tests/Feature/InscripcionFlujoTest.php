@@ -155,7 +155,7 @@ class InscripcionFlujoTest extends TestCase
         $this->assertSame($e['curso']->id, $enrollment->registration->course_id);
 
         // Documentos de inscripción en línea pendientes
-        $this->assertSame(5, $student->documents()->count());
+        $this->assertSame(count(\App\Http\Controllers\InscripcionController::DOCS_LINEA), $student->documents()->count());
     }
 
     public function test_verificar_pago_pasa_a_inscrito(): void
@@ -243,6 +243,34 @@ class InscripcionFlujoTest extends TestCase
         $this->assertNull(Student::where('numero_documento', '1010101')->first());
         $this->assertNull(Student::where('numero_documento', '1010102')->first());
         $this->assertNull(Student::where('numero_documento', '123')->first());
+    }
+
+    public function test_solo_grupo_principal_es_obligatorio(): void
+    {
+        $e = $this->crearEstructura('TP1');
+        $admin = $this->crearUsuario('Administrador', 'admin_ins8@sanber.edu.bo');
+
+        // Tutor principal = padre, solo datos del padre -> ok
+        $datos = $this->datosInscripcion($e['curso']->id, '2020201');
+        unset($datos['tutor_nombres'], $datos['tutor_apellidos'], $datos['tutor_num_doc'], $datos['tutor_email']);
+        $datos['tutor_principal'] = 'padre';
+        $datos['padre_nombres'] = 'Jose Luis';
+        $datos['padre_apellidos'] = 'Benites Alarcon';
+        $datos['padre_num_doc'] = '3711878';
+        $this->actingAs($admin)->post(route('inscripciones.store'), $datos)
+            ->assertRedirect();
+        $this->assertNotNull(Student::where('numero_documento', '2020201')->first());
+
+        // Tutor principal = padre pero sin CI del padre -> error
+        $datos = $this->datosInscripcion($e['curso']->id, '2020202');
+        unset($datos['tutor_nombres'], $datos['tutor_apellidos'], $datos['tutor_num_doc'], $datos['tutor_email']);
+        $datos['tutor_principal'] = 'padre';
+        $datos['padre_nombres'] = 'Jose Luis';
+        $datos['padre_apellidos'] = 'Benites Alarcon';
+        unset($datos['padre_num_doc']);
+        $this->actingAs($admin)->post(route('inscripciones.store'), $datos)
+            ->assertSessionHasErrors('padre_num_doc');
+        $this->assertNull(Student::where('numero_documento', '2020202')->first());
     }
 
     public function test_contrato_y_anexo_pdf_descargan(): void

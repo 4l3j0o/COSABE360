@@ -14,11 +14,17 @@ class Enrollment extends Model
         'fecha',
         'estado',
         'observaciones',
+        'nit_facturacion',
+        'razon_social_facturacion',
+        'contrato_aceptado_en',
+        'linea_completada_en',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'academic_year_id' => 'integer',
+        'contrato_aceptado_en' => 'datetime',
+        'linea_completada_en' => 'datetime',
     ];
 
     public const ESTADOS = ['PENDIENTE', 'COMPLETADA', 'ANULADA'];

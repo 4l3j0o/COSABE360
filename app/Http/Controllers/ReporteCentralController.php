@@ -250,11 +250,13 @@ class ReporteCentralController extends Controller
     {
         $user = $request->user();
         $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $cursos = $this->cursosPermitidos($user);
         $resultado = $this->buildCentralizadorEvaluacion($request, $user, $courseSubjects);
 
         return view('reportes-central.centralizador-evaluacion', [
             'courseSubjects' => $courseSubjects,
-            'filtros' => $request->only(['course_subject_id']),
+            'cursos' => $cursos,
+            'filtros' => $request->only(['course_subject_id', 'course_id', 'subject_id']),
             'resultado' => $resultado,
         ]);
     }
@@ -280,9 +282,9 @@ class ReporteCentralController extends Controller
 
     private function buildCentralizadorEvaluacion(Request $request, $user, Collection $courseSubjects): array
     {
-        $csId = $request->query('course_subject_id');
+        $cs = $this->resolverCourseSubject($request, $courseSubjects);
 
-        if (! $csId) {
+        if (! $cs) {
             return [
                 'curso' => null,
                 'materia' => null,
@@ -292,12 +294,8 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        if (! $courseSubjects->contains('id', (int) $csId)) {
-            abort(403, 'No tiene acceso a esa materia del curso.');
-        }
-
         $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
-            ->find($csId);
+            ->find($cs->id);
 
         if (! $cs) {
             return ['curso' => null, 'materia' => null, 'trimestres' => [1, 2, 3], 'filas' => collect(), 'requiere_curso' => true];
@@ -355,11 +353,13 @@ class ReporteCentralController extends Controller
     {
         $user = $request->user();
         $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $cursos = $this->cursosPermitidos($user);
         $resultado = $this->buildCentralizadorTrimestre($request, $user, $courseSubjects);
 
         return view('reportes-central.centralizador-trimestre', [
             'courseSubjects' => $courseSubjects,
-            'filtros' => $request->only(['course_subject_id', 'trimestre']),
+            'cursos' => $cursos,
+            'filtros' => $request->only(['course_subject_id', 'course_id', 'subject_id', 'trimestre']),
             'resultado' => $resultado,
         ]);
     }
@@ -385,11 +385,12 @@ class ReporteCentralController extends Controller
 
     private function buildCentralizadorTrimestre(Request $request, $user, Collection $courseSubjects): array
     {
-        $csId = $request->query('course_subject_id');
         $trimestre = (int) ($request->query('trimestre') ?: 1);
         $trimestre = in_array($trimestre, [1, 2, 3], true) ? $trimestre : 1;
 
-        if (! $csId) {
+        $cs = $this->resolverCourseSubject($request, $courseSubjects);
+
+        if (! $cs) {
             return [
                 'curso' => null,
                 'materia' => null,
@@ -400,12 +401,8 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        if (! $courseSubjects->contains('id', (int) $csId)) {
-            abort(403, 'No tiene acceso a esa materia del curso.');
-        }
-
         $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
-            ->find($csId);
+            ->find($cs->id);
 
         if (! $cs) {
             return ['curso' => null, 'materia' => null, 'plan' => null, 'filas' => collect(), 'trimestre' => $trimestre, 'requiere_curso' => true];
@@ -465,6 +462,31 @@ class ReporteCentralController extends Controller
             'trimestre' => $trimestre,
             'requiere_curso' => false,
         ];
+    }
+
+    /**
+     * Resuelve el course_subject desde course_subject_id (compat) o desde
+     * el par curso + materia (filtros en cascada de la central).
+     */
+    private function resolverCourseSubject(Request $request, Collection $courseSubjects): ?CourseSubject
+    {
+        if ($request->filled('course_subject_id')) {
+            $cs = $courseSubjects->firstWhere('id', (int) $request->query('course_subject_id'));
+            abort_if(! $cs, 403, 'No tiene acceso a esa materia del curso.');
+
+            return $cs;
+        }
+
+        if ($request->filled('course_id') && $request->filled('subject_id')) {
+            $cs = $courseSubjects
+                ->first(fn ($c) => (int) $c->course_id === (int) $request->query('course_id')
+                    && (int) $c->subject_id === (int) $request->query('subject_id'));
+            abort_if(! $cs, 403, 'No tiene acceso a esa materia del curso.');
+
+            return $cs;
+        }
+
+        return null;
     }
 
     // ------------------------------------------------------------ Permisos
@@ -815,62 +837,16 @@ class ReporteCentralController extends Controller
 
     private function exportTrimestreExcel(array $resultado): StreamedResponse
     {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Centralizador T'.$resultado['trimestre']);
+        // HU-58b: formato de planilla oficial (logo, tarjeta, bloques por
+        // criterio) con valores calculados, vía EvaluationTemplateService.
+        $contenido = app(\App\Services\EvaluationTemplateService::class)
+            ->exportarCentralizador($resultado['plan']);
 
-        $titulo = 'Centralizador de Calificaciones por Trimestre — Trimestre '.$resultado['trimestre'].'°';
-        $this->escribirMembreteExcel($sheet, $titulo, trim(($resultado['curso'] ?? '').' · '.($resultado['materia'] ?? '')), 6);
-
-        $plan = $resultado['plan'];
-
-        // Cabecera dinámica: actividades por criterio + prom + nota trim
-        $cabecera = ['N.º', 'Código', 'Estudiante'];
-        foreach (($plan?->criteria ?? collect()) as $criterion) {
-            if ($criterion->activities->isEmpty()) {
-                $cabecera[] = trim($criterion->codigo.' ('.$criterion->porcentaje.'%)');
-            } else {
-                foreach ($criterion->activities as $activity) {
-                    $cabecera[] = $activity->nombre;
-                }
-            }
-            $cabecera[] = 'Prom '.$criterion->codigo;
-        }
-        $cabecera[] = 'Nota Trim.';
-        $cabecera[] = 'Valoración';
-        $cabecera[] = 'Estado';
-
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
-
-        $fila = 3;
-        foreach ($resultado['filas'] as $i => $f) {
-            $col = 4;
-            $sheet->setCellValue('A'.$fila, $i + 1);
-            $sheet->setCellValue('B'.$fila, $f['codigo']);
-            $sheet->setCellValue('C'.$fila, $f['apellidos'].' '.$f['nombres']);
-
-            foreach (($plan?->criteria ?? collect()) as $criterion) {
-                if ($criterion->activities->isEmpty()) {
-                    $sheet->setCellValue($this->colLetter($col++).$fila, '');
-                } else {
-                    $notas = $f['actividades'][$criterion->id] ?? collect();
-                    foreach ($notas as $nota) {
-                        $sheet->setCellValue($this->colLetter($col++).$fila, $nota ?? '');
-                    }
-                }
-                $sheet->setCellValue($this->colLetter($col++).$fila, $f['criterios'][$criterion->codigo] ?? '');
-            }
-
-            $sheet->setCellValue($this->colLetter($col++).$fila, $f['notaTrim'] ?? '');
-            $sheet->setCellValue($this->colLetter($col++).$fila, $f['valoracion']['codigo'] ?? '—');
-            $sheet->setCellValue($this->colLetter($col++).$fila, $f['aprobado'] === null ? 'Sin nota' : ($f['aprobado'] ? 'Aprobado' : 'Reprobado'));
-            $fila++;
-        }
-
-        $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
-
-        return $this->streamXlsx($spreadsheet, $this->nombreArchivo('centralizador-trimestre', $resultado, 'xlsx'));
+        return response()->streamDownload(
+            fn () => print ($contenido),
+            $this->nombreArchivo('centralizador-trimestre', $resultado, 'xlsx'),
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
     }
 
     private function escribirMembreteExcel($sheet, string $titulo, string $subtitulo, int $filasMembrete): void

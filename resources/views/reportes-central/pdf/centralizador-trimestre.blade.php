@@ -65,7 +65,7 @@
           <th>Prom {{ $criterion->codigo }}</th>
         @endif
       @endforeach
-      <th style="width:7%">Nota Trim.</th><th style="width:7%">Val.</th><th style="width:9%">Estado</th>
+      <th style="width:7%">Nota Trim.</th><th style="width:9%">Estado</th>
     </tr>
     @foreach($resultado['filas'] as $i => $fila)
       <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
@@ -83,7 +83,6 @@
           @endif
         @endforeach
         <td><strong>{{ $fila['notaTrim'] ?? '—' }}</strong></td>
-        <td>{{ $fila['valoracion']['codigo'] ?? '—' }}</td>
         <td class="{{ $fila['aprobado'] ? 'aprobado' : 'reprobado' }}">{{ $fila['aprobado'] === null ? '—' : ($fila['aprobado'] ? 'Aprobado' : 'Reprobado') }}</td>
       </tr>
     @endforeach

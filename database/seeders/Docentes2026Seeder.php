@@ -408,10 +408,21 @@ class Docentes2026Seeder extends Seeder
         $niveles = ['Inicial en Familia Comunitaria' => 1, 'Primaria Comunitaria Vocacional' => 2, 'Secundaria Comunitaria Productiva' => 3];
 
         foreach ($docentes as $d) {
-            DB::table('teachers')->updateOrInsert(
-                ['numero_documento' => $d['numero_documento']],
-                ['nombres' => $d['nombres'], 'apellidos' => $d['apellidos'], 'especialidad' => $d['especialidad'], 'numero_documento' => $d['numero_documento'], 'complemento' => '', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]
-            );
+            // HU-62: buscar también por nombre, porque DocentesDatosOficialesSeeder
+            // puede haber actualizado el CI (clave anterior) con el verdadero.
+            $id = DB::table('teachers')->where('numero_documento', $d['numero_documento'])->value('id')
+                ?? DB::table('teachers')->where('nombres', $d['nombres'])->where('apellidos', $d['apellidos'])->value('id');
+            $datos = ['nombres' => $d['nombres'], 'apellidos' => $d['apellidos'], 'especialidad' => $d['especialidad'], 'numero_documento' => $d['numero_documento'], 'complemento' => '', 'estado' => 'ACTIVO', 'updated_at' => now()];
+            if ($id) {
+                // No pisar el CI verdadero si ya fue oficializado (solo completar vacíos).
+                $actual = DB::table('teachers')->where('id', $id)->first(['numero_documento', 'complemento']);
+                if ($actual && ! preg_match('/^90\d{6}$/', (string) $actual->numero_documento)) {
+                    unset($datos['numero_documento'], $datos['complemento']);
+                }
+                DB::table('teachers')->where('id', $id)->update($datos);
+            } else {
+                DB::table('teachers')->insert(array_merge($datos, ['created_at' => now()]));
+            }
         }
 
         // Materias

@@ -6,6 +6,12 @@
 @endsection
 
 @section('contenido')
+    @if(session('error'))
+        <div class="bg-error/10 border border-error/20 text-error rounded-xl p-4 mb-5 text-sm">{{ session('error') }}</div>
+    @endif
+    @if(session('mensaje'))
+        <div class="bg-success/10 border border-success/20 text-success rounded-xl p-4 mb-5 text-sm">{!! session('mensaje') !!}</div>
+    @endif
     @php
         $meses = [2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre'];
         $totalMeses = $pagos->count();

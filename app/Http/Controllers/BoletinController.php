@@ -19,9 +19,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class BoletinController extends Controller
 {
-    public function show(Request $request, Student $student): View
+    public function show(Request $request, Student $student)
     {
         $this->autorizar($request, $student);
+
+        if ($redir = $this->verificarPagosAlDia($request, $student)) {
+            return $redir;
+        }
 
         $student->load(['rudeRecord']);
         $curso = $student->activeCourse();
@@ -47,9 +51,13 @@ class BoletinController extends Controller
         return view('boletin.show', compact('student', 'curso', 'filas', 'promedioGeneral', 'periodo'));
     }
 
-    public function pdf(Request $request, Student $student): StreamedResponse
+    public function pdf(Request $request, Student $student)
     {
         $this->autorizar($request, $student);
+
+        if ($redir = $this->verificarPagosAlDia($request, $student)) {
+            return $redir;
+        }
 
         $student->load(['rudeRecord']);
         $curso = $student->activeCourse();
@@ -103,5 +111,42 @@ class BoletinController extends Controller
         }
 
         abort(403);
+    }
+
+    /**
+     * HU-59b: la familia debe estar al día para ver el boletín.
+     * Si hay mensualidades pendientes, redirige a pagos recordando los meses.
+     * El personal (Admin/Director/Secretaría) no se bloquea.
+     */
+    private function verificarPagosAlDia(Request $request, Student $student)
+    {
+        $user = $request->user();
+
+        $esFamilia = $user->hasRole('Estudiante')
+            || ($user->hasRole('Padre/Tutor') && ParentGuardian::where('user_id', $user->id)->exists());
+
+        if (! $esFamilia) {
+            return null;
+        }
+
+        if ($user->hasRole('Estudiante') && $user->student?->id !== $student->id) {
+            return null;
+        }
+
+        $meses = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
+
+        $reg = $student->activeRegistration();
+        $pendientes = $reg
+            ? $reg->monthlyPayments()->whereIn('estado', ['PENDIENTE', 'ESPERA'])->orderBy('mes')->get()
+            : collect();
+
+        if ($pendientes->isEmpty()) {
+            return null;
+        }
+
+        $nombres = $pendientes->map(fn ($p) => $meses[(int) $p->mes] ?? ('Mes ' . $p->mes))->implode(', ');
+
+        return redirect()->route('monthly-payments.estudiante', $student)
+            ->with('error', 'Tiene mensualidades pendientes (' . $nombres . '). Regularice sus pagos para ver el boletín.');
     }
 }

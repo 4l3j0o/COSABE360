@@ -15,6 +15,11 @@ class ParentGuardian extends Model
         'user_id',
         'nombres',
         'apellidos',
+        'apellido_paterno',
+        'apellido_materno',
+        'fecha_nacimiento',
+        'idioma',
+        'grado_instruccion',
         'tipo_documento',
         'numero_documento',
         'complemento',
@@ -22,7 +27,27 @@ class ParentGuardian extends Model
         'email',
         'direccion',
         'ocupacion',
+        'cargo_actual',
+        'nombre_institucion',
         'estado',
+    ];
+
+    protected function casts(): array
+    {
+        return ['fecha_nacimiento' => 'date'];
+    }
+
+    /**
+     * Grados de instrucción oficiales (RUDE sección V).
+     */
+    public const GRADOS_INSTRUCCION = [
+        'Ninguno',
+        'Primaria',
+        'Secundaria',
+        'Técnico Medio',
+        'Técnico Superior',
+        'Licenciatura',
+        'Postgrado',
     ];
 
     public function user(): BelongsTo
