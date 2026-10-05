@@ -49,7 +49,7 @@
                         </div>
                     @endif
 
-                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-4 gap-2">
+                    <div class="mt-4 pt-3 border-t border-border grid grid-cols-3 gap-2">
                         <a href="{{ route('evaluations.index', $curso) }}" title="Evaluaciones por trimestre (HU-47)"
                             class="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -61,10 +61,6 @@
                         <a href="{{ route('docente.asistencias', $curso) }}" title="Historial de Asistencia"
                             class="inline-flex items-center justify-center p-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </a>
-                        <a href="{{ route('evaluation-reports.index', ['course_subject_id' => $curso->id]) }}" title="Notas / Calificaciones (aprobados, promedios)"
-                            class="inline-flex items-center justify-center p-2 rounded-lg border border-border text-foreground hover:bg-muted transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         </a>
                     </div>
 
