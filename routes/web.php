@@ -112,40 +112,6 @@ Route::get('/dashboard', function () {
         $datos['miHorario'] = $teacher
             ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count()
             : 0;
-
-        // HU-65b: clase actual según horario (hora Bolivia) + mapa curso→materias
-        // para el widget de diario/conducta del panel docente.
-        $datos['claseActual'] = null;
-        $datos['mapaCursos'] = [];
-        if ($teacher) {
-            $asignaciones = \App\Models\CourseSubject::with(['course', 'subject'])
-                ->where('teacher_id', $teacher->id)->get();
-            $datos['mapaCursos'] = $asignaciones->groupBy('course_id')->map(function ($grupo) {
-                $curso = $grupo->first()->course;
-
-                return [
-                    'id' => $curso->id,
-                    'nombre' => $curso->codigoCorto(),
-                    'materias' => $grupo->map(fn ($cs) => ['id' => $cs->subject->id, 'nombre' => $cs->subject->nombre])->values(),
-                ];
-            })->values();
-
-            $ahora = \Carbon\Carbon::now('America/La_Paz');
-            $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES', 6 => 'SABADO'];
-            $dia = $dias[$ahora->dayOfWeekIso] ?? null;
-            if ($dia) {
-                $hora = $ahora->format('H:i:s');
-                $datos['claseActual'] = \App\Models\Schedule::with(['course', 'subject'])
-                    ->where('teacher_id', $teacher->id)
-                    ->where('dia', $dia)
-                    ->where('estado', 'ACTIVO')
-                    ->orderBy('hora_inicio')
-                    ->get()
-                    ->first(fn ($s) => $s->hora_inicio && $s->hora_fin
-                        && $s->hora_inicio->format('H:i:s') <= $hora
-                        && $hora <= $s->hora_fin->format('H:i:s'));
-            }
-        }
     }
 
     // Para el rol Estudiante: promedio, asistencia, materias y curso activo
@@ -708,6 +674,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 // HU-65: Diario de aula — bitácora de avances por clase (docente registra; estudiante/padre/director consultan)
 Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->prefix('diario-aula')->group(function () {
     Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
+    Route::get('/ahora', [DiarioAulaController::class, 'ahora'])->name('diario.ahora');
     Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');
     Route::post('/', [DiarioAulaController::class, 'store'])->name('diario.store');
     Route::get('/{diario}', [DiarioAulaController::class, 'show'])->name('diario.show');
@@ -717,6 +684,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padr
 // HU-65: Reportes de conducta — faltas Leve/Grave/Muy grave + reportes por curso y por estudiante
 Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Padre/Tutor,Estudiante'])->prefix('conducta')->group(function () {
     Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
+    Route::get('/ahora', [ConductaReporteController::class, 'ahora'])->name('conducta.ahora');
     Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');
     Route::post('/', [ConductaReporteController::class, 'store'])->name('conducta.store');
     Route::get('/estudiante', [ConductaReporteController::class, 'estudiante'])->name('conducta.estudiante');

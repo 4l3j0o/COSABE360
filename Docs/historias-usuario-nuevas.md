@@ -442,3 +442,9 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Reportes de conducta** — faltas LEVE/GRAVE/MUY_GRAVE con fecha, hora, materia (o General) y descripción (conducta_reportes); el estudiante solo ve las propias. Rutas /conducta.
 - **Reportes**: general por curso (filtros curso/materia/tipo/rango + conteos) y específico por estudiante (historial + conteo por tipo); ambos exportan a PDF (dompdf) y Excel (PhpSpreadsheet).
 - **Permisos** — registra: Docente asignado al curso (o tutor del paralelo) + Admin/Director/Secretaría; consulta: + Estudiante, Padre/Tutor, Regente (solo conducta). Sin Policies: ownership en controlador, como asistencias.
+
+## HU-65b/65c: accesos por curso + acciones rapidas + demo (2026-10-05)
+- **Tarjetas Mis Cursos** — cada tarjeta curso+materia trae botones Diario y Conducta prefiltrados a ese curso/materia.
+- **Acciones rapidas del panel docente** — Diario de Aula y Conducta abren la clase actual segun horario (hora Bolivia); fuera de horario muestran aviso y llevan a Mis Cursos (rutas diario.ahora, conducta.ahora).
+- **Sin selectores en dashboard** — el selector curso/materia en cascada se retiro; direccion/admin/secretaria/regente mantienen acceso global en sidebar; estudiante/padre entran desde sus paneles.
+- **DocenteDemoSeeder** — horario semanal sin choques para los 10 cursos del docente (+ bloque que cubre la hora actual), 30 bitacoras, 14 reportes de conducta, asistencias de 5 dias y 2 comunicados a docentes. Corre con php artisan db:seed --class=DocenteDemoSeeder.

@@ -67,6 +67,25 @@ class DiarioAulaController extends Controller
     }
 
     /**
+     * HU-65c: acción rápida — abre el diario de la clase actual según horario;
+     * fuera de horario avisa y lleva a Mis Cursos.
+     */
+    public function ahora(): RedirectResponse
+    {
+        $bloque = $this->bloqueActual();
+
+        if (! $bloque) {
+            return redirect()->route('docente.cursos')
+                ->with('mensaje', 'Fuera de tu horario de clases. Elige el curso para abrir su diario de aula.');
+        }
+
+        return redirect()->route('diario.index', [
+            'course_id' => $bloque->course_id,
+            'subject_id' => $bloque->subject_id,
+        ]);
+    }
+
+    /**
      * Formulario de nueva bitácora (docente y roles administrativos).
      */
     public function create(Request $request): View
@@ -137,6 +156,34 @@ class DiarioAulaController extends Controller
     }
 
     // ---------- permisos y alcance ----------
+
+    private function bloqueActual()
+    {
+        $teacher = auth()->user()->teacher
+            ?? Teacher::where('user_id', auth()->id())->first();
+
+        if (! $teacher) {
+            return null;
+        }
+
+        $ahora = \Carbon\Carbon::now('America/La_Paz');
+        $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES', 6 => 'SABADO'];
+        $dia = $dias[$ahora->dayOfWeekIso] ?? null;
+        if (! $dia) {
+            return null;
+        }
+
+        $hora = $ahora->format('H:i:s');
+
+        return \App\Models\Schedule::where('teacher_id', $teacher->id)
+            ->where('dia', $dia)
+            ->where('estado', 'ACTIVO')
+            ->orderBy('hora_inicio')
+            ->get()
+            ->first(fn ($s) => $s->hora_inicio && $s->hora_fin
+                && $s->hora_inicio->format('H:i:s') <= $hora
+                && $hora <= $s->hora_fin->format('H:i:s'));
+    }
 
     private function authorizeRegistro($user): void
     {
