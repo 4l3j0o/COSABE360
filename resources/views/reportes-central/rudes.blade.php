@@ -5,10 +5,7 @@
 @section('contenido')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <a href="{{ route('reportes.central.index') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Volver a Central de Reportes
-        </a>
+        @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
         <h1 class="text-xl font-bold text-foreground mt-2">Lista de RUDEs</h1>
         <p class="text-sm text-muted-foreground mt-1">Lista de RUDEs del paralelo seleccionado. El curso completo solo es visible para el tutor/encargado.</p>
     </div>

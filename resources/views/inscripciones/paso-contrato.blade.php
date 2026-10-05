@@ -4,10 +4,7 @@
 
 @section('contenido')
 <div class="mb-6">
-    <a href="{{ route('inscripciones.mi-inscripcion') }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Volver a Mi Inscripción
-    </a>
+    @include('layouts._volver', ['href' => route('inscripciones.mi-inscripcion'), 'texto' => 'Volver a Mi Inscripción'])
     <h1 class="text-xl font-bold text-foreground mt-2">Paso 4 — Aceptar el contrato en línea</h1>
     <p class="text-sm text-muted-foreground mt-1">Complete los datos de facturación, lea el contrato y acéptelo. Además imprímalo y entréguelo firmado en secretaría.</p>
 </div>

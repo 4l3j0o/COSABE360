@@ -8,7 +8,8 @@
 @section('contenido')
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Diario de Aula</h1>
+            @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Diario de Aula</h1>
             <p class="text-sm text-muted-foreground">Bitácora de lo avanzado en cada clase: avance curricular, ejercicios y observaciones.</p>
         </div>
         @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))

@@ -116,4 +116,48 @@ class ReportesConsolidacionTest extends TestCase
         $this->actingAs($admin)->get(route('reportes.export.administrativo.matriculas', ['format' => 'excel']))
             ->assertOk();
     }
+
+    public function test_administrativos_abren_vista_antes_de_exportar(): void
+    {
+        $nivel = Level::firstOrCreate(['nombre' => 'Primaria'], ['orden' => 2, 'estado' => 'ACTIVO']);
+        $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'G', 'orden' => 1, 'estado' => 'ACTIVO']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
+        $gestion = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'C', 'estado' => 'ACTIVO']);
+        $est = Student::create(['codigo' => '2', 'nombres' => 'Luis', 'apellidos' => 'Vega', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '7654321', 'estado' => 'ACTIVO']);
+        $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 100, 'estado' => 'ACTIVA']);
+
+        $admin = $this->admin();
+
+        foreach ([
+            'reportes.central.administrativo.inscripciones' => 'Reporte de Inscripciones',
+            'reportes.central.administrativo.matriculas' => 'Reporte de Matrículas',
+            'reportes.central.administrativo.pagos' => 'Reporte de Pagos y Deudas',
+            'reportes.central.administrativo.documentacion' => 'Reporte de Documentación',
+        ] as $ruta => $titulo) {
+            $response = $this->actingAs($admin)->get(route($ruta));
+            $response->assertOk();
+            $response->assertSee($titulo, false);
+            $response->assertSee('Volver a Central de Reportes', false);
+        }
+
+        // La central lleva a Abrir, ya no descarga directo
+        $central = $this->actingAs($admin)->get(route('reportes.central.index'));
+        $central->assertOk();
+        $central->assertSee('Abrir', false);
+    }
+
+    public function test_director_no_abre_matriculas_ni_pagos(): void
+    {
+        $rol = Role::where('nombre', 'Director')->first();
+        $director = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'dir_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+
+        $this->actingAs($director)->get(route('reportes.central.administrativo.matriculas'))
+            ->assertRedirect(route('acceso.denegado'));
+        $this->actingAs($director)->get(route('reportes.central.administrativo.pagos'))
+            ->assertRedirect(route('acceso.denegado'));
+        $this->actingAs($director)->get(route('reportes.central.administrativo.inscripciones'))
+            ->assertOk();
+    }
 }

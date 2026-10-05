@@ -7,7 +7,8 @@
 
 @section('contenido')
     <div class="mb-6">
-        <h1 class="text-xl font-bold text-foreground">Nueva bitácora de aula</h1>
+        @include('layouts._volver', ['href' => route('diario.index'), 'texto' => 'Volver al Diario'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Nueva bitácora de aula</h1>
         <p class="text-sm text-muted-foreground">Anota lo hecho en la clase para que estudiantes y dirección vean el avance.</p>
     </div>
 

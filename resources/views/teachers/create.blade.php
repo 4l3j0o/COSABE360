@@ -9,7 +9,8 @@
 @section('contenido')
     <div class="max-w-2xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-xl font-bold text-foreground">Registrar docente</h1>
+            @include('layouts._volver', ['href' => route('teachers.index'), 'texto' => 'Volver al listado'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Registrar docente</h1>
             <p class="text-sm text-muted-foreground mt-1">Complete los campos requeridos.</p>
         </div>
 

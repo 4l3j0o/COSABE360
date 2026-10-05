@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="mb-6">
-        <a href="{{ route('students.show', $estudiante) }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al estudiante</a>
+        @include('layouts._volver', ['href' => route('students.show', $estudiante), 'texto' => 'Volver al estudiante'])
         <h1 class="text-xl font-bold text-foreground mt-1">Registrar matrícula</h1>
     </div>
 

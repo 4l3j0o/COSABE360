@@ -17,10 +17,7 @@
 @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <a href="{{ route('evaluations.index', $courseSubject) }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Volver a Evaluaciones
-        </a>
+        @include('layouts._volver', ['href' => route('evaluations.index', $courseSubject), 'texto' => 'Volver a Evaluaciones'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $nombresTrim[$plan->trimestre] }}</h1>
         <div class="mt-2 flex flex-wrap gap-2">
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>

@@ -8,9 +8,7 @@
 @section('contenido')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div class="flex items-center gap-3 min-w-0">
-            <a href="{{ route('schedules.index') }}" class="shrink-0 inline-flex items-center gap-1.5 p-2 rounded-lg border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Volver a horarios">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            </a>
+            @include('layouts._volver', ['href' => route('schedules.index'), 'texto' => 'Volver a horarios'])
             <div class="min-w-0">
                 <h1 class="text-xl font-bold text-foreground truncate">Estudiantes Matriculados</h1>
                 <p class="text-sm text-muted-foreground">{{ $course->nombre }} - {{ $course->aula ?? 's/a' }} ({{ $course->gestion->nombre ?? '' }})</p>

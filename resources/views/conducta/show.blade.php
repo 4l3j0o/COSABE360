@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="mb-6">
-        <a href="{{ route('conducta.index', ['course_id' => $reporte->course_id]) }}" class="text-sm text-primary hover:underline">← Volver al reporte del curso</a>
+        @include('layouts._volver', ['href' => route('conducta.index', ['course_id' => $reporte->course_id]), 'texto' => 'Volver al reporte del curso'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $reporte->student->apellidos }} {{ $reporte->student->nombres }}</h1>
         <p class="text-sm text-muted-foreground">{{ $reporte->course->nombre }} · {{ $reporte->subject->nombre ?? 'General' }} · {{ $reporte->fecha->format('d/m/Y') }}{{ $reporte->hora ? ' · '.substr($reporte->hora, 0, 5) : '' }}</p>
     </div>

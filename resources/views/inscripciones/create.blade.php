@@ -4,7 +4,8 @@
 
 @section('contenido')
 <div class="mb-6">
-    <h1 class="text-xl font-bold text-foreground">Nueva Inscripción — Preinscripción</h1>
+    @include('layouts._volver', ['href' => route('students.index'), 'texto' => 'Volver al listado'])
+    <h1 class="text-xl font-bold text-foreground mt-2">Nueva Inscripción — Preinscripción</h1>
     <p class="text-sm text-muted-foreground mt-1">Período {{ $periodo?->nombre ?? '—' }}. El estudiante queda en preinscripción hasta verificar el pago en contabilidad.</p>
 </div>
 

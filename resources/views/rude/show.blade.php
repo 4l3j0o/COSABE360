@@ -16,14 +16,14 @@
 
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">RUDE — {{ $student->nombres }} {{ $student->apellidos }}</h1>
+            @include('layouts._volver', ['href' => route('rude.index'), 'texto' => 'Volver al listado'])
+            <h1 class="text-xl font-bold text-foreground mt-2">RUDE — {{ $student->nombres }} {{ $student->apellidos }}</h1>
             <p class="text-sm text-muted-foreground mt-1">Código {{ $student->codigo }} • CI {{ $student->numero_documento }} {{ $student->complemento }}</p>
         </div>
         <div class="flex gap-2">
             <a href="{{ route('rude.form', $student) }}" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Editar Form I-V</a>
             <a href="{{ route('rude.export', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Exportar MinEdu</a>
             <a href="{{ route('rude.export-pdf', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">PDF</a>
-            <a href="{{ route('rude.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Volver</a>
         </div>
     </div>
 
