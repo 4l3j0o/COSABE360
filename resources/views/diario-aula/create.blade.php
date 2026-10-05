@@ -46,7 +46,8 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Avance curricular *</label>
-                <textarea name="avance_curricular" rows="4" placeholder="Ej: Avanzamos operaciones con fracciones: suma y resta con distinto denominador…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('avance_curricular') }}</textarea>
+                <textarea name="avance_curricular" rows="4" required minlength="10" placeholder="Ej: Avanzamos operaciones con fracciones: suma y resta con distinto denominador…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('avance_curricular') }}</textarea>
+                <p class="text-[11px] text-muted-foreground mt-1">Mínimo 10 caracteres: describa qué se avanzó en la clase.</p>
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Ejercicios propuestos en el aula</label>

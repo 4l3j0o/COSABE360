@@ -65,7 +65,8 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Descripción de lo ocurrido *</label>
-                <textarea name="descripcion" rows="4" placeholder="Ej: Juan Carlos se levantó de su silla y empezó a molestar a sus compañeros en horario de clases…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('descripcion') }}</textarea>
+                <textarea name="descripcion" rows="4" required minlength="10" placeholder="Ej: Juan Carlos se levantó de su silla y empezó a molestar a sus compañeros en horario de clases…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('descripcion') }}</textarea>
+                <p class="text-[11px] text-muted-foreground mt-1">Mínimo 10 caracteres: describa lo ocurrido con detalle.</p>
             </div>
             <div class="flex items-center gap-2">
                 <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Guardar reporte</button>
