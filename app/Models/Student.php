@@ -118,6 +118,11 @@ class Student extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function conductaReportes(): HasMany
+    {
+        return $this->hasMany(ConductaReporte::class);
+    }
+
     public function operations(): HasMany
     {
         return $this->hasMany(OperationHistory::class, 'modelo_id')

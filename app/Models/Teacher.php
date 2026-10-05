@@ -51,6 +51,16 @@ class Teacher extends Model
         return $this->hasMany(CourseSubject::class, 'teacher_id');
     }
 
+    public function diarioAulas(): HasMany
+    {
+        return $this->hasMany(DiarioAula::class, 'teacher_id');
+    }
+
+    public function conductaReportes(): HasMany
+    {
+        return $this->hasMany(ConductaReporte::class, 'teacher_id');
+    }
+
     public function estaActivo(): bool
     {
         return $this->estado === 'ACTIVO';

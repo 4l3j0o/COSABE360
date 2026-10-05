@@ -1,0 +1,269 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreDiarioAulaRequest;
+use App\Models\Course;
+use App\Models\CourseSubject;
+use App\Models\DiarioAula;
+use App\Models\ParentGuardian;
+use App\Models\Registration;
+use App\Models\Subject;
+use App\Models\Teacher;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class DiarioAulaController extends Controller
+{
+    /**
+     * HU-65: bitácora de aula — el docente anota avance curricular,
+     * ejercicios y observaciones; estudiantes, padres y directores la consultan.
+     */
+    public function index(Request $request): View
+    {
+        $user = $request->user();
+        $cursos = $this->cursosPermitidos($user);
+
+        if (! $request->query('course_id') && $cursos->count() === 1) {
+            $request->merge(['course_id' => $cursos->first()->id]);
+        }
+
+        $courseId = $request->query('course_id');
+        $subjectId = $request->query('subject_id');
+
+        $course = $courseId ? Course::with(['grade', 'section', 'gestion'])->find($courseId) : null;
+        if ($course && ! $this->permiteCurso($user, $course->id, $cursos)) {
+            abort(403, 'No tiene acceso a ese curso.');
+        }
+
+        $materias = $this->materiasVisibles($user, $courseId, $cursos);
+        if ($subjectId && ! $materias->contains('id', (int) $subjectId)) {
+            $subjectId = null;
+        }
+
+        // Docente y estudiante siempre trabajan sobre un curso concreto
+        $requiereCurso = $this->requiereCurso($user);
+        $entradas = collect();
+        if (! $requiereCurso || $courseId) {
+            $entradas = DiarioAula::with(['course.grade', 'course.section', 'subject', 'teacher'])
+                ->when($courseId, fn ($q) => $q->where('course_id', $courseId),
+                    fn ($q) => $q->whereIn('course_id', $cursos->pluck('id')))
+                ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
+                ->orderByDesc('fecha')
+                ->orderByDesc('id')
+                ->paginate(15)
+                ->withQueryString();
+        }
+
+        return view('diario-aula.index', [
+            'cursos' => $cursos,
+            'materias' => $materias,
+            'course' => $course,
+            'entradas' => $entradas,
+            'requiereCurso' => $requiereCurso && ! $courseId,
+            'filtros' => $request->only(['course_id', 'subject_id']),
+        ]);
+    }
+
+    /**
+     * Formulario de nueva bitácora (docente y roles administrativos).
+     */
+    public function create(Request $request): View
+    {
+        $this->authorizeRegistro($request->user());
+
+        $courseId = $request->query('course_id');
+        $cursos = $this->cursosRegistro($request->user());
+        $course = $courseId
+            ? $cursos->firstWhere('id', (int) $courseId)
+            : ($cursos->count() === 1 ? $cursos->first() : null);
+
+        $materias = $course ? $this->materiasRegistro($request->user(), $course) : collect();
+
+        return view('diario-aula.create', [
+            'cursos' => $cursos,
+            'course' => $course,
+            'materias' => $materias,
+            'hoy' => now()->toDateString(),
+        ]);
+    }
+
+    public function store(StoreDiarioAulaRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        $this->authorizeRegistro($user);
+
+        $course = Course::findOrFail($request->validated()['course_id']);
+        $this->authorizeDocenteDelCurso($user, $course);
+
+        $data = $request->validated();
+        $this->authorizeMateria($user, $course, (int) $data['subject_id']);
+
+        DiarioAula::create($data + [
+            'teacher_id' => $this->teacherIdPara($user, $course),
+            'registered_by_user_id' => $user->id,
+        ]);
+
+        return redirect()->route('diario.index', ['course_id' => $course->id])
+            ->with('mensaje', 'Bitácora registrada en el diario de aula.');
+    }
+
+    public function show(Request $request, DiarioAula $diario): View
+    {
+        $user = $request->user();
+        if (! $this->permiteCurso($user, $diario->course_id, $this->cursosPermitidos($user))) {
+            abort(403, 'No tiene acceso a esta bitácora.');
+        }
+        $diario->load(['course.grade', 'course.section', 'subject', 'teacher']);
+
+        return view('diario-aula.show', ['entrada' => $diario]);
+    }
+
+    public function destroy(Request $request, DiarioAula $diario): RedirectResponse
+    {
+        $user = $request->user();
+
+        $puede = $user->hasAnyRole(['Administrador', 'Director'])
+            || ($user->hasRole('Docente') && $user->teacher && $diario->teacher_id === $user->teacher->id);
+
+        abort_unless($puede, 403, 'Solo el autor o la dirección puede eliminar esta bitácora.');
+
+        $courseId = $diario->course_id;
+        $diario->delete();
+
+        return redirect()->route('diario.index', ['course_id' => $courseId])
+            ->with('mensaje', 'Bitácora eliminada.');
+    }
+
+    // ---------- permisos y alcance ----------
+
+    private function authorizeRegistro($user): void
+    {
+        abort_unless(
+            $user->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']),
+            403, 'Solo docentes y personal administrativo registran el diario.'
+        );
+    }
+
+    private function authorizeDocenteDelCurso($user, Course $course): void
+    {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return;
+        }
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $asignado = CourseSubject::where('teacher_id', $user->teacher->id)
+                ->where('course_id', $course->id)->exists()
+                || \App\Models\Section::where('id', $course->section_id)
+                    ->where('teacher_id', $user->teacher->id)->exists();
+            if ($asignado) {
+                return;
+            }
+        }
+        abort(403, 'No está asignado a este curso.');
+    }
+
+    private function authorizeMateria($user, Course $course, int $subjectId): void
+    {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return;
+        }
+        $ok = CourseSubject::where('course_id', $course->id)
+            ->where('subject_id', $subjectId)
+            ->where('teacher_id', $user->teacher->id)
+            ->exists();
+        abort_unless($ok, 403, 'Esa materia no le corresponde en este curso.');
+    }
+
+    private function teacherIdPara($user, Course $course): ?int
+    {
+        if ($user->hasRole('Docente') && $user->teacher) {
+            return $user->teacher->id;
+        }
+        // Registro administrativo: docente titular de la materia si existe
+        return CourseSubject::where('course_id', $course->id)
+            ->where('subject_id', request('subject_id'))
+            ->value('teacher_id');
+    }
+
+    private function cursosPermitidos($user)
+    {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
+        }
+
+        if ($user->hasRole('Docente') && $user->teacher) {
+            return $user->teacher->courseSubjects()
+                ->with(['course.grade', 'course.section', 'course.gestion'])
+                ->get()->map(fn ($cs) => $cs->course)->unique('id')->values();
+        }
+
+        if ($user->hasRole('Estudiante') && $user->student) {
+            $curso = $user->student->activeCourse();
+
+            return $curso ? collect([$curso]) : collect();
+        }
+
+        if ($user->hasRole('Padre/Tutor')) {
+            $guardian = ParentGuardian::where('user_id', $user->id)->first();
+            $hijosIds = $guardian ? $guardian->students()->pluck('students.id') : collect();
+            $courseIds = Registration::where('estado', 'ACTIVA')
+                ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $hijosIds)->where('estado', 'COMPLETADA'))
+                ->pluck('course_id')->unique()->values();
+
+            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->orderBy('nombre')->get();
+        }
+
+        return collect();
+    }
+
+    private function cursosRegistro($user)
+    {
+        // Para registrar: el docente solo sus cursos; admin ve todos los activos
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->orderBy('nombre')->get();
+        }
+
+        return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();
+    }
+
+    private function materiasVisibles($user, $courseId, $cursos)
+    {
+        $q = CourseSubject::with('subject');
+        if ($courseId) {
+            $q->where('course_id', $courseId);
+        } else {
+            $q->whereIn('course_id', $cursos->pluck('id'));
+        }
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $q->where('teacher_id', $user->teacher->id);
+        }
+
+        return $q->get()->map(fn ($cs) => $cs->subject)->unique('id')->values();
+    }
+
+    private function materiasRegistro($user, Course $course)
+    {
+        $q = CourseSubject::where('course_id', $course->id);
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $q->where('teacher_id', $user->teacher->id);
+        }
+        $ids = $q->pluck('subject_id')->unique()->values();
+
+        return $ids->isEmpty() ? collect() : Subject::whereIn('id', $ids)->orderBy('nombre')->get();
+    }
+
+    private function requiereCurso($user): bool
+    {
+        return $user->hasRole('Docente') || $user->hasRole('Estudiante') || $user->hasRole('Padre/Tutor');
+    }
+
+    private function permiteCurso($user, int $courseId, $cursos): bool
+    {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+            return true;
+        }
+
+        return $cursos->contains('id', $courseId);
+    }
+}

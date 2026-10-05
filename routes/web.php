@@ -6,6 +6,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BoletinController;
+use App\Http\Controllers\ConductaReporteController;
+use App\Http\Controllers\DiarioAulaController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\InscripcionController;
@@ -667,4 +669,23 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     Route::get('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'show'])->name('rc-iva-withholdings.show');
     Route::put('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'update'])->name('rc-iva-withholdings.update');
     Route::delete('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'destroy'])->name('rc-iva-withholdings.destroy');
+});
+
+// HU-65: Diario de aula — bitácora de avances por clase (docente registra; estudiante/padre/director consultan)
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->prefix('diario-aula')->group(function () {
+    Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
+    Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');
+    Route::post('/', [DiarioAulaController::class, 'store'])->name('diario.store');
+    Route::get('/{diario}', [DiarioAulaController::class, 'show'])->name('diario.show');
+    Route::delete('/{diario}', [DiarioAulaController::class, 'destroy'])->name('diario.destroy');
+});
+
+// HU-65: Reportes de conducta — faltas Leve/Grave/Muy grave + reportes por curso y por estudiante
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Padre/Tutor,Estudiante'])->prefix('conducta')->group(function () {
+    Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
+    Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');
+    Route::post('/', [ConductaReporteController::class, 'store'])->name('conducta.store');
+    Route::get('/estudiante', [ConductaReporteController::class, 'estudiante'])->name('conducta.estudiante');
+    Route::get('/exportar', [ConductaReporteController::class, 'export'])->name('conducta.export');
+    Route::get('/{conducta}', [ConductaReporteController::class, 'show'])->name('conducta.show');
 });
