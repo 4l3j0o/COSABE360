@@ -59,6 +59,17 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         $response->assertDontSee('Diario de Aula');
     }
 
+    public function test_mis_cursos_notas_apunta_al_reporte_y_no_duplica_evaluaciones(): void
+    {
+        $d = $this->crearDocenteConCurso();
+        $this->actingAs($d['userDocente']);
+
+        $response = $this->get(route('docente.cursos'));
+        $response->assertStatus(200);
+        // El icono Notas/Calificaciones va al reporte prefiltrado, no a evaluations.index
+        $response->assertSee('reportes-evaluacion?course_subject_id=', false);
+    }
+
     public function test_dashboard_docente_muestra_acciones_rapidas(): void
     {
         $d = $this->crearDocenteConCurso();
