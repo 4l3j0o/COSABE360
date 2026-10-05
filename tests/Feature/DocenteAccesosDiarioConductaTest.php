@@ -59,27 +59,24 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         $response->assertDontSee('Diario de Aula');
     }
 
-    public function test_dashboard_docente_sin_clase_actual_muestra_selector(): void
+    public function test_dashboard_docente_muestra_acciones_rapidas(): void
     {
         $d = $this->crearDocenteConCurso();
         $this->actingAs($d['userDocente']);
 
         $response = $this->get(route('dashboard'));
         $response->assertStatus(200);
-        $response->assertSee('Diario y conducta');
-        $response->assertSee('Fuera de tu horario');
-        $response->assertSee($d['curso']->codigoCorto());
+        $response->assertSee('Diario de Aula');
+        $response->assertSee('Conducta');
     }
 
-    public function test_dashboard_docente_muestra_mi_clase_de_ahora(): void
+    private function crearBloqueAhora(array $d): bool
     {
         $dias = [1 => 'LUNES', 2 => 'MARTES', 3 => 'MIERCOLES', 4 => 'JUEVES', 5 => 'VIERNES', 6 => 'SABADO'];
         $hoy = now('America/La_Paz')->dayOfWeekIso;
         if (! isset($dias[$hoy])) {
-            $this->markTestSkipped('Hoy es domingo, sin clases según horario.');
+            return false;
         }
-
-        $d = $this->crearDocenteConCurso();
         Schedule::create([
             'course_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
@@ -90,12 +87,50 @@ class DocenteAccesosDiarioConductaTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
 
+        return true;
+    }
+
+    public function test_diario_ahora_abre_clase_actual(): void
+    {
+        $d = $this->crearDocenteConCurso();
+        if (! $this->crearBloqueAhora($d)) {
+            $this->markTestSkipped('Hoy es domingo, sin clases según horario.');
+        }
+
         $this->actingAs($d['userDocente']);
-        $response = $this->get(route('dashboard'));
-        $response->assertStatus(200);
-        $response->assertSee('Mi clase de ahora');
-        $response->assertSee($d['curso']->nombre);
-        $response->assertSee('Abrir diario');
-        $response->assertSee('Abrir conducta');
+        $this->get(route('diario.ahora'))
+            ->assertRedirect(route('diario.index', ['course_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
+    }
+
+    public function test_diario_ahora_fuera_de_horario_avisa_y_va_a_mis_cursos(): void
+    {
+        $d = $this->crearDocenteConCurso();
+        $this->actingAs($d['userDocente']);
+
+        $this->get(route('diario.ahora'))
+            ->assertRedirect(route('docente.cursos'))
+            ->assertSessionHas('mensaje');
+    }
+
+    public function test_conducta_ahora_abre_clase_actual(): void
+    {
+        $d = $this->crearDocenteConCurso();
+        if (! $this->crearBloqueAhora($d)) {
+            $this->markTestSkipped('Hoy es domingo, sin clases según horario.');
+        }
+
+        $this->actingAs($d['userDocente']);
+        $this->get(route('conducta.ahora'))
+            ->assertRedirect(route('conducta.index', ['course_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
+    }
+
+    public function test_conducta_ahora_fuera_de_horario_avisa_y_va_a_mis_cursos(): void
+    {
+        $d = $this->crearDocenteConCurso();
+        $this->actingAs($d['userDocente']);
+
+        $this->get(route('conducta.ahora'))
+            ->assertRedirect(route('docente.cursos'))
+            ->assertSessionHas('mensaje');
     }
 }

@@ -33,101 +33,6 @@
         </div>
     </div>
 
-    {{-- HU-65b: mi clase de ahora según horario, con accesos a diario y conducta --}}
-    <div class="bg-card border border-border rounded-xl p-6 mb-6">
-        @if($claseActual ?? null)
-            <div class="flex flex-col lg:flex-row lg:items-center gap-4">
-                <div class="flex-1 min-w-0">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-bold uppercase tracking-wider">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Mi clase de ahora
-                    </span>
-                    <h3 class="text-lg font-bold text-foreground mt-2">{{ $claseActual->subject->nombre }} · {{ $claseActual->course->nombre }}</h3>
-                    <p class="text-sm text-muted-foreground">{{ \App\Models\Schedule::DIAS_LABEL[$claseActual->dia] ?? $claseActual->dia }} {{ $claseActual->hora_inicio->format('H:i') }}–{{ $claseActual->hora_fin->format('H:i') }}</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('asistencias.create', ['course_id' => $claseActual->course_id, 'subject_id' => $claseActual->subject_id]) }}" class="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Pasar lista</a>
-                    <a href="{{ route('diario.index', ['course_id' => $claseActual->course_id, 'subject_id' => $claseActual->subject_id]) }}" class="px-4 py-2.5 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Abrir diario</a>
-                    <a href="{{ route('diario.create', ['course_id' => $claseActual->course_id]) }}" class="px-4 py-2.5 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Nueva bitácora</a>
-                    <a href="{{ route('conducta.index', ['course_id' => $claseActual->course_id, 'subject_id' => $claseActual->subject_id]) }}" class="px-4 py-2.5 rounded-lg border border-amber-300 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors">Abrir conducta</a>
-                    <a href="{{ route('conducta.create', ['course_id' => $claseActual->course_id]) }}" class="px-4 py-2.5 rounded-lg border border-amber-300 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors">Nuevo reporte</a>
-                </div>
-            </div>
-        @else
-            <h3 class="text-base font-semibold text-foreground">Diario y conducta</h3>
-            <p class="text-sm text-muted-foreground mt-0.5 mb-4">Fuera de tu horario de clases. Elige el curso y la materia para abrir su diario o su conducta.</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                    <select id="dc-curso" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-                        <option value="">Seleccionar curso…</option>
-                        @foreach(($mapaCursos ?? []) as $mc)
-                            <option value="{{ $mc['id'] }}">{{ $mc['nombre'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia</label>
-                    <select id="dc-materia" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm" disabled>
-                        <option value="">Primero elige el curso…</option>
-                    </select>
-                </div>
-                <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-2">
-                    <button type="button" id="dc-diario" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40" disabled>Abrir diario</button>
-                    <button type="button" id="dc-conducta" class="flex-1 px-4 py-2.5 rounded-lg border border-amber-300 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors disabled:opacity-40" disabled>Abrir conducta</button>
-                </div>
-            </div>
-        @endif
-    </div>
-
-    @push('scripts')
-    <script>
-        (function () {
-            var mapa = @json(($mapaCursos ?? collect())->values());
-            var porCurso = {};
-            mapa.forEach(function (c) { porCurso[c.id] = c.materias; });
-            var selCurso = document.getElementById('dc-curso');
-            var selMateria = document.getElementById('dc-materia');
-            var btnDiario = document.getElementById('dc-diario');
-            var btnConducta = document.getElementById('dc-conducta');
-            if (!selCurso) return;
-            var baseDiario = "{{ route('diario.index') }}";
-            var baseConducta = "{{ route('conducta.index') }}";
-            selCurso.addEventListener('change', function () {
-                var materias = porCurso[selCurso.value] || [];
-                selMateria.innerHTML = '';
-                if (!materias.length) {
-                    selMateria.disabled = true;
-                    selMateria.innerHTML = '<option value="">Primero elige el curso…</option>';
-                } else {
-                    selMateria.disabled = false;
-                    // Si dicta una sola materia en el curso, queda seleccionada automáticamente
-                    materias.forEach(function (m, i) {
-                        var opt = document.createElement('option');
-                        opt.value = m.id;
-                        opt.textContent = m.nombre;
-                        if (materias.length === 1 || i === 0) opt.selected = true;
-                        selMateria.appendChild(opt);
-                    });
-                }
-                actualizarBotones();
-            });
-            selMateria.addEventListener('change', actualizarBotones);
-            function actualizarBotones() {
-                var ok = selCurso.value && selMateria.value;
-                btnDiario.disabled = !ok;
-                btnConducta.disabled = !ok;
-            }
-            btnDiario.addEventListener('click', function () {
-                window.location.href = baseDiario + '?course_id=' + selCurso.value + '&subject_id=' + selMateria.value;
-            });
-            btnConducta.addEventListener('click', function () {
-                window.location.href = baseConducta + '?course_id=' + selCurso.value + '&subject_id=' + selMateria.value;
-            });
-        })();
-    </script>
-    @endpush
-
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <a href="{{ route('docente.cursos') }}">
             <x-ui.stat-card label="Mis Cursos" :value="$misCursos" color="primary" />
@@ -173,6 +78,20 @@
                     <div>
                         <span class="font-medium text-foreground">Mis Comunicados</span>
                         <p class="text-xs text-muted-foreground">Revisar comunicados internos</p>
+                    </div>
+                </a>
+                <a href="{{ route('diario.ahora') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+                    <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                    <div>
+                        <span class="font-medium text-foreground">Diario de Aula</span>
+                        <p class="text-xs text-muted-foreground">Abrir el diario de tu clase actual</p>
+                    </div>
+                </a>
+                <a href="{{ route('conducta.ahora') }}" class="flex items-center gap-3 p-4 rounded-lg border border-border text-sm">
+                    <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <span class="font-medium text-foreground">Conducta</span>
+                        <p class="text-xs text-muted-foreground">Reportes de tu clase actual</p>
                     </div>
                 </a>
             </div>
