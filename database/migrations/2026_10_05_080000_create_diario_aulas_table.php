@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('course_id')->constrained('courses');
             $table->foreignId('subject_id')->constrained('subjects');
-            $table->foreignId('teacher_id')->constrained('teachers');
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->date('fecha');
             $table->text('avance_curricular');
             $table->text('ejercicios')->nullable();

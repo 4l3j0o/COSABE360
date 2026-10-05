@@ -186,4 +186,26 @@ class ConductaReporteTest extends TestCase
             'descripcion' => 'Corta',
         ])->assertSessionHasErrors(['tipo_falta', 'descripcion']);
     }
+
+    public function test_hora_vacia_registra_hora_local_automatica(): void
+    {
+        $d = $this->crearCurso();
+        $this->actingAs($d['userDocente']);
+
+        $antes = now('America/La_Paz')->format('H:i');
+        $this->post('/conducta', [
+            'course_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'student_id' => $d['estudiantes'][0]->id,
+            'tipo_falta' => 'LEVE',
+            'fecha' => '2026-04-10',
+            'descripcion' => 'Reporte sin hora explícita para verificar el default automático.',
+        ])->assertRedirect();
+        $despues = now('America/La_Paz')->format('H:i');
+
+        $reporte = ConductaReporte::where('student_id', $d['estudiantes'][0]->id)->firstOrFail();
+        $this->assertNotNull($reporte->hora);
+        $this->assertMatchesRegularExpression('/^\d{2}:\d{2}(:\d{2})?$/', (string) $reporte->hora);
+        $this->assertContains(substr((string) $reporte->hora, 0, 5), [$antes, $despues]);
+    }
 }

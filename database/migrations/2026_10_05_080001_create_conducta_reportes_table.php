@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained('students');
             $table->foreignId('course_id')->constrained('courses');
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->nullOnDelete();
-            $table->foreignId('teacher_id')->constrained('teachers');
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->string('tipo_falta', 16);
             $table->date('fecha');
             $table->time('hora')->nullable();
