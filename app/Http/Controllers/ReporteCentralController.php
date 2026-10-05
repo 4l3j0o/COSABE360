@@ -644,6 +644,28 @@ class ReporteCentralController extends Controller
             ];
         }
 
+        // HU-66: Diario de Aula y Conducta viven dentro de la Central
+        // (se retiran sus links directos de los sidebars).
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante'])) {
+            $existentes[] = [
+                'nombre' => 'Diario de Aula',
+                'descripcion' => 'Bitácora de avances por clase: el docente registra, directivos y familias consultan.',
+                'parametros' => '—',
+                'ruta' => 'diario.index',
+                'tipo' => 'link',
+            ];
+        }
+
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Regente', 'Padre/Tutor', 'Estudiante'])) {
+            $existentes[] = [
+                'nombre' => 'Conducta',
+                'descripcion' => 'Reportes de conducta (LEVE/GRAVE/MUY_GRAVE) por curso y por estudiante, con PDF/Excel.',
+                'parametros' => '—',
+                'ruta' => 'conducta.index',
+                'tipo' => 'link',
+            ];
+        }
+
         if ($esSupervisor) {
             $existentes[] = [
                 'nombre' => 'Cierre de Gestión',

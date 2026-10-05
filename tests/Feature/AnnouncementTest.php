@@ -56,7 +56,16 @@ class AnnouncementTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_docente_no_puede_crear_comunicado(): void
+    public function test_estudiante_ve_modulo_sin_crear(): void
+    {
+        $est = $this->crearUsuario('Estudiante');
+        $response = $this->actingAs($est)->get(route('announcements.index'));
+        $response->assertOk();
+        $response->assertDontSee('Nuevo Comunicado', false);
+        $response->assertDontSee('Mis Envíos', false);
+    }
+
+    public function test_docente_no_puede_enviar_a_todos(): void
     {
         $docente = $this->crearUsuario('Docente');
 
@@ -66,14 +75,23 @@ class AnnouncementTest extends TestCase
             'tipo_destinatario' => 'TODOS',
         ]);
 
-        $response->assertRedirect(route('acceso.denegado'));
+        // Pasa el middleware de rol pero el alcance lo rechaza
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseMissing('announcements', ['titulo' => 'Test']);
     }
 
-    public function test_estudiante_no_puede_acceder(): void
+    public function test_estudiante_no_puede_crear_aunque_vea_el_modulo(): void
     {
         $est = $this->crearUsuario('Estudiante');
-        $response = $this->actingAs($est)->get(route('announcements.index'));
+        $response = $this->actingAs($est)->post(route('announcements.store'), [
+            'titulo' => 'Test',
+            'contenido' => 'Contenido',
+            'tipo_destinatario' => 'TODOS',
+        ]);
+        // Sin rol de creación: middleware lo redirige a acceso denegado
         $response->assertRedirect(route('acceso.denegado'));
+        $this->assertDatabaseMissing('announcements', ['titulo' => 'Test']);
     }
 
     public function test_permite_crear_comunicado_con_titulo_contenido_destinatario_y_fecha(): void
