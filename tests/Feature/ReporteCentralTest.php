@@ -85,6 +85,17 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('Centralizador de calificaciones por trimestre');
     }
 
+    public function test_landing_incluye_diario_y_conducta(): void
+    {
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('reportes.central.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Diario de Aula', false);
+        $response->assertSee('Conducta', false);
+    }
+
     public function test_lista_padres_muestra_tutor(): void
     {
         $a = $this->crearCurso('P1');

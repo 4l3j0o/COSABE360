@@ -551,9 +551,12 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::get('/rude/{student}/export/pdf', [RudeController::class, 'exportPdf'])->name('rude.export-pdf');
 });
 
-// HU-30: Crear y publicar comunicados - solo Administrador y Director (pulido: nombres announcements.* para AnnouncementTest - 7 rutas)
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados')->group(function () {
+// HU-30 + HU-65: módulo único de comunicados - ver/consultar: todos los autenticados.
+// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (solo sus cursos).
+Route::middleware(['auth'])->prefix('comunicados')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
+});
+Route::middleware(['auth', 'role:Administrador,Director,Docente'])->prefix('comunicados')->group(function () {
     Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');

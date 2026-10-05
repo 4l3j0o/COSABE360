@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Announcement extends Model
 {
     public const ESTADOS = ['BORRADOR', 'PUBLICADO', 'ARCHIVADO'];
-    public const TIPOS_DESTINATARIO = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO'];
+    public const TIPOS_DESTINATARIO = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'];
 
     protected $fillable = [
         'titulo',
