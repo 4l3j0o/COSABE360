@@ -18,7 +18,7 @@
         ];
     @endphp
     <div class="mb-6">
-        <a href="{{ route('teachers.index') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al listado</a>
+        @include('layouts._volver', ['href' => route('teachers.index'), 'texto' => 'Volver al listado'])
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $teacher->apellidos }}, {{ $teacher->nombres }}</h1>
             <div class="flex items-center gap-2">

@@ -9,9 +9,9 @@
     <div class="mb-6">
         @php
             $volver = request('volver') ? urldecode(request('volver')) : route('students.index');
-            $volverTexto = request('volver') ? '← Volver a Estudiantes del Paralelo' : '← Volver al listado';
+            $volverTexto = request('volver') ? 'Volver a Estudiantes del Paralelo' : 'Volver al listado';
         @endphp
-        <a href="{{ $volver }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">{{ $volverTexto }}</a>
+        @include('layouts._volver', ['href' => $volver, 'texto' => $volverTexto])
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $student->apellidos }}, {{ $student->nombres }}</h1>
             <div class="flex items-center gap-2">

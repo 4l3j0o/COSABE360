@@ -7,10 +7,9 @@
 
 @section('contenido')
 <div class="max-w-3xl mx-auto">
-    <a href="{{ route('announcements.index', ['tab' => 'recibidos']) }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Volver a Comunicados
-    </a>
+<div class="mb-4">
+        @include('layouts._volver', ['href' => route('announcements.index', ['tab' => 'recibidos']), 'texto' => 'Volver a Comunicados'])
+    </div>
 
     <div class="bg-card border rounded-xl p-6 sm:p-8 shadow-sm {{ $announcement->es_nuevo ? 'border-primary/40' : 'border-border' }}">
         <div class="flex items-start justify-between gap-3">

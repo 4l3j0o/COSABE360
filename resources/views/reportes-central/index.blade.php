@@ -141,56 +141,12 @@
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
                             <td class="px-4 py-3 font-medium text-foreground">{{ $reporte['nombre'] }}</td>
                             <td class="px-4 py-3 text-sm text-muted-foreground">{{ $reporte['descripcion'] }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-2 items-center">
-                                    @if(in_array('gestion', $reporte['filtros']))
-                                        <select name="academic_year_id" form="dl-{{ $loop->index }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Todas las gestiones</option>
-                                            @foreach($gestiones as $gestion)
-                                                <option value="{{ $gestion->id }}">{{ $gestion->nombre }}</option>
-                                            @endforeach
-                                        </select>
-                                    @endif
-                                    @if(in_array('estado_inscripcion', $reporte['filtros']))
-                                        <select name="estado" form="dl-{{ $loop->index }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Todos los estados</option>
-                                            <option value="PENDIENTE">Pendiente</option>
-                                            <option value="COMPLETADA">Completada</option>
-                                            <option value="ANULADA">Anulada</option>
-                                        </select>
-                                    @endif
-                                    @if(in_array('estado_matricula', $reporte['filtros']))
-                                        <select name="estado" form="dl-{{ $loop->index }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Todos los estados</option>
-                                            <option value="ACTIVA">Activa</option>
-                                            <option value="INACTIVA">Inactiva</option>
-                                            <option value="CANCELADA">Cancelada</option>
-                                        </select>
-                                    @endif
-                                    @if(in_array('estado_pago', $reporte['filtros']))
-                                        <select name="estado" form="dl-{{ $loop->index }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Todos los estados</option>
-                                            <option value="PENDIENTE">Pendiente</option>
-                                            <option value="ESPERA">En espera</option>
-                                            <option value="PAGADA">Pagada</option>
-                                            <option value="VENCIDO">Vencido</option>
-                                        </select>
-                                    @endif
-                                    @if(in_array('estado_documento', $reporte['filtros']))
-                                        <select name="estado" form="dl-{{ $loop->index }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Todos los estados</option>
-                                            <option value="PENDIENTE">Pendiente</option>
-                                            <option value="ENTREGADO">Entregado</option>
-                                            <option value="VERIFICADO">Verificado</option>
-                                        </select>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <form id="dl-{{ $loop->index }}" method="GET" action="{{ route($reporte['ruta']) }}" class="inline">
-                                    <button type="submit" name="format" value="pdf" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-red-500 text-white text-xs font-medium hover:opacity-90 cursor-pointer">PDF</button>
-                                    <button type="submit" name="format" value="excel" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:opacity-90 cursor-pointer">Excel</button>
-                                </form>
+                            <td class="px-4 py-3 text-xs text-muted-foreground">{{ $reporte['parametros'] }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <a href="{{ route($reporte['ruta']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Abrir
+                                </a>
                             </td>
                         </tr>
                     @endforeach

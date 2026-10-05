@@ -496,6 +496,17 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
         Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');
         Route::get('/centralizador-trimestre/exportar', [ReporteCentralController::class, 'exportCentralizadorTrimestre'])->name('reportes.central.trimestre.export');
     });
+
+    // HU-66b: vista previa de administrativos (primero Abrir, luego exportar).
+    // Mismos roles que sus exports: inscripciones/documentación incluyen Director.
+    Route::middleware(['role:Administrador,Director,Secretaría'])->group(function () {
+        Route::get('/administrativo/inscripciones', [ReporteCentralController::class, 'verInscripciones'])->name('reportes.central.administrativo.inscripciones');
+        Route::get('/administrativo/documentacion', [ReporteCentralController::class, 'verDocumentacion'])->name('reportes.central.administrativo.documentacion');
+    });
+    Route::middleware(['role:Administrador,Secretaría'])->group(function () {
+        Route::get('/administrativo/matriculas', [ReporteCentralController::class, 'verMatriculas'])->name('reportes.central.administrativo.matriculas');
+        Route::get('/administrativo/pagos', [ReporteCentralController::class, 'verPagos'])->name('reportes.central.administrativo.pagos');
+    });
 });
 
 // HU-52: cierre de gestión - escala de valoración y promoción/retención (Secretaría/Director/Admin)

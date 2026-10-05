@@ -8,7 +8,7 @@
 @section('contenido')
     <div class="max-w-2xl mx-auto">
         <div class="mb-6">
-            <a href="{{ route('levels.index') }}" class="text-sm text-muted-foreground hover:text-foreground">← Volver a niveles</a>
+            @include('layouts._volver', ['href' => route('levels.index'), 'texto' => 'Volver a niveles'])
             <h1 class="text-xl font-bold text-foreground mt-1">Editar Nivel: {{ $level->nombre }}</h1>
         </div>
 

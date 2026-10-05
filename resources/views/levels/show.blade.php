@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="max-w-2xl mx-auto">
-        <a href="{{ route('levels.index') }}" class="text-sm text-muted-foreground hover:text-foreground">← Volver a niveles</a>
+        @include('layouts._volver', ['href' => route('levels.index'), 'texto' => 'Volver a niveles'])
         <div class="bg-card border border-border rounded-xl p-6 mt-4">
             <h1 class="text-xl font-bold text-foreground">{{ $level->nombre }}</h1>
             <p class="text-sm text-muted-foreground mt-1">{{ $level->descripcion ?: 'Sin descripción' }}</p>
@@ -27,7 +27,6 @@
             </dl>
             <div class="flex gap-2 mt-6">
                 <a href="{{ route('levels.edit', $level) }}" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90">Editar</a>
-                <a href="{{ route('levels.index') }}" class="px-4 py-2 rounded-lg border border-border text-sm">Volver</a>
             </div>
         </div>
     </div>

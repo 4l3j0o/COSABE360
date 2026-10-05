@@ -22,9 +22,9 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             @if(auth()->user()->hasRole('Padre/Tutor'))
-                <a href="{{ route('dashboard') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al panel</a>
+                @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al panel'])
             @else
-                <a href="{{ route('students.show', $estudiante) }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al estudiante</a>
+                @include('layouts._volver', ['href' => route('students.show', $estudiante), 'texto' => 'Volver al estudiante'])
             @endif
             <h1 class="text-xl font-bold text-foreground mt-1">Pagos de mensualidades</h1>
             <p class="text-sm text-muted-foreground">{{ $estudiante->apellidos }} {{ $estudiante->nombres }} · <span class="font-mono">{{ $estudiante->codigo }}</span></p>
