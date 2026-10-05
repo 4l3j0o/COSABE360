@@ -13,9 +13,9 @@ return [
         'Administrador' => ['*'],
         'Director'      => ['dashboard', 'reportes', 'comunicados', 'acceso.denegado'],
         'Secretaría'    => ['dashboard', 'inscripciones', 'pagos', 'students', 'students.eliminados', 'students.restaurar', 'acceso.denegado'],
-        'Docente'       => ['dashboard', 'calificaciones', 'asistencia', 'horario', 'acceso.denegado'],
-        'Padre/Tutor'   => ['dashboard', 'hijos', 'calificaciones', 'asistencia', 'acceso.denegado'],
-        'Estudiante'    => ['dashboard', 'calificaciones', 'horario', 'asistencia', 'acceso.denegado'],
+        'Docente'       => ['dashboard', 'calificaciones', 'asistencia', 'horario', 'diario', 'conducta', 'acceso.denegado'],
+        'Padre/Tutor'   => ['dashboard', 'hijos', 'calificaciones', 'asistencia', 'diario', 'conducta', 'acceso.denegado'],
+        'Estudiante'    => ['dashboard', 'calificaciones', 'horario', 'asistencia', 'diario', 'conducta', 'acceso.denegado'],
     ],
 
     /*
@@ -32,6 +32,8 @@ return [
         'pagos'             => ['Administrador', 'Secretaría'],
         'calificaciones'    => ['Administrador', 'Docente'],
         'asistencia'        => ['Administrador', 'Docente', 'Padre/Tutor', 'Estudiante'],
+        'diario'            => ['Administrador', 'Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante'],
+        'conducta'          => ['Administrador', 'Director', 'Secretaría', 'Regente', 'Docente', 'Padre/Tutor', 'Estudiante'],
         'comunicados'       => ['Administrador', 'Director'],
     ],
 ];

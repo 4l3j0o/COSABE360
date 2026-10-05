@@ -436,3 +436,9 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   formato de ejemplo (logo 110, tarjeta DOCENTE/CURSO/MATERIA/TRIMESTRE, bloques por
   criterio con colores, PROMEDIO por criterio y total); reutiliza la hoja Notas del
   servicio de plantillas con valores calculados en vez de fÃ³rmulas.
+
+## HU-65: Diario de aula + Reportes de conducta (2026-10-05)
+- **Diario de aula** — el docente anota por clase: avance curricular, ejercicios propuestos y observaciones (diario_aulas); visible para estudiantes de su curso, padres, directores y admin. Rutas /diario-aula.
+- **Reportes de conducta** — faltas LEVE/GRAVE/MUY_GRAVE con fecha, hora, materia (o General) y descripción (conducta_reportes); el estudiante solo ve las propias. Rutas /conducta.
+- **Reportes**: general por curso (filtros curso/materia/tipo/rango + conteos) y específico por estudiante (historial + conteo por tipo); ambos exportan a PDF (dompdf) y Excel (PhpSpreadsheet).
+- **Permisos** — registra: Docente asignado al curso (o tutor del paralelo) + Admin/Director/Secretaría; consulta: + Estudiante, Padre/Tutor, Regente (solo conducta). Sin Policies: ownership en controlador, como asistencias.
