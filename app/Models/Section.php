@@ -25,6 +25,17 @@ class Section extends Model
         return $this->hasMany(Course::class, 'section_id');
     }
 
+    /**
+     * Orden pedagógico de paralelos: Inicial, Primaria, Secundaria;
+     * luego por grado y código. Usa subconsultas para no chocar con where().
+     */
+    public function scopeOrdenadoPorNivel($query): void
+    {
+        $query->orderByRaw('(select levels.orden from levels inner join grades g1 on g1.level_id = levels.id where g1.id = sections.grade_id limit 1)')
+            ->orderByRaw('(select g2.orden from grades g2 where g2.id = sections.grade_id limit 1)')
+            ->orderBy('codigo');
+    }
+
     public function estaActivo(): bool
     {
         return $this->estado === 'ACTIVO';

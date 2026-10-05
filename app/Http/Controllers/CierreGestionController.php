@@ -105,7 +105,7 @@ class CierreGestionController extends Controller
     private function cursosPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section'])->orderBy('nombre')->get();
+            return Course::with(['grade', 'section'])->ordenadoPorNivel()->get();
         }
 
         return collect();

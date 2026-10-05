@@ -35,8 +35,7 @@ class SectionController extends Controller
             })
             ->when($request->query('grade_id'), fn ($q, $v) => $q->where('grade_id', $v))
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->orderBy('grade_id')
-            ->orderBy('nombre')
+            ->ordenadoPorNivel()
             ->paginate(10)
             ->withQueryString();
 
@@ -55,7 +54,7 @@ class SectionController extends Controller
             $sections->where('grade_id', $request->grade_id);
         }
 
-        $sections->orderBy('grade_id')->orderBy('nombre');
+        $sections->ordenadoPorNivel();
 
         return SectionResource::collection($sections->get());
     }

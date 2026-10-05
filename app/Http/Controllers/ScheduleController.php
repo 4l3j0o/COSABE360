@@ -16,13 +16,14 @@ class ScheduleController extends Controller
         $paralelos = Course::withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
-            ->orderBy('nombre')
+            ->ordenadoPorNivel()
             ->paginate(10)
             ->withQueryString();
 
         $cursosSinHorario = Course::withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
+            ->ordenadoPorNivel()
             ->get()
             ->filter(fn ($c) => $c->schedules_count === 0)
             ->values();

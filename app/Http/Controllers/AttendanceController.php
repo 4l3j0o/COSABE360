@@ -38,13 +38,13 @@ class AttendanceController extends Controller
 
                 $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])->whereIn('id', $cursoIds)
                     ->with(['grade', 'section', 'gestion'])
-                    ->orderBy('nombre');
+                    ->ordenadoPorNivel();
                 $puede = true;
             }
         } elseif ($user->hasAnyRole('Director,Administrador,Secretaría')) {
             $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])
                 ->with(['grade', 'section', 'gestion'])
-                ->orderBy('nombre');
+                ->ordenadoPorNivel();
             $puede = true;
         }
 
@@ -58,7 +58,7 @@ class AttendanceController extends Controller
             : $cursosRegistro->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
 
         $grados = \App\Models\Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('orden')->orderBy('nombre')->get();
-        $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->orderBy('nombre')->get();
+        $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         $gestiones = \App\Models\AcademicYear::orderByDesc('nombre')->get();
 
         return view('attendances.index', compact('cursos', 'cursosRegistro', 'materiasPorCurso', 'grados', 'paralelos', 'gestiones'));

@@ -53,7 +53,7 @@ class ComunicadoAlcanceService
     /** Cursos ofrecibles en el selector según el rol. */
     public function cursosCreables(User $user): Collection
     {
-        $query = Course::with(['grade.level', 'section'])->where('estado', 'ACTIVO')->orderBy('nombre');
+        $query = Course::with(['grade.level', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel();
 
         if ($user->esAdmin()) {
             return $query->get();

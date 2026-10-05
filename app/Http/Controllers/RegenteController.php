@@ -31,7 +31,7 @@ class RegenteController extends Controller
         $this->autorizar($request);
 
         $cursos = Course::with(['grade', 'section', 'gestion'])
-            ->orderBy('nombre')
+            ->ordenadoPorNivel()
             ->get();
 
         return view('regente.cursos', compact('cursos'));

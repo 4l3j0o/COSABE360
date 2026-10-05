@@ -510,7 +510,7 @@ class ReporteCentralController extends Controller
         if ($this->esSupervisor($user)) {
             return Course::with(['grade', 'section', 'gestion'])
                 ->where('estado', 'ACTIVO')
-                ->orderBy('nombre')
+                ->ordenadoPorNivel()
                 ->get();
         }
 
