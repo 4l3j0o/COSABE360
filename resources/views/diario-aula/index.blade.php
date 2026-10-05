@@ -59,7 +59,7 @@
                     <div class="flex flex-wrap items-center gap-2 mb-2">
                         <span class="inline-flex px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">{{ $entrada->fecha->format('d/m/Y') }}</span>
                         <span class="inline-flex px-2.5 py-1 rounded-full bg-muted text-xs font-medium">{{ $entrada->subject->nombre }}</span>
-                        <span class="text-xs text-muted-foreground ml-auto">{{ $entrada->teacher->nombres }} {{ $entrada->teacher->apellidos }}</span>
+                        <span class="text-xs text-muted-foreground ml-auto">{{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</span>
                     </div>
                     <p class="text-sm text-foreground line-clamp-2">{{ $entrada->avance_curricular }}</p>
                     @if($entrada->ejercicios)

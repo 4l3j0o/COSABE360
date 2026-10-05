@@ -9,7 +9,7 @@
     <div class="mb-6">
         <a href="{{ route('diario.index', ['course_id' => $entrada->course_id]) }}" class="text-sm text-primary hover:underline">← Volver al diario</a>
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $entrada->subject->nombre }} · {{ $entrada->fecha->format('d/m/Y') }}</h1>
-        <p class="text-sm text-muted-foreground">{{ $entrada->course->nombre }} · Docente: {{ $entrada->teacher->nombres }} {{ $entrada->teacher->apellidos }}</p>
+        <p class="text-sm text-muted-foreground">{{ $entrada->course->nombre }} · Docente: {{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</p>
     </div>
 
     <div class="space-y-4 max-w-3xl">

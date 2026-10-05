@@ -59,6 +59,7 @@
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hora</label>
                         <input type="time" name="hora" value="{{ old('hora') }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <p class="text-[11px] text-muted-foreground mt-1">Si se deja vacío se registra la hora actual.</p>
                     </div>
                 </div>
             </div>

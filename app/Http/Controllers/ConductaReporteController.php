@@ -101,6 +101,8 @@ class ConductaReporteController extends Controller
 
         ConductaReporte::create($data + [
             'teacher_id' => $this->teacherIdPara($user, $course, $data['subject_id'] ?? null),
+            // HU-65d: si no se indica la hora, se registra la hora local automáticamente
+            'hora' => $data['hora'] ?? now('America/La_Paz')->format('H:i'),
             'registered_by_user_id' => $user->id,
         ]);
 
