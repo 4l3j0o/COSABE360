@@ -33,6 +33,28 @@ class Course extends Model
     }
 
     /**
+     * Orden pedagógico: primero Inicial, luego Primaria, luego Secundaria;
+     * dentro del nivel por grado y luego por paralelo.
+     * Usa subconsultas para no chocar con los where() existentes.
+     */
+    public function scopeOrdenadoPorNivel($query): void
+    {
+        $query->orderByRaw('(select levels.orden from levels inner join grades g1 on g1.level_id = levels.id where g1.id = courses.grade_id limit 1)')
+            ->orderByRaw('(select g2.orden from grades g2 where g2.id = courses.grade_id limit 1)')
+            ->orderByRaw('(select s.codigo from sections s where s.id = courses.section_id limit 1)');
+    }
+
+    /** Misma ordenación para colecciones ya cargadas (listas de docente, etc.). */
+    public static function ordenarPorNivel(\Illuminate\Support\Collection $cursos): \Illuminate\Support\Collection
+    {
+        return $cursos->sortBy([
+            fn ($c) => $c->grade?->level?->orden ?? 999,
+            fn ($c) => $c->grade?->orden ?? 999,
+            fn ($c) => $c->section?->codigo ?? $c->section?->nombre ?? $c->nombre,
+        ])->values();
+    }
+
+    /**
      * Código corto del paralelo para vista (Ej: I1A, P2C, S5A).
      * Usa Section.codigo; si no existe, cae al nombre completo.
      */

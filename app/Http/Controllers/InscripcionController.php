@@ -111,7 +111,7 @@ class InscripcionController extends Controller
             }
         }
 
-        return $query->orderBy('nombre')->get();
+        return $query->ordenadoPorNivel()->get();
     }
 
     // --------------------------------------- Código correlativo y CI

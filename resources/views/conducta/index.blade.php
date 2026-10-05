@@ -24,7 +24,7 @@
         <form method="GET" action="{{ route('conducta.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                <select name="course_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                     @if($cursos->count() !== 1)
                         <option value="">Seleccionar curso…</option>
                     @endif

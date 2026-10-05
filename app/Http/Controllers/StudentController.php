@@ -336,7 +336,7 @@ class StudentController extends Controller
             $cursos = \App\Models\Course::with(['grade', 'section'])
                 ->where('academic_year_id', $periodoActivo->id)
                 ->where('estado', 'ACTIVO')
-                ->orderBy('nombre')
+                ->ordenadoPorNivel()
                 ->get();
         }
 
@@ -486,7 +486,7 @@ class StudentController extends Controller
             $cursos = Course::with(['grade', 'section'])
                 ->where('academic_year_id', $periodo->id)
                 ->where('estado', 'ACTIVO')
-                ->orderBy('nombre')
+                ->ordenadoPorNivel()
                 ->get();
         }
 
