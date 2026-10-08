@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\Course;
 use App\Models\CourseSubject;
+use App\Models\Enrollment;
 use App\Models\EvaluationPlan;
+use App\Models\MonthlyPayment;
+use App\Models\Registration;
 use App\Models\Student;
+use App\Models\StudentDocument;
 use App\Models\StudentRudeRecord;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -510,7 +514,7 @@ class ReporteCentralController extends Controller
         if ($this->esSupervisor($user)) {
             return Course::with(['grade', 'section', 'gestion'])
                 ->where('estado', 'ACTIVO')
-                ->orderBy('nombre')
+                ->ordenadoPorNivel()
                 ->get();
         }
 
@@ -644,6 +648,28 @@ class ReporteCentralController extends Controller
             ];
         }
 
+        // HU-66: Diario de Aula y Conducta viven dentro de la Central
+        // (se retiran sus links directos de los sidebars).
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante'])) {
+            $existentes[] = [
+                'nombre' => 'Diario de Aula',
+                'descripcion' => 'Bitácora de avances por clase: el docente registra, directivos y familias consultan.',
+                'parametros' => '—',
+                'ruta' => 'diario.index',
+                'tipo' => 'link',
+            ];
+        }
+
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Regente', 'Padre/Tutor', 'Estudiante'])) {
+            $existentes[] = [
+                'nombre' => 'Conducta',
+                'descripcion' => 'Reportes de conducta (LEVE/GRAVE/MUY_GRAVE) por curso y por estudiante, con PDF/Excel.',
+                'parametros' => '—',
+                'ruta' => 'conducta.index',
+                'tipo' => 'link',
+            ];
+        }
+
         if ($esSupervisor) {
             $existentes[] = [
                 'nombre' => 'Cierre de Gestión',
@@ -662,39 +688,35 @@ class ReporteCentralController extends Controller
         if ($esSupervisor) {
             $administrativos[] = [
                 'nombre' => 'Inscripciones',
-                'descripcion' => 'Listado de inscripciones por gestión y estado.',
+                'descripcion' => 'Listado de inscripciones por gestión y estado. Ábralo y expórtelo si lo necesita.',
                 'parametros' => 'gestión / estado',
-                'ruta' => 'reportes.export.administrativo.inscripciones',
-                'tipo' => 'download',
-                'filtros' => ['gestion', 'estado_inscripcion'],
+                'ruta' => 'reportes.central.administrativo.inscripciones',
+                'tipo' => 'link',
             ];
             // HU-58b: Matrículas y Pagos son financieros: sin Director
             // (también restringido en rutas).
             if ($user->hasAnyRole(['Administrador', 'Secretaría'])) {
                 $administrativos[] = [
                     'nombre' => 'Matrículas',
-                    'descripcion' => 'Estudiantes matriculados por curso y gestión.',
+                    'descripcion' => 'Estudiantes matriculados por curso y gestión. Ábralo y expórtelo si lo necesita.',
                     'parametros' => 'gestión / estado',
-                    'ruta' => 'reportes.export.administrativo.matriculas',
-                    'tipo' => 'download',
-                    'filtros' => ['gestion', 'estado_matricula'],
+                    'ruta' => 'reportes.central.administrativo.matriculas',
+                    'tipo' => 'link',
                 ];
                 $administrativos[] = [
                     'nombre' => 'Pagos y Deudas',
-                    'descripcion' => 'Estado de pagos de mensualidades.',
+                    'descripcion' => 'Estado de pagos de mensualidades. Ábralo y expórtelo si lo necesita.',
                     'parametros' => 'gestión / estado',
-                    'ruta' => 'reportes.export.administrativo.pagos',
-                    'tipo' => 'download',
-                    'filtros' => ['gestion', 'estado_pago'],
+                    'ruta' => 'reportes.central.administrativo.pagos',
+                    'tipo' => 'link',
                 ];
             }
             $administrativos[] = [
                 'nombre' => 'Documentación Pendiente',
-                'descripcion' => 'Documentos pendientes de entrega por estudiante.',
+                'descripcion' => 'Documentos pendientes de entrega por estudiante. Ábralo y expórtelo si lo necesita.',
                 'parametros' => 'estado',
-                'ruta' => 'reportes.export.administrativo.documentacion',
-                'tipo' => 'download',
-                'filtros' => ['estado_documento'],
+                'ruta' => 'reportes.central.administrativo.documentacion',
+                'tipo' => 'link',
             ];
         }
 
@@ -703,6 +725,96 @@ class ReporteCentralController extends Controller
             'existentes' => $existentes,
             'administrativos' => $administrativos,
         ];
+    }
+
+    // ------------------------------------ Administrativos con vista previa
+    // HU-66b: primero Abrir (filtros + tabla en pantalla), luego exportar a PDF/Excel.
+
+    public function verInscripciones(Request $request): View
+    {
+        $gestiones = AcademicYear::orderByDesc('nombre')->get();
+        $filas = Enrollment::with(['estudiante', 'academicYear'])
+            ->when($request->academic_year_id, fn ($q, $v) => $q->where('academic_year_id', $v))
+            ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
+            ->orderByDesc('id')->limit(500)->get()
+            ->map(fn ($e) => [
+                'estudiante' => $e->estudiante ? $e->estudiante->nombres . ' ' . $e->estudiante->apellidos : 'N/A',
+                'codigo' => $e->estudiante?->codigo ?? '',
+                'gestion' => $e->academicYear?->nombre ?? '',
+                'fecha' => $e->fecha ?? '',
+                'estado' => $e->estado,
+            ]);
+
+        return view('reportes-central.administrativo-inscripciones', [
+            'gestiones' => $gestiones,
+            'filtros' => $request->only(['academic_year_id', 'estado']),
+            'filas' => $filas,
+        ]);
+    }
+
+    public function verMatriculas(Request $request): View
+    {
+        $gestiones = AcademicYear::orderByDesc('nombre')->get();
+        $filas = Registration::with(['enrollment.estudiante', 'course.grade', 'course.section', 'enrollment.academicYear'])
+            ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
+            ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
+            ->orderByDesc('id')->limit(500)->get()
+            ->map(fn ($m) => [
+                'estudiante' => $m->enrollment?->estudiante ? $m->enrollment->estudiante->nombres . ' ' . $m->enrollment->estudiante->apellidos : 'N/A',
+                'codigo' => $m->enrollment?->estudiante?->codigo ?? '',
+                'curso' => trim(($m->course?->grade?->nombre ?? '') . ' ' . ($m->course?->section?->nombre ?? '') . ' - ' . ($m->course?->nombre ?? ''), ' -'),
+                'gestion' => $m->enrollment?->academicYear?->nombre ?? '',
+                'estado' => $m->estado,
+            ]);
+
+        return view('reportes-central.administrativo-matriculas', [
+            'gestiones' => $gestiones,
+            'filtros' => $request->only(['academic_year_id', 'estado']),
+            'filas' => $filas,
+        ]);
+    }
+
+    public function verPagos(Request $request): View
+    {
+        $gestiones = AcademicYear::orderByDesc('nombre')->get();
+        $mesNombre = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
+        $filas = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.course', 'registration.enrollment.academicYear'])
+            ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('registration.enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
+            ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
+            ->orderByDesc('id')->limit(500)->get()
+            ->map(fn ($p) => [
+                'estudiante' => $p->registration?->enrollment?->estudiante ? $p->registration->enrollment->estudiante->nombres . ' ' . $p->registration->enrollment->estudiante->apellidos : 'N/A',
+                'codigo' => $p->registration?->enrollment?->estudiante?->codigo ?? '',
+                'mensualidad' => ($mesNombre[(int) $p->mes] ?? 'Mes ' . $p->mes) . ' ' . ($p->registration?->enrollment?->academicYear?->nombre ?? ''),
+                'monto' => $p->monto ?? $p->monto_esperado,
+                'estado' => $p->estado,
+            ]);
+
+        return view('reportes-central.administrativo-pagos', [
+            'gestiones' => $gestiones,
+            'filtros' => $request->only(['academic_year_id', 'estado']),
+            'filas' => $filas,
+        ]);
+    }
+
+    public function verDocumentacion(Request $request): View
+    {
+        $filas = StudentDocument::with(['student'])
+            ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
+            ->when($request->tipo_documento, fn ($q, $v) => $q->where('tipo_documento', $v))
+            ->orderByDesc('id')->limit(500)->get()
+            ->map(fn ($d) => [
+                'estudiante' => $d->student ? $d->student->nombres . ' ' . $d->student->apellidos : 'N/A',
+                'codigo' => $d->student?->codigo ?? '',
+                'tipo' => $d->tipo_documento,
+                'estado' => $d->estado,
+                'observaciones' => $d->observaciones ?? '',
+            ]);
+
+        return view('reportes-central.administrativo-documentacion', [
+            'filtros' => $request->only(['estado', 'tipo_documento']),
+            'filas' => $filas,
+        ]);
     }
 
     // ------------------------------------------------------- Export PDF

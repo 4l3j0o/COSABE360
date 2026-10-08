@@ -5,7 +5,8 @@
 @section('contenido')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <h1 class="text-xl font-bold text-foreground">Reportes de Evaluación</h1>
+        @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Reportes de Evaluación</h1>
         <p class="text-sm text-muted-foreground mt-1">Aprobados/reprobados, mejores calificaciones y asistencia por curso y trimestre.</p>
     </div>
 </div>

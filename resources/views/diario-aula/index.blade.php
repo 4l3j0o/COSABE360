@@ -8,7 +8,8 @@
 @section('contenido')
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Diario de Aula</h1>
+            @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Diario de Aula</h1>
             <p class="text-sm text-muted-foreground">Bitácora de lo avanzado en cada clase: avance curricular, ejercicios y observaciones.</p>
         </div>
         @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))
@@ -20,7 +21,7 @@
         <form method="GET" action="{{ route('diario.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <select name="course_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                     @if($cursos->count() !== 1)
                         <option value="">Seleccionar curso…</option>
                     @endif

@@ -212,7 +212,7 @@ class AttendanceReportController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director'])) {
-            return Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
+            return Course::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
@@ -221,7 +221,7 @@ class AttendanceReportController extends Controller
                 ->get()
                 ->map(fn ($cs) => $cs->course)
                 ->unique('id')
-                ->values();
+                ->pipe(fn ($c) => Course::ordenarPorNivel($c));
         }
 
         if ($user->hasRole('Estudiante') && $user->student) {
@@ -241,7 +241,7 @@ class AttendanceReportController extends Controller
 
             return Course::with(['grade', 'section', 'gestion'])
                 ->whereIn('id', $courseIds)
-                ->orderBy('nombre')
+                ->ordenadoPorNivel()
                 ->get();
         }
 

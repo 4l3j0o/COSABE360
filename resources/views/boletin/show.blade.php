@@ -5,14 +5,14 @@
 @section('contenido')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <h1 class="text-xl font-bold text-foreground">Libreta / Boletín de Calificaciones</h1>
+        @include('layouts._volver', ['href' => route('students.show', $student), 'texto' => 'Volver al estudiante'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Libreta / Boletín de Calificaciones</h1>
         <p class="text-sm text-muted-foreground mt-1">{{ $student->apellidos }}, {{ $student->nombres }} · {{ $curso?->nombre ?? 'Sin curso' }} · Gestión {{ $periodo }}</p>
     </div>
     <div class="flex gap-2">
         @if($curso)
             <a href="{{ route('boletin.pdf', $student) }}" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">PDF</a>
         @endif
-        <a href="{{ route('students.show', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Volver</a>
     </div>
 </div>
 

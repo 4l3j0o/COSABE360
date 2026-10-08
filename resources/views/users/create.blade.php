@@ -8,7 +8,8 @@
 @section('contenido')
     <div class="max-w-2xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-xl font-bold text-foreground">Nuevo usuario</h1>
+            @include('layouts._volver', ['href' => route('users.index'), 'texto' => 'Volver al listado'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Nuevo usuario</h1>
             <p class="text-sm text-muted-foreground mt-1">Completa los datos para crear un usuario. El correo debe ser único.</p>
         </div>
 

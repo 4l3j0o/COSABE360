@@ -8,7 +8,8 @@
 @section('contenido')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Documentación Pendiente</h1>
+            @include('layouts._volver', ['href' => route('students.index'), 'texto' => 'Volver al listado'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Documentación Pendiente</h1>
             <p class="text-sm text-muted-foreground">Estudiantes con documentos pendientes de entrega</p>
         </div>
         <a href="{{ route('students.index') }}" class="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors">

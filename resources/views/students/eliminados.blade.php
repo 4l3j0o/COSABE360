@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="mb-6">
-        <a href="{{ route('students.index') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al listado</a>
+        @include('layouts._volver', ['href' => route('students.index'), 'texto' => 'Volver al listado'])
         <h1 class="text-xl font-bold text-foreground mt-1">Estudiantes Eliminados</h1>
         <p class="text-sm text-muted-foreground">Estudiantes marcados como eliminados. Puedes restaurarlos si es necesario.</p>
     </div>

@@ -7,7 +7,8 @@
 
 @section('contenido')
     <div class="mb-6">
-        <h1 class="text-xl font-bold text-foreground">Reporte de conducta por estudiante</h1>
+        @include('layouts._volver', ['href' => route('conducta.index'), 'texto' => 'Volver a Conducta'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Reporte de conducta por estudiante</h1>
         <p class="text-sm text-muted-foreground">Historial específico con fecha, hora, materia, tipo de falta y descripción.</p>
     </div>
 

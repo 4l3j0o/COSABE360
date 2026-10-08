@@ -8,7 +8,7 @@
 @section('contenido')
     <div class="max-w-3xl space-y-6">
         <div>
-            <a href="{{ route('auditoria.index') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver al historial</a>
+            @include('layouts._volver', ['href' => route('auditoria.index'), 'texto' => 'Volver al historial'])
             <h1 class="text-xl font-bold text-foreground mt-1">Detalle de Operación #{{ $operationHistory->id }}</h1>
         </div>
 

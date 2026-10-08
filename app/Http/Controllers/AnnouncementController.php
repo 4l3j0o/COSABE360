@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\Course;
+use App\Services\ComunicadoAlcanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,32 +16,33 @@ use Illuminate\View\View;
 
 class AnnouncementController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection|View|JsonResponse
+    /**
+     * HU-65: módulo único de comunicados (todos los autenticados).
+     * Pestaña "recibidos" (bandeja filtrada) + pestaña "enviados" (gestión, solo quien puede crear).
+     */
+    public function index(Request $request, ComunicadoAlcanceService $alcance): AnonymousResourceCollection|View|JsonResponse
     {
-        $query = Announcement::with(['author', 'recipients.course'])
-            ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->when($request->query('search'), function ($q, $v) {
-                $q->where(function ($qq) use ($v) {
-                    $qq->where('titulo', 'like', "%{$v}%")
-                        ->orWhere('contenido', 'like', "%{$v}%");
-                });
-            })
-            ->orderByDesc('fecha_publicacion')
-            ->orderByDesc('created_at');
-
-        if ($request->expectsJson()) {
-            return AnnouncementResource::collection($query->get());
-        }
-
-        $announcements = $query->paginate(10)->withQueryString();
-        $courses = Course::with(['grade', 'section'])->orderBy('nombre')->get();
-
-        return view('announcements.index', compact('announcements', 'courses'));
+        return $this->modulo($request, $alcance, (string) $request->query('tab', 'recibidos'));
     }
 
-    public function store(StoreAnnouncementRequest $request): JsonResponse|RedirectResponse
+    public function store(StoreAnnouncementRequest $request, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
+
+        // HU-65: el alcance (destinatario/curso/nivel) debe estar permitido para el rol
+        $error = $alcance->validarAlcance(
+            $request->user(),
+            $validated['tipo_destinatario'],
+            isset($validated['course_id']) ? (int) $validated['course_id'] : null,
+            isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+        );
+        if ($error) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $error], 403);
+            }
+
+            return back()->withInput()->with('error', $error);
+        }
 
         // Lógica específica HU30: fecha solo si PUBLICADO o si viene explícita
         $fecha = $validated['fecha_publicacion'] ?? null;
@@ -60,6 +62,7 @@ class AnnouncementController extends Controller
         $announcement->recipients()->create([
             'tipo_destinatario' => $validated['tipo_destinatario'],
             'course_id' => $validated['course_id'] ?? null,
+            'level_id' => $validated['level_id'] ?? null,
             'user_id' => $validated['user_id'] ?? null,
         ]);
 
@@ -75,9 +78,15 @@ class AnnouncementController extends Controller
         return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
     }
 
-    public function update(UpdateAnnouncementRequest $request, Announcement $announcement): JsonResponse|RedirectResponse|AnnouncementResource
+    public function update(UpdateAnnouncementRequest $request, Announcement $announcement, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse|AnnouncementResource
     {
         $validated = $request->validated();
+        $user = $request->user();
+
+        // Docente: solo sus propios comunicados
+        if ($user->hasRole('Docente') && $announcement->author_id !== $user->id) {
+            return $this->denegarAlcance($request, 'Solo puedes editar tus propios comunicados.');
+        }
 
         $data = [];
         if (isset($validated['titulo'])) {
@@ -101,10 +110,21 @@ class AnnouncementController extends Controller
         }
 
         if (isset($validated['tipo_destinatario'])) {
+            $error = $alcance->validarAlcance(
+                $user,
+                $validated['tipo_destinatario'],
+                isset($validated['course_id']) ? (int) $validated['course_id'] : null,
+                isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+            );
+            if ($error) {
+                return $this->denegarAlcance($request, $error);
+            }
+
             $recipient = $announcement->recipients()->first();
             $payload = [
                 'tipo_destinatario' => $validated['tipo_destinatario'],
                 'course_id' => $validated['course_id'] ?? null,
+                'level_id' => $validated['level_id'] ?? null,
                 'user_id' => $validated['user_id'] ?? null,
             ];
             if ($recipient) {
@@ -123,6 +143,10 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement): JsonResponse|RedirectResponse
     {
+        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
+            return $this->denegarAlcance(request(), 'Solo puedes eliminar tus propios comunicados.');
+        }
+
         $announcement->delete();
 
         if (request()->expectsJson()) {
@@ -134,6 +158,10 @@ class AnnouncementController extends Controller
 
     public function publicar(Announcement $announcement): JsonResponse|RedirectResponse
     {
+        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
+            return $this->denegarAlcance(request(), 'Solo puedes publicar tus propios comunicados.');
+        }
+
         if ($announcement->estado === 'PUBLICADO') {
             if (request()->expectsJson()) {
                 return response()->json(['message' => 'El comunicado ya está publicado.'], 409);
@@ -155,6 +183,10 @@ class AnnouncementController extends Controller
 
     public function archivar(Announcement $announcement): JsonResponse|RedirectResponse
     {
+        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
+            return $this->denegarAlcance(request(), 'Solo puedes archivar tus propios comunicados.');
+        }
+
         $announcement->update(['estado' => 'ARCHIVADO']);
 
         if (request()->expectsJson()) {
@@ -175,31 +207,101 @@ class AnnouncementController extends Controller
         return redirect()->route('announcements.index');
     }
 
-    public function bandeja(Request $request): View|JsonResponse
+    public function bandeja(Request $request, ComunicadoAlcanceService $alcance): View|JsonResponse
     {
-        $query = Announcement::with(['author', 'recipients.course'])
+        // Compatibilidad: /mis-comunicados muestra el módulo en la pestaña recibidos
+        return $this->modulo($request, $alcance, 'recibidos');
+    }
+
+    private function modulo(Request $request, ComunicadoAlcanceService $alcance, string $tab): View|JsonResponse|AnonymousResourceCollection
+    {
+        $user = $request->user();
+        $puedeCrear = $alcance->tiposPermitidos($user) !== [];
+        $tab = in_array($tab, ['recibidos', 'enviados'], true) ? $tab : 'recibidos';
+        if (! $puedeCrear) {
+            $tab = 'recibidos';
+        }
+
+        $with = ['author', 'recipients.course.section', 'recipients.course.grade', 'recipients.level'];
+
+        // ---- Recibidos: publicados visibles para el usuario ----
+        $recQuery = Announcement::with($with)
             ->where('estado', 'PUBLICADO')
             ->orderByDesc('fecha_publicacion')
             ->orderByDesc('created_at');
 
-        if ($request->expectsJson()) {
-            return AnnouncementResource::collection($query->get());
+        $todos = $recQuery->get()->filter(fn ($a) => $alcance->visiblePara($user, $a))->values();
+        $alcance->marcarNovedad($user, $todos);
+        $nuevos = $todos->where('es_nuevo', true)->count();
+
+        if ($request->expectsJson() && ! $puedeCrear) {
+            return AnnouncementResource::collection($todos);
         }
 
-        $announcements = $query->paginate(10)->withQueryString();
-        return view('announcements.bandeja', compact('announcements'));
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = 9;
+        $announcements = new \Illuminate\Pagination\LengthAwarePaginator(
+            $todos->forPage($page, $perPage)->values(),
+            $todos->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => array_merge($request->query(), ['tab' => 'recibidos'])]
+        );
+
+        // ---- Enviados: gestión (solo quien puede crear) ----
+        $enviados = null;
+        if ($puedeCrear) {
+            $envQuery = Announcement::with($with)
+                ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
+                ->when($request->query('search'), function ($q, $v) {
+                    $q->where(function ($qq) use ($v) {
+                        $qq->where('titulo', 'like', "%{$v}%")
+                            ->orWhere('contenido', 'like', "%{$v}%");
+                    });
+                })
+                ->orderByDesc('fecha_publicacion')
+                ->orderByDesc('created_at');
+
+            // Docente: gestiona solo sus propios comunicados
+            if ($user->hasRole('Docente')) {
+                $envQuery->where('author_id', $user->id);
+            }
+
+            if ($request->expectsJson()) {
+                return AnnouncementResource::collection($envQuery->get());
+            }
+
+            $enviados = $envQuery->paginate(10, ['*'], 'env_page')->withQueryString();
+        }
+
+        $courses = $puedeCrear ? $alcance->cursosCreables($user) : collect();
+        $niveles = $puedeCrear ? $alcance->nivelesCreables($user) : collect();
+        $tipos = $alcance->tiposPermitidos($user);
+
+        return view('announcements.index', compact('announcements', 'nuevos', 'enviados', 'tab', 'puedeCrear', 'courses', 'niveles', 'tipos'));
     }
 
-    public function showBandeja(Announcement $announcement): View|AnnouncementResource
+    public function showBandeja(Announcement $announcement, ComunicadoAlcanceService $alcance): View|AnnouncementResource
     {
         if (request()->expectsJson()) {
             return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
         }
+
+        if ($announcement->estado !== 'PUBLICADO' || ! $alcance->visiblePara(request()->user(), $announcement)) {
+            abort(404);
+        }
+
+        $alcance->marcarNovedad(request()->user(), [$announcement]);
+
         return view('announcements.show-bandeja', compact('announcement'));
     }
 
-    public function marcarLeido(Request $request, Announcement $announcement): JsonResponse|RedirectResponse
+    public function marcarLeido(Request $request, Announcement $announcement, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse
     {
+        if ($announcement->estado !== 'PUBLICADO' || ! $alcance->visiblePara($request->user(), $announcement)) {
+            abort(404);
+        }
+
         $announcement->reads()->updateOrCreate(
             ['user_id' => $request->user()->id],
             ['leido' => true, 'fecha_lectura' => now()]
@@ -209,5 +311,15 @@ class AnnouncementController extends Controller
             return response()->json(['message' => 'Marcado como leído']);
         }
         return back()->with('success', 'Marcado como leído');
+    }
+
+    /** Respuesta uniforme cuando el alcance no está permitido (web o JSON). */
+    private function denegarAlcance(Request $request, string $mensaje): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $mensaje], 403);
+        }
+
+        return back()->withInput()->with('error', $mensaje);
     }
 }

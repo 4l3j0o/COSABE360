@@ -49,7 +49,7 @@
                     </a>
                 @endif
             @endif
-            <a href="{{ $editar ? route('asistencias.create', $rutaBase) : route('asistencias.index') }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent transition-colors">{{ $editar ? 'Cancelar' : 'Volver' }}</a>
+            @include('layouts._volver', ['href' => $editar ? route('asistencias.create', $rutaBase) : route('asistencias.index'), 'texto' => $editar ? 'Cancelar' : 'Volver'])
         </div>
     </div>
 

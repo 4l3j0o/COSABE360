@@ -496,6 +496,17 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
         Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');
         Route::get('/centralizador-trimestre/exportar', [ReporteCentralController::class, 'exportCentralizadorTrimestre'])->name('reportes.central.trimestre.export');
     });
+
+    // HU-66b: vista previa de administrativos (primero Abrir, luego exportar).
+    // Mismos roles que sus exports: inscripciones/documentación incluyen Director.
+    Route::middleware(['role:Administrador,Director,Secretaría'])->group(function () {
+        Route::get('/administrativo/inscripciones', [ReporteCentralController::class, 'verInscripciones'])->name('reportes.central.administrativo.inscripciones');
+        Route::get('/administrativo/documentacion', [ReporteCentralController::class, 'verDocumentacion'])->name('reportes.central.administrativo.documentacion');
+    });
+    Route::middleware(['role:Administrador,Secretaría'])->group(function () {
+        Route::get('/administrativo/matriculas', [ReporteCentralController::class, 'verMatriculas'])->name('reportes.central.administrativo.matriculas');
+        Route::get('/administrativo/pagos', [ReporteCentralController::class, 'verPagos'])->name('reportes.central.administrativo.pagos');
+    });
 });
 
 // HU-52: cierre de gestión - escala de valoración y promoción/retención (Secretaría/Director/Admin)
@@ -551,9 +562,12 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::get('/rude/{student}/export/pdf', [RudeController::class, 'exportPdf'])->name('rude.export-pdf');
 });
 
-// HU-30: Crear y publicar comunicados - solo Administrador y Director (pulido: nombres announcements.* para AnnouncementTest - 7 rutas)
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('comunicados')->group(function () {
+// HU-30 + HU-65: módulo único de comunicados - ver/consultar: todos los autenticados.
+// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (solo sus cursos).
+Route::middleware(['auth'])->prefix('comunicados')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
+});
+Route::middleware(['auth', 'role:Administrador,Director,Docente'])->prefix('comunicados')->group(function () {
     Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');

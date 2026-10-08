@@ -15,7 +15,8 @@
 
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">RUDE — Formulario Oficial RM 0031/2025 (Secciones I-V)</h1>
+            @include('layouts._volver', ['href' => route('rude.show', $student), 'texto' => 'Volver al RUDE'])
+            <h1 class="text-xl font-bold text-foreground mt-2">RUDE — Formulario Oficial RM 0031/2025 (Secciones I-V)</h1>
             <p class="text-sm text-muted-foreground mt-1">{{ $student->nombres }} {{ $student->apellidos }} — {{ $student->codigo }} — Ley 070 Art.68</p>
         </div>
         <a href="{{ route('rude.show', $student) }}" class="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm hover:bg-accent">Cancelar</a>

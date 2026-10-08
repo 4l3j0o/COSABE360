@@ -8,10 +8,7 @@
 @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <a href="{{ route('students.show', $student) }}" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Volver al estudiante
-        </a>
+        @include('layouts._volver', ['href' => route('students.show', $student), 'texto' => 'Volver al estudiante'])
         <h1 class="text-xl font-bold text-foreground mt-2">Expediente Documental</h1>
         <p class="text-sm text-muted-foreground mt-1">{{ $student->apellidos }}, {{ $student->nombres }} · {{ $student->codigo }}</p>
         <p class="text-xs text-muted-foreground mt-1">Requisitos según R.M. 001/2022 (Art. 12) — Nivel: <strong>{{ $nivel ?? '—' }}</strong></p>

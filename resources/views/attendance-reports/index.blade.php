@@ -8,7 +8,8 @@
 
 @section('contenido')
     <div class="mb-6">
-        <h1 class="text-xl font-bold text-foreground">Reportes de Asistencia</h1>
+        @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Reportes de Asistencia</h1>
         <p class="text-sm text-muted-foreground">Genere reportes por día, semana, mes o trimestre y expórtelos a PDF o Excel.</p>
     </div>
 

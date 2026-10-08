@@ -20,7 +20,7 @@
         $claseInput = 'w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary';
     @endphp
     <div class="mb-6">
-        <a href="{{ route('asistencias.index') }}" class="text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver a Cursos</a>
+        @include('layouts._volver', ['href' => route('asistencias.index'), 'texto' => 'Volver a Cursos'])
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $course->nombre }}</h1>
             @if($esAdmin)

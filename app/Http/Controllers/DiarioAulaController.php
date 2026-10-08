@@ -236,13 +236,13 @@ class DiarioAulaController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
+            return Course::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->courseSubjects()
                 ->with(['course.grade', 'course.section', 'course.gestion'])
-                ->get()->map(fn ($cs) => $cs->course)->unique('id')->values();
+                ->get()->map(fn ($cs) => $cs->course)->unique('id')->pipe(fn ($c) => Course::ordenarPorNivel($c));
         }
 
         if ($user->hasRole('Estudiante') && $user->student) {
@@ -258,7 +258,7 @@ class DiarioAulaController extends Controller
                 ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $hijosIds)->where('estado', 'COMPLETADA'))
                 ->pluck('course_id')->unique()->values();
 
-            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->orderBy('nombre')->get();
+            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->ordenadoPorNivel()->get();
         }
 
         return collect();
@@ -268,7 +268,7 @@ class DiarioAulaController extends Controller
     {
         // Para registrar: el docente solo sus cursos; admin ve todos los activos
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->orderBy('nombre')->get();
+            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();

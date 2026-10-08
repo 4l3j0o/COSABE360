@@ -8,7 +8,8 @@
 @section('contenido')
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Reportes de Conducta</h1>
+            @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+            <h1 class="text-xl font-bold text-foreground mt-2">Reportes de Conducta</h1>
             <p class="text-sm text-muted-foreground">Faltas Leves, Graves y Muy graves reportadas por curso, con fecha, hora, materia y descripción.</p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -23,7 +24,7 @@
         <form method="GET" action="{{ route('conducta.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                <select name="course_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                     @if($cursos->count() !== 1)
                         <option value="">Seleccionar curso…</option>
                     @endif

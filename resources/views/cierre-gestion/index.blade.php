@@ -5,7 +5,8 @@
 @section('contenido')
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <h1 class="text-xl font-bold text-foreground">Cierre de Gestión — Promoción y Retención</h1>
+        @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+        <h1 class="text-xl font-bold text-foreground mt-2">Cierre de Gestión — Promoción y Retención</h1>
         <p class="text-sm text-muted-foreground mt-1">Escala oficial (R.M. 473/2021): ED ≤50 · DA 51-68 · DO 69-84 · DP 85-100. Estudiante con una o más áreas &lt; 51 se retiene.</p>
     </div>
 </div>

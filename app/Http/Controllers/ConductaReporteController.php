@@ -451,13 +451,13 @@ class ConductaReporteController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Regente'])) {
-            return Course::with(['grade', 'section', 'gestion'])->orderBy('nombre')->get();
+            return Course::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->courseSubjects()
                 ->with(['course.grade', 'course.section', 'course.gestion'])
-                ->get()->map(fn ($cs) => $cs->course)->unique('id')->values();
+                ->get()->map(fn ($cs) => $cs->course)->unique('id')->pipe(fn ($c) => Course::ordenarPorNivel($c));
         }
 
         if ($user->hasRole('Estudiante') && $user->student) {
@@ -471,7 +471,7 @@ class ConductaReporteController extends Controller
                 ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $this->hijosIds($user))->where('estado', 'COMPLETADA'))
                 ->pluck('course_id')->unique()->values();
 
-            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->orderBy('nombre')->get();
+            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->ordenadoPorNivel()->get();
         }
 
         return collect();
@@ -480,7 +480,7 @@ class ConductaReporteController extends Controller
     private function cursosRegistro($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->orderBy('nombre')->get();
+            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();

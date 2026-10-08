@@ -20,6 +20,9 @@ class StoreAnnouncementRequest extends FormRequest
         if ($this->has('course_id') && $this->input('course_id') === '') {
             $this->merge(['course_id' => null]);
         }
+        if ($this->has('level_id') && $this->input('level_id') === '') {
+            $this->merge(['level_id' => null]);
+        }
         if ($this->has('user_id') && $this->input('user_id') === '') {
             $this->merge(['user_id' => null]);
         }
@@ -32,8 +35,9 @@ class StoreAnnouncementRequest extends FormRequest
             'contenido' => ['required', 'string'],
             'fecha_publicacion' => ['nullable', 'date'],
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO'])],
-            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO'])],
+            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
             'course_id' => ['nullable', 'required_if:tipo_destinatario,CURSO_ESPECIFICO', 'integer', 'exists:courses,id'],
+            'level_id' => ['nullable', 'required_if:tipo_destinatario,NIVEL_DOCENTES', 'integer', 'exists:levels,id'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
@@ -47,6 +51,7 @@ class StoreAnnouncementRequest extends FormRequest
             'tipo_destinatario.required' => 'Debe seleccionar un destinatario.',
             'tipo_destinatario.in' => 'Destinatario no válido.',
             'course_id.required_if' => 'Debe seleccionar un curso cuando el destinatario es curso específico.',
+            'level_id.required_if' => 'Debe seleccionar un nivel cuando el destinatario es docentes de un nivel.',
         ];
     }
 }
