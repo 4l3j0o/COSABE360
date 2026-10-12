@@ -91,17 +91,23 @@ class SectionController extends Controller
         return redirect()->route('sections.index')->with('success', 'Paralelo actualizado correctamente.');
     }
 
+    public function toggle(Section $section)
+    {
+        $nuevo = $section->estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        $section->update(['estado' => $nuevo]);
+
+        $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
+
+        return redirect()->route('sections.index')->with('success', "Paralelo {$accion} correctamente.");
+    }
+
     public function destroy(Section $section)
     {
-        $tieneMatriculados = false;
-
-        if (Schema::hasColumn('sections', 'section_id') && Schema::hasColumn('registrations', 'section_id')) {
-            $tieneMatriculados = DB::table('registrations')
-                ->join('sections', 'registrations.section_id', '=', 'sections.id')
-                ->where('sections.section_id', $section->id)
-                ->where('registrations.estado', '!=', 'CANCELADA')
+        $tieneMatriculados = Schema::hasTable('registrations')
+            && DB::table('registrations')
+                ->where('section_id', $section->id)
+                ->where('estado', '!=', 'CANCELADA')
                 ->exists();
-        }
 
         if ($tieneMatriculados) {
             if (request()->expectsJson()) {

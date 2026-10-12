@@ -333,7 +333,7 @@ class StudentController extends Controller
                 ->first();
             $matriculaPeriodo = $inscripcionPeriodo?->registration;
 
-            $cursos = \App\Models\Section::with(['grade', 'section'])
+            $cursos = \App\Models\Section::with(['grade'])
                 ->where('academic_year_id', $periodoActivo->id)
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()
@@ -483,7 +483,7 @@ class StudentController extends Controller
 
         $cursos = collect();
         if ($periodo) {
-            $cursos = Section::with(['grade', 'section'])
+            $cursos = Section::with(['grade'])
                 ->where('academic_year_id', $periodo->id)
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()

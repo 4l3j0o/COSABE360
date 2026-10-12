@@ -30,7 +30,7 @@ class RegenteController extends Controller
     {
         $this->autorizar($request);
 
-        $cursos = Section::with(['grade', 'section', 'gestion'])
+        $cursos = Section::with(['grade', 'gestion'])
             ->ordenadoPorNivel()
             ->get();
 
@@ -41,7 +41,7 @@ class RegenteController extends Controller
     {
         $this->autorizar($request);
 
-        $section->load(['grade', 'section', 'gestion']);
+        $section->load(['grade', 'gestion']);
 
         $students = $section->students()
             ->where('students.estado', 'ACTIVO')

@@ -54,6 +54,14 @@ class SectionTest extends TestCase
         ]);
     }
 
+    private function gestion(): \App\Models\AcademicYear
+    {
+        return \App\Models\AcademicYear::firstOrCreate(
+            ['nombre' => '2026'],
+            ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']
+        );
+    }
+
     public function test_sections_index_requires_auth(): void
     {
         $this->get('/paralelos')->assertRedirect('/login');
@@ -66,6 +74,7 @@ class SectionTest extends TestCase
 
         $response = $this->post('/paralelos', [
             'grade_id' => $grado->id,
+            'academic_year_id' => $this->gestion()->id,
             'nombre'   => 'A',
         ]);
 
@@ -96,9 +105,9 @@ class SectionTest extends TestCase
     {
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
-        $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $grado->id, 'academic_year_id' => $this->gestion()->id, 'nombre' => 'A']);
 
-        $response = $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
+        $response = $this->post('/paralelos', ['grade_id' => $grado->id, 'academic_year_id' => $this->gestion()->id, 'nombre' => 'A']);
 
         $response->assertSessionHasErrors('nombre');
     }
@@ -109,8 +118,8 @@ class SectionTest extends TestCase
         $g1 = $this->crearGrado('1ro');
         $g2 = $this->crearGrado('2do');
 
-        $this->post('/paralelos', ['grade_id' => $g1->id, 'nombre' => 'A']);
-        $response = $this->post('/paralelos', ['grade_id' => $g2->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $g1->id, 'academic_year_id' => $this->gestion()->id, 'nombre' => 'A']);
+        $response = $this->post('/paralelos', ['grade_id' => $g2->id, 'academic_year_id' => $this->gestion()->id, 'nombre' => 'A']);
 
         $response->assertSessionHasNoErrors();
         $this->assertTrue(Section::where('grade_id', $g1->id)->where('nombre', 'A')->exists());
@@ -163,31 +172,11 @@ class SectionTest extends TestCase
         $grado = $this->crearGrado();
         $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        DB::table('academic_years')->insert([
-            'nombre'       => '2026',
-            'fecha_inicio' => '2026-02-01',
-            'fecha_fin'    => '2026-11-30',
-            'estado'       => 'ACTIVA',
-            'created_at'   => now(),
-            'updated_at'   => now(),
-        ]);
-        $gestionId = DB::table('academic_years')->value('id');
-
-        $cursoId = DB::table('sections')->insertGetId([
-            'grade_id'    => $grado->id,
-            'section_id' => $sec->id,
-            'academic_year_id'  => $gestionId,
-            'nombre'      => '1ro A 2026',
-            'estado'      => 'ACTIVO',
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
-
         DB::table('registrations')->insert([
-            'section_id'    => $cursoId,
-            'estado'      => 'ACTIVA',
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'section_id' => $sec->id,
+            'estado'     => 'ACTIVA',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $response = $this->delete("/paralelos/{$sec->id}");
@@ -203,31 +192,11 @@ class SectionTest extends TestCase
         $grado = $this->crearGrado();
         $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        DB::table('academic_years')->insert([
-            'nombre'       => '2026',
-            'fecha_inicio' => '2026-02-01',
-            'fecha_fin'    => '2026-11-30',
-            'estado'       => 'ACTIVA',
-            'created_at'   => now(),
-            'updated_at'   => now(),
-        ]);
-        $gestionId = DB::table('academic_years')->value('id');
-
-        $cursoId = DB::table('sections')->insertGetId([
-            'grade_id'    => $grado->id,
-            'section_id' => $sec->id,
-            'academic_year_id'  => $gestionId,
-            'nombre'      => '1ro A 2026',
-            'estado'      => 'ACTIVO',
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
-
         DB::table('registrations')->insert([
-            'section_id'    => $cursoId,
-            'estado'      => 'CANCELADA',
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'section_id' => $sec->id,
+            'estado'     => 'CANCELADA',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $response = $this->delete("/paralelos/{$sec->id}");
@@ -256,6 +225,7 @@ class SectionTest extends TestCase
 
         $this->post('/paralelos', [
             'grade_id'       => $grado->id,
+            'academic_year_id' => $this->gestion()->id,
             'nombre'         => 'A',
             'teacher_id' => $docente->id,
         ]);
@@ -268,7 +238,7 @@ class SectionTest extends TestCase
         $this->loginAsAdmin();
         $grado = $this->crearGrado();
 
-        $this->post('/paralelos', ['grade_id' => $grado->id, 'nombre' => 'A']);
+        $this->post('/paralelos', ['grade_id' => $grado->id, 'academic_year_id' => $this->gestion()->id, 'nombre' => 'A']);
 
         $this->assertDatabaseHas('sections', ['grade_id' => $grado->id, 'teacher_id' => null]);
     }

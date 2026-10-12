@@ -83,7 +83,7 @@ class HistorialAcademicoController extends Controller
 
         $regs = Registration::where('estado', 'ACTIVA')
             ->whereHas('enrollment', fn ($q) => $q->where('student_id', $student->id)->where('estado', 'COMPLETADA'))
-            ->with('section.gestion', 'section.grade', 'section.section')
+            ->with('section.gestion', 'section.grade', 'section')
             ->get();
 
         if ($academicYearId) {

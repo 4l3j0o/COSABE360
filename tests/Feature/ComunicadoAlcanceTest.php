@@ -321,7 +321,7 @@ class ComunicadoAlcanceTest extends TestCase
         $response->assertSee('Mis Envíos', false);
         $response->assertSee('Aviso unificado', false);
         // Paralelo por código, no nombre largo
-        $response->assertSee($curso->section->codigo, false);
+        $response->assertSee($curso->codigo, false);
     }
 
     public function test_modulo_unificado_estudiante_sin_envios(): void

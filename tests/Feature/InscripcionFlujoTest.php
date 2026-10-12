@@ -31,8 +31,8 @@ class InscripcionFlujoTest extends TestCase
     {
         $nivel = Level::firstOrCreate(['nombre' => $nivelNombre], ['orden' => 2, 'estado' => 'ACTIVO']);
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Ins ' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
-        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'academic_year_id' => $gestion->id, 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $curso = $seccion;
 
         return compact('nivel', 'grado', 'seccion', 'gestion', 'curso');
@@ -111,8 +111,8 @@ class InscripcionFlujoTest extends TestCase
         // El formulario solo lista cursos de su nivel
         $response = $this->actingAs($director)->get(route('inscripciones.create'));
         $response->assertOk();
-        $response->assertSee($prim['curso']->nombre);
-        $response->assertDontSee($sec['curso']->nombre);
+        $response->assertSee($prim['nivel']->nombre);
+        $response->assertDontSee($sec['nivel']->nombre);
 
         // Intentar inscribir en otro nivel -> 403
         $response = $this->actingAs($director)->post(route('inscripciones.store'), $this->datosInscripcion($sec['curso']->id, '4444444'));

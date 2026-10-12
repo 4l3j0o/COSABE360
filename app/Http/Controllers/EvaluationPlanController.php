@@ -23,7 +23,7 @@ class EvaluationPlanController extends Controller
     {
         $this->autorizar($request, $sectionSubject);
 
-        $sectionSubject->load(['subject', 'section.grade', 'section.section', 'section.gestion']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion']);
 
         $plans = $sectionSubject->evaluationPlans()
             ->withCount('criteria')
@@ -63,7 +63,7 @@ class EvaluationPlanController extends Controller
         $this->autorizar($request, $sectionSubject);
         abort_unless($plan->section_subject_id === $sectionSubject->id, 404);
 
-        $sectionSubject->load(['subject', 'section.grade', 'section.section', 'section.gestion']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion']);
 
         $plan->load(['criteria.activities.grades', 'criteria.activities.grades.student']);
         $service = app(EvaluationService::class);

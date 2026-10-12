@@ -228,12 +228,9 @@ class AnnouncementTest extends TestCase
                 $sectionId = \Illuminate\Support\Facades\DB::table('sections')->insertGetId([
                     'grade_id' => $gradeId, 'nombre' => 'A', 'capacidad' => 30, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now(),
                 ]);
-                // academic_year
+                // academic_year (requerido por validación de curso específico)
                 $yearId = \Illuminate\Support\Facades\DB::table('academic_years')->insertGetId([
                     'nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA', 'created_at' => now(), 'updated_at' => now(),
-                ]);
-                $sectionId = \Illuminate\Support\Facades\DB::table('sections')->insertGetId([
-                    'grade_id' => $gradeId, 'section_id' => $sectionId, 'academic_year_id' => $yearId, 'nombre' => '1ro A 2026', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now(),
                 ]);
 
                 $response = $this->actingAs($admin)->post(route('announcements.store'), [

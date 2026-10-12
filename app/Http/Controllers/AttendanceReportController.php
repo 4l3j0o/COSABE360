@@ -84,7 +84,7 @@ class AttendanceReportController extends Controller
 
         [$desde, $hasta] = $this->rangoFechas($rango, $fecha);
 
-        $section = $sectionId ? Section::with(['grade', 'section', 'gestion'])->find($sectionId) : null;
+        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
 
         if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
@@ -211,12 +211,12 @@ class AttendanceReportController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director'])) {
-            return Section::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->sectionSubjects()
-                ->with(['section.grade', 'section.section', 'section.gestion', 'subject'])
+                ->with(['section.grade', 'section', 'section.gestion', 'subject'])
                 ->get()
                 ->map(fn ($cs) => $cs->section)
                 ->unique('id')

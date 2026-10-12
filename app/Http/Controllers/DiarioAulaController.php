@@ -31,7 +31,7 @@ class DiarioAulaController extends Controller
         $sectionId = $request->query('section_id');
         $subjectId = $request->query('subject_id');
 
-        $section = $sectionId ? Section::with(['grade', 'section', 'gestion'])->find($sectionId) : null;
+        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
         if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
@@ -45,7 +45,7 @@ class DiarioAulaController extends Controller
         $requiereCurso = $this->requiereCurso($user);
         $entradas = collect();
         if (! $requiereCurso || $sectionId) {
-            $entradas = DiarioAula::with(['section.grade', 'section.section', 'subject', 'teacher'])
+            $entradas = DiarioAula::with(['section.grade', 'section', 'subject', 'teacher'])
                 ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId),
                     fn ($q) => $q->whereIn('section_id', $cursos->pluck('id')))
                 ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
@@ -133,7 +133,7 @@ class DiarioAulaController extends Controller
         if (! $this->permiteCurso($user, $diario->section_id, $this->cursosPermitidos($user))) {
             abort(403, 'No tiene acceso a esta bitácora.');
         }
-        $diario->load(['section.grade', 'section.section', 'subject', 'teacher']);
+        $diario->load(['section.grade', 'section', 'subject', 'teacher']);
 
         return view('diario-aula.show', ['entrada' => $diario]);
     }
@@ -235,12 +235,12 @@ class DiarioAulaController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Section::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->sectionSubjects()
-                ->with(['section.grade', 'section.section', 'section.gestion'])
+                ->with(['section.grade', 'section', 'section.gestion'])
                 ->get()->map(fn ($cs) => $cs->section)->unique('id')->pipe(fn ($c) => Section::ordenarPorNivel($c));
         }
 
@@ -257,7 +257,7 @@ class DiarioAulaController extends Controller
     {
         // Para registrar: el docente solo sus cursos; admin ve todos los activos
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Section::with(['grade', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
+            return Section::with(['grade'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();

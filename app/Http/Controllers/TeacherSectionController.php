@@ -23,7 +23,7 @@ class TeacherSectionController extends Controller
             ->with([
                 'subject',
                 'section.grade',
-                'section.section',
+                'section',
                 'section.gestion',
                 // HU-41: bloques de horario de cada asignación, ordenados por día y hora
                 'schedules' => fn ($q) => $q->where('estado', 'ACTIVO')

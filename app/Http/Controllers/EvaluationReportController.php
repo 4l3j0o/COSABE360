@@ -89,7 +89,7 @@ class EvaluationReportController extends Controller
             ];
         }
 
-        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion', 'teacher'])
             ->find($sectionSubjectId);
 
         if ($cs && ! $sectionSubjects->contains('id', $cs->id)) {
@@ -201,13 +201,13 @@ class EvaluationReportController extends Controller
     private function sectionSubjectsPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
                 ->orderBy('section_id')->orderBy('subject_id')->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->sectionSubjects()
-                ->with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+                ->with(['subject', 'section.grade', 'section', 'section.gestion'])
                 ->orderBy('section_id')->orderBy('subject_id')->get();
         }
 
@@ -238,9 +238,9 @@ class EvaluationReportController extends Controller
         $sheet->setTitle('Reporte');
 
         $curso = $resultado['curso'];
-        $nombreCurso = $curso?->codigoCorto() ?? '—';
+        $nombreCurso = $curso?->section?->codigoCorto() ?? '—';
         $nombreMateria = $curso?->subject->nombre ?? '—';
-        $gestion = $curso?->gestion?->nombre ?? (string) now()->year;
+        $gestion = $curso?->section?->gestion?->nombre ?? (string) now()->year;
         $docente = $curso?->teacher
             ? trim(($curso->teacher->nombres ?? '').' '.($curso->teacher->apellidos ?? ''))
             : '—';
@@ -365,7 +365,7 @@ class EvaluationReportController extends Controller
     {
         $base = 'reporte-evaluacion';
         if ($resultado['curso']) {
-            $codigo = $resultado['curso']->codigo ?? $resultado['curso']->nombre ?? '';
+            $codigo = $resultado['curso']->section->codigo ?? $resultado['curso']->section->nombre ?? '';
             $slug = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $codigo), '-'));
             if ($slug !== '') {
                 $base .= '_'.$slug;

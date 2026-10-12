@@ -135,7 +135,7 @@ HTML;
 
     public function administrativoMatriculas(Request $request)
     {
-        $query = Registration::with(['enrollment.estudiante', 'section.grade', 'section.section', 'enrollment.academicYear'])
+        $query = Registration::with(['enrollment.estudiante', 'section.grade', 'section', 'enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
             ->when($request->section_id, fn ($q, $v) => $q->where('section_id', $v))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
@@ -146,14 +146,14 @@ HTML;
             $rows = $query->map(fn ($m) => [
                 $m->enrollment?->estudiante ? $m->enrollment->estudiante->nombres . ' ' . $m->enrollment->estudiante->apellidos : 'N/A',
                 $m->enrollment?->estudiante?->codigo ?? '',
-                ($m->section?->grade?->nombre ?? '') . ' ' . ($m->section?->section?->nombre ?? '') . ' - ' . ($m->section?->nombre ?? ''),
+                ($m->section?->codigoCorto() ?? ''),
                 $m->enrollment?->academicYear?->nombre ?? '',
                 $m->estado,
             ]);
             return $this->excelResponse('reporte_matriculas_' . date('Ymd_His'), $headers, $rows);
         }
 
-        $rowsHtml = $query->map(fn ($m) => '<tr><td>' . e($m->enrollment?->estudiante?->nombres . ' ' . $m->enrollment?->estudiante?->apellidos) . '</td><td>' . e($m->enrollment?->estudiante?->codigo) . '</td><td>' . e(($m->section?->grade?->nombre ?? '') . ' ' . ($m->section?->section?->nombre ?? '') . ' - ' . ($m->section?->nombre ?? '')) . '</td><td>' . e($m->enrollment?->academicYear?->nombre) . '</td><td>' . e($m->estado) . '</td></tr>')->implode('');
+        $rowsHtml = $query->map(fn ($m) => '<tr><td>' . e($m->enrollment?->estudiante?->nombres . ' ' . $m->enrollment?->estudiante?->apellidos) . '</td><td>' . e($m->enrollment?->estudiante?->codigo) . '</td><td>' . e(($m->section?->codigoCorto() ?? '')) . '</td><td>' . e($m->enrollment?->academicYear?->nombre) . '</td><td>' . e($m->estado) . '</td></tr>')->implode('');
         $body = '<table><thead><tr><th>Estudiante</th><th>Código</th><th>Curso</th><th>Gestión</th><th>Estado</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
         return $this->pdfDownload('Reporte Matrículas', $body, 'reporte_matriculas_' . date('Ymd_His'));
     }

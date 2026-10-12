@@ -113,7 +113,7 @@ class ConductaReporteController extends Controller
     {
         $user = $request->user();
         $this->authorizeVerReporte($user, $conducta);
-        $conducta->load(['student', 'section.grade', 'section.section', 'subject', 'teacher']);
+        $conducta->load(['student', 'section.grade', 'section', 'subject', 'teacher']);
 
         return view('conducta.show', ['reporte' => $conducta]);
     }
@@ -133,7 +133,7 @@ class ConductaReporteController extends Controller
         $reportes = collect();
         $conteo = ['LEVE' => 0, 'GRAVE' => 0, 'MUY_GRAVE' => 0];
         if ($student) {
-            $reportes = ConductaReporte::with(['section.grade', 'section.section', 'subject', 'teacher'])
+            $reportes = ConductaReporte::with(['section.grade', 'section', 'subject', 'teacher'])
                 ->where('student_id', $student->id)
                 ->orderByDesc('fecha')->orderByDesc('id')->get();
             foreach ($reportes as $r) {
@@ -189,7 +189,7 @@ class ConductaReporteController extends Controller
         $desde = $request->query('desde');
         $hasta = $request->query('hasta');
 
-        $section = $sectionId ? Section::with(['grade', 'section', 'gestion'])->find($sectionId) : null;
+        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
         if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
@@ -202,7 +202,7 @@ class ConductaReporteController extends Controller
         $requiereCurso = $this->requiereCurso($user);
         $filas = collect();
         if (! $requiereCurso || $sectionId) {
-            $q = ConductaReporte::with(['student', 'section.grade', 'section.section', 'subject', 'teacher'])
+            $q = ConductaReporte::with(['student', 'section.grade', 'section', 'subject', 'teacher'])
                 ->when($sectionId, fn ($qq) => $qq->where('section_id', $sectionId),
                     fn ($qq) => $qq->whereIn('section_id', $cursos->pluck('id')))
                 ->when($subjectId, fn ($qq) => $qq->where('subject_id', $subjectId))
@@ -238,7 +238,7 @@ class ConductaReporteController extends Controller
 
     private function filasEstudiante(Student $student)
     {
-        return ConductaReporte::with(['student', 'section.grade', 'section.section', 'subject', 'teacher'])
+        return ConductaReporte::with(['student', 'section.grade', 'section', 'subject', 'teacher'])
             ->where('student_id', $student->id)
             ->orderByDesc('fecha')->orderByDesc('id')->get();
     }
@@ -433,12 +433,12 @@ class ConductaReporteController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Regente'])) {
-            return Section::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->sectionSubjects()
-                ->with(['section.grade', 'section.section', 'section.gestion'])
+                ->with(['section.grade', 'section', 'section.gestion'])
                 ->get()->map(fn ($cs) => $cs->section)->unique('id')->pipe(fn ($c) => Section::ordenarPorNivel($c));
         }
 
@@ -454,7 +454,7 @@ class ConductaReporteController extends Controller
     private function cursosRegistro($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Section::with(['grade', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
+            return Section::with(['grade'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();

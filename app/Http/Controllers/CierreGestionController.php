@@ -27,7 +27,7 @@ class CierreGestionController extends Controller
         $cursos = $this->cursosPermitidos($request->user());
 
         $curso = $request->query('section_id')
-            ? Section::with(['grade', 'section', 'gestion'])->find($request->query('section_id'))
+            ? Section::with(['grade', 'gestion'])->find($request->query('section_id'))
             : $cursos->first();
 
         if ($curso && ! $cursos->contains('id', $curso->id)) {
@@ -41,7 +41,7 @@ class CierreGestionController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $curso = Section::with(['grade', 'section', 'gestion'])->findOrFail($request->query('section_id'));
+        $curso = Section::with(['grade', 'gestion'])->findOrFail($request->query('section_id'));
         $resultado = $this->build($curso);
 
         $formato = $request->query('format', 'pdf');
@@ -105,7 +105,7 @@ class CierreGestionController extends Controller
     private function cursosPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Section::with(['grade', 'section'])->ordenadoPorNivel()->get();
+            return Section::with(['grade'])->ordenadoPorNivel()->get();
         }
 
         return collect();

@@ -114,7 +114,7 @@ class EvaluationTemplateService
      */
     public function exportar(EvaluationPlan $plan): string
     {
-        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section.section', 'criteria.activities']);
+        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section', 'criteria.activities']);
         $cs = $plan->sectionSubject;
         $criterios = $this->criteriosOrdenados($plan);
 
@@ -240,7 +240,7 @@ class EvaluationTemplateService
      */
     public function exportarCentralizador(EvaluationPlan $plan): string
     {
-        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section.section', 'sectionSubject.section.gestion', 'criteria.activities']);
+        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section', 'sectionSubject.section.gestion', 'criteria.activities']);
         $cs = $plan->sectionSubject;
 
         $spreadsheet = new Spreadsheet;

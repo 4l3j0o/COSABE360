@@ -25,8 +25,8 @@ class AsignacionImportTest extends TestCase
     {
         $nivel = Level::create(['nombre' => 'Primaria Comunitaria Vocacional', 'orden' => 2, 'estado' => 'ACTIVO']);
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => '1ro Primaria', 'orden' => 1, 'estado' => 'ACTIVO']);
-        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'T1A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'T1A', 'academic_year_id' => $gestion->id, 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $curso = $seccion;
         $mat = Subject::create(['nombre' => 'MATEMÁTICA', 'codigo' => '06', 'sigla' => 'MAT', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 

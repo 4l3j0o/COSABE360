@@ -37,13 +37,13 @@ class AttendanceController extends Controller
                     ->values();
 
                 $base = Section::whereIn('estado', ['ACTIVO', 'INACTIVO'])->whereIn('id', $cursoIds)
-                    ->with(['grade', 'section', 'gestion'])
+                    ->with(['grade', 'gestion'])
                     ->ordenadoPorNivel();
                 $puede = true;
             }
         } elseif ($user->hasAnyRole('Director,Administrador,Secretaría')) {
             $base = Section::whereIn('estado', ['ACTIVO', 'INACTIVO'])
-                ->with(['grade', 'section', 'gestion'])
+                ->with(['grade', 'gestion'])
                 ->ordenadoPorNivel();
             $puede = true;
         }
@@ -114,7 +114,7 @@ class AttendanceController extends Controller
             'fecha' => ['nullable', 'date'],
         ]);
 
-        $section = Section::with(['grade', 'section', 'gestion'])->findOrFail($request->query('section_id'));
+        $section = Section::with(['grade', 'gestion'])->findOrFail($request->query('section_id'));
 
         // El docente solo registra la asistencia del día actual; las demás fechas son para roles administrativos.
         $user = auth()->user();
@@ -209,7 +209,7 @@ class AttendanceController extends Controller
         $teacher = $request->user()->teacher;
         abort_if (! $teacher || $teacher->id !== $sectionSubject->teacher_id, 403);
 
-        $sectionSubject->load(['subject', 'section.grade', 'section.section', 'section.gestion', 'schedules']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion', 'schedules']);
 
         $section = $sectionSubject->section;
 

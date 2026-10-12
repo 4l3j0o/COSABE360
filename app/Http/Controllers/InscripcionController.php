@@ -100,7 +100,7 @@ class InscripcionController extends Controller
             return collect();
         }
 
-        $query = Section::with(['grade.level', 'section'])
+        $query = Section::with(['grade.level'])
             ->where('academic_year_id', $periodo->id)
             ->where('estado', 'ACTIVO');
 

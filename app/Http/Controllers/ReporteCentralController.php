@@ -104,7 +104,7 @@ class ReporteCentralController extends Controller
         $query = Student::with('parentGuardians')->where('students.estado', 'ACTIVO');
 
         if ($sectionId) {
-            $section = Section::with(['grade', 'section', 'gestion'])->find($sectionId);
+            $section = Section::with(['grade', 'gestion'])->find($sectionId);
             $query->whereIn('students.id', $section->students()->pluck('students.id'));
         } elseif ($gestionId) {
             $ids = collect();
@@ -218,7 +218,7 @@ class ReporteCentralController extends Controller
 
         // El curso completo (lista de RUDEs de todo el paralelo) solo si es
         // tutor/encargado del curso o rol de supervisión.
-        $section = Section::with(['grade', 'section', 'gestion'])->find($sectionId);
+        $section = Section::with(['grade', 'gestion'])->find($sectionId);
         if ($user->hasRole('Docente') && ! $this->esEncargadoCurso($user, $section)) {
             abort(403, 'Solo el tutor/encargado del curso puede ver la lista de RUDEs completa.');
         }
@@ -298,7 +298,7 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion', 'teacher'])
             ->find($cs->id);
 
         if (! $cs) {
@@ -405,7 +405,7 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion', 'teacher'])
             ->find($cs->id);
 
         if (! $cs) {
@@ -527,7 +527,7 @@ class ReporteCentralController extends Controller
 
             $encargado = Section::with(['grade', 'gestion'])
                 ->where('estado', 'ACTIVO')
-                ->whereHas('section', fn ($q) => $q->where('teacher_id', $user->teacher->id))
+                ->where('teacher_id', $user->teacher->id)
                 ->get();
 
             return $propios->concat($encargado)->unique('id')->values()->sortBy('nombre');
@@ -539,7 +539,7 @@ class ReporteCentralController extends Controller
     private function sectionSubjectsPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
-            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
                 ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
                 ->orderBy('section_id')
                 ->orderBy('subject_id')
@@ -549,10 +549,10 @@ class ReporteCentralController extends Controller
         if ($user->hasRole('Docente') && $user->teacher) {
             // Sus materias + todas las materias de los cursos donde es
             // tutor/encargado (ve el curso completo).
-            $cursosEncargado = Section::whereHas('section', fn ($q) => $q->where('teacher_id', $user->teacher->id))
+            $cursosEncargado = Section::where('teacher_id', $user->teacher->id)
                 ->pluck('id');
 
-            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
                 ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
                 ->where(fn ($q) => $q
                     ->where('teacher_id', $user->teacher->id)

@@ -48,7 +48,7 @@ class ScheduleController extends Controller
 
     public function show(Section $section)
     {
-        $section->load(['grade.level', 'section', 'gestion']);
+        $section->load(['grade.level', 'gestion']);
 
         $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
 
@@ -127,7 +127,7 @@ class ScheduleController extends Controller
      */
     public function estudiantes(Section $section)
     {
-        $section->load(['grade', 'section', 'gestion']);
+        $section->load(['grade', 'gestion']);
 
         $estudiantes = $section->students()
             ->with(['user'])
@@ -183,7 +183,7 @@ class ScheduleController extends Controller
 
             // Horario semanal consolidado del docente (todas sus clases en una sola tabla)
             $schedules = $teacher->schedules()
-                ->with(['section.grade', 'section.section', 'section.gestion', 'subject'])
+                ->with(['section.grade', 'section', 'section.gestion', 'subject'])
                 ->where('estado', 'ACTIVO')
                 ->orderBy('hora_inicio')
                 ->get();
@@ -219,7 +219,7 @@ class ScheduleController extends Controller
     public function horarioDocente(Teacher $teacher)
     {
         $schedules = $teacher->schedules()
-            ->with(['section.grade', 'section.section', 'section.gestion', 'subject'])
+            ->with(['section.grade', 'section', 'section.gestion', 'subject'])
             ->where('estado', 'ACTIVO')
             ->orderBy('hora_inicio')
             ->get();
@@ -266,7 +266,7 @@ class ScheduleController extends Controller
 
         $bloquesDia = $this->bloquesDia();
 
-        $section->load(['grade.level', 'section', 'gestion']);
+        $section->load(['grade.level', 'gestion']);
 
         return view($vista, array_merge($extra, compact('section', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia')));
     }

@@ -222,7 +222,7 @@ class AnnouncementController extends Controller
             $tab = 'recibidos';
         }
 
-        $with = ['author', 'recipients.section.section', 'recipients.section.grade', 'recipients.level'];
+        $with = ['author', 'recipients.section', 'recipients.section.grade', 'recipients.level'];
 
         // ---- Recibidos: publicados visibles para el usuario ----
         $recQuery = Announcement::with($with)

@@ -17,16 +17,19 @@ class UpdateSectionRequest extends FormRequest
         $section = $this->route('section');
 
         return [
-            'grade_id'       => 'sometimes|exists:grades,id',
-            'nombre'         => [
+            'grade_id'        => 'sometimes|exists:grades,id',
+            'academic_year_id'=> 'sometimes|exists:academic_years,id',
+            'nombre'          => [
                 'sometimes', 'string', 'max:10',
                 Rule::unique('sections', 'nombre')
                     ->where('grade_id', $section->grade_id)
+                    ->where('academic_year_id', $section->academic_year_id)
                     ->ignore($section->id),
             ],
-            'teacher_id' => 'nullable|exists:teachers,id',
-            'capacidad'      => 'sometimes|integer|min:1|max:255',
-            'estado'         => ['sometimes', Rule::in(['ACTIVO', 'INACTIVO'])],
+            'teacher_id'  => 'nullable|exists:teachers,id',
+            'capacidad'   => 'sometimes|integer|min:1|max:255',
+            'aula'        => 'nullable|string|max:50',
+            'estado'      => ['sometimes', Rule::in(['ACTIVO', 'INACTIVO'])],
         ];
     }
 }

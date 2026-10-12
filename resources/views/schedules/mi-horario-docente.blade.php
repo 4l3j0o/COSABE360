@@ -87,8 +87,8 @@
                                                     @if($clases->first()->section)
                                                         <div class="mt-1 text-[11px] leading-snug text-muted-foreground">
                                                             {{ $clases->first()->section->grade->nombre ?? $clases->first()->section->nombre }}
-                                                            @if($clases->first()->section->section?->nombre)
-                                                                <span class="italic">"{{ $clases->first()->section->section->nombre }}"</span>
+                                                            @if($clases->first()->section?->nombre)
+                                                                <span class="italic">"{{ $clases->first()->section->nombre }}"</span>
                                                             @endif
                                                         </div>
                                                     @endif

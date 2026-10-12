@@ -32,9 +32,9 @@ class HistorialAcademicoTest extends TestCase
     {
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Hist Trim', 'orden' => 1, 'estado' => 'ACTIVO']);
-        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion2026 = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
         $gestion2025 = AcademicYear::create(['nombre' => '2025', 'fecha_inicio' => '2025-02-01', 'fecha_fin' => '2025-11-30', 'estado' => 'CERRADA']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'academic_year_id' => $gestion2026->id, 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $curso = $seccion;
         $subject = Subject::create(['nombre' => 'Matemáticas Trim', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
