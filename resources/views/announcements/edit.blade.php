@@ -56,7 +56,6 @@
                         <option value="TODOS" @selected(($dest?->tipo_destinatario ?? null) === 'TODOS')>Todos</option>
                         <option value="DOCENTES" @selected(($dest?->tipo_destinatario ?? null) === 'DOCENTES')>Docentes</option>
                         <option value="ESTUDIANTES" @selected(($dest?->tipo_destinatario ?? null) === 'ESTUDIANTES')>Estudiantes</option>
-                        <option value="PADRES" @selected(($dest?->tipo_destinatario ?? null) === 'PADRES')>Padres/Tutores</option>
                         <option value="CURSO_ESPECIFICO" @selected(($dest?->tipo_destinatario ?? null) === 'CURSO_ESPECIFICO')>Curso específico</option>
                     </select>
                     @error('destinatarios.*.tipo_destinatario') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror

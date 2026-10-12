@@ -35,7 +35,7 @@ class StoreAnnouncementRequest extends FormRequest
             'contenido' => ['required', 'string'],
             'fecha_publicacion' => ['nullable', 'date'],
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO'])],
-            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
+            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
             'course_id' => ['nullable', 'required_if:tipo_destinatario,CURSO_ESPECIFICO', 'integer', 'exists:courses,id'],
             'level_id' => ['nullable', 'required_if:tipo_destinatario,NIVEL_DOCENTES', 'integer', 'exists:levels,id'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],

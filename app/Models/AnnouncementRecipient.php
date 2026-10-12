@@ -9,7 +9,7 @@ class AnnouncementRecipient extends Model
 {
     public $timestamps = false;
 
-    public const TIPOS = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'];
+    public const TIPOS = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'];
 
     protected $fillable = ['announcement_id', 'tipo_destinatario', 'course_id', 'level_id', 'user_id'];
 
