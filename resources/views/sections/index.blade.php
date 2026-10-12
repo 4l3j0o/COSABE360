@@ -149,6 +149,21 @@
                                 <input type="number" name="capacidad" min="1" max="255" value="40" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                 @error('capacidad') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Gestión <span class="text-error">*</span></label>
+                                <select name="academic_year_id" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                    <option value="">Seleccione…</option>
+                                    @foreach($gestiones as $g)
+                                        <option value="{{ $g->id }}" @selected(old('academic_year_id') == $g->id)>{{ $g->nombre }}</option>
+                                    @endforeach
+                                </select>
+                                @error('academic_year_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Aula</label>
+                                <input type="text" name="aula" maxlength="50" placeholder="Ej: Aula 10" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                @error('aula') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
                             <div class="sm:col-span-2">
                                 <x-forms.picker
                                     id="teacher-create"

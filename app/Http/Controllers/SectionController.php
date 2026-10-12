@@ -27,6 +27,7 @@ class SectionController extends Controller
         $levels  = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
         $grados  = Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('level_id')->orderBy('orden')->get();
         $docentes = Teacher::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
+        $gestiones = \App\Models\AcademicYear::orderByDesc('nombre')->get();
 
         $sections = Section::with(['grade.level', 'responsable'])
             ->where('estado', '!=', 'ELIMINADO')
@@ -39,7 +40,7 @@ class SectionController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('sections.index', compact('sections', 'levels', 'grados', 'docentes'));
+        return view('sections.index', compact('sections', 'levels', 'grados', 'docentes', 'gestiones'));
     }
 
     private function apiIndex(Request $request): AnonymousResourceCollection
