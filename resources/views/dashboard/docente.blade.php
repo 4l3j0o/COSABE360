@@ -10,7 +10,7 @@
     @php
         $docUser = auth()->user();
         $teacher = $docUser->teacher;
-        $misCursos = $misCursos ?? ($teacher ? \App\Models\CourseSubject::where('teacher_id', $teacher->id)->count() : 0);
+        $misCursos = $misCursos ?? ($teacher ? \App\Models\SectionSubject::where('teacher_id', $teacher->id)->count() : 0);
         $miHorario = $miHorario ?? ($teacher ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count() : 0);
         $misEvaluaciones = $misEvaluaciones ?? 0;
         $misNoLeidos = $misNoLeidos ?? \App\Models\AnnouncementRead::where('user_id', $docUser->id)->where('leido', false)->count();

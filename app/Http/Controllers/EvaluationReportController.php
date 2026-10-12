@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationPlan;
 use App\Models\Student;
 use App\Services\EvaluationService;
@@ -30,19 +30,19 @@ class EvaluationReportController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
 
         // Con una sola asignación se preselecciona directo; si no, el
         // docente primero elige el curso/materia (HU-57).
-        if (! $request->query('course_subject_id') && $courseSubjects->count() === 1) {
-            $request->merge(['course_subject_id' => $courseSubjects->first()->id]);
+        if (! $request->query('section_subject_id') && $sectionSubjects->count() === 1) {
+            $request->merge(['section_subject_id' => $sectionSubjects->first()->id]);
         }
 
-        $resultado = $this->build($request, $user, $courseSubjects);
+        $resultado = $this->build($request, $user, $sectionSubjects);
 
         return view('evaluation-reports.index', [
-            'courseSubjects' => $courseSubjects,
-            'filtros' => $request->only(['course_subject_id', 'trimestre']),
+            'sectionSubjects' => $sectionSubjects,
+            'filtros' => $request->only(['section_subject_id', 'trimestre']),
             'resultado' => $resultado,
         ]);
     }
@@ -50,17 +50,17 @@ class EvaluationReportController extends Controller
     public function export(Request $request)
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
 
-        if (! $request->query('course_subject_id') && $courseSubjects->count() === 1) {
-            $request->merge(['course_subject_id' => $courseSubjects->first()->id]);
+        if (! $request->query('section_subject_id') && $sectionSubjects->count() === 1) {
+            $request->merge(['section_subject_id' => $sectionSubjects->first()->id]);
         }
 
-        if (! $request->query('course_subject_id')) {
+        if (! $request->query('section_subject_id')) {
             return back()->with('error', 'Primero selecciona el curso y la materia para exportar el reporte.');
         }
 
-        $resultado = $this->build($request, $user, $courseSubjects);
+        $resultado = $this->build($request, $user, $sectionSubjects);
 
         $formato = $request->query('format', 'pdf');
 
@@ -71,14 +71,14 @@ class EvaluationReportController extends Controller
         return $this->exportPdf($resultado);
     }
 
-    private function build(Request $request, $user, Collection $courseSubjects): array
+    private function build(Request $request, $user, Collection $sectionSubjects): array
     {
-        $courseSubjectId = $request->query('course_subject_id');
+        $sectionSubjectId = $request->query('section_subject_id');
         $trimestre = (int) ($request->query('trimestre') ?: 1);
         $trimestre = in_array($trimestre, [1, 2, 3], true) ? $trimestre : 1;
 
         // HU-57: sin curso elegido no se genera nada; la vista pide elegir primero.
-        if (! $courseSubjectId) {
+        if (! $sectionSubjectId) {
             return [
                 'filas' => collect(),
                 'curso' => null,
@@ -89,10 +89,10 @@ class EvaluationReportController extends Controller
             ];
         }
 
-        $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
-            ->find($courseSubjectId);
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
+            ->find($sectionSubjectId);
 
-        if ($cs && ! $courseSubjects->contains('id', $cs->id)) {
+        if ($cs && ! $sectionSubjects->contains('id', $cs->id)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
@@ -100,12 +100,12 @@ class EvaluationReportController extends Controller
             return ['filas' => collect(), 'curso' => null, 'trimestre' => $trimestre, 'resumen' => [], 'top' => collect(), 'requiere_curso' => true];
         }
 
-        $plan = EvaluationPlan::where('course_subject_id', $cs->id)
+        $plan = EvaluationPlan::where('section_subject_id', $cs->id)
             ->where('trimestre', $trimestre)
             ->with('criteria.activities')
             ->first();
 
-        $students = $cs->course->students()
+        $students = $cs->section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
             ->get();
@@ -166,7 +166,7 @@ class EvaluationReportController extends Controller
     /**
      * Métricas de asistencia del trimestre por estudiante.
      */
-    private function asistencia(CourseSubject $cs, Collection $students, int $trimestre): array
+    private function asistencia(SectionSubject $cs, Collection $students, int $trimestre): array
     {
         $desde = match ($trimestre) {
             2 => now()->startOfYear()->addMonths(3),
@@ -176,7 +176,7 @@ class EvaluationReportController extends Controller
         $hasta = now();
 
         $attendance = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
-            ->where('course_id', $cs->course_id)
+            ->where('section_id', $cs->section_id)
             ->whereIn('student_id', $students->pluck('id'))
             ->get()
             ->groupBy('student_id');
@@ -198,17 +198,17 @@ class EvaluationReportController extends Controller
         return $result;
     }
 
-    private function courseSubjectsPermitidos($user): Collection
+    private function sectionSubjectsPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion'])
-                ->orderBy('course_id')->orderBy('subject_id')->get();
+            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+                ->orderBy('section_id')->orderBy('subject_id')->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            return $user->teacher->courseSubjects()
-                ->with(['subject', 'course.grade', 'course.section', 'course.gestion'])
-                ->orderBy('course_id')->orderBy('subject_id')->get();
+            return $user->teacher->sectionSubjects()
+                ->with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+                ->orderBy('section_id')->orderBy('subject_id')->get();
         }
 
         return collect();
@@ -238,9 +238,9 @@ class EvaluationReportController extends Controller
         $sheet->setTitle('Reporte');
 
         $curso = $resultado['curso'];
-        $nombreCurso = $curso?->course->nombre ?? '—';
+        $nombreCurso = $curso?->codigoCorto() ?? '—';
         $nombreMateria = $curso?->subject->nombre ?? '—';
-        $gestion = $curso?->course->gestion->nombre ?? (string) now()->year;
+        $gestion = $curso?->gestion?->nombre ?? (string) now()->year;
         $docente = $curso?->teacher
             ? trim(($curso->teacher->nombres ?? '').' '.($curso->teacher->apellidos ?? ''))
             : '—';
@@ -365,7 +365,7 @@ class EvaluationReportController extends Controller
     {
         $base = 'reporte-evaluacion';
         if ($resultado['curso']) {
-            $codigo = $resultado['curso']->course->section->codigo ?? $resultado['curso']->course->nombre ?? '';
+            $codigo = $resultado['curso']->codigo ?? $resultado['curso']->nombre ?? '';
             $slug = strtolower(trim((string) preg_replace('/[^a-z0-9]+/i', '-', $codigo), '-'));
             if ($slug !== '') {
                 $base .= '_'.$slug;

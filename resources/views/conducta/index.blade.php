@@ -15,7 +15,7 @@
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('conducta.estudiante') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Por estudiante</a>
             @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))
-                <a href="{{ route('conducta.create', request()->only(['course_id'])) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ Nuevo reporte</a>
+                <a href="{{ route('conducta.create', request()->only(['section_id'])) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ Nuevo reporte</a>
             @endif
         </div>
     </div>
@@ -24,12 +24,12 @@
         <form method="GET" action="{{ route('conducta.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="course_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                <select name="section_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                     @if($cursos->count() !== 1)
                         <option value="">Seleccionar curso…</option>
                     @endif
-                    @foreach($cursos as $course)
-                        <option value="{{ $course->id }}" {{ ($filtros['course_id'] ?? '') == $course->id ? 'selected' : '' }}>{{ $course->codigoCorto() }}</option>
+                    @foreach($cursos as $section)
+                        <option value="{{ $section->id }}" {{ ($filtros['section_id'] ?? '') == $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
                     @endforeach
                 </select>
             </div>

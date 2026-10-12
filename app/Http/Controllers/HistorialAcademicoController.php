@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\Registration;
 use App\Models\Student;
 use App\Services\EvaluationService;
@@ -33,9 +33,9 @@ class HistorialAcademicoController extends Controller
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            $cursoIds = CourseSubject::where('teacher_id', $user->teacher->id)->pluck('course_id')->unique();
+            $cursoIds = SectionSubject::where('teacher_id', $user->teacher->id)->pluck('section_id')->unique();
             $estudiantes = Student::where('estado', 'ACTIVO')
-                ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('course_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
+                ->whereHas('enrollments.registration', fn ($q) => $q->whereIn('section_id', $cursoIds)->where('registrations.estado', 'ACTIVA'))
                 ->orderBy('apellidos')->orderBy('nombres')->get();
             $student = $studentId ? $estudiantes->firstWhere('id', (int) $studentId) : $estudiantes->first();
 
@@ -83,18 +83,18 @@ class HistorialAcademicoController extends Controller
 
         $regs = Registration::where('estado', 'ACTIVA')
             ->whereHas('enrollment', fn ($q) => $q->where('student_id', $student->id)->where('estado', 'COMPLETADA'))
-            ->with('course.gestion', 'course.grade', 'course.section')
+            ->with('section.gestion', 'section.grade', 'section.section')
             ->get();
 
         if ($academicYearId) {
-            $regs = $regs->filter(fn ($r) => (string) $r->course->academic_year_id === (string) $academicYearId)->values();
+            $regs = $regs->filter(fn ($r) => (string) $r->section->academic_year_id === (string) $academicYearId)->values();
         }
 
         return $regs
-            ->groupBy(fn ($r) => $r->course->gestion?->nombre ?? 'Sin gestión')
+            ->groupBy(fn ($r) => $r->section->gestion?->nombre ?? 'Sin gestión')
             ->map(function ($regsGestion, $gestion) use ($service, $student) {
                 $materias = $regsGestion
-                    ->flatMap(fn ($r) => $r->course->courseSubjects()->with(['subject', 'evaluationPlans'])->get())
+                    ->flatMap(fn ($r) => $r->section->sectionSubjects()->with(['subject', 'evaluationPlans'])->get())
                     ->groupBy(fn ($cs) => $cs->subject?->nombre ?? 'Sin materia')
                     ->map(function ($css, $materia) use ($service, $student) {
                         $trimestres = [];
@@ -132,9 +132,9 @@ class HistorialAcademicoController extends Controller
     {
         $ids = Registration::where('estado', 'ACTIVA')
             ->whereHas('enrollment', fn ($q) => $q->where('student_id', $student->id)->where('estado', 'COMPLETADA'))
-            ->with('course')
+            ->with('section')
             ->get()
-            ->map(fn ($r) => $r->course->academic_year_id)
+            ->map(fn ($r) => $r->section->academic_year_id)
             ->filter()->unique()->values();
 
         if ($ids->isEmpty()) {

@@ -95,10 +95,10 @@ class SectionController extends Controller
     {
         $tieneMatriculados = false;
 
-        if (Schema::hasColumn('courses', 'section_id') && Schema::hasColumn('registrations', 'course_id')) {
+        if (Schema::hasColumn('sections', 'section_id') && Schema::hasColumn('registrations', 'section_id')) {
             $tieneMatriculados = DB::table('registrations')
-                ->join('courses', 'registrations.course_id', '=', 'courses.id')
-                ->where('courses.section_id', $section->id)
+                ->join('sections', 'registrations.section_id', '=', 'sections.id')
+                ->where('sections.section_id', $section->id)
                 ->where('registrations.estado', '!=', 'CANCELADA')
                 ->exists();
         }

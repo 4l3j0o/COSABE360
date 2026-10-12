@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Student;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -26,8 +26,8 @@ class CierreGestionController extends Controller
     {
         $cursos = $this->cursosPermitidos($request->user());
 
-        $curso = $request->query('course_id')
-            ? Course::with(['grade', 'section', 'gestion'])->find($request->query('course_id'))
+        $curso = $request->query('section_id')
+            ? Section::with(['grade', 'section', 'gestion'])->find($request->query('section_id'))
             : $cursos->first();
 
         if ($curso && ! $cursos->contains('id', $curso->id)) {
@@ -41,7 +41,7 @@ class CierreGestionController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $curso = Course::with(['grade', 'section', 'gestion'])->findOrFail($request->query('course_id'));
+        $curso = Section::with(['grade', 'section', 'gestion'])->findOrFail($request->query('section_id'));
         $resultado = $this->build($curso);
 
         $formato = $request->query('format', 'pdf');
@@ -52,11 +52,11 @@ class CierreGestionController extends Controller
         return $this->exportPdf($resultado);
     }
 
-    private function build(Course $course): array
+    private function build(Section $section): array
     {
         $service = app(EvaluationService::class);
-        $materias = CourseSubject::where('course_id', $course->id)->with('subject')->get();
-        $students = $course->students()->where('students.estado', 'ACTIVO')->orderBy('apellidos')->get();
+        $materias = SectionSubject::where('section_id', $section->id)->with('subject')->get();
+        $students = $section->students()->where('students.estado', 'ACTIVO')->orderBy('apellidos')->get();
 
         $filas = $students->map(function (Student $student) use ($materias, $service) {
             $materiasNota = [];
@@ -96,7 +96,7 @@ class CierreGestionController extends Controller
         $sinNota = $filas->filter(fn ($f) => $f->promovido === null)->count();
 
         return [
-            'curso' => $course,
+            'curso' => $section,
             'filas' => $filas,
             'resumen' => ['promovidos' => $promovidos, 'retenidos' => $retenidos, 'sin_nota' => $sinNota, 'total' => $filas->count()],
         ];
@@ -105,7 +105,7 @@ class CierreGestionController extends Controller
     private function cursosPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'section'])->ordenadoPorNivel()->get();
         }
 
         return collect();

@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Models\Announcement;
-use App\Models\Course;
-use App\Models\CourseSubject;
-use App\Models\Level;
 use App\Models\Section;
+use App\Models\SectionSubject;
+use App\Models\Level;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -52,7 +51,7 @@ class ComunicadoAlcanceService
     /** Cursos ofrecibles en el selector según el rol. */
     public function cursosCreables(User $user): Collection
     {
-        $query = Course::with(['grade.level', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel();
+        $query = Section::with(['grade.level', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel();
 
         if ($user->esAdmin()) {
             return $query->get();
@@ -73,7 +72,7 @@ class ComunicadoAlcanceService
                 return collect();
             }
 
-            return $query->whereIn('courses.id', $ids)->get();
+            return $query->whereIn('sections.id', $ids)->get();
         }
 
         return collect();
@@ -102,17 +101,17 @@ class ComunicadoAlcanceService
      * Valida que el alcance elegido esté permitido para el usuario.
      * Retorna mensaje de error o null si es válido.
      */
-    public function validarAlcance(User $user, string $tipo, ?int $courseId, ?int $levelId): ?string
+    public function validarAlcance(User $user, string $tipo, ?int $sectionId, ?int $levelId): ?string
     {
         if (! array_key_exists($tipo, $this->tiposPermitidos($user))) {
             return 'No tienes permiso para enviar a ese destinatario.';
         }
 
         if ($tipo === 'CURSO_ESPECIFICO') {
-            if (! $courseId) {
+            if (! $sectionId) {
                 return 'Debe seleccionar un curso.';
             }
-            if (! $user->esAdmin() && ! $this->cursosCreables($user)->contains('id', $courseId)) {
+            if (! $user->esAdmin() && ! $this->cursosCreables($user)->contains('id', $sectionId)) {
                 if ($user->hasRole('Director')) {
                     return 'El curso no pertenece a tu nivel a cargo.';
                 }
@@ -149,7 +148,7 @@ class ComunicadoAlcanceService
             'TODOS' => true,
             'DOCENTES' => $user->hasRole('Docente'),
             'ESTUDIANTES' => $user->hasRole('Estudiante'),
-            'CURSO_ESPECIFICO' => $recipient->course_id !== null && $this->esMiembroDelCurso($user, $recipient->course_id),
+            'CURSO_ESPECIFICO' => $recipient->section_id !== null && $this->esMiembroDelCurso($user, $recipient->section_id),
             self::TIPO_NIVEL => $recipient->level_id !== null && $this->esDocenteDelNivel($user, $recipient->level_id),
             default => false,
         };
@@ -181,10 +180,10 @@ class ComunicadoAlcanceService
             return collect();
         }
 
-        $porMateria = CourseSubject::where('teacher_id', $teacherId)->pluck('course_id');
+        $porMateria = SectionSubject::where('teacher_id', $teacherId)->pluck('section_id');
         $secciones = Section::where('teacher_id', $teacherId)->pluck('id');
         $porTutoria = $secciones->isNotEmpty()
-            ? Course::whereIn('section_id', $secciones)->pluck('id')
+            ? Section::whereIn('section_id', $secciones)->pluck('id')
             : collect();
 
         return $porMateria->merge($porTutoria)->unique()->values();
@@ -198,23 +197,23 @@ class ComunicadoAlcanceService
             return collect();
         }
 
-        return Course::whereIn('courses.id', $cursos)
-            ->join('grades', 'grades.id', '=', 'courses.grade_id')
+        return Section::whereIn('sections.id', $cursos)
+            ->join('grades', 'grades.id', '=', 'sections.grade_id')
             ->distinct()
             ->pluck('grades.level_id');
     }
 
-    private function esMiembroDelCurso(User $user, int $courseId): bool
+    private function esMiembroDelCurso(User $user, int $sectionId): bool
     {
         // Estudiante matriculado en el curso
         if ($user->hasRole('Estudiante') && $user->student) {
-            if ($this->cursosIdsEstudiante($user)->contains($courseId)) {
+            if ($this->cursosIdsEstudiante($user)->contains($sectionId)) {
                 return true;
             }
         }
 
         // Docente del curso (dicta o tutor)
-        if ($user->hasRole('Docente') && $this->cursosIdsDocente($user)->contains($courseId)) {
+        if ($user->hasRole('Docente') && $this->cursosIdsDocente($user)->contains($sectionId)) {
             return true;
         }
 
@@ -238,9 +237,9 @@ class ComunicadoAlcanceService
             return collect();
         }
 
-        $ids = $student->registrations()->where('registrations.estado', 'ACTIVA')->pluck('registrations.course_id');
-        if ($student->activeCourse()) {
-            $ids->push($student->activeCourse()->id);
+        $ids = $student->registrations()->where('registrations.estado', 'ACTIVA')->pluck('registrations.section_id');
+        if ($student->activeSection()) {
+            $ids->push($student->activeSection()->id);
         }
 
         return $ids->unique()->values();

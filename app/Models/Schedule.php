@@ -17,7 +17,7 @@ class Schedule extends Model
     ];
 
     protected $fillable = [
-        'course_id',
+        'section_id',
         'subject_id',
         'teacher_id',
         'dia',
@@ -37,9 +37,9 @@ class Schedule extends Model
         return $query->where('estado', 'ACTIVO');
     }
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Section::class, 'section_id');
     }
 
     public function subject(): BelongsTo

@@ -13,11 +13,11 @@ class AnnouncementRecipientResource extends JsonResource
             'id' => $this->id,
             'announcement_id' => $this->announcement_id,
             'tipo_destinatario' => $this->tipo_destinatario,
-            'course_id' => $this->course_id,
+            'section_id' => $this->section_id,
             'user_id' => $this->user_id,
-            'course' => $this->whenLoaded('course', fn () => [
-                'id' => $this->course->id,
-                'nombre' => $this->course->nombre,
+            'section' => $this->whenLoaded('section', fn () => [
+                'id' => $this->section->id,
+                'nombre' => $this->section->nombre,
             ]),
         ];
     }

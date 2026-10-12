@@ -159,7 +159,7 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                         @if($recipient?->tipo_destinatario === 'CURSO_ESPECIFICO')
-                                            {{ $recipient->course?->section?->codigo ?? '—' }} · Curso
+                                            {{ $recipient->section?->codigo ?? '—' }} · Paralelo
                                         @elseif($recipient?->tipo_destinatario === 'NIVEL_DOCENTES')
                                             Docentes · {{ $recipient->level?->nombre ?? 'nivel' }}
                                         @else
@@ -177,7 +177,7 @@
                                     <div class="flex items-center justify-end gap-1">
                                         <button type="button"
                                             data-announcement='{!! json_encode(['id' => $announcement->id, 'titulo' => $announcement->titulo, 'contenido' => $announcement->contenido, 'estado' => $announcement->estado, 'fecha' => $announcement->fecha_publicacion?->format('Y-m-d\TH:i')], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
-                                            data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'course_id' => $recipient?->course_id, 'level_id' => $recipient?->level_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
+                                            data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'section_id' => $recipient?->section_id, 'level_id' => $recipient?->level_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
                                             onclick="editarComunicado(this)" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
@@ -247,7 +247,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Destinatario <span class="text-error">*</span></label>
-                                <select name="tipo_destinatario" id="create-tipo" required onchange="toggleCourseSelect('create')" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="tipo_destinatario" id="create-tipo" required onchange="toggleSectionSelect('create')" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar...</option>
                                     @foreach($tipos as $valor => $etiqueta)
                                         <option value="{{ $valor }}" {{ old('tipo_destinatario')===$valor?'selected':'' }}>{{ $etiqueta }}</option>
@@ -255,15 +255,15 @@
                                 </select>
                                 @error('tipo_destinatario') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
-                            <div id="create-course-wrap" style="display:none;">
+                            <div id="create-section-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo <span class="text-error">*</span></label>
-                                <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar paralelo...</option>
-                                    @foreach($courses as $course)
-                                        <option value="{{ $course->id }}" {{ old('course_id')==$course->id?'selected':'' }}>{{ $course->section->codigo }} · {{ $course->grade->nombre }}</option>
+                                    @foreach($sections as $section)
+                                        <option value="{{ $section->id }}" {{ old('section_id')==$section->id?'selected':'' }}>{{ $section->codigo ?: $section->nombre }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div id="create-level-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel <span class="text-error">*</span></label>
@@ -324,18 +324,18 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Destinatario <span class="text-error">*</span></label>
-                                <select name="tipo_destinatario" id="edit-tipo" required onchange="toggleCourseSelect('edit')" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="tipo_destinatario" id="edit-tipo" required onchange="toggleSectionSelect('edit')" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($tipos as $valor => $etiqueta)
                                         <option value="{{ $valor }}">{{ $etiqueta }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div id="edit-course-wrap" style="display:none;">
+                            <div id="edit-section-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo</label>
-                                <select name="course_id" id="edit-course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                <select name="section_id" id="edit-section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar paralelo...</option>
-                                    @foreach($courses as $course)
-                                        <option value="{{ $course->id }}">{{ $course->section->codigo }} · {{ $course->grade->nombre }}</option>
+                                    @foreach($sections as $section)
+                                        <option value="{{ $section->id }}">{{ $section->codigo ?: $section->nombre }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -420,11 +420,11 @@
 
 @push('scripts')
     <script>
-        function toggleCourseSelect(prefix) {
+        function toggleSectionSelect(prefix) {
             const tipo = document.getElementById(prefix + '-tipo').value;
-            const wrapCourse = document.getElementById(prefix + '-course-wrap');
+            const wrapSection = document.getElementById(prefix + '-section-wrap');
             const wrapLevel = document.getElementById(prefix + '-level-wrap');
-            if (wrapCourse) wrapCourse.style.display = tipo === 'CURSO_ESPECIFICO' ? 'block' : 'none';
+            if (wrapSection) wrapSection.style.display = tipo === 'CURSO_ESPECIFICO' ? 'block' : 'none';
             if (wrapLevel) wrapLevel.style.display = tipo === 'NIVEL_DOCENTES' ? 'block' : 'none';
         }
         @if($puedeCrear)
@@ -435,15 +435,15 @@
             document.getElementById('edit-titulo').value = ann.titulo || '';
             document.getElementById('edit-contenido').value = ann.contenido || '';
             document.getElementById('edit-tipo').value = rec.tipo || 'TODOS';
-            document.getElementById('edit-course_id').value = rec.course_id || '';
+            document.getElementById('edit-section_id').value = rec.section_id || '';
             document.getElementById('edit-level_id').value = rec.level_id || '';
             document.getElementById('edit-estado').value = ann.estado || 'BORRADOR';
             document.getElementById('edit-fecha').value = ann.fecha || '';
-            toggleCourseSelect('edit');
+            toggleSectionSelect('edit');
             openModal('modal-edit');
         }
         document.addEventListener('DOMContentLoaded', function() {
-            toggleCourseSelect('create');
+            toggleSectionSelect('create');
             @if($errors->has('titulo') || $errors->has('contenido') || $errors->has('tipo_destinatario'))
                 openModal('modal-create');
             @endif

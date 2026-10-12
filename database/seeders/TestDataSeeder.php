@@ -3,10 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Grade;
 use App\Models\Level;
-use App\Models\Section;
 use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Database\Seeder;
@@ -35,7 +34,7 @@ class TestDataSeeder extends Seeder
             ['capacidad' => 40, 'estado' => 'ACTIVO']
         );
 
-        Course::firstOrCreate(
+        Section::firstOrCreate(
             ['grado_id' => $grade->id, 'paralelo_id' => $section->id, 'academic_year_id' => $year->id],
             ['nombre' => '1ro A - 2026', 'estado' => 'ACTIVO']
         );

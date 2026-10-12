@@ -17,21 +17,21 @@
 @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        @include('layouts._volver', ['href' => route('evaluations.index', $courseSubject), 'texto' => 'Volver a Evaluaciones'])
+        @include('layouts._volver', ['href' => route('evaluations.index', $sectionSubject), 'texto' => 'Volver a Evaluaciones'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $nombresTrim[$plan->trimestre] }}</h1>
         <div class="mt-2 flex flex-wrap gap-2">
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->codigoCorto() }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $sectionSubject->subject->nombre }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->codigoCorto() }}</span>
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ count($students) }} estudiante(s)</span>
         </div>
     </div>
     {{-- Plantilla Excel (HU-48) --}}
     <div class="flex flex-wrap gap-2 items-center sm:justify-end">
-        <a href="{{ route('evaluations.template-download', [$courseSubject, $plan]) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">
+        <a href="{{ route('evaluations.template-download', [$sectionSubject, $plan]) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
             Descargar (.xlsx)
         </a>
-        <form method="POST" action="{{ route('evaluations.template-upload', [$courseSubject, $plan]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+        <form method="POST" action="{{ route('evaluations.template-upload', [$sectionSubject, $plan]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
             @csrf
             <input type="file" name="archivo" accept=".xlsx" required class="text-sm text-muted-foreground file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
             <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:opacity-90 cursor-pointer">Subir</button>
@@ -57,7 +57,7 @@
                 </div>
 
                 {{-- Agregar actividad (aparece como nueva columna) --}}
-                <form method="POST" action="{{ route('evaluations.activity', [$courseSubject, $plan]) }}" class="flex gap-1.5">
+                <form method="POST" action="{{ route('evaluations.activity', [$sectionSubject, $plan]) }}" class="flex gap-1.5">
                     @csrf
                     <input type="hidden" name="evaluation_criteria_id" value="{{ $criterion->id }}">
                     <input type="text" name="nombre" placeholder="Ej: Examen, Tarea..." required maxlength="200" class="flex-1 px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
@@ -80,7 +80,7 @@
 
 {{-- Matriz de calificaciones tipo Excel --}}
 @if(count($students) > 0)
-<form id="form-matriz" method="POST" action="{{ route('evaluations.grades', [$courseSubject, $plan]) }}">
+<form id="form-matriz" method="POST" action="{{ route('evaluations.grades', [$sectionSubject, $plan]) }}">
     @csrf
     <div class="sticky top-14 z-20 bg-card border border-border rounded-xl shadow-sm px-4 py-3 mb-3 flex items-center justify-between gap-3">
         <p class="text-sm text-muted-foreground">Ingrese las notas y pulse <strong class="text-foreground">Enter</strong> o el botón para guardar todo.</p>

@@ -6,7 +6,7 @@ use App\Http\Requests\StoreAnnouncementRequest;
 use App\Http\Requests\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
-use App\Models\Course;
+use App\Models\Section;
 use App\Services\ComunicadoAlcanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,7 +33,7 @@ class AnnouncementController extends Controller
         $error = $alcance->validarAlcance(
             $request->user(),
             $validated['tipo_destinatario'],
-            isset($validated['course_id']) ? (int) $validated['course_id'] : null,
+            isset($validated['section_id']) ? (int) $validated['section_id'] : null,
             isset($validated['level_id']) ? (int) $validated['level_id'] : null,
         );
         if ($error) {
@@ -61,7 +61,7 @@ class AnnouncementController extends Controller
 
         $announcement->recipients()->create([
             'tipo_destinatario' => $validated['tipo_destinatario'],
-            'course_id' => $validated['course_id'] ?? null,
+            'section_id' => $validated['section_id'] ?? null,
             'level_id' => $validated['level_id'] ?? null,
             'user_id' => $validated['user_id'] ?? null,
         ]);
@@ -75,7 +75,7 @@ class AnnouncementController extends Controller
 
     public function show(Announcement $announcement): AnnouncementResource
     {
-        return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
+        return new AnnouncementResource($announcement->load(['author', 'recipients.section']));
     }
 
     public function update(UpdateAnnouncementRequest $request, Announcement $announcement, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse|AnnouncementResource
@@ -113,7 +113,7 @@ class AnnouncementController extends Controller
             $error = $alcance->validarAlcance(
                 $user,
                 $validated['tipo_destinatario'],
-                isset($validated['course_id']) ? (int) $validated['course_id'] : null,
+                isset($validated['section_id']) ? (int) $validated['section_id'] : null,
                 isset($validated['level_id']) ? (int) $validated['level_id'] : null,
             );
             if ($error) {
@@ -123,7 +123,7 @@ class AnnouncementController extends Controller
             $recipient = $announcement->recipients()->first();
             $payload = [
                 'tipo_destinatario' => $validated['tipo_destinatario'],
-                'course_id' => $validated['course_id'] ?? null,
+                'section_id' => $validated['section_id'] ?? null,
                 'level_id' => $validated['level_id'] ?? null,
                 'user_id' => $validated['user_id'] ?? null,
             ];
@@ -222,7 +222,7 @@ class AnnouncementController extends Controller
             $tab = 'recibidos';
         }
 
-        $with = ['author', 'recipients.course.section', 'recipients.course.grade', 'recipients.level'];
+        $with = ['author', 'recipients.section.section', 'recipients.section.grade', 'recipients.level'];
 
         // ---- Recibidos: publicados visibles para el usuario ----
         $recQuery = Announcement::with($with)
@@ -274,17 +274,17 @@ class AnnouncementController extends Controller
             $enviados = $envQuery->paginate(10, ['*'], 'env_page')->withQueryString();
         }
 
-        $courses = $puedeCrear ? $alcance->cursosCreables($user) : collect();
+        $sections = $puedeCrear ? $alcance->cursosCreables($user) : collect();
         $niveles = $puedeCrear ? $alcance->nivelesCreables($user) : collect();
         $tipos = $alcance->tiposPermitidos($user);
 
-        return view('announcements.index', compact('announcements', 'nuevos', 'enviados', 'tab', 'puedeCrear', 'courses', 'niveles', 'tipos'));
+        return view('announcements.index', compact('announcements', 'nuevos', 'enviados', 'tab', 'puedeCrear', 'sections', 'niveles', 'tipos'));
     }
 
     public function showBandeja(Announcement $announcement, ComunicadoAlcanceService $alcance): View|AnnouncementResource
     {
         if (request()->expectsJson()) {
-            return new AnnouncementResource($announcement->load(['author', 'recipients.course']));
+            return new AnnouncementResource($announcement->load(['author', 'recipients.section']));
         }
 
         if ($announcement->estado !== 'PUBLICADO' || ! $alcance->visiblePara(request()->user(), $announcement)) {

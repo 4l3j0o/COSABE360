@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\MonthlyPayment;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +31,7 @@ class PanelEstudianteTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'G' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'PX' . $sufijo, 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'C' . $sufijo, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
         $est = Student::create(['codigo' => 'E' . $sufijo, 'nombres' => 'Est', 'apellidos' => 'Alu ' . $sufijo, 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '555' . $sufijo, 'email' => 'est_' . $sufijo . '@t.bo', 'estado' => 'ACTIVO']);
@@ -40,7 +39,7 @@ class PanelEstudianteTest extends TestCase
         $est->update(['user_id' => $userEst->id]);
 
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        $registration = Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 785.50, 'estado' => 'ACTIVA']);
+        $registration = Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 785.50, 'estado' => 'ACTIVA']);
         MonthlyPayment::create(['registration_id' => $registration->id, 'mes' => 2, 'monto' => 785.50, 'estado' => 'PENDIENTE']);
         MonthlyPayment::create(['registration_id' => $registration->id, 'mes' => 3, 'monto' => 785.50, 'estado' => 'PAGADA', 'fecha' => '2026-03-05']);
 

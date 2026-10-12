@@ -31,17 +31,17 @@
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
                 @if(auth()->user()->hasRole('Estudiante') && $cursos->count() === 1)
                     @php $cursoPropio = $cursos->first(); @endphp
-                    <input type="hidden" name="course_id" value="{{ $cursoPropio->id }}">
+                    <input type="hidden" name="section_id" value="{{ $cursoPropio->id }}">
                     <div class="w-full px-3 py-2.5 border border-input rounded-lg bg-muted text-foreground text-sm font-medium">{{ $cursoPropio->codigoCorto() }}</div>
                 @else
-                <select name="course_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <select name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                     @if(auth()->user()->hasAnyRole(['Administrador', 'Director']))
                         <option value="">Todos los cursos</option>
                     @else
                         <option value="">Seleccionar curso…</option>
                     @endif
-                    @foreach($cursos as $course)
-                        <option value="{{ $course->id }}" {{ ($filtros['course_id'] ?? '') == $course->id ? 'selected' : '' }}>{{ $course->codigoCorto() }}</option>
+                    @foreach($cursos as $section)
+                        <option value="{{ $section->id }}" {{ ($filtros['section_id'] ?? '') == $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
                     @endforeach
                 </select>
                 @endif

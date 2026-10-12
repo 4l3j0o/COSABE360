@@ -7,9 +7,9 @@
 
 @section('contenido')
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('diario.index', ['course_id' => $entrada->course_id]), 'texto' => 'Volver al diario'])
+        @include('layouts._volver', ['href' => route('diario.index', ['section_id' => $entrada->section_id]), 'texto' => 'Volver al diario'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $entrada->subject->nombre }} · {{ $entrada->fecha->format('d/m/Y') }}</h1>
-        <p class="text-sm text-muted-foreground">{{ $entrada->course->nombre }} · Docente: {{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</p>
+        <p class="text-sm text-muted-foreground">{{ $entrada->section->nombre }} · Docente: {{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</p>
     </div>
 
     <div class="space-y-4 max-w-3xl">

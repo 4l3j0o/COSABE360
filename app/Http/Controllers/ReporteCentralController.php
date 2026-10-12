@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\EvaluationPlan;
 use App\Models\MonthlyPayment;
@@ -52,12 +52,12 @@ class ReporteCentralController extends Controller
     {
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
 
         $reportes = $this->catalogoReportes($user);
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
 
-        return view('reportes-central.index', compact('cursos', 'courseSubjects', 'reportes', 'gestiones'));
+        return view('reportes-central.index', compact('cursos', 'sectionSubjects', 'reportes', 'gestiones'));
     }
 
     // -------------------------------------------- Lista de padres de familia
@@ -72,7 +72,7 @@ class ReporteCentralController extends Controller
         return view('reportes-central.padres', [
             'cursos' => $cursos,
             'gestiones' => $gestiones,
-            'filtros' => $request->only(['course_id', 'academic_year_id']),
+            'filtros' => $request->only(['section_id', 'academic_year_id']),
             'resultado' => $resultado,
         ]);
     }
@@ -94,22 +94,22 @@ class ReporteCentralController extends Controller
 
     private function buildPadres(Request $request, $user, Collection $cursos): array
     {
-        $courseId = $request->query('course_id');
+        $sectionId = $request->query('section_id');
         $gestionId = $request->query('academic_year_id');
 
-        if ($courseId && ! $this->permiteCurso($user, $courseId, $cursos)) {
+        if ($sectionId && ! $this->permiteCurso($user, $sectionId, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
         $query = Student::with('parentGuardians')->where('students.estado', 'ACTIVO');
 
-        if ($courseId) {
-            $course = Course::with(['grade', 'section', 'gestion'])->find($courseId);
-            $query->whereIn('students.id', $course->students()->pluck('students.id'));
+        if ($sectionId) {
+            $section = Section::with(['grade', 'section', 'gestion'])->find($sectionId);
+            $query->whereIn('students.id', $section->students()->pluck('students.id'));
         } elseif ($gestionId) {
             $ids = collect();
-            foreach (Course::where('academic_year_id', $gestionId)->get() as $course) {
-                $ids = $ids->merge($course->students()->pluck('students.id'));
+            foreach (Section::where('academic_year_id', $gestionId)->get() as $section) {
+                $ids = $ids->merge($section->students()->pluck('students.id'));
             }
             $query->whereIn('students.id', $ids->unique());
         }
@@ -122,7 +122,7 @@ class ReporteCentralController extends Controller
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeCourse()?->codigoCorto() ?? '—',
+                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
                     'relacion' => '—',
                     'apellidos' => '',
                     'nombres' => 'Sin tutor registrado',
@@ -139,7 +139,7 @@ class ReporteCentralController extends Controller
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeCourse()?->codigoCorto() ?? '—',
+                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
                     'relacion' => $pivot?->tipo_relacion ?? '—',
                     'apellidos' => $pg->apellidos ?? '',
                     'nombres' => $pg->nombres ?? '',
@@ -152,8 +152,8 @@ class ReporteCentralController extends Controller
         }
 
         $curso = null;
-        if ($courseId) {
-            $curso = Course::find($courseId)?->codigoCorto();
+        if ($sectionId) {
+            $curso = Section::find($sectionId)?->codigoCorto();
         } elseif ($gestionId) {
             $gestion = AcademicYear::find($gestionId);
             $curso = $gestion ? 'Gestión '.$gestion->nombre : null;
@@ -176,7 +176,7 @@ class ReporteCentralController extends Controller
 
         return view('reportes-central.rudes', [
             'cursos' => $cursos,
-            'filtros' => $request->only(['course_id']),
+            'filtros' => $request->only(['section_id']),
             'resultado' => $resultado,
         ]);
     }
@@ -202,9 +202,9 @@ class ReporteCentralController extends Controller
 
     private function buildRudes(Request $request, $user, Collection $cursos): array
     {
-        $courseId = $request->query('course_id');
+        $sectionId = $request->query('section_id');
 
-        if (! $courseId) {
+        if (! $sectionId) {
             return [
                 'curso' => null,
                 'filas' => collect(),
@@ -212,18 +212,18 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        if (! $this->permiteCurso($user, $courseId, $cursos)) {
+        if (! $this->permiteCurso($user, $sectionId, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
         // El curso completo (lista de RUDEs de todo el paralelo) solo si es
         // tutor/encargado del curso o rol de supervisión.
-        $course = Course::with(['grade', 'section', 'gestion'])->find($courseId);
-        if ($user->hasRole('Docente') && ! $this->esEncargadoCurso($user, $course)) {
+        $section = Section::with(['grade', 'section', 'gestion'])->find($sectionId);
+        if ($user->hasRole('Docente') && ! $this->esEncargadoCurso($user, $section)) {
             abort(403, 'Solo el tutor/encargado del curso puede ver la lista de RUDEs completa.');
         }
 
-        $estudiantes = $course->students()
+        $estudiantes = $section->students()
             ->with('rudeRecord')
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
@@ -242,7 +242,7 @@ class ReporteCentralController extends Controller
         ]);
 
         return [
-            'curso' => $course->codigoCorto(),
+            'curso' => $section->codigoCorto(),
             'filas' => $filas,
             'requiere_curso' => false,
         ];
@@ -253,14 +253,14 @@ class ReporteCentralController extends Controller
     public function centralizadorEvaluacion(Request $request): View
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
         $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildCentralizadorEvaluacion($request, $user, $courseSubjects);
+        $resultado = $this->buildCentralizadorEvaluacion($request, $user, $sectionSubjects);
 
         return view('reportes-central.centralizador-evaluacion', [
-            'courseSubjects' => $courseSubjects,
+            'sectionSubjects' => $sectionSubjects,
             'cursos' => $cursos,
-            'filtros' => $request->only(['course_subject_id', 'course_id', 'subject_id']),
+            'filtros' => $request->only(['section_subject_id', 'section_id', 'subject_id']),
             'resultado' => $resultado,
         ]);
     }
@@ -268,8 +268,8 @@ class ReporteCentralController extends Controller
     public function exportCentralizadorEvaluacion(Request $request)
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
-        $resultado = $this->buildCentralizadorEvaluacion($request, $user, $courseSubjects);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
+        $resultado = $this->buildCentralizadorEvaluacion($request, $user, $sectionSubjects);
 
         if ($resultado['requiere_curso']) {
             return back()->with('error', 'Selecciona el curso y la materia para generar el centralizador.');
@@ -284,9 +284,9 @@ class ReporteCentralController extends Controller
         return $this->exportPdf('reportes-central.pdf.centralizador-evaluacion', $resultado, $this->nombreArchivo('centralizador-evaluaciones', $resultado, 'pdf'));
     }
 
-    private function buildCentralizadorEvaluacion(Request $request, $user, Collection $courseSubjects): array
+    private function buildCentralizadorEvaluacion(Request $request, $user, Collection $sectionSubjects): array
     {
-        $cs = $this->resolverCourseSubject($request, $courseSubjects);
+        $cs = $this->resolverSectionSubject($request, $sectionSubjects);
 
         if (! $cs) {
             return [
@@ -298,7 +298,7 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
             ->find($cs->id);
 
         if (! $cs) {
@@ -308,13 +308,13 @@ class ReporteCentralController extends Controller
         // Planes por trimestre del sistema vigente (evaluation_plans)
         $planes = [];
         foreach ([1, 2, 3] as $t) {
-            $planes[$t] = EvaluationPlan::where('course_subject_id', $cs->id)
+            $planes[$t] = EvaluationPlan::where('section_subject_id', $cs->id)
                 ->where('trimestre', $t)
                 ->with('criteria.activities')
                 ->first();
         }
 
-        $students = $cs->course->students()
+        $students = $cs->section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
             ->orderBy('students.nombres')
@@ -341,10 +341,10 @@ class ReporteCentralController extends Controller
         });
 
         return [
-            'curso' => $cs->course->codigoCorto(),
+            'curso' => $cs->section->codigoCorto(),
             'materia' => $cs->subject->nombre,
             'docente' => $cs->teacher ? trim(($cs->teacher->nombres ?? '') . ' ' . ($cs->teacher->apellidos ?? '')) : '—',
-            'gestion' => $cs->course->gestion?->nombre ?? (string) now()->year,
+            'gestion' => $cs->section->gestion?->nombre ?? (string) now()->year,
             'trimestres' => [1, 2, 3],
             'filas' => $filas,
             'requiere_curso' => false,
@@ -356,14 +356,14 @@ class ReporteCentralController extends Controller
     public function centralizadorTrimestre(Request $request): View
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
         $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildCentralizadorTrimestre($request, $user, $courseSubjects);
+        $resultado = $this->buildCentralizadorTrimestre($request, $user, $sectionSubjects);
 
         return view('reportes-central.centralizador-trimestre', [
-            'courseSubjects' => $courseSubjects,
+            'sectionSubjects' => $sectionSubjects,
             'cursos' => $cursos,
-            'filtros' => $request->only(['course_subject_id', 'course_id', 'subject_id', 'trimestre']),
+            'filtros' => $request->only(['section_subject_id', 'section_id', 'subject_id', 'trimestre']),
             'resultado' => $resultado,
         ]);
     }
@@ -371,8 +371,8 @@ class ReporteCentralController extends Controller
     public function exportCentralizadorTrimestre(Request $request)
     {
         $user = $request->user();
-        $courseSubjects = $this->courseSubjectsPermitidos($user);
-        $resultado = $this->buildCentralizadorTrimestre($request, $user, $courseSubjects);
+        $sectionSubjects = $this->sectionSubjectsPermitidos($user);
+        $resultado = $this->buildCentralizadorTrimestre($request, $user, $sectionSubjects);
 
         if ($resultado['requiere_curso']) {
             return back()->with('error', 'Selecciona el curso y la materia para generar el centralizador.');
@@ -387,12 +387,12 @@ class ReporteCentralController extends Controller
         return $this->exportPdf('reportes-central.pdf.centralizador-trimestre', $resultado, $this->nombreArchivo('centralizador-trimestre', $resultado, 'pdf'));
     }
 
-    private function buildCentralizadorTrimestre(Request $request, $user, Collection $courseSubjects): array
+    private function buildCentralizadorTrimestre(Request $request, $user, Collection $sectionSubjects): array
     {
         $trimestre = (int) ($request->query('trimestre') ?: 1);
         $trimestre = in_array($trimestre, [1, 2, 3], true) ? $trimestre : 1;
 
-        $cs = $this->resolverCourseSubject($request, $courseSubjects);
+        $cs = $this->resolverSectionSubject($request, $sectionSubjects);
 
         if (! $cs) {
             return [
@@ -405,19 +405,19 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        $cs = CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion', 'teacher'])
+        $cs = SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion', 'teacher'])
             ->find($cs->id);
 
         if (! $cs) {
             return ['curso' => null, 'materia' => null, 'plan' => null, 'filas' => collect(), 'trimestre' => $trimestre, 'requiere_curso' => true];
         }
 
-        $plan = EvaluationPlan::where('course_subject_id', $cs->id)
+        $plan = EvaluationPlan::where('section_subject_id', $cs->id)
             ->where('trimestre', $trimestre)
             ->with('criteria.activities')
             ->first();
 
-        $students = $cs->course->students()
+        $students = $cs->section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
             ->orderBy('students.nombres')
@@ -457,10 +457,10 @@ class ReporteCentralController extends Controller
         });
 
         return [
-            'curso' => $cs->course->codigoCorto(),
+            'curso' => $cs->section->codigoCorto(),
             'materia' => $cs->subject->nombre,
             'docente' => $cs->teacher ? trim(($cs->teacher->nombres ?? '').' '.($cs->teacher->apellidos ?? '')) : '—',
-            'gestion' => $cs->course->gestion?->nombre ?? (string) now()->year,
+            'gestion' => $cs->section->gestion?->nombre ?? (string) now()->year,
             'plan' => $plan,
             'filas' => $filas,
             'trimestre' => $trimestre,
@@ -469,21 +469,21 @@ class ReporteCentralController extends Controller
     }
 
     /**
-     * Resuelve el course_subject desde course_subject_id (compat) o desde
+     * Resuelve el section_subject desde section_subject_id (compat) o desde
      * el par curso + materia (filtros en cascada de la central).
      */
-    private function resolverCourseSubject(Request $request, Collection $courseSubjects): ?CourseSubject
+    private function resolverSectionSubject(Request $request, Collection $sectionSubjects): ?SectionSubject
     {
-        if ($request->filled('course_subject_id')) {
-            $cs = $courseSubjects->firstWhere('id', (int) $request->query('course_subject_id'));
+        if ($request->filled('section_subject_id')) {
+            $cs = $sectionSubjects->firstWhere('id', (int) $request->query('section_subject_id'));
             abort_if(! $cs, 403, 'No tiene acceso a esa materia del curso.');
 
             return $cs;
         }
 
-        if ($request->filled('course_id') && $request->filled('subject_id')) {
-            $cs = $courseSubjects
-                ->first(fn ($c) => (int) $c->course_id === (int) $request->query('course_id')
+        if ($request->filled('section_id') && $request->filled('subject_id')) {
+            $cs = $sectionSubjects
+                ->first(fn ($c) => (int) $c->section_id === (int) $request->query('section_id')
                     && (int) $c->subject_id === (int) $request->query('subject_id'));
             abort_if(! $cs, 403, 'No tiene acceso a esa materia del curso.');
 
@@ -500,32 +500,32 @@ class ReporteCentralController extends Controller
         return $user->hasAnyRole(['Administrador', 'Director', 'Secretaría']);
     }
 
-    private function esEncargadoCurso($user, Course $course): bool
+    private function esEncargadoCurso($user, Section $section): bool
     {
         if (! $user->hasRole('Docente') || ! $user->teacher) {
             return false;
         }
 
-        return $course->section?->teacher_id === $user->teacher->id;
+        return $section->teacher_id === $user->teacher->id;
     }
 
     private function cursosPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
-            return Course::with(['grade', 'section', 'gestion'])
+            return Section::with(['grade', 'gestion'])
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()
                 ->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            // Cursos donde dicta + cursos donde es tutor/encargado del paralelo.
-            $propios = $user->teacher->courseSubjects()
-                ->with(['course.grade', 'course.section', 'course.gestion'])
+            // Secciones donde dicta + donde es tutor/encargado del paralelo.
+            $propios = $user->teacher->sectionSubjects()
+                ->with(['section.grade', 'section.gestion'])
                 ->get()
-                ->map(fn ($cs) => $cs->course);
+                ->map(fn ($cs) => $cs->section);
 
-            $encargado = Course::with(['grade', 'section', 'gestion'])
+            $encargado = Section::with(['grade', 'gestion'])
                 ->where('estado', 'ACTIVO')
                 ->whereHas('section', fn ($q) => $q->where('teacher_id', $user->teacher->id))
                 ->get();
@@ -536,12 +536,12 @@ class ReporteCentralController extends Controller
         return collect();
     }
 
-    private function courseSubjectsPermitidos($user): Collection
+    private function sectionSubjectsPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
-            return CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion'])
-                ->whereHas('course', fn ($q) => $q->where('estado', 'ACTIVO'))
-                ->orderBy('course_id')
+            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+                ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
+                ->orderBy('section_id')
                 ->orderBy('subject_id')
                 ->get();
         }
@@ -549,15 +549,15 @@ class ReporteCentralController extends Controller
         if ($user->hasRole('Docente') && $user->teacher) {
             // Sus materias + todas las materias de los cursos donde es
             // tutor/encargado (ve el curso completo).
-            $cursosEncargado = Course::whereHas('section', fn ($q) => $q->where('teacher_id', $user->teacher->id))
+            $cursosEncargado = Section::whereHas('section', fn ($q) => $q->where('teacher_id', $user->teacher->id))
                 ->pluck('id');
 
-            return CourseSubject::with(['subject', 'course.grade', 'course.section', 'course.gestion'])
-                ->whereHas('course', fn ($q) => $q->where('estado', 'ACTIVO'))
+            return SectionSubject::with(['subject', 'section.grade', 'section.section', 'section.gestion'])
+                ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
                 ->where(fn ($q) => $q
                     ->where('teacher_id', $user->teacher->id)
-                    ->orWhereIn('course_id', $cursosEncargado))
-                ->orderBy('course_id')
+                    ->orWhereIn('section_id', $cursosEncargado))
+                ->orderBy('section_id')
                 ->orderBy('subject_id')
                 ->get();
         }
@@ -565,13 +565,13 @@ class ReporteCentralController extends Controller
         return collect();
     }
 
-    private function permiteCurso($user, int $courseId, Collection $cursos): bool
+    private function permiteCurso($user, int $sectionId, Collection $cursos): bool
     {
         if ($this->esSupervisor($user)) {
             return true;
         }
 
-        return $cursos->contains('id', $courseId);
+        return $cursos->contains('id', $sectionId);
     }
 
     // ----------------------------------------------------------- Catálogo
@@ -755,14 +755,14 @@ class ReporteCentralController extends Controller
     public function verMatriculas(Request $request): View
     {
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
-        $filas = Registration::with(['enrollment.estudiante', 'course.grade', 'course.section', 'enrollment.academicYear'])
+        $filas = Registration::with(['enrollment.estudiante', 'section.grade', 'enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->orderByDesc('id')->limit(500)->get()
             ->map(fn ($m) => [
                 'estudiante' => $m->enrollment?->estudiante ? $m->enrollment->estudiante->nombres . ' ' . $m->enrollment->estudiante->apellidos : 'N/A',
                 'codigo' => $m->enrollment?->estudiante?->codigo ?? '',
-                'curso' => trim(($m->course?->grade?->nombre ?? '') . ' ' . ($m->course?->section?->nombre ?? '') . ' - ' . ($m->course?->nombre ?? ''), ' -'),
+                'curso' => $m->section?->codigoCorto() ?? '',
                 'gestion' => $m->enrollment?->academicYear?->nombre ?? '',
                 'estado' => $m->estado,
             ]);
@@ -778,7 +778,7 @@ class ReporteCentralController extends Controller
     {
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
         $mesNombre = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
-        $filas = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.course', 'registration.enrollment.academicYear'])
+        $filas = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.section', 'registration.enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('registration.enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->orderByDesc('id')->limit(500)->get()

@@ -46,9 +46,9 @@ class Teacher extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function courseSubjects(): HasMany
+    public function sectionSubjects(): HasMany
     {
-        return $this->hasMany(CourseSubject::class, 'teacher_id');
+        return $this->hasMany(SectionSubject::class, 'teacher_id');
     }
 
     public function diarioAulas(): HasMany

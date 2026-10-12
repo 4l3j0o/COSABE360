@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\EvaluationPlan;
 use App\Models\Grade;
@@ -12,7 +12,6 @@ use App\Models\Level;
 use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -37,7 +36,7 @@ class ReporteCentralTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado RC ' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso RC ' . $sufijo, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Materia RC ' . $sufijo], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $est = Student::create([
@@ -50,7 +49,7 @@ class ReporteCentralTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         return compact('curso', 'subject', 'est', 'gestion', 'seccion');
     }
@@ -105,7 +104,7 @@ class ReporteCentralTest extends TestCase
         $admin = $this->crearAdmin();
         $this->actingAs($admin);
 
-        $response = $this->get(route('reportes.central.padres', ['course_id' => $a['curso']->id]));
+        $response = $this->get(route('reportes.central.padres', ['section_id' => $a['curso']->id]));
         $response->assertStatus(200);
         $response->assertSee('TutorP1');
         $response->assertSee('ApellidoRCP1');
@@ -118,17 +117,17 @@ class ReporteCentralTest extends TestCase
         $otro = $this->crearDocente('R1B');
         // Docente encargado del paralelo
         $a['seccion']->update(['teacher_id' => $doc['teacher']->id]);
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $otro['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $otro['teacher']->id]);
 
         // Encargado: ve la lista
         $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.rudes', ['course_id' => $a['curso']->id]));
+        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
         $response->assertStatus(200);
         $response->assertSee('ApellidoRCR1');
 
         // No encargado: 403
         $this->actingAs($otro['user']);
-        $response = $this->get(route('reportes.central.rudes', ['course_id' => $a['curso']->id]));
+        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
         $response->assertStatus(403);
     }
 
@@ -136,7 +135,7 @@ class ReporteCentralTest extends TestCase
     {
         $a = $this->crearCurso('E1');
         $doc = $this->crearDocente('E1');
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         // Planes de los 3 trimestres con nota completa en SE/SA/HA/AU vía service
         $service = app(\App\Services\EvaluationService::class);
@@ -149,7 +148,7 @@ class ReporteCentralTest extends TestCase
         }
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.evaluacion', ['course_subject_id' => $cs->id]));
+        $response = $this->get(route('reportes.central.evaluacion', ['section_subject_id' => $cs->id]));
         $response->assertStatus(200);
         $response->assertSee('ApellidoRCE1');
         $response->assertSee('Prom. Anual');
@@ -159,7 +158,7 @@ class ReporteCentralTest extends TestCase
     {
         $a = $this->crearCurso('T1');
         $doc = $this->crearDocente('T1');
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $service = app(EvaluationService::class);
         $plan = $service->obtenerOCrearPlan($cs, 1);
@@ -169,7 +168,7 @@ class ReporteCentralTest extends TestCase
 
         // Los otros criterios quedan sin nota -> fila "Sin nota"
         $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.trimestre', ['course_subject_id' => $cs->id, 'trimestre' => 1]));
+        $response = $this->get(route('reportes.central.trimestre', ['section_subject_id' => $cs->id, 'trimestre' => 1]));
         $response->assertStatus(200);
         $response->assertSee('ApellidoRCT1');
         $response->assertSee('Puntualidad');
@@ -179,7 +178,7 @@ class ReporteCentralTest extends TestCase
     {
         $a = $this->crearCurso('PX1');
         $doc = $this->crearDocente('PX1');
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $service = app(EvaluationService::class);
         $plan = $service->obtenerOCrearPlan($cs, 1);
@@ -188,7 +187,7 @@ class ReporteCentralTest extends TestCase
         $service->registrarNota($act, $a['est'], 40, null, $doc['user']->id);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.trimestre.export', ['course_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'excel']));
+        $response = $this->get(route('reportes.central.trimestre.export', ['section_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'excel']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
@@ -217,11 +216,11 @@ class ReporteCentralTest extends TestCase
         $admin = $this->crearAdmin();
         $this->actingAs($admin);
 
-        $response = $this->get(route('reportes.central.padres.export', ['course_id' => $a['curso']->id, 'format' => 'pdf']));
+        $response = $this->get(route('reportes.central.padres.export', ['section_id' => $a['curso']->id, 'format' => 'pdf']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
 
-        $response = $this->get(route('reportes.central.padres.export', ['course_id' => $a['curso']->id, 'format' => 'excel']));
+        $response = $this->get(route('reportes.central.padres.export', ['section_id' => $a['curso']->id, 'format' => 'excel']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
@@ -230,11 +229,11 @@ class ReporteCentralTest extends TestCase
     {
         $a = $this->crearCurso('C1');
         $doc = $this->crearDocente('C1');
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('reportes.central.evaluacion', [
-            'course_id' => $a['curso']->id,
+            'section_id' => $a['curso']->id,
             'subject_id' => $a['subject']->id,
         ]));
         $response->assertStatus(200);
@@ -243,7 +242,7 @@ class ReporteCentralTest extends TestCase
         // Materia de otro curso -> 403
         $b = $this->crearCurso('C2');
         $response = $this->get(route('reportes.central.trimestre', [
-            'course_id' => $b['curso']->id,
+            'section_id' => $b['curso']->id,
             'subject_id' => $a['subject']->id,
             'trimestre' => 1,
         ]));
@@ -256,14 +255,14 @@ class ReporteCentralTest extends TestCase
         $b = $this->crearCurso('A2');
         $doc = $this->crearDocente('A1');
         $otro = $this->crearDocente('A2');
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        $csAjeno = CourseSubject::create(['course_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $otro['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $csAjeno = SectionSubject::create(['section_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $otro['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.evaluacion', ['course_subject_id' => $csAjeno->id]));
+        $response = $this->get(route('reportes.central.evaluacion', ['section_subject_id' => $csAjeno->id]));
         $response->assertStatus(403);
 
-        $response = $this->get(route('reportes.central.trimestre', ['course_subject_id' => $csAjeno->id, 'trimestre' => 1]));
+        $response = $this->get(route('reportes.central.trimestre', ['section_subject_id' => $csAjeno->id, 'trimestre' => 1]));
         $response->assertStatus(403);
     }
 }

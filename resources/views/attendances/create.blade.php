@@ -1,6 +1,6 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('titulo', 'Registrar Asistencia - ' . $course->nombre)
+@section('titulo', 'Registrar Asistencia - ' . $section->nombre)
 
 @section('sidebar')
     @if(auth()->user()->hasRole('Docente'))
@@ -14,7 +14,7 @@
     @php
         $editando = $asistenciasExistentes->isNotEmpty();
         $modoLectura = $editando && ! $editar;
-        $rutaBase = ['course_id' => $course->id, 'subject_id' => $subjectId, 'fecha' => $fecha];
+        $rutaBase = ['section_id' => $section->id, 'subject_id' => $subjectId, 'fecha' => $fecha];
         $badges = [
             'PRESENTE' => 'bg-success/10 text-success border-success/30',
             'FALTA' => 'bg-error/10 text-error border-error/30',
@@ -34,7 +34,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Registrar Asistencia</h1>
-            <p class="text-sm text-muted-foreground mt-1">{{ $course->nombre }} — {{ $materias->firstWhere('id', $subjectId)?->nombre ?? 'General' }} — {{ $fecha }}</p>
+            <p class="text-sm text-muted-foreground mt-1">{{ $section->nombre }} — {{ $materias->firstWhere('id', $subjectId)?->nombre ?? 'General' }} — {{ $fecha }}</p>
         </div>
         <div class="flex items-center gap-2">
             @if($editando)
@@ -106,7 +106,7 @@
     @else
         <form method="POST" action="{{ route('asistencias.store') }}" class="bg-card border border-border rounded-xl overflow-hidden">
             @csrf
-            <input type="hidden" name="course_id" value="{{ $course->id }}">
+            <input type="hidden" name="section_id" value="{{ $section->id }}">
             <input type="hidden" name="subject_id" value="{{ $subjectId }}">
             <input type="hidden" name="fecha" value="{{ $fecha }}">
 

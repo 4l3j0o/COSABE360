@@ -13,7 +13,7 @@ class EvaluationPlan extends Model
     public const ESTADOS = ['BORRADOR', 'ACTIVO', 'CERRADO'];
 
     protected $fillable = [
-        'course_subject_id',
+        'section_subject_id',
         'trimestre',
         'nombre',
         'fecha_inicio',
@@ -30,9 +30,9 @@ class EvaluationPlan extends Model
         ];
     }
 
-    public function courseSubject(): BelongsTo
+    public function sectionSubject(): BelongsTo
     {
-        return $this->belongsTo(CourseSubject::class, 'course_subject_id');
+        return $this->belongsTo(SectionSubject::class, 'section_subject_id');
     }
 
     public function criteria(): HasMany

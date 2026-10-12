@@ -15,10 +15,10 @@
     <form method="GET" action="{{ route('diario.create') }}" class="bg-card border border-border rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-            <select name="course_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+            <select name="section_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                 <option value="">Seleccionar curso…</option>
                 @foreach($cursos as $c)
-                    <option value="{{ $c->id }}" {{ $course && $course->id == $c->id ? 'selected' : '' }}>{{ $c->codigoCorto() }}</option>
+                    <option value="{{ $c->id }}" {{ $section && $section->id == $c->id ? 'selected' : '' }}>{{ $c->codigoCorto() }}</option>
                 @endforeach
             </select>
         </div>
@@ -27,10 +27,10 @@
         </div>
     </form>
 
-    @if($course)
+    @if($section)
         <form method="POST" action="{{ route('diario.store') }}" class="bg-card border border-border rounded-xl p-4 space-y-4">
             @csrf
-            <input type="hidden" name="course_id" value="{{ $course->id }}">
+            <input type="hidden" name="section_id" value="{{ $section->id }}">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia *</label>
@@ -60,7 +60,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Guardar bitácora</button>
-                <a href="{{ route('diario.index', ['course_id' => $course->id]) }}" class="px-5 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Cancelar</a>
+                <a href="{{ route('diario.index', ['section_id' => $section->id]) }}" class="px-5 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Cancelar</a>
             </div>
         </form>
     @endif

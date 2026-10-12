@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 

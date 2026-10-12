@@ -11,7 +11,7 @@ return new class extends Migration
      *
      * Sustituye conceptualmente al modelo por bimestres/peso (tablas assessments/grade_scores),
      * que se conserva por compatibilidad. Este esquema es el oficial:
-     *  - evaluation_plans:      plan/evaluación de un trimestre por course_subject.
+     *  - evaluation_plans:      plan/evaluación de un trimestre por section_subject.
      *  - evaluation_criteria:   los 4 criterios (SE/SA/HA/AU) con su porcentaje.
      *  - evaluation_activities: actividades dentro de SABER/HACER (y valor único en SER/AUTOEV).
      *  - evaluation_activity_grades: nota de cada estudiante por actividad.
@@ -21,7 +21,7 @@ return new class extends Migration
         // Plan/evaluación de un trimestre por curso-materia-docente
         Schema::create('evaluation_plans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('course_subject_id')->constrained('course_subjects')->cascadeOnDelete();
+            $table->foreignId('section_subject_id')->constrained('section_subjects')->cascadeOnDelete();
             $table->unsignedTinyInteger('trimestre')->comment('1-3');
             $table->string('nombre', 150)->nullable()->comment('Ej: TRIM 2');
             $table->date('fecha_inicio')->nullable();
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->enum('estado', ['BORRADOR', 'ACTIVO', 'CERRADO'])->default('ACTIVO');
             $table->timestamps();
 
-            $table->unique(['course_subject_id', 'trimestre'], 'uk_plan_cs_trimestre');
+            $table->unique(['section_subject_id', 'trimestre'], 'uk_plan_cs_trimestre');
             $table->index('trimestre');
         });
 

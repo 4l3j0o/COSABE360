@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Subject;
 use App\Models\Teacher;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -48,9 +48,9 @@ class AsignacionImportService
         }
 
         $cursos = [];
-        foreach (Course::with(['grade.level', 'section'])->where('academic_year_id', $gestionId)->where('estado', 'ACTIVO')->get() as $c) {
-            if ($c->section?->codigo) {
-                $cursos[$c->section->codigo] = $c;
+        foreach (Section::with(['grade.level'])->where('academic_year_id', $gestionId)->where('estado', 'ACTIVO')->get() as $c) {
+            if ($c->codigo) {
+                $cursos[$c->codigo] = $c;
             }
         }
         $stats = ['creadas' => 0, 'actualizadas' => 0, 'existentes' => 0, 'omitidas' => []];
@@ -94,7 +94,7 @@ class AsignacionImportService
             }
 
             $triples[$curso->id . '-' . $materia->id . '-' . $docente->id] = [
-                'course_id' => $curso->id,
+                'section_id' => $curso->id,
                 'subject_id' => $materia->id,
                 'teacher_id' => $docente->id,
                 'carga' => $carga,
@@ -105,9 +105,9 @@ class AsignacionImportService
         // Paso 2: asegurar cada triple oficial (crear o actualizar horas)
         $filas = [];
         foreach ($triples as $key => $t) {
-            [$courseId, $subjectId, $teacherId] = array_map('intval', explode('-', $key));
-            $fila = CourseSubject::firstOrCreate(
-                ['course_id' => $courseId, 'subject_id' => $subjectId, 'teacher_id' => $teacherId],
+            [$sectionId, $subjectId, $teacherId] = array_map('intval', explode('-', $key));
+            $fila = SectionSubject::firstOrCreate(
+                ['section_id' => $sectionId, 'subject_id' => $subjectId, 'teacher_id' => $teacherId],
                 ['horas_semanales' => $t['carga'] > 0 ? $t['carga'] : null]
             );
             $filas[$key] = $fila;
@@ -126,12 +126,12 @@ class AsignacionImportService
         // fusionar dependientes en el triple oficial si es único, si no reportar.
         $porPar = [];
         foreach ($triples as $key => $t) {
-            $porPar[$t['course_id'] . '-' . $t['subject_id']][$t['teacher_id']] = $key;
+            $porPar[$t['section_id'] . '-' . $t['subject_id']][$t['teacher_id']] = $key;
         }
         foreach ($porPar as $par => $docentesPar) {
-            [$courseId, $subjectId] = array_map('intval', explode('-', $par));
+            [$sectionId, $subjectId] = array_map('intval', explode('-', $par));
             $docentesExcel = array_keys($docentesPar);
-            $obsoletas = CourseSubject::where('course_id', $courseId)
+            $obsoletas = SectionSubject::where('section_id', $sectionId)
                 ->where('subject_id', $subjectId)
                 ->whereNotIn('teacher_id', $docentesExcel)
                 ->get();
@@ -139,8 +139,8 @@ class AsignacionImportService
             foreach ($obsoletas as $vieja) {
                 if (count($docentesExcel) === 1) {
                     $destino = $filas[$par . '-' . $docentesExcel[0]];
-                    \App\Models\Assessment::where('course_subject_id', $vieja->id)->update(['course_subject_id' => $destino->id]);
-                    \App\Models\EvaluationPlan::where('course_subject_id', $vieja->id)->update(['course_subject_id' => $destino->id]);
+                    \App\Models\Assessment::where('section_subject_id', $vieja->id)->update(['section_subject_id' => $destino->id]);
+                    \App\Models\EvaluationPlan::where('section_subject_id', $vieja->id)->update(['section_subject_id' => $destino->id]);
                     $vieja->delete();
                     $stats['actualizadas']++;
                     $stats['omitidas'][] = "Par {$par}: obsoleta fusionada (docente {$vieja->teacher_id})";

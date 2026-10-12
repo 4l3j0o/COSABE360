@@ -14,7 +14,7 @@ class StoreDiarioAulaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['required', 'exists:subjects,id'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
             'avance_curricular' => ['required', 'string', 'min:10', 'max:4000'],
@@ -26,7 +26,7 @@ class StoreDiarioAulaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'course_id.required' => 'Seleccione el curso.',
+            'section_id.required' => 'Seleccione el curso.',
             'subject_id.required' => 'Seleccione la materia.',
             'fecha.before_or_equal' => 'La fecha no puede ser futura.',
             'avance_curricular.min' => 'Describa el avance curricular con al menos 10 caracteres.',

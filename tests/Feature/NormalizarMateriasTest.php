@@ -3,11 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Grade;
 use App\Models\Level;
-use App\Models\Section;
 use App\Models\AcademicYear;
 use App\Models\Student;
 use App\Models\Subject;
@@ -43,15 +42,15 @@ class NormalizarMateriasTest extends TestCase
         $grado = Grade::create(['level_id' => $primaria, 'nombre' => 'G', 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'C', 'estado' => 'ACTIVO']);
+        $curso = $seccion;
 
         $rol = Role::where('nombre', 'Docente')->first();
         $user = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'd@d.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'D', 'apellidos' => 'D', 'numero_documento' => '1234567', 'estado' => 'ACTIVO']);
-        $cs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $ingles->id, 'teacher_id' => $teacher->id]);
+        $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $ingles->id, 'teacher_id' => $teacher->id]);
 
         $est = Student::create(['codigo' => '1', 'nombres' => 'A', 'apellidos' => 'B', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '7654321', 'estado' => 'ACTIVO']);
-        Attendance::create(['student_id' => $est->id, 'course_id' => $curso->id, 'subject_id' => $ingles->id, 'fecha' => '2026-03-01', 'estado' => 'PRESENTE', 'registered_by_user_id' => $user->id]);
+        Attendance::create(['student_id' => $est->id, 'section_id' => $curso->id, 'subject_id' => $ingles->id, 'fecha' => '2026-03-01', 'estado' => 'PRESENTE', 'registered_by_user_id' => $user->id]);
 
         $this->seed(NormalizarMateriasSeeder::class);
         $this->seed(NormalizarMateriasSeeder::class);
@@ -60,7 +59,7 @@ class NormalizarMateriasTest extends TestCase
         $this->assertNull(Subject::find($ingles->id));
         $this->assertSame($cl->id, $cs->fresh()->subject_id);
         $this->assertSame($cl->id, Attendance::first()->subject_id);
-        $this->assertSame(1, CourseSubject::where('subject_id', $cl->id)->count());
+        $this->assertSame(1, SectionSubject::where('subject_id', $cl->id)->count());
     }
 
     public function test_elimina_antiguas_sin_referencias(): void

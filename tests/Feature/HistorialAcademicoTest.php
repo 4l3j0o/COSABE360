@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -36,13 +35,13 @@ class HistorialAcademicoTest extends TestCase
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion2026 = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
         $gestion2025 = AcademicYear::create(['nombre' => '2025', 'fecha_inicio' => '2025-02-01', 'fecha_fin' => '2025-11-30', 'estado' => 'CERRADA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion2026->id, 'nombre' => 'Curso Hist Trim', 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::create(['nombre' => 'Matemáticas Trim', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDoc = Role::where('nombre', 'Docente')->first();
         $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Hist', 'email' => 'doc_hist_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDoc->id, 'nombres' => 'Doc', 'apellidos' => 'Hist', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
-        $cs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         $student = Student::create([
             'codigo' => 'EST-HIST-001',
@@ -54,7 +53,7 @@ class HistorialAcademicoTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $enrollment = Enrollment::create(['student_id' => $student->id, 'academic_year_id' => $gestion2026->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         // Notas por trimestre: T1=88, T2=92, T3=82 (SE/SA/HA/AU)
         $service = app(EvaluationService::class);

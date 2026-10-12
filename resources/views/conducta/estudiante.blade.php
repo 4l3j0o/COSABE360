@@ -64,7 +64,7 @@
                         @foreach($reportes as $r)
                             <tr class="border-b border-border/60 hover:bg-muted/30">
                                 <td class="px-4 py-2.5 whitespace-nowrap">{{ $r->fecha->format('d/m/Y') }}<br><span class="text-xs text-muted-foreground">{{ $r->hora ? substr($r->hora, 0, 5) : '—' }}</span></td>
-                                <td class="px-4 py-2.5 whitespace-nowrap">{{ $r->course->nombre }}</td>
+                                <td class="px-4 py-2.5 whitespace-nowrap">{{ $r->section->nombre }}</td>
                                 <td class="px-4 py-2.5">{{ $r->subject->nombre ?? 'General' }}</td>
                                 <td class="px-4 py-2.5 whitespace-nowrap">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold {{ $r->tipo_falta === 'LEVE' ? 'bg-amber-100 text-amber-800' : ($r->tipo_falta === 'GRAVE' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800') }}">{{ $r->tipoLabel() }}</span>

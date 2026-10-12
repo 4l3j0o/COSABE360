@@ -173,7 +173,7 @@ class SectionTest extends TestCase
         ]);
         $gestionId = DB::table('academic_years')->value('id');
 
-        $cursoId = DB::table('courses')->insertGetId([
+        $cursoId = DB::table('sections')->insertGetId([
             'grade_id'    => $grado->id,
             'section_id' => $sec->id,
             'academic_year_id'  => $gestionId,
@@ -184,7 +184,7 @@ class SectionTest extends TestCase
         ]);
 
         DB::table('registrations')->insert([
-            'course_id'    => $cursoId,
+            'section_id'    => $cursoId,
             'estado'      => 'ACTIVA',
             'created_at'  => now(),
             'updated_at'  => now(),
@@ -213,7 +213,7 @@ class SectionTest extends TestCase
         ]);
         $gestionId = DB::table('academic_years')->value('id');
 
-        $cursoId = DB::table('courses')->insertGetId([
+        $cursoId = DB::table('sections')->insertGetId([
             'grade_id'    => $grado->id,
             'section_id' => $sec->id,
             'academic_year_id'  => $gestionId,
@@ -224,7 +224,7 @@ class SectionTest extends TestCase
         ]);
 
         DB::table('registrations')->insert([
-            'course_id'    => $cursoId,
+            'section_id'    => $cursoId,
             'estado'      => 'CANCELADA',
             'created_at'  => now(),
             'updated_at'  => now(),

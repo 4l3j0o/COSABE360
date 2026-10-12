@@ -12,7 +12,7 @@ class Registration extends Model
 
     protected $fillable = [
         'enrollment_id',
-        'course_id',
+        'section_id',
         'fecha',
         'monto_mensual',
         'observaciones',
@@ -29,9 +29,9 @@ class Registration extends Model
         return $this->belongsTo(Enrollment::class, 'enrollment_id');
     }
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Section::class, 'section_id');
     }
 
     public function monthlyPayments(): HasMany

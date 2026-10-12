@@ -100,16 +100,16 @@
 
                     <div>
                         <x-forms.picker
-                            id="course"
-                            name="course_id"
+                            id="section"
+                            name="section_id"
                             label="Curso sin horario"
                             required
                             placeholder="Buscar curso..."
                             searchHint="Escriba para buscar el curso."
-                            value="{{ old('course_id') }}"
+                            value="{{ old('section_id') }}"
                             :items="$cursosSinHorario->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre . ' - ' . ($c->aula ?? 's/a'), 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
                         />
-                        @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                        @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     @if($errors->any())

@@ -345,16 +345,16 @@ class SubjectTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Verificar que course_subject(s) existe
+        // Verificar que section_subject(s) existe
         $tabla = null;
-        if (Schema::hasTable('course_subject') && Schema::hasColumn('course_subject', 'subject_id')) {
-            $tabla = 'course_subject';
-        } elseif (Schema::hasTable('course_subjects') && Schema::hasColumn('course_subjects', 'subject_id')) {
-            $tabla = 'course_subjects';
+        if (Schema::hasTable('section_subject') && Schema::hasColumn('section_subject', 'subject_id')) {
+            $tabla = 'section_subject';
+        } elseif (Schema::hasTable('section_subjects') && Schema::hasColumn('section_subjects', 'subject_id')) {
+            $tabla = 'section_subjects';
         }
 
         if ($tabla === null) {
-            $this->markTestSkipped('course_subject(s).subject_id no existe — migración stub');
+            $this->markTestSkipped('section_subject(s).subject_id no existe — migración stub');
         }
 
         // Necesitamos un curso y docente para la FK
@@ -365,7 +365,7 @@ class SubjectTest extends TestCase
         $docenteId = 1;
 
         // Intentar crear curso mínimo si tabla tiene columnas
-        if (Schema::hasColumn('courses', 'grade_id')) {
+        if (Schema::hasColumn('sections', 'grade_id')) {
             // Verificar que academic_years, grades, sections existan
             try {
                 if (DB::table('academic_years')->count() === 0) {
@@ -392,11 +392,11 @@ class SubjectTest extends TestCase
                 if (DB::table('sections')->count() > 0) {
                     $paraleloId = DB::table('sections')->first()->id;
                 }
-                if (Schema::hasTable('courses') && Schema::hasColumn('courses', 'grade_id')) {
-                    DB::table('courses')->insert(['grade_id' => $gradoId, 'section_id' => $paraleloId, 'academic_year_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
-                    $cursoId = DB::table('courses')->orderByDesc('id')->first()->id;
+                if (Schema::hasTable('sections') && Schema::hasColumn('sections', 'grade_id')) {
+                    DB::table('sections')->insert(['grade_id' => $gradoId, 'section_id' => $paraleloId, 'academic_year_id' => $gestionId, 'nombre' => 'Curso Test', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
+                    $cursoId = DB::table('sections')->orderByDesc('id')->first()->id;
                 } else {
-                    $this->markTestSkipped('courses sin columnas necesarias');
+                    $this->markTestSkipped('sections sin columnas necesarias');
                 }
                 if (DB::table('teachers')->count() === 0 && Schema::hasColumn('teachers', 'nombres')) {
                     DB::table('teachers')->insert(['codigo' => 'DOC001', 'nombres' => 'Juan', 'apellidos' => 'Pérez', 'numero_documento' => '123456', 'complemento' => '', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now()]);
@@ -404,12 +404,12 @@ class SubjectTest extends TestCase
                 if (DB::table('teachers')->count() > 0) {
                     $docenteId = DB::table('teachers')->first()->id;
                 }
-                DB::table($tabla)->insert(['subject_id' => $subjectId, 'course_id' => $cursoId, 'teacher_id' => $docenteId, 'created_at' => now()]);
+                DB::table($tabla)->insert(['subject_id' => $subjectId, 'section_id' => $cursoId, 'teacher_id' => $docenteId, 'created_at' => now()]);
             } catch (\Throwable $e) {
                 $this->markTestSkipped('No se pudo crear datos de curso para el test: '.$e->getMessage());
             }
         } else {
-            $this->markTestSkipped('courses.grade_id no existe');
+            $this->markTestSkipped('sections.grade_id no existe');
         }
 
         $response = $this->deleteJson("/materias/{$subjectId}");

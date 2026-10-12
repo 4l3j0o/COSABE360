@@ -25,16 +25,16 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <x-forms.picker
-                                id="course"
-                                name="course_id"
+                                id="section"
+                                name="section_id"
                                 label="Curso"
                                 required
                                 placeholder="Buscar curso..."
                                 searchHint="Escriba para buscar por nombre de curso."
-                                value="{{ old('course_id') }}"
-                                :items="$courses->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre, 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                                value="{{ old('section_id') }}"
+                                :items="$sections->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre, 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
                             />
-                            @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <x-forms.picker

@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\MonthlyPayment;
 use App\Models\ParentGuardian;
@@ -63,39 +63,39 @@ class EnrollmentRegistrationSeeder extends Seeder
                 continue;
             }
 
-            $course = $this->coursePara($cursoNombre, $gestion);
-            if (! $course) {
+            $section = $this->sectionPara($cursoNombre, $gestion);
+            if (! $section) {
                 $this->command->warn("No se encontró el curso {$cursoNombre}.");
                 continue;
             }
 
-            $this->matricular($student, $course, $gestion, $montoMensual);
+            $this->matricular($student, $section, $gestion, $montoMensual);
         }
 
         // Cobertura mínima: 2 estudiantes matriculados por paralelo
-        foreach (Course::where('estado', 'ACTIVO')->orderBy('id')->get() as $course) {
-            $matriculados = Registration::where('course_id', $course->id)
+        foreach (Section::where('estado', 'ACTIVO')->orderBy('id')->get() as $section) {
+            $matriculados = Registration::where('section_id', $section->id)
                 ->where('estado', 'ACTIVA')
                 ->count();
 
             $faltan = max(0, 2 - $matriculados);
             for ($n = 0; $n < $faltan; $n++) {
-                $student = $this->crearEstudianteGenerado($course, $n);
-                $this->matricular($student, $course, $gestion, $montoMensual);
+                $student = $this->crearEstudianteGenerado($section, $n);
+                $this->matricular($student, $section, $gestion, $montoMensual);
             }
         }
 
         $this->command->info('Inscripciones, matrículas y cuotas generadas para todos los estudiantes.');
     }
 
-    private function coursePara(string $nombreCurso, AcademicYear $gestion): ?Course
+    private function sectionPara(string $nombreCurso, AcademicYear $gestion): ?Section
     {
         $partes = preg_split('/\s+/', trim($nombreCurso));
 
         $seccion = (string) array_pop($partes);
         $gradoNombre = implode(' ', $partes);
 
-        return Course::where('academic_year_id', $gestion->id)
+        return Section::where('academic_year_id', $gestion->id)
             ->whereHas('grade', fn ($q) => $q->where('nombre', $gradoNombre))
             ->whereHas('section', fn ($q) => $q->where('nombre', $seccion))
             ->first();
@@ -113,7 +113,7 @@ class EnrollmentRegistrationSeeder extends Seeder
         $enrollment->save();
     }
 
-    private function matricular(Student $student, Course $course, AcademicYear $gestion, float $montoMensual): void
+    private function matricular(Student $student, Section $section, AcademicYear $gestion, float $montoMensual): void
     {
         $enrollment = Enrollment::firstOrNew([
             'student_id'       => $student->id,
@@ -127,7 +127,7 @@ class EnrollmentRegistrationSeeder extends Seeder
         $registration = Registration::updateOrCreate(
             ['enrollment_id' => $enrollment->id],
             [
-                'course_id'     => $course->id,
+                'section_id'     => $section->id,
                 'fecha'         => $gestion->fecha_inicio,
                 'monto_mensual' => $montoMensual,
                 'observaciones'     => null,
@@ -138,27 +138,27 @@ class EnrollmentRegistrationSeeder extends Seeder
         $this->syncCuotas($registration->id, $student->id, $gestion, $montoMensual);
     }
 
-    private function crearEstudianteGenerado(Course $course, int $n): Student
+    private function crearEstudianteGenerado(Section $section, int $n): Student
     {
         $nombresM = ['Andrés', 'Joaquín', 'Emilio', 'Fabián', 'Gustavo', 'Hugo', 'Iván', 'Nicolás'];
         $nombresF = ['Emma', 'Antonella', 'Priyanka', 'Rafaela', 'Gabriela', 'Ariana', 'Daniela', 'Nicole'];
         $apellidos = ['Paredes Quiroga', 'Villarroel Padilla', 'Siles Rojas', 'Zelaya Condori', 'Camacho Ibarra', 'Ramos Suárez', 'Mendoza Añez', 'Hurtado Loza'];
 
-        $semilla = $course->id * 10 + $n;
+        $semilla = $section->id * 10 + $n;
         $sexo = $semilla % 2 === 0 ? 'F' : 'M';
         $nombres = $sexo === 'M' ? $nombresM : $nombresF;
 
-        $nivel = $course->grade?->level_id;
+        $nivel = $section->grade?->level_id;
         $anioNacimiento = match ($nivel) {
             1 => 2019,  // Inicial
             2 => 2015,  // Primaria
             default => 2012, // Secundaria
         };
         $mes = 1 + ($semilla % 4) + 8;          // abril a diciembre
-        $dia = 1 + (($course->id + $n * 3) % 27);
+        $dia = 1 + (($section->id + $n * 3) % 27);
 
-        $numeroDocumento = (string) ($course->id * 1000 + $n);
-        $email = 'gen' . $course->id . '.' . ($n + 1) . '@sanber.edu.bo';
+        $numeroDocumento = (string) ($section->id * 1000 + $n);
+        $email = 'gen' . $section->id . '.' . ($n + 1) . '@sanber.edu.bo';
         $calles = ['Av. Beni', 'Calle La Madrid', 'Av. Las Américas', 'Calle Bolivar', 'Av. Juan XXIII', 'Calle Suipacha', 'Av. Circunvalación', 'Calle Virginia'];
 
         $direccion = $calles[$semilla % count($calles)] . ' Nro ' . (100 + $n) . ', Tarija';
@@ -179,7 +179,7 @@ class EnrollmentRegistrationSeeder extends Seeder
             ['numero_documento' => $numeroDocumento],
             [
                 'user_id'           => $user->id,
-                'codigo'            => 'EST-GEN-' . $course->id . '-' . ($n + 1),
+                'codigo'            => 'EST-GEN-' . $section->id . '-' . ($n + 1),
                 'nombres'           => $nombres[$semilla % count($nombres)],
                 'apellidos'         => $apellidos[$semilla % count($apellidos)],
                 'fecha_nacimiento'  => sprintf('%04d-%02d-%02d', $anioNacimiento, $mes, $dia),

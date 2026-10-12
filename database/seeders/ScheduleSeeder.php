@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Schedule;
 use Illuminate\Database\Seeder;
 
@@ -42,13 +42,13 @@ class ScheduleSeeder extends Seeder
         $totalBloques = count($bloques);
         $totalDias = count($dias);
 
-        $cursoMaterias = CourseSubject::with(['subject', 'teacher'])
+        $cursoMaterias = SectionSubject::with(['subject', 'teacher'])
             ->whereHas('teacher')
             ->get()
-            ->groupBy('course_id');
+            ->groupBy('section_id');
 
-        // Aula fija de cada paralelo (course.aula)
-        $aulasCurso = Course::pluck('aula', 'id');
+        // Aula fija de cada paralelo (section.aula)
+        $aulasCurso = Section::pluck('aula', 'id');
 
         // Reserva global docente|dia|bloque para que un docente no esté en dos
         // paralelos a la misma hora (equivalente a CA-28-02).
@@ -56,12 +56,12 @@ class ScheduleSeeder extends Seeder
 
         Schedule::query()->delete();
 
-        foreach ($cursoMaterias as $courseId => $items) {
+        foreach ($cursoMaterias as $sectionId => $items) {
             $ocupadoCurso = []; // dia|bloque ya usados en este paralelo
             // El aula del horario coincide con el aula del paralelo (su salón fijo)
-            $aula = $aulasCurso->get($courseId);
+            $aula = $aulasCurso->get($sectionId);
             if (blank($aula)) {
-                $aula = 'Aula '.$courseId;
+                $aula = 'Aula '.$sectionId;
             }
 
             // Prioridad: materias con más horas semanales primero
@@ -77,7 +77,7 @@ class ScheduleSeeder extends Seeder
 
                 // Barrido de todos los bloques en orden rotativo: garantiza que una
                 // materia use cualquier hueco libre (día/bloque) que tenga su docente.
-                $desfase = ($courseId * 3 + $indiceMateria * 5) % $capacidad;
+                $desfase = ($sectionId * 3 + $indiceMateria * 5) % $capacidad;
                 $indiceMateria++;
 
                 $asignadas = 0;
@@ -98,7 +98,7 @@ class ScheduleSeeder extends Seeder
 
                     Schedule::updateOrCreate(
                         [
-                            'course_id' => $courseId,
+                            'section_id' => $sectionId,
                             'subject_id' => $subject->id,
                             'teacher_id' => $teacher->id,
                             'dia' => $dia,

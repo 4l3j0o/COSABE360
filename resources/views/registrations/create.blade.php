@@ -56,16 +56,16 @@
                 @csrf
                 <div>
                     <x-forms.picker
-                        id="course"
-                        name="course_id"
+                        id="section"
+                        name="section_id"
                         label="Curso (grado y paralelo)"
                         required
                         placeholder="Buscar curso..."
                         searchHint="Escriba para buscar por grado, paralelo o nombre de curso."
-                        value="{{ old('course_id') }}"
+                        value="{{ old('section_id') }}"
                         :items="$cursos->map(fn($c) => ['value' => $c->id, 'label' => $c->grade->nombre . ' — Paralelo ' . $c->section->nombre . ' (' . $c->nombre . ')', 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->grade->nombre . ' paralelo ' . $c->section->nombre . ' ' . $c->nombre . ' aula ' . ($c->aula ?? '')])"
                     />
-                    @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                    @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -130,10 +130,10 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso *</label>
-                <select name="course_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
+                <select name="section_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
                     <option value="">Seleccionar curso…</option>
                     @foreach($cursos as $curso)
-                        <option value="{{ $curso->id }}" {{ old('course_id') == $curso->id ? 'selected' : '' }}>{{ $curso->grade->level->nombre }} — {{ $curso->codigoCorto() }}</option>
+                        <option value="{{ $curso->id }}" {{ old('section_id') == $curso->id ? 'selected' : '' }}>{{ $curso->grade->level->nombre }} — {{ $curso->codigoCorto() }}</option>
                     @endforeach
                 </select>
             </div>

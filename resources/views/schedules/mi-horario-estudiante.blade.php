@@ -9,8 +9,8 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
             <h1 class="text-xl font-bold text-foreground">Mi Horario</h1>
-            @if($course)
-                <p class="text-sm text-muted-foreground">{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</p>
+            @if($section)
+                <p class="text-sm text-muted-foreground">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }}</p>
             @endif
         </div>
     </div>

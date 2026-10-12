@@ -11,7 +11,7 @@ class AnnouncementRecipient extends Model
 
     public const TIPOS = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'];
 
-    protected $fillable = ['announcement_id', 'tipo_destinatario', 'course_id', 'level_id', 'user_id'];
+    protected $fillable = ['announcement_id', 'tipo_destinatario', 'section_id', 'level_id', 'user_id'];
 
     protected $casts = ['created_at' => 'datetime'];
 
@@ -20,9 +20,9 @@ class AnnouncementRecipient extends Model
         return $this->belongsTo(Announcement::class, 'announcement_id');
     }
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Section::class, 'section_id');
     }
 
     public function level(): BelongsTo

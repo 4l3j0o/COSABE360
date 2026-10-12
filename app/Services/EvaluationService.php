@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationActivity;
 use App\Models\EvaluationActivityGrade;
 use App\Models\EvaluationCriterion;
@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
  * y el formato usado por el colegio (plantilla Excel).
  *
  * Reglas:
- *  - Una evaluación de trimestre (EvaluationPlan) pertenece a un course_subject (curso-materia-docente).
+ *  - Una evaluación de trimestre (EvaluationPlan) pertenece a un section_subject (curso-materia-docente).
  *  - Tiene 4 criterios: SE(10), SA(45), HA(40), AU(5). Total 100.
  *  - Cada criterio se califica sobre su máximo = su porcentaje.
  *      * VALOR_UNICO (SER, AUTOEVALUACIÓN): una sola nota de 0..porcentaje.
@@ -27,13 +27,13 @@ use Illuminate\Support\Collection;
 class EvaluationService
 {
     /**
-     * Crea (si no existe) el plan de evaluación de un trimestre para un course_subject
+     * Crea (si no existe) el plan de evaluación de un trimestre para un section_subject
      * y sus 4 criterios por defecto.
      */
-    public function obtenerOCrearPlan(CourseSubject $courseSubject, int $trimestre, ?string $nombre = null): EvaluationPlan
+    public function obtenerOCrearPlan(SectionSubject $sectionSubject, int $trimestre, ?string $nombre = null): EvaluationPlan
     {
         $plan = EvaluationPlan::firstOrCreate(
-            ['course_subject_id' => $courseSubject->id, 'trimestre' => $trimestre],
+            ['section_subject_id' => $sectionSubject->id, 'trimestre' => $trimestre],
             [
                 'nombre' => $nombre ?? 'TRIM '.$trimestre,
                 'estado' => 'ACTIVO',
@@ -125,14 +125,14 @@ class EvaluationService
     }
 
     /**
-     * Promedio final anual de un course_subject para un estudiante:
+     * Promedio final anual de un section_subject para un estudiante:
      * promedio de las notas de los 3 trimestres, redondeado a entero.
      */
-    public function promedioAnual(CourseSubject $courseSubject, Student $student): ?float
+    public function promedioAnual(SectionSubject $sectionSubject, Student $student): ?float
     {
         $notas = [];
         for ($t = 1; $t <= 3; $t++) {
-            $plan = EvaluationPlan::where('course_subject_id', $courseSubject->id)
+            $plan = EvaluationPlan::where('section_subject_id', $sectionSubject->id)
                 ->where('trimestre', $t)
                 ->with('criteria.activities')
                 ->first();

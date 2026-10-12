@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('course_subjects', function (Blueprint $table) {
+        Schema::table('section_subjects', function (Blueprint $table) {
             $table->unsignedTinyInteger('horas_semanales')->nullable()->after('teacher_id');
         });
     }
 
     public function down(): void
     {
-        Schema::table('course_subjects', function (Blueprint $table) {
+        Schema::table('section_subjects', function (Blueprint $table) {
             $table->dropColumn('horas_semanales');
         });
     }

@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Grade;
 use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Database\Seeder;
 
-class CourseSubjectSeeder extends Seeder
+class SectionSubjectSeeder extends Seeder
 {
     /**
      * Asigna a cada curso las materias de su nivel, con su docente según especialidad.
@@ -18,10 +18,10 @@ class CourseSubjectSeeder extends Seeder
     public function run(): void
     {
         $teachers = Teacher::where('estado', 'ACTIVO')->get();
-        $courses = Course::where('estado', 'ACTIVO')->get();
+        $sections = Section::where('estado', 'ACTIVO')->get();
 
-        foreach ($courses as $course) {
-            $grade = $course->grade ?? Grade::find($course->grade_id);
+        foreach ($sections as $section) {
+            $grade = $section->grade ?? Grade::find($section->grade_id);
             if (! $grade) {
                 continue;
             }
@@ -29,19 +29,19 @@ class CourseSubjectSeeder extends Seeder
             $subjects = Subject::where('level_id', $grade->level_id)->get();
 
             // Limpiar asignaciones previas del curso para evitar duplicados al rotar docentes
-            CourseSubject::where('course_id', $course->id)->delete();
+            SectionSubject::where('section_id', $section->id)->delete();
 
             foreach ($subjects as $subject) {
-                $teacher = $this->docenteParaMateria($subject->nombre, $teachers, $course->id);
+                $teacher = $this->docenteParaMateria($subject->nombre, $teachers, $section->id);
 
                 if (! $teacher) {
                     continue;
                 }
 
-                CourseSubject::updateOrCreate(
+                SectionSubject::updateOrCreate(
                     [
                         'subject_id' => $subject->id,
-                        'course_id' => $course->id,
+                        'section_id' => $section->id,
                         'teacher_id' => $teacher->id,
                     ]
                 );
@@ -51,7 +51,7 @@ class CourseSubjectSeeder extends Seeder
         $this->command->info('Materias asignadas a los cursos con sus docentes.');
     }
 
-    private function docenteParaMateria(string $materia, $teachers, int $courseId): ?Teacher
+    private function docenteParaMateria(string $materia, $teachers, int $sectionId): ?Teacher
     {
         $mapaEspecialidad = [
             'Matemáticas' => 'Matemáticas',
@@ -90,6 +90,6 @@ class CourseSubjectSeeder extends Seeder
         // distintos docentes según paralelo).
         $lista = $candidatos->values();
 
-        return $lista->get($courseId % $lista->count()) ?: $lista->first();
+        return $lista->get($sectionId % $lista->count()) ?: $lista->first();
     }
 }

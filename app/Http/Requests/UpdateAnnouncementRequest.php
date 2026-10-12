@@ -17,8 +17,8 @@ class UpdateAnnouncementRequest extends FormRequest
         if ($this->has('fecha_publicacion') && $this->input('fecha_publicacion') === '') {
             $this->merge(['fecha_publicacion' => null]);
         }
-        if ($this->has('course_id') && $this->input('course_id') === '') {
-            $this->merge(['course_id' => null]);
+        if ($this->has('section_id') && $this->input('section_id') === '') {
+            $this->merge(['section_id' => null]);
         }
         if ($this->has('level_id') && $this->input('level_id') === '') {
             $this->merge(['level_id' => null]);
@@ -36,7 +36,7 @@ class UpdateAnnouncementRequest extends FormRequest
             'fecha_publicacion' => ['nullable', 'date'],
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO', 'ARCHIVADO'])],
             'tipo_destinatario' => ['sometimes', 'required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
-            'course_id' => ['nullable', 'required_if:tipo_destinatario,CURSO_ESPECIFICO', 'integer', 'exists:courses,id'],
+            'section_id' => ['nullable', 'required_if:tipo_destinatario,CURSO_ESPECIFICO', 'integer', 'exists:sections,id'],
             'level_id' => ['nullable', 'required_if:tipo_destinatario,NIVEL_DOCENTES', 'integer', 'exists:levels,id'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
         ];

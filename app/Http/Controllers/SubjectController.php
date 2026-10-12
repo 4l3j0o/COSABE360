@@ -104,9 +104,9 @@ class SubjectController extends Controller
     {
         $bloqueadoPor = [];
 
-        // course_subject.subject_id RESTRICT — no borrar si está asignada a curso
-        if (Schema::hasColumn('course_subject', 'subject_id') || Schema::hasColumn('course_subjects', 'subject_id')) {
-            $tabla = Schema::hasColumn('course_subject', 'subject_id') ? 'course_subject' : 'course_subjects';
+        // section_subject.subject_id RESTRICT — no borrar si está asignada a curso
+        if (Schema::hasColumn('section_subject', 'subject_id') || Schema::hasColumn('section_subjects', 'subject_id')) {
+            $tabla = Schema::hasColumn('section_subject', 'subject_id') ? 'section_subject' : 'section_subjects';
             if (DB::table($tabla)->where('subject_id', $subject->id)->exists()) {
                 $bloqueadoPor[] = 'cursos asignados';
             }

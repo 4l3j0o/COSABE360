@@ -112,10 +112,10 @@ class GradeController extends Controller
             $bloqueadoPor[] = 'paralelos asociados';
         }
 
-        if (Schema::hasColumn('courses', 'grade_id') && Schema::hasColumn('registrations', 'course_id')) {
+        if (Schema::hasColumn('sections', 'grade_id') && Schema::hasColumn('registrations', 'section_id')) {
             $tieneMatriculados = DB::table('registrations')
-                ->join('courses', 'registrations.course_id', '=', 'courses.id')
-                ->where('courses.grade_id', $grade->id)
+                ->join('sections', 'registrations.section_id', '=', 'sections.id')
+                ->where('sections.grade_id', $grade->id)
                 ->where('registrations.estado', '!=', 'CANCELADA')
                 ->exists();
 

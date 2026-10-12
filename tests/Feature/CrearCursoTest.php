@@ -3,11 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -47,7 +46,7 @@ class CrearCursoTest extends TestCase
         $this->post('/cursos', $datos)
             ->assertRedirect(route('asistencias.index'));
 
-        $this->assertDatabaseHas('courses', [
+        $this->assertDatabaseHas('sections', [
             'grade_id'          => $datos['grade_id'],
             'section_id'        => $datos['section_id'],
             'academic_year_id'  => $datos['academic_year_id'],
@@ -55,7 +54,7 @@ class CrearCursoTest extends TestCase
             'estado'            => 'ACTIVO',
         ]);
 
-        $curso = Course::first();
+        $curso = Section::first();
         $this->assertSame('Primero "A" - 2026', $curso->nombre);
     }
 
@@ -65,12 +64,12 @@ class CrearCursoTest extends TestCase
         $this->actingAs($admin);
 
         $datos = $this->datosCurso();
-        Course::create([...$datos, 'nombre' => 'Ya existe', 'estado' => 'ACTIVO']);
+        Section::create([...$datos, 'nombre' => 'Ya existe', 'estado' => 'ACTIVO']);
 
         $this->post('/cursos', $datos)
             ->assertSessionHasErrors('general');
 
-        $this->assertSame(1, Course::count());
+        $this->assertSame(1, Section::count());
     }
 
     public function test_curso_inactivo_se_ve_en_lista_pero_no_en_panel_de_registro(): void
@@ -82,15 +81,15 @@ class CrearCursoTest extends TestCase
         $grado = Grade::find($datos['grade_id']);
         $seccionB = Section::create(['grade_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        $activo = Course::create([... $datos, 'nombre' => 'Curso Activo Visible', 'estado' => 'ACTIVO']);
-        $inactivo = Course::create(['grade_id' => $grado->id, 'section_id' => $seccionB->id, 'academic_year_id' => $datos['academic_year_id'], 'nombre' => 'Curso Inactivo En Lista', 'estado' => 'INACTIVO']);
+        $activo = Section::create([... $datos, 'nombre' => 'Curso Activo Visible', 'estado' => 'ACTIVO']);
+        $inactivo = $seccionB;
 
         $this->get('/asistencias')
             ->assertOk()
             ->assertSee('Curso Activo Visible')
             ->assertSee('Curso Inactivo En Lista')
-            ->assertSee('name="course_id" value="' . $activo->id . '"', false)
-            ->assertDontSee('name="course_id" value="' . $inactivo->id . '"', false);
+            ->assertSee('name="section_id" value="' . $activo->id . '"', false)
+            ->assertDontSee('name="section_id" value="' . $inactivo->id . '"', false);
     }
 
     public function test_curso_eliminado_no_aparece_en_lista(): void
@@ -99,18 +98,18 @@ class CrearCursoTest extends TestCase
         $this->actingAs($admin);
 
         $datos = $this->datosCurso();
-        $curso = Course::create([...$datos, 'nombre' => 'Curso a Eliminar', 'estado' => 'ACTIVO']);
+        $curso = Section::create([...$datos, 'nombre' => 'Curso a Eliminar', 'estado' => 'ACTIVO']);
 
         $this->delete('/cursos/' . $curso->id)
             ->assertRedirect(route('asistencias.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('courses', ['id' => $curso->id, 'estado' => 'ELIMINADO']);
+        $this->assertDatabaseHas('sections', ['id' => $curso->id, 'estado' => 'ELIMINADO']);
 
         $this->get('/asistencias')
             ->assertOk()
             ->assertDontSee('Curso a Eliminar')
-            ->assertDontSee('name="course_id" value="' . $curso->id . '"', false);
+            ->assertDontSee('name="section_id" value="' . $curso->id . '"', false);
     }
 
     public function test_admin_puede_ver_y_editar_un_curso(): void
@@ -119,7 +118,7 @@ class CrearCursoTest extends TestCase
         $this->actingAs($admin);
 
         $datos = $this->datosCurso();
-        $curso = Course::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'aula' => 'Aula 5', 'estado' => 'ACTIVO']);
+        $curso = Section::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'aula' => 'Aula 5', 'estado' => 'ACTIVO']);
 
         $this->get('/cursos/' . $curso->id)
             ->assertOk()
@@ -127,9 +126,9 @@ class CrearCursoTest extends TestCase
             ->assertSee('Aula 5');
 
         $this->put('/cursos/' . $curso->id, ['aula' => 'Aula 9', 'estado' => 'INACTIVO'])
-            ->assertRedirect(route('courses.show', $curso));
+            ->assertRedirect(route('sections.show', $curso));
 
-        $this->assertDatabaseHas('courses', ['id' => $curso->id, 'aula' => 'Aula 9', 'estado' => 'INACTIVO']);
+        $this->assertDatabaseHas('sections', ['id' => $curso->id, 'aula' => 'Aula 9', 'estado' => 'INACTIVO']);
     }
 
     public function test_docente_puede_ver_curso_pero_no_editarlo(): void
@@ -146,14 +145,14 @@ class CrearCursoTest extends TestCase
         $this->actingAs($docente);
 
         $datos = $this->datosCurso();
-        $curso = Course::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'estado' => 'ACTIVO']);
+        $curso = Section::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'estado' => 'ACTIVO']);
 
         $this->get('/cursos/' . $curso->id)->assertOk();
 
         $this->put('/cursos/' . $curso->id, ['aula' => 'Aula 9', 'estado' => 'INACTIVO'])
             ->assertForbidden();
 
-        $this->assertDatabaseHas('courses', ['id' => $curso->id, 'estado' => 'ACTIVO']);
+        $this->assertDatabaseHas('sections', ['id' => $curso->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_admin_puede_alternar_estado_de_un_curso(): void
@@ -162,17 +161,17 @@ class CrearCursoTest extends TestCase
         $this->actingAs($admin);
 
         $datos = $this->datosCurso();
-        $curso = Course::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'estado' => 'ACTIVO']);
+        $curso = Section::create([...$datos, 'nombre' => 'Primero "A" - 2026', 'estado' => 'ACTIVO']);
 
         $this->patch('/cursos/' . $curso->id . '/alternar')
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('courses', ['id' => $curso->id, 'estado' => 'INACTIVO']);
+        $this->assertDatabaseHas('sections', ['id' => $curso->id, 'estado' => 'INACTIVO']);
 
         $this->patch('/cursos/' . $curso->id . '/alternar');
 
-        $this->assertDatabaseHas('courses', ['id' => $curso->id, 'estado' => 'ACTIVO']);
+        $this->assertDatabaseHas('sections', ['id' => $curso->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_docente_no_puede_crear_un_curso(): void
@@ -191,6 +190,6 @@ class CrearCursoTest extends TestCase
         $this->post('/cursos', $this->datosCurso())
             ->assertForbidden();
 
-        $this->assertSame(0, Course::count());
+        $this->assertSame(0, Section::count());
     }
 }

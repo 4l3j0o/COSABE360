@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -30,20 +30,20 @@ class RegenteController extends Controller
     {
         $this->autorizar($request);
 
-        $cursos = Course::with(['grade', 'section', 'gestion'])
+        $cursos = Section::with(['grade', 'section', 'gestion'])
             ->ordenadoPorNivel()
             ->get();
 
         return view('regente.cursos', compact('cursos'));
     }
 
-    public function verCurso(Request $request, Course $course): View
+    public function verCurso(Request $request, Section $section): View
     {
         $this->autorizar($request);
 
-        $course->load(['grade', 'section', 'gestion']);
+        $section->load(['grade', 'section', 'gestion']);
 
-        $students = $course->students()
+        $students = $section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('apellidos')
             ->orderBy('nombres')
@@ -51,21 +51,21 @@ class RegenteController extends Controller
 
         $fecha = $request->query('fecha') ? Carbon::parse($request->query('fecha')) : now();
 
-        $asistencias = Attendance::where('course_id', $course->id)
+        $asistencias = Attendance::where('section_id', $section->id)
             ->whereDate('fecha', $fecha->toDateString())
             ->whereIn('student_id', $students->pluck('id'))
             ->get()
             ->keyBy('student_id');
 
-        $materias = CourseSubject::where('course_id', $course->id)->with('subject')->get();
+        $materias = SectionSubject::where('section_id', $section->id)->with('subject')->get();
 
-        return view('regente.curso', compact('course', 'students', 'fecha', 'asistencias', 'materias'));
+        return view('regente.curso', compact('section', 'students', 'fecha', 'asistencias', 'materias'));
     }
 
     /**
      * El Regente modifica la lista de asistencia a su antojo (todos los estados, cualquier fecha).
      */
-    public function guardarAsistencia(Request $request, Course $course): RedirectResponse
+    public function guardarAsistencia(Request $request, Section $section): RedirectResponse
     {
         $this->autorizar($request);
 
@@ -76,7 +76,7 @@ class RegenteController extends Controller
             'asistencias.*.justificacion' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $estudiantesCurso = $course->students()->where('students.estado', 'ACTIVO')->pluck('id')->toArray();
+        $estudiantesCurso = $section->students()->where('students.estado', 'ACTIVO')->pluck('id')->toArray();
         $fecha = Carbon::parse($validated['fecha'])->toDateString();
 
         $seDetectoLicencia = false;
@@ -87,7 +87,7 @@ class RegenteController extends Controller
             }
 
             $existente = Attendance::where('student_id', $studentId)
-                ->where('course_id', $course->id)
+                ->where('section_id', $section->id)
                 ->whereDate('fecha', $fecha)
                 ->whereNull('subject_id')
                 ->first();
@@ -101,7 +101,7 @@ class RegenteController extends Controller
             } else {
                 Attendance::create([
                     'student_id' => $studentId,
-                    'course_id' => $course->id,
+                    'section_id' => $section->id,
                     'subject_id' => null,
                     'fecha' => $fecha,
                     'estado' => $data['estado'],
@@ -117,17 +117,17 @@ class RegenteController extends Controller
 
         if ($seDetectoLicencia) {
             // Se notificará a los docentes del curso sobre las licencias registradas.
-            $this->notificarLicencias($course, $validated['asistencias'], $fecha, $request->user());
+            $this->notificarLicencias($section, $validated['asistencias'], $fecha, $request->user());
         }
 
-        return redirect()->route('regente.curso', ['course' => $course, 'fecha' => $fecha])
+        return redirect()->route('regente.curso', ['section' => $section, 'fecha' => $fecha])
             ->with('success', 'Asistencia actualizada por el Regente para el '.$fecha.'.');
     }
 
     /**
      * Registra una licencia puntual para un estudiante en uno o más días y notifica a los docentes.
      */
-    public function registrarLicencia(Request $request, Course $course, Student $student): RedirectResponse
+    public function registrarLicencia(Request $request, Section $section, Student $student): RedirectResponse
     {
         $this->autorizar($request);
 
@@ -146,7 +146,7 @@ class RegenteController extends Controller
             Attendance::updateOrCreate(
                 [
                     'student_id' => $student->id,
-                    'course_id' => $course->id,
+                    'section_id' => $section->id,
                     'fecha' => $d->toDateString(),
                     'subject_id' => null,
                 ],
@@ -159,20 +159,20 @@ class RegenteController extends Controller
         }
 
         // Comunicado automático a los docentes del curso del estudiante
-        $this->crearComunicadoLicencia($student, $course, $dias, $validated['motivo'] ?? null, $request->user());
+        $this->crearComunicadoLicencia($student, $section, $dias, $validated['motivo'] ?? null, $request->user());
 
-        return redirect()->route('regente.curso', ['course' => $course])
+        return redirect()->route('regente.curso', ['section' => $section])
             ->with('success', 'Licencia registrada para '.count($dias).' día(s) y notificado a los docentes del curso.');
     }
 
     /**
      * Crea un comunicado PUBLICADO dirigido a los docentes que dictan en el curso del estudiante.
      */
-    private function crearComunicadoLicencia(Student $student, Course $course, array $dias, ?string $motivo, $autor): void
+    private function crearComunicadoLicencia(Student $student, Section $section, array $dias, ?string $motivo, $autor): void
     {
         $announcement = Announcement::create([
             'titulo' => 'Licencia de estudiante: '.$student->apellidos.' '.$student->nombres,
-            'contenido' => "Se informa que el(la) estudiante **{$student->nombres} {$student->apellidos}** de {$course->nombre} "
+            'contenido' => "Se informa que el(la) estudiante **{$student->nombres} {$student->apellidos}** de {$section->nombre} "
                 .'se encuentra con LICENCIA los siguientes día(s): '.implode(', ', $dias)
                 .($motivo ? '. Motivo: '.$motivo : '.'),
             'author_id' => $autor->id,
@@ -181,7 +181,7 @@ class RegenteController extends Controller
         ]);
 
         // Docentes que dictan en este curso
-        $docenteUserIds = CourseSubject::where('course_id', $course->id)
+        $docenteUserIds = SectionSubject::where('section_id', $section->id)
             ->with('teacher.user')
             ->get()
             ->pluck('teacher.user_id')
@@ -199,7 +199,7 @@ class RegenteController extends Controller
         foreach ($docenteUserIds as $userId) {
             $announcement->recipients()->create([
                 'tipo_destinatario' => 'CURSO_ESPECIFICO',
-                'course_id' => $course->id,
+                'section_id' => $section->id,
                 'user_id' => $userId,
             ]);
         }
@@ -208,7 +208,7 @@ class RegenteController extends Controller
     /**
      * Al detectar LICENCIA en el guardado masivo, notifica a los docentes del curso.
      */
-    private function notificarLicencias(Course $course, array $asistencias, string $fecha, $autor): void
+    private function notificarLicencias(Section $section, array $asistencias, string $fecha, $autor): void
     {
         $licenciados = [];
         foreach ($asistencias as $studentId => $data) {
@@ -224,7 +224,7 @@ class RegenteController extends Controller
         $students = Student::whereIn('id', $licenciados)->get();
 
         foreach ($students as $student) {
-            $this->crearComunicadoLicencia($student, $course, [$fecha], null, $autor);
+            $this->crearComunicadoLicencia($student, $section, [$fecha], null, $autor);
         }
     }
 

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Horario - ' . $course->nombre)
+@section('titulo', 'Horario - ' . $section->nombre)
 
 @section('sidebar')
     @include('dashboard.partials._sidebar-admin')
@@ -10,7 +10,7 @@
         <div class="flex items-center gap-3 min-w-0">
             @include('layouts._volver', ['href' => route('schedules.index'), 'texto' => 'Volver a paralelos'])
             <div class="min-w-0">
-                <h1 class="text-xl font-bold text-foreground truncate">{{ $course->nombre }} - {{ $course->aula ?? 's/a' }}</h1>
+                <h1 class="text-xl font-bold text-foreground truncate">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }}</h1>
                 <p class="text-sm text-muted-foreground">Horario semanal de clases</p>
             </div>
         </div>
@@ -137,7 +137,7 @@
                 </div>
                 <form method="POST" action="{{ route('schedules.store') }}" style="padding:1.5rem;">
                     @csrf
-                    <input type="hidden" name="course_id" value="{{ $course->id }}">
+                    <input type="hidden" name="section_id" value="{{ $section->id }}">
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -189,8 +189,8 @@
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Aula</label>
-                            <input type="text" name="aula" maxlength="50" value="{{ $course->aula }}" readonly class="w-full px-3 py-2.5 border border-input rounded-lg bg-muted/50 text-foreground text-sm">
-                            <p class="text-xs text-muted-foreground mt-1">Se usa el aula del paralelo ({{ $course->aula ?? 'sin asignar' }}).</p>
+                            <input type="text" name="aula" maxlength="50" value="{{ $section->aula }}" readonly class="w-full px-3 py-2.5 border border-input rounded-lg bg-muted/50 text-foreground text-sm">
+                            <p class="text-xs text-muted-foreground mt-1">Se usa el aula del paralelo ({{ $section->aula ?? 'sin asignar' }}).</p>
                         </div>
                     </div>
 

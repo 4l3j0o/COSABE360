@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -34,7 +33,7 @@ class AttendanceReportTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Rep ' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Rep ' . $sufijo, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Materia Rep ' . $sufijo], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $est = Student::create([
@@ -47,7 +46,7 @@ class AttendanceReportTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         return compact('curso', 'subject', 'est', 'gestion');
     }
@@ -66,8 +65,8 @@ class AttendanceReportTest extends TestCase
         $a = $this->crearCurso('A1');
         $b = $this->crearCurso('A2');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        CourseSubject::create(['course_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('reportes.asistencia.index'));
@@ -79,12 +78,12 @@ class AttendanceReportTest extends TestCase
     {
         $a = $this->crearCurso('B1');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('reportes.asistencia.index', [
             'rango' => 'semana',
-            'course_id' => $a['curso']->id,
+            'section_id' => $a['curso']->id,
             'subject_id' => $a['subject']->id,
         ]));
         $response->assertStatus(200);
@@ -97,10 +96,10 @@ class AttendanceReportTest extends TestCase
         $a = $this->crearCurso('C1');
         $b = $this->crearCurso('C2');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $this->get(route('reportes.asistencia.index', ['course_id' => $b['curso']->id]))
+        $this->get(route('reportes.asistencia.index', ['section_id' => $b['curso']->id]))
             ->assertForbidden();
     }
 
@@ -108,7 +107,7 @@ class AttendanceReportTest extends TestCase
     {
         $a = $this->crearCurso('G1');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $this->get(route('reportes.asistencia.export', ['format' => 'excel']))
@@ -138,7 +137,7 @@ class AttendanceReportTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $enrollment = Enrollment::create(['student_id' => $otro->id, 'academic_year_id' => $a['gestion']->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $a['curso']->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $a['curso']->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         $userEst = $this->crearEstudianteUser($a['est']);
 
@@ -156,7 +155,7 @@ class AttendanceReportTest extends TestCase
         $userEst = $this->crearEstudianteUser($a['est']);
 
         $this->actingAs($userEst);
-        $this->get(route('reportes.asistencia.index', ['course_id' => $b['curso']->id]))
+        $this->get(route('reportes.asistencia.index', ['section_id' => $b['curso']->id]))
             ->assertForbidden();
     }
 }

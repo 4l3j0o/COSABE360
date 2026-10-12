@@ -12,15 +12,15 @@
         @include('layouts._volver', ['href' => route('docente.cursos'), 'texto' => 'Volver a Mis Cursos'])
         <h1 class="text-xl font-bold text-foreground mt-2">Evaluaciones por Trimestre</h1>
         <div class="mt-2 flex flex-wrap gap-2">
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>
-            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->codigoCorto() }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $sectionSubject->subject->nombre }}</span>
+            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->codigoCorto() }}</span>
         </div>
     </div>
 </div>
 
 <div class="bg-card border border-border rounded-xl p-5 mb-5">
     <h3 class="text-sm font-semibold text-foreground mb-3">Crear / abrir evaluación de un trimestre</h3>
-    <form method="POST" action="{{ route('evaluations.store', $courseSubject) }}" class="flex flex-wrap gap-3 items-end">
+    <form method="POST" action="{{ route('evaluations.store', $sectionSubject) }}" class="flex flex-wrap gap-3 items-end">
         @csrf
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Trimestre <span class="text-error">*</span></label>
@@ -60,7 +60,7 @@
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estilosEstado[$plan->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $plan->estado }}</span>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <a href="{{ route('evaluations.show', [$courseSubject, $plan]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                                <a href="{{ route('evaluations.show', [$sectionSubject, $plan]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                                     Cargar actividades y notas
                                 </a>
                             </td>

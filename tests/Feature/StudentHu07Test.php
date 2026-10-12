@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
 use App\Models\OperationHistory;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,11 +79,11 @@ class StudentHu07Test extends TestCase
             $nivel = Level::firstOrCreate(['nombre' => 'Primaria Ac'], ['orden' => 2, 'estado' => 'ACTIVO']);
             $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Ac '.fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
             $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
-            $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Ac '.fake()->unique()->numerify('##'), 'estado' => 'ACTIVO']);
+            $curso = $seccion;
 
             Registration::create([
                 'enrollment_id' => $enrollment->id,
-                'course_id' => $curso->id,
+                'section_id' => $curso->id,
                 'fecha' => '2026-03-02',
                 'monto_mensual' => 0,
                 'estado' => 'ACTIVA',

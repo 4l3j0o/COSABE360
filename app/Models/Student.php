@@ -93,14 +93,14 @@ class Student extends Model
                     ->where('enrollments.estado', 'COMPLETADA');
             })
             ->where('registrations.estado', 'ACTIVA')
-            ->with('course')
+            ->with('section')
             ->latest('id')
             ->first();
     }
 
-    public function activeCourse(): ?Course
+    public function activeSection(): ?Section
     {
-        return $this->activeRegistration()?->course;
+        return $this->activeRegistration()?->section;
     }
 
     public function documents(): HasMany

@@ -25,10 +25,10 @@
             @include('layouts._volver', ['href' => route('docente.cursos'), 'texto' => 'Volver a Mis Cursos'])
             <h1 class="text-xl font-bold text-foreground mt-2">Historial de Asistencia</h1>
             <div class="mt-2 flex flex-wrap gap-2">
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $courseSubject->subject->nombre }}</span>
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $courseSubject->course->nombre }}</span>
-                @if($course->aula)
-                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Aula {{ $course->aula }}</span>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $sectionSubject->subject->nombre }}</span>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->nombre }}</span>
+                @if($section->aula)
+                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Aula {{ $section->aula }}</span>
                 @endif
                 @if($dias->isNotEmpty())
                     <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Días: {{ $dias->map(fn ($dia) => ucfirst(strtolower($dia)))->implode(' · ') }}</span>
@@ -37,7 +37,7 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('docente.asistencias', $courseSubject) }}" class="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <form method="GET" action="{{ route('docente.asistencias', $sectionSubject) }}" class="bg-card border border-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div>
             <label class="text-xs font-medium text-muted-foreground block">Ver por mes</label>
             <select name="mes" class="mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
@@ -54,7 +54,7 @@
 
     <div class="bg-card border border-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border">
-            <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Asistencia de {{ $course->nombre }} — {{ $etiquetaMes }}</h2>
+            <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Asistencia de {{ $section->nombre }} — {{ $etiquetaMes }}</h2>
         </div>
 
         @if($fechas->isEmpty())

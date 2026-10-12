@@ -17,9 +17,9 @@ use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteCentralController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
-use App\Http\Controllers\CourseSubjectController;
+use App\Http\Controllers\SectionSubjectController;
 use App\Http\Controllers\CierreGestionController;
-use App\Http\Controllers\CourseController;
+use App\Http\Controllers\SectionController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\EvaluationReportController;
@@ -29,7 +29,6 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\SubjectController;
@@ -46,7 +45,7 @@ use App\Http\Controllers\RegenteController;
 use App\Http\Controllers\SignificantEventController;
 use App\Http\Controllers\TaxConfigurationController;
 use App\Http\Controllers\TeacherController;
-use App\Http\Controllers\TeacherCourseController;
+use App\Http\Controllers\TeacherSectionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,7 +86,7 @@ Route::get('/dashboard', function () {
         'totalEstudiantes' => \App\Models\Student::where('estado', '!=', 'ELIMINADO')->count(),
         'totalDocentes' => \App\Models\Teacher::where('estado', '!=', 'ELIMINADO')->count(),
         'totalUsuarios' => \App\Models\User::where('estado', '!=', 'ELIMINADO')->count(),
-        'totalCursos' => \App\Models\Course::where('estado', '!=', 'ELIMINADO')->count(),
+        'totalCursos' => \App\Models\Section::where('estado', '!=', 'ELIMINADO')->count(),
         'totalMaterias' => \App\Models\Subject::where('estado', '!=', 'ELIMINADO')->count(),
         'totalComunicados' => \App\Models\Announcement::count(),
         'totalMatriculados' => \App\Models\Enrollment::where('estado', 'COMPLETADA')->count(),
@@ -103,11 +102,11 @@ Route::get('/dashboard', function () {
     // Para el rol Docente: datos reales de cursos, evaluaciones y horario
     if ($rol === 'Docente') {
         $teacher = $user->teacher;
-        $courseSubjectIds = $teacher
-            ? \App\Models\CourseSubject::where('teacher_id', $teacher->id)->pluck('id')
+        $sectionSubjectIds = $teacher
+            ? \App\Models\SectionSubject::where('teacher_id', $teacher->id)->pluck('id')
             : collect();
-        $datos['misCursos'] = $courseSubjectIds->count();
-        $datos['misEvaluaciones'] = \App\Models\EvaluationPlan::whereIn('course_subject_id', $courseSubjectIds)->count();
+        $datos['misCursos'] = $sectionSubjectIds->count();
+        $datos['misEvaluaciones'] = \App\Models\EvaluationPlan::whereIn('section_subject_id', $sectionSubjectIds)->count();
         $datos['miHorario'] = $teacher
             ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count()
             : 0;
@@ -127,9 +126,9 @@ Route::get('/dashboard', function () {
                 + (clone $asistencias)->where('estado', 'PERMISO')->count();
             $datos['asistenciaPct'] = $totalAsist > 0 ? round(($presentes / $totalAsist) * 100, 0) : null;
 
-            $curso = $student->activeCourse();
+            $curso = $student->activeSection();
             $datos['curso'] = $curso;
-            $datos['materias'] = $curso ? $curso->courseSubjects()->count() : 0;
+            $datos['materias'] = $curso ? $curso->sectionSubjects()->count() : 0;
 
             // HU-59b: información económica del estudiante (mensualidades)
             $regActiva = $student->activeRegistration();
@@ -168,19 +167,9 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::delete('/docentes/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
 });
 
-// Cursos (creación/edición) - solo Administrador
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/cursos', [CourseController::class, 'index'])->name('courses.index');
-    Route::post('/cursos', [CourseController::class, 'store'])->name('courses.store');
-    Route::put('/cursos/{course}', [CourseController::class, 'update'])->name('courses.update');
-    Route::patch('/cursos/{course}/alternar', [CourseController::class, 'toggle'])->name('courses.toggle');
-    Route::delete('/cursos/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
-});
-
-// Cursos (ver) - todos los autenticados
-Route::middleware('auth')->get('/cursos/{course}', [CourseController::class, 'show'])->name('courses.show');
-// HU-61: calificaciones viejas del curso retiradas -> ficha del curso.
-Route::middleware('auth')->get('/cursos/{course}/calificaciones', fn (App\Models\Course $course) => redirect()->route('courses.show', $course))->name('courses.calificaciones');
+// HU-69: el módulo "Cursos" se unificó dentro de "Paralelos".
+Route::middleware('auth')->get('/cursos/{any?}', fn () => redirect()->route('sections.index'))
+    ->where('any', '.*')->name('courses.redirect');
 
 // Estudiantes: consulta (Administrador, Director y Secretaría) y gestión (solo Administrador)
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
@@ -247,56 +236,59 @@ Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
         return redirect()->route('dashboard');
     })->name('calificaciones.index');
     Route::get('/{assessment}/ver', function (App\Models\Assessment $assessment) {
-        return $assessment->course_subject_id
-            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+        return $assessment->section_subject_id
+            ? redirect()->route('evaluations.index', $assessment->section_subject_id)
             : redirect()->route('docente.cursos');
     })->name('calificaciones.ver');
     Route::get('/{assessment}', function (App\Models\Assessment $assessment) {
-        return $assessment->course_subject_id
-            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+        return $assessment->section_subject_id
+            ? redirect()->route('evaluations.index', $assessment->section_subject_id)
             : redirect()->route('docente.cursos');
     })->name('calificaciones.show');
     Route::put('/{assessment}', function (App\Models\Assessment $assessment) {
-        return $assessment->course_subject_id
-            ? redirect()->route('evaluations.index', $assessment->course_subject_id)
+        return $assessment->section_subject_id
+            ? redirect()->route('evaluations.index', $assessment->section_subject_id)
             : redirect()->route('docente.cursos');
     })->name('calificaciones.update');
 });
 
-// Mis Cursos del docente - evaluaciones por curso/paralelo (course_subject)
+// Mis Cursos del docente - evaluaciones por curso/paralelo (section_subject)
 Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
-    Route::get('/', [TeacherCourseController::class, 'index'])->name('docente.cursos');
+    Route::get('/', [TeacherSectionController::class, 'index'])->name('docente.cursos');
     // Evaluaciones por trimestre y criterios (HU-47)
-    Route::get('/{courseSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'index'])->name('evaluations.index');
-    Route::post('/{courseSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'guardar'])->name('evaluations.store');
-    Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}', [EvaluationPlanController::class, 'show'])->name('evaluations.show');
-    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/actividad', [EvaluationPlanController::class, 'agregarActividad'])->name('evaluations.activity');
-    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/notas', [EvaluationPlanController::class, 'guardarNotas'])->name('evaluations.grades');
-    Route::get('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'descargarPlantilla'])->name('evaluations.template-download');
-    Route::post('/{courseSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'subirPlantilla'])->name('evaluations.template-upload');
+    Route::get('/{sectionSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'index'])->name('evaluations.index');
+    Route::post('/{sectionSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'guardar'])->name('evaluations.store');
+    Route::get('/{sectionSubject}/evaluaciones-trimestre/{plan}', [EvaluationPlanController::class, 'show'])->name('evaluations.show');
+    Route::post('/{sectionSubject}/evaluaciones-trimestre/{plan}/actividad', [EvaluationPlanController::class, 'agregarActividad'])->name('evaluations.activity');
+    Route::post('/{sectionSubject}/evaluaciones-trimestre/{plan}/notas', [EvaluationPlanController::class, 'guardarNotas'])->name('evaluations.grades');
+    Route::get('/{sectionSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'descargarPlantilla'])->name('evaluations.template-download');
+    Route::post('/{sectionSubject}/evaluaciones-trimestre/{plan}/plantilla', [EvaluationPlanController::class, 'subirPlantilla'])->name('evaluations.template-upload');
 
     // HU-61: evaluaciones/calificaciones viejas por curso -> sistema vigente.
-    Route::get('/{courseSubject}/evaluaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones');
-    Route::get('/{courseSubject}/evaluaciones/crear', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones.create');
-    Route::post('/{courseSubject}/evaluaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.evaluaciones.store');
+    Route::get('/{sectionSubject}/evaluaciones', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.evaluaciones');
+    Route::get('/{sectionSubject}/evaluaciones/crear', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.evaluaciones.create');
+    Route::post('/{sectionSubject}/evaluaciones', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.evaluaciones.store');
 
     // Asistencia del curso: historial por año / bimestre
-    Route::get('/{courseSubject}/asistencias', [AttendanceController::class, 'porCurso'])->name('docente.asistencias');
+    Route::get('/{sectionSubject}/asistencias', [AttendanceController::class, 'porCurso'])->name('docente.asistencias');
 
     // HU-61: calificaciones viejas por curso -> sistema vigente.
-    Route::get('/{courseSubject}/evaluaciones/{assessment}/calificaciones', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.calificaciones');
+    Route::get('/{sectionSubject}/evaluaciones/{assessment}/calificaciones', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.calificaciones');
 
     // HU-61: matriz vieja por estudiante -> sistema vigente.
-    Route::get('/{courseSubject}/notas', fn (App\Models\CourseSubject $courseSubject) => redirect()->route('evaluations.index', $courseSubject))->name('docente.notas-curso');
+    Route::get('/{sectionSubject}/notas', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.notas-curso');
 });
 
-// HU-13: Administrar paralelos solo Administrador
+// HU-13 + HU-69: Administrar paralelos (unidad-clase: grado + gestión + aula) solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(function () {
     Route::get('/', [SectionController::class, 'index'])->name('sections.index');
     Route::post('/', [SectionController::class, 'store'])->name('sections.store');
     Route::put('/{section}', [SectionController::class, 'update'])->name('sections.update');
+    Route::patch('/{section}/alternar', [SectionController::class, 'toggle'])->name('sections.toggle');
     Route::delete('/{section}', [SectionController::class, 'destroy'])->name('sections.destroy');
 });
+Route::middleware('auth')->get('/paralelos/{section}', [SectionController::class, 'show'])->name('sections.show');
+Route::middleware('auth')->get('/paralelos/{section}/calificaciones', fn (App\Models\Section $section) => redirect()->route('sections.show', $section))->name('sections.calificaciones');
 
 // Materias: consulta (Administrador y Director) y gestión (solo Administrador)
 Route::middleware(['auth', 'role:Administrador,Director'])->prefix('materias')->group(function () {
@@ -311,9 +303,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(fun
 
 // HU-16: Asignar docentes a materias y cursos solo Administrador
 Route::middleware(['auth', 'role:Administrador'])->prefix('asignaciones-docentes')->group(function () {
-    Route::get('/', [CourseSubjectController::class, 'index'])->name('course_subjects.index');
-    Route::get('/crear', [CourseSubjectController::class, 'create'])->name('course_subjects.create');
-    Route::post('/', [CourseSubjectController::class, 'store'])->name('course_subjects.store');
+    Route::get('/', [SectionSubjectController::class, 'index'])->name('section_subjects.index');
+    Route::get('/crear', [SectionSubjectController::class, 'create'])->name('section_subjects.create');
+    Route::post('/', [SectionSubjectController::class, 'store'])->name('section_subjects.store');
 });
 
 // HU-08: Registrar padres/tutores solo Administrador
@@ -378,8 +370,8 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(fun
     Route::post('/iniciar', [ScheduleController::class, 'iniciar'])->name('schedules.iniciar');
     Route::delete('/clases/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
     Route::get('/docente/{teacher}', [ScheduleController::class, 'horarioDocente'])->name('schedules.docente');
-    Route::get('/{course}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
-    Route::get('/{course}', [ScheduleController::class, 'show'])->name('schedules.show');
+    Route::get('/{section}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
+    Route::get('/{section}', [ScheduleController::class, 'show'])->name('schedules.show');
 });
 
 // HU-29: Consultar horario - Estudiante y Docente
@@ -497,9 +489,9 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('datos')->group(functi
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
 Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->prefix('regente')->group(function () {
     Route::get('/', [RegenteController::class, 'cursos'])->name('regente.cursos');
-    Route::get('/{course}', [RegenteController::class, 'verCurso'])->name('regente.curso');
-    Route::post('/{course}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
-    Route::post('/{course}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
+    Route::get('/{section}', [RegenteController::class, 'verCurso'])->name('regente.curso');
+    Route::post('/{section}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
+    Route::post('/{section}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
 });
 
 // HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada

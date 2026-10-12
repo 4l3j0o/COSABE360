@@ -19,17 +19,17 @@
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso</label>
-        <select name="course_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+        <select name="section_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
             @foreach($cursos as $c)
-                <option value="{{ $c->id }}" {{ request('course_id', $curso?->id) == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
+                <option value="{{ $c->id }}" {{ request('section_id', $curso?->id) == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
             @endforeach
         </select>
     </div>
     <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Ver</button>
     @if($curso)
         <div class="flex gap-2 ml-auto">
-            <a href="{{ route('cierre-gestion.export', ['course_id' => $curso->id, 'format' => 'pdf']) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">PDF</a>
-            <a href="{{ route('cierre-gestion.export', ['course_id' => $curso->id, 'format' => 'excel']) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">Excel</a>
+            <a href="{{ route('cierre-gestion.export', ['section_id' => $curso->id, 'format' => 'pdf']) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">PDF</a>
+            <a href="{{ route('cierre-gestion.export', ['section_id' => $curso->id, 'format' => 'excel']) }}" class="px-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground hover:bg-muted">Excel</a>
         </div>
     @endif
 </form>

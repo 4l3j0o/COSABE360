@@ -4,14 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\ConductaReporte;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -35,13 +34,13 @@ class ConductaReporteTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Primero Cond ' . fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Cond ' . fake()->unique()->numerify('##'), 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Tecnología Cond'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
         $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Cond', 'email' => 'doc_cond_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'nombres' => 'Docente', 'apellidos' => 'Cond', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
-        $courseSubject = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        $sectionSubject = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         $estudiantes = collect();
         foreach (['Juan Carlos', 'María Luz'] as $i => $nom) {
@@ -53,7 +52,7 @@ class ConductaReporteTest extends TestCase
                 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO',
             ]);
             $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-            Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+            Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
             $estudiantes->push($est);
         }
 
@@ -61,7 +60,7 @@ class ConductaReporteTest extends TestCase
         $userEst = User::create(['nombre' => 'Juan', 'apellido' => 'Carlos', 'email' => 'est_cond_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
         $estudiantes[0]->update(['user_id' => $userEst->id]);
 
-        return compact('curso', 'subject', 'teacher', 'userDocente', 'estudiantes', 'userEst', 'courseSubject');
+        return compact('curso', 'subject', 'teacher', 'userDocente', 'estudiantes', 'userEst', 'sectionSubject');
     }
 
     public function test_conducta_requiere_autenticacion(): void
@@ -75,7 +74,7 @@ class ConductaReporteTest extends TestCase
         $this->actingAs($d['userDocente']);
 
         $response = $this->post('/conducta', [
-            'course_id' => $d['curso']->id,
+            'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
             'student_id' => $d['estudiantes'][0]->id,
             'tipo_falta' => 'GRAVE',
@@ -84,7 +83,7 @@ class ConductaReporteTest extends TestCase
             'descripcion' => 'Se levantó de su silla y empezó a molestar a sus compañeros en horario de clases.',
         ]);
 
-        $response->assertRedirect(route('conducta.index', ['course_id' => $d['curso']->id]));
+        $response->assertRedirect(route('conducta.index', ['section_id' => $d['curso']->id]));
         $this->assertDatabaseHas('conducta_reportes', [
             'student_id' => $d['estudiantes'][0]->id,
             'tipo_falta' => 'GRAVE',
@@ -100,7 +99,7 @@ class ConductaReporteTest extends TestCase
 
         $this->actingAs($otro);
         $this->post('/conducta', [
-            'course_id' => $d['curso']->id,
+            'section_id' => $d['curso']->id,
             'student_id' => $d['estudiantes'][0]->id,
             'tipo_falta' => 'LEVE',
             'fecha' => '2026-04-10',
@@ -112,7 +111,7 @@ class ConductaReporteTest extends TestCase
     {
         $d = $this->crearCurso();
         ConductaReporte::create([
-            'student_id' => $d['estudiantes'][0]->id, 'course_id' => $d['curso']->id,
+            'student_id' => $d['estudiantes'][0]->id, 'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id, 'teacher_id' => $d['teacher']->id,
             'tipo_falta' => 'GRAVE', 'fecha' => '2026-04-10', 'hora' => '10:30',
             'descripcion' => 'Molestó a sus compañeros durante la clase de tecnología.',
@@ -120,7 +119,7 @@ class ConductaReporteTest extends TestCase
         ]);
 
         $this->actingAs($d['userDocente']);
-        $response = $this->get('/conducta?course_id=' . $d['curso']->id);
+        $response = $this->get('/conducta?section_id=' . $d['curso']->id);
         $response->assertStatus(200);
         $response->assertSee('Molestó a sus compañeros');
         $response->assertSee('Grave');
@@ -131,7 +130,7 @@ class ConductaReporteTest extends TestCase
         $d = $this->crearCurso();
         foreach ([0, 1] as $i) {
             ConductaReporte::create([
-                'student_id' => $d['estudiantes'][$i]->id, 'course_id' => $d['curso']->id,
+                'student_id' => $d['estudiantes'][$i]->id, 'section_id' => $d['curso']->id,
                 'subject_id' => $d['subject']->id, 'teacher_id' => $d['teacher']->id,
                 'tipo_falta' => 'LEVE', 'fecha' => '2026-04-10',
                 'descripcion' => 'Reporte del estudiante número ' . ($i + 1) . ' para aislamiento.',
@@ -140,7 +139,7 @@ class ConductaReporteTest extends TestCase
         }
 
         $this->actingAs($d['userEst']);
-        $response = $this->get('/conducta?course_id=' . $d['curso']->id);
+        $response = $this->get('/conducta?section_id=' . $d['curso']->id);
         $response->assertStatus(200);
         $response->assertSee('Reporte del estudiante número 1');
         $response->assertDontSee('Reporte del estudiante número 2');
@@ -150,7 +149,7 @@ class ConductaReporteTest extends TestCase
     {
         $d = $this->crearCurso();
         ConductaReporte::create([
-            'student_id' => $d['estudiantes'][0]->id, 'course_id' => $d['curso']->id,
+            'student_id' => $d['estudiantes'][0]->id, 'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id, 'teacher_id' => $d['teacher']->id,
             'tipo_falta' => 'MUY_GRAVE', 'fecha' => '2026-04-11',
             'descripcion' => 'Falta muy grave de prueba para el historial específico.',
@@ -168,7 +167,7 @@ class ConductaReporteTest extends TestCase
             ->assertStatus(200)
             ->assertHeader('content-type', 'application/pdf');
 
-        $this->get('/conducta/exportar?course_id=' . $d['curso']->id . '&format=excel')
+        $this->get('/conducta/exportar?section_id=' . $d['curso']->id . '&format=excel')
             ->assertStatus(200)
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
@@ -179,7 +178,7 @@ class ConductaReporteTest extends TestCase
         $this->actingAs($d['userDocente']);
 
         $this->post('/conducta', [
-            'course_id' => $d['curso']->id,
+            'section_id' => $d['curso']->id,
             'student_id' => $d['estudiantes'][0]->id,
             'tipo_falta' => 'INEXISTENTE',
             'fecha' => '2026-04-10',
@@ -194,7 +193,7 @@ class ConductaReporteTest extends TestCase
 
         $antes = now('America/La_Paz')->format('H:i');
         $this->post('/conducta', [
-            'course_id' => $d['curso']->id,
+            'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
             'student_id' => $d['estudiantes'][0]->id,
             'tipo_falta' => 'LEVE',

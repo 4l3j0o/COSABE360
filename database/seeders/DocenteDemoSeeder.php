@@ -6,7 +6,7 @@ use App\Models\Announcement;
 use App\Models\AnnouncementRecipient;
 use App\Models\Attendance;
 use App\Models\ConductaReporte;
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\DiarioAula;
 use App\Models\Registration;
 use App\Models\Schedule;
@@ -41,7 +41,7 @@ class DocenteDemoSeeder extends Seeder
             return;
         }
 
-        $asignaciones = CourseSubject::with(['course', 'subject'])
+        $asignaciones = SectionSubject::with(['section', 'subject'])
             ->where('teacher_id', $teacher->id)->get();
         if ($asignaciones->isEmpty()) {
             $this->command->warn('DocenteDemoSeeder: el docente no tiene cursos asignados.');
@@ -93,7 +93,7 @@ class DocenteDemoSeeder extends Seeder
             $ini = $ahora->copy()->subMinutes(30)->format('H:i');
             $fin = $ahora->copy()->addMinutes(60)->format('H:i');
             Schedule::create([
-                'course_id' => $primera->course_id, 'subject_id' => $primera->subject_id,
+                'section_id' => $primera->section_id, 'subject_id' => $primera->subject_id,
                 'teacher_id' => $teacher->id, 'dia' => $diaHoy,
                 'hora_inicio' => $ini, 'hora_fin' => $fin, 'estado' => 'ACTIVO',
             ]);
@@ -122,7 +122,7 @@ class DocenteDemoSeeder extends Seeder
                     continue;
                 }
                 Schedule::create([
-                    'course_id' => $cs->course_id, 'subject_id' => $cs->subject_id,
+                    'section_id' => $cs->section_id, 'subject_id' => $cs->subject_id,
                     'teacher_id' => $teacher->id, 'dia' => $dia,
                     'hora_inicio' => $ini, 'hora_fin' => $fin, 'estado' => 'ACTIVO',
                 ]);
@@ -163,7 +163,7 @@ class DocenteDemoSeeder extends Seeder
         foreach ($asignaciones as $i => $cs) {
             foreach ($fechas as $j => $fecha) {
                 DiarioAula::create([
-                    'course_id' => $cs->course_id,
+                    'section_id' => $cs->section_id,
                     'subject_id' => $cs->subject_id,
                     'teacher_id' => $teacher->id,
                     'fecha' => $fecha,
@@ -198,7 +198,7 @@ class DocenteDemoSeeder extends Seeder
         $fechas = $this->ultimosDiasClase(10);
         $n = 0;
         foreach ($asignaciones as $cs) {
-            $estudiantes = $this->estudiantesDelCurso($cs->course_id);
+            $estudiantes = $this->estudiantesDelCurso($cs->section_id);
             if ($estudiantes->isEmpty()) {
                 continue;
             }
@@ -206,7 +206,7 @@ class DocenteDemoSeeder extends Seeder
                 [$tipo, $desc] = $casos[($n * 3 + $k * 2) % count($casos)];
                 ConductaReporte::create([
                     'student_id' => $estudiantes[$n % $estudiantes->count()]->id,
-                    'course_id' => $cs->course_id,
+                    'section_id' => $cs->section_id,
                     'subject_id' => $cs->subject_id,
                     'teacher_id' => $teacher->id,
                     'tipo_falta' => $tipo,
@@ -233,14 +233,14 @@ class DocenteDemoSeeder extends Seeder
 
         $fechas = $this->ultimosDiasClase(5);
         foreach ($asignaciones as $cs) {
-            $estudiantes = $this->estudiantesDelCurso($cs->course_id);
+            $estudiantes = $this->estudiantesDelCurso($cs->section_id);
             foreach ($fechas as $fecha) {
                 foreach ($estudiantes as $est) {
                     $r = rand(1, 100);
                     $estado = $r <= 85 ? 'PRESENTE' : ($r <= 93 ? 'ATRASO' : ($r <= 98 ? 'FALTA' : 'PERMISO'));
                     Attendance::create([
                         'student_id' => $est->id,
-                        'course_id' => $cs->course_id,
+                        'section_id' => $cs->section_id,
                         'subject_id' => $cs->subject_id,
                         'fecha' => $fecha,
                         'estado' => $estado,
@@ -281,9 +281,9 @@ class DocenteDemoSeeder extends Seeder
 
     // ---------- apoyo ----------
 
-    private function estudiantesDelCurso(int $courseId)
+    private function estudiantesDelCurso(int $sectionId)
     {
-        return Registration::where('estado', 'ACTIVA')->where('course_id', $courseId)
+        return Registration::where('estado', 'ACTIVA')->where('section_id', $sectionId)
             ->with('enrollment.estudiante')
             ->whereHas('enrollment.estudiante', fn ($q) => $q->where('estado', 'ACTIVO'))
             ->get()->map(fn ($r) => $r->enrollment?->estudiante)->filter()->unique('id')->values();

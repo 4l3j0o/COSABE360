@@ -4,14 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\Announcement;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -58,7 +57,7 @@ class ComunicadoAlcanceTest extends TestCase
         );
     }
 
-    private function curso(Level $level, string $sufijo = 'A'): Course
+    private function curso(Level $level, string $sufijo = 'A'): Section
     {
         $this->seq++;
         $grado = Grade::create(['level_id' => $level->id, 'nombre' => "Grado {$this->seq}", 'orden' => 1, 'estado' => 'ACTIVO']);
@@ -68,7 +67,7 @@ class ComunicadoAlcanceTest extends TestCase
             ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']
         );
 
-        return Course::create([
+        return Section::create([
             'grade_id' => $grado->id,
             'section_id' => $paralelo->id,
             'academic_year_id' => $gestion->id,
@@ -77,7 +76,7 @@ class ComunicadoAlcanceTest extends TestCase
         ]);
     }
 
-    private function docenteDe(Course $curso): User
+    private function docenteDe(Section $curso): User
     {
         $user = $this->usuario('Docente');
         $teacher = Teacher::create([
@@ -89,12 +88,12 @@ class ComunicadoAlcanceTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $materia = Subject::create(['nombre' => 'Materia ' . $teacher->id . '-' . rand(100, 999), 'level_id' => $curso->grade->level_id, 'orden' => 1, 'estado' => 'ACTIVO']);
-        CourseSubject::create(['subject_id' => $materia->id, 'course_id' => $curso->id, 'teacher_id' => $teacher->id]);
+        SectionSubject::create(['subject_id' => $materia->id, 'section_id' => $curso->id, 'teacher_id' => $teacher->id]);
 
         return $user;
     }
 
-    private function estudianteEn(Course $curso): User
+    private function estudianteEn(Section $curso): User
     {
         $user = $this->usuario('Estudiante');
         $student = Student::create([
@@ -117,7 +116,7 @@ class ComunicadoAlcanceTest extends TestCase
         ]);
         Registration::create([
             'enrollment_id' => $enrollment->id,
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-05',
             'estado' => 'ACTIVA',
         ]);
@@ -133,7 +132,7 @@ class ComunicadoAlcanceTest extends TestCase
         return $director;
     }
 
-    private function comunicado(string $tipo, ?int $courseId = null, ?int $levelId = null): Announcement
+    private function comunicado(string $tipo, ?int $sectionId = null, ?int $levelId = null): Announcement
     {
         $admin = $this->usuario('Administrador');
         $ann = Announcement::create([
@@ -145,7 +144,7 @@ class ComunicadoAlcanceTest extends TestCase
         ]);
         $ann->recipients()->create([
             'tipo_destinatario' => $tipo,
-            'course_id' => $courseId,
+            'section_id' => $sectionId,
             'level_id' => $levelId,
         ]);
 
@@ -161,7 +160,7 @@ class ComunicadoAlcanceTest extends TestCase
             'titulo' => 'Aviso de mi curso',
             'contenido' => 'Mañana traigan cuaderno',
             'tipo_destinatario' => 'CURSO_ESPECIFICO',
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'estado' => 'PUBLICADO',
         ]);
 
@@ -179,7 +178,7 @@ class ComunicadoAlcanceTest extends TestCase
             'titulo' => 'Aviso ajeno',
             'contenido' => 'Contenido',
             'tipo_destinatario' => 'CURSO_ESPECIFICO',
-            'course_id' => $ajeno->id,
+            'section_id' => $ajeno->id,
         ]);
 
         $response->assertSessionHas('error');
@@ -313,7 +312,7 @@ class ComunicadoAlcanceTest extends TestCase
             'titulo' => 'Aviso unificado',
             'contenido' => 'Contenido',
             'tipo_destinatario' => 'CURSO_ESPECIFICO',
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'estado' => 'PUBLICADO',
         ]);
 

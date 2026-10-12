@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -32,8 +32,8 @@ class AnnouncementSeeder extends Seeder
         $gestion = AcademicYear::where('estado', 'ACTIVA')->first()
             ?? AcademicYear::first();
 
-        $cursoDemo = Course::where('estado', 'ACTIVO')->orderBy('id')->value('id');
-        $cursoNombre = $cursoDemo ? Course::find($cursoDemo)->nombre : '';
+        $cursoDemo = Section::where('estado', 'ACTIVO')->orderBy('id')->value('id');
+        $cursoNombre = $cursoDemo ? Section::find($cursoDemo)->nombre : '';
 
         $docentesIds = $this->usuariosDeRol('Docente');
         $estudiantesIds = $this->usuariosDeRol('Estudiante');
@@ -44,7 +44,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => "Saludos a toda la comunidad educativa. Damos inicio al año escolar {$gestion?->nombre}. Revisen el calendario de actividades y las fechas de evaluaciones publicadas en el sistema.",
                 'diasAtras'       => 12,
                 'tipo'            => 'TODOS',
-                'course_id'       => null,
+                'section_id'       => null,
                 'user_id'         => null,
                 'destinatarios'   => null,
             ],
@@ -53,7 +53,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => 'Se convoca a todos los docentes a la reunión de planificación curricular del primer bimestre en la sala de profesores, a las 15:00. Favor asistir con su plan de clases.',
                 'diasAtras'       => 9,
                 'tipo'            => 'DOCENTES',
-                'course_id'       => null,
+                'section_id'       => null,
                 'user_id'         => null,
                 'destinatarios'   => $docentesIds,
             ],
@@ -62,7 +62,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => 'Se recuerda a los estudiantes que la entrega de documentos (RUDE, certificado de nacimiento y libreta) es requisito para completar su matrícula. Revisen su estado en el módulo de documentos.',
                 'diasAtras'       => 8,
                 'tipo'            => 'ESTUDIANTES',
-                'course_id'       => null,
+                'section_id'       => null,
                 'user_id'         => null,
                 'destinatarios'   => $estudiantesIds,
             ],
@@ -71,7 +71,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => 'Invitamos a los padres y tutores a la reunión informativa sobre el rendimiento académico del primer bimestre. Se realizará en el patio central. Los esperamos.',
                 'diasAtras'       => 6,
                 'tipo'            => 'TODOS',
-                'course_id'       => null,
+                'section_id'       => null,
                 'user_id'         => null,
                 'destinatarios'   => null,
             ],
@@ -80,7 +80,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => 'Se informa a los estudiantes y padres del curso que se realizará la feria de ciencias con las materias de Física y Biología. La participación es obligatoria.',
                 'diasAtras'       => 3,
                 'tipo'            => 'CURSO_ESPECIFICO',
-                'course_id'       => $cursoDemo,
+                'section_id'       => $cursoDemo,
                 'user_id'         => null,
                 'destinatarios'   => $this->usuariosDelCurso($cursoDemo),
             ],
@@ -89,7 +89,7 @@ class AnnouncementSeeder extends Seeder
                 'contenido'       => 'Debido al mantenimiento del edificio, la próxima semana habrá ajustes en los horarios de salida. Se publicará el nuevo horario en el panel de anuncios.',
                 'diasAtras'       => 1,
                 'tipo'            => 'TODOS',
-                'course_id'       => null,
+                'section_id'       => null,
                 'user_id'         => null,
                 'destinatarios'   => null,
             ],
@@ -114,7 +114,7 @@ class AnnouncementSeeder extends Seeder
 
             $anuncio->recipients()->create([
                 'tipo_destinatario' => $datos['tipo'],
-                'course_id'         => $datos['course_id'],
+                'section_id'         => $datos['section_id'],
                 'user_id'           => $datos['user_id'],
                 'level_id'          => $datos['level_id'] ?? null,
             ]);
@@ -149,16 +149,16 @@ class AnnouncementSeeder extends Seeder
         return User::where('estado', 'ACTIVO')->pluck('id');
     }
 
-    private function usuariosDelCurso(?int $courseId): \Illuminate\Support\Collection
+    private function usuariosDelCurso(?int $sectionId): \Illuminate\Support\Collection
     {
-        if (! $courseId) {
+        if (! $sectionId) {
             return collect();
         }
 
         $ids = collect();
 
         // Estudiantes matriculados en el curso.
-        $studentUserIds = \App\Models\Registration::where('course_id', $courseId)
+        $studentUserIds = \App\Models\Registration::where('section_id', $sectionId)
             ->where('estado', 'ACTIVA')
             ->with(['enrollment.estudiante.user'])
             ->get()
@@ -168,7 +168,7 @@ class AnnouncementSeeder extends Seeder
         $ids = $ids->merge($studentUserIds);
 
         // Padres/tutores de esos estudiantes.
-        $studentIds = \App\Models\Registration::where('course_id', $courseId)
+        $studentIds = \App\Models\Registration::where('section_id', $sectionId)
             ->where('estado', 'ACTIVA')
             ->with('enrollment.estudiante')
             ->get()

@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Assessment;
 use App\Models\Attendance;
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationPlan;
 use App\Models\Level;
 use App\Models\Schedule;
@@ -13,8 +13,8 @@ use Illuminate\Database\Seeder;
 
 /**
  * HU-59: normaliza el catálogo de materias.
- * - Fusiona duplicadas en la canónica oficial (remapea course_subjects,
- *   assessments, schedules y attendances; fusiona course_subjects colisionados).
+ * - Fusiona duplicadas en la canónica oficial (remapea section_subjects,
+ *   assessments, schedules y attendances; fusiona section_subjects colisionados).
  * - Elimina las antiguas sin ninguna referencia (si aparece alguna con
  *   referencias inesperadas, se marca INACTIVO en vez de borrar).
  * - Idempotente. Debe correr DESPUÉS de MateriasOficialesSeeder.
@@ -100,15 +100,15 @@ class NormalizarMateriasSeeder extends Seeder
         Attendance::where('subject_id', $vieja->id)->update(['subject_id' => $canonica->id]);
 
         // Asignaciones: fusiona colisionadas (curso+docente), remapea el resto
-        foreach (CourseSubject::where('subject_id', $vieja->id)->get() as $cs) {
-            $existente = CourseSubject::where('course_id', $cs->course_id)
+        foreach (SectionSubject::where('subject_id', $vieja->id)->get() as $cs) {
+            $existente = SectionSubject::where('section_id', $cs->section_id)
                 ->where('subject_id', $canonica->id)
                 ->where('teacher_id', $cs->teacher_id)
                 ->first();
 
             if ($existente) {
-                Assessment::where('course_subject_id', $cs->id)->update(['course_subject_id' => $existente->id]);
-                EvaluationPlan::where('course_subject_id', $cs->id)->update(['course_subject_id' => $existente->id]);
+                Assessment::where('section_subject_id', $cs->id)->update(['section_subject_id' => $existente->id]);
+                EvaluationPlan::where('section_subject_id', $cs->id)->update(['section_subject_id' => $existente->id]);
                 $cs->delete();
             } else {
                 $cs->update(['subject_id' => $canonica->id]);
@@ -130,7 +130,7 @@ class NormalizarMateriasSeeder extends Seeder
             return;
         }
 
-        $enUso = CourseSubject::where('subject_id', $vieja->id)->exists()
+        $enUso = SectionSubject::where('subject_id', $vieja->id)->exists()
             || Assessment::where('subject_id', $vieja->id)->exists()
             || Schedule::where('subject_id', $vieja->id)->exists()
             || Attendance::where('subject_id', $vieja->id)->exists();
