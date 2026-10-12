@@ -8,7 +8,6 @@ use App\Models\CourseSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Role;
 use App\Models\Section;
@@ -62,16 +61,6 @@ class AttendanceReportTest extends TestCase
         return compact('user', 'teacher');
     }
 
-    private function crearTutor(Student $hijo): User
-    {
-        $rol = Role::where('nombre', 'Padre/Tutor')->first();
-        $user = User::create(['nombre' => 'Padre', 'apellido' => 'Rep', 'email' => 'padre_rep_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
-        $tutor = ParentGuardian::create(['user_id' => $user->id, 'nombres' => 'Padre', 'apellidos' => 'Rep', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
-        $tutor->students()->attach($hijo->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
-
-        return $user;
-    }
-
     public function test_docente_sin_curso_ve_prompt(): void
     {
         $a = $this->crearCurso('A1');
@@ -111,48 +100,6 @@ class AttendanceReportTest extends TestCase
         CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $this->get(route('reportes.asistencia.index', ['course_id' => $b['curso']->id]))
-            ->assertForbidden();
-    }
-
-    public function test_tutor_ve_solo_cursos_de_sus_hijos(): void
-    {
-        $a = $this->crearCurso('D1');
-        $b = $this->crearCurso('D2');
-        $tutorUser = $this->crearTutor($a['est']);
-
-        $this->actingAs($tutorUser);
-        $response = $this->get(route('reportes.asistencia.index'));
-        $response->assertStatus(200);
-        $response->assertSee($a['curso']->nombre);
-        $response->assertDontSee($b['curso']->nombre);
-    }
-
-    public function test_tutor_genera_reporte_por_materia(): void
-    {
-        $a = $this->crearCurso('E1');
-        $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        $tutorUser = $this->crearTutor($a['est']);
-
-        $this->actingAs($tutorUser);
-        $response = $this->get(route('reportes.asistencia.index', [
-            'rango' => 'mes',
-            'course_id' => $a['curso']->id,
-            'subject_id' => $a['subject']->id,
-        ]));
-        $response->assertStatus(200);
-        $response->assertSee('ApellidoRepE1');
-        $response->assertSee($a['subject']->nombre);
-    }
-
-    public function test_tutor_no_accede_a_curso_ajeno(): void
-    {
-        $a = $this->crearCurso('F1');
-        $b = $this->crearCurso('F2');
-        $tutorUser = $this->crearTutor($a['est']);
-
-        $this->actingAs($tutorUser);
         $this->get(route('reportes.asistencia.index', ['course_id' => $b['curso']->id]))
             ->assertForbidden();
     }

@@ -105,33 +105,6 @@
 
             <div class="space-y-6">
                 <div class="bg-card border border-border rounded-xl p-6">
-                    <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Cuenta de Acceso</h3>
-                    @if($parentGuardian->user)
-                        <div class="mb-3">
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">Con acceso al sistema</span>
-                        </div>
-                        <dl class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Usuario</dt>
-                                <dd class="text-foreground">{{ $parentGuardian->user->nombre }} {{ $parentGuardian->user->apellido }}</dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Correo</dt>
-                                <dd class="text-foreground">{{ $parentGuardian->user->email }}</dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Estado</dt>
-                                <dd>
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresEstado[$parentGuardian->user->estado] ?? 'bg-muted text-muted-foreground' }}">{{ mb_strtolower($parentGuardian->user->estado) }}</span>
-                                </dd>
-                            </div>
-                        </dl>
-                    @else
-                        <p class="text-sm text-muted-foreground">Sin cuenta de usuario (solo los tutores reciben acceso).</p>
-                    @endif
-                </div>
-
-                <div class="bg-card border border-border rounded-xl p-6">
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Estudiantes a cargo</h3>
                     @php
                         $vinculos = $parentGuardian->students->map(fn($s) => [

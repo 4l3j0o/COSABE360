@@ -39,12 +39,6 @@ class AdminUserSeeder extends Seeder
                 'rol' => 'Docente',
             ],
             [
-                'email' => 'padre@sanber.edu.bo',
-                'nombre' => 'Jorge',
-                'apellido' => 'Flores',
-                'rol' => 'Padre/Tutor',
-            ],
-            [
                 'email' => 'estudiante@sanber.edu.bo',
                 'nombre' => 'Lucía',
                 'apellido' => 'Torres',

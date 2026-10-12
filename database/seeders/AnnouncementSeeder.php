@@ -37,7 +37,6 @@ class AnnouncementSeeder extends Seeder
 
         $docentesIds = $this->usuariosDeRol('Docente');
         $estudiantesIds = $this->usuariosDeRol('Estudiante');
-        $padresIds = $this->usuariosDeRol('Padre/Tutor');
 
         $comunicados = [
             [
@@ -74,7 +73,7 @@ class AnnouncementSeeder extends Seeder
                 'tipo'            => 'PADRES',
                 'course_id'       => null,
                 'user_id'         => null,
-                'destinatarios'   => $padresIds,
+                'destinatarios'   => collect(),
             ],
             [
                 'titulo'          => "Feria de la ciencia - curso {$cursoNombre}",

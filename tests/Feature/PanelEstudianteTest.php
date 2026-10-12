@@ -8,7 +8,6 @@ use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\MonthlyPayment;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Role;
 use App\Models\Section;
@@ -83,18 +82,5 @@ class PanelEstudianteTest extends TestCase
         // Al día sí lo ve
         MonthlyPayment::where('registration_id', $a['registration']->id)->update(['estado' => 'PAGADA']);
         $this->actingAs($a['userEst'])->get(route('boletin.show', $a['est']))->assertOk();
-    }
-
-    public function test_padre_tambien_bloqueado_si_hijo_debe(): void
-    {
-        $a = $this->base('D1');
-
-        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
-        $userPadre = User::create(['nombre' => 'P', 'apellido' => 'P', 'email' => 'padre_d1@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolPadre->id, 'estado' => 'ACTIVO']);
-        $pg = ParentGuardian::create(['user_id' => $userPadre->id, 'nombres' => 'P', 'apellidos' => 'P', 'numero_documento' => '9999999', 'estado' => 'ACTIVO']);
-        $a['est']->parentGuardians()->attach($pg->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
-
-        $response = $this->actingAs($userPadre)->get(route('boletin.show', $a['est']));
-        $response->assertRedirect(route('monthly-payments.estudiante', $a['est']));
     }
 }

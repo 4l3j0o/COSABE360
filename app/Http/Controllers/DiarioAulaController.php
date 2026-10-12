@@ -6,7 +6,6 @@ use App\Http\Requests\StoreDiarioAulaRequest;
 use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\DiarioAula;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -251,16 +250,6 @@ class DiarioAulaController extends Controller
             return $curso ? collect([$curso]) : collect();
         }
 
-        if ($user->hasRole('Padre/Tutor')) {
-            $guardian = ParentGuardian::where('user_id', $user->id)->first();
-            $hijosIds = $guardian ? $guardian->students()->pluck('students.id') : collect();
-            $courseIds = Registration::where('estado', 'ACTIVA')
-                ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $hijosIds)->where('estado', 'COMPLETADA'))
-                ->pluck('course_id')->unique()->values();
-
-            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->ordenadoPorNivel()->get();
-        }
-
         return collect();
     }
 
@@ -302,7 +291,7 @@ class DiarioAulaController extends Controller
 
     private function requiereCurso($user): bool
     {
-        return $user->hasRole('Docente') || $user->hasRole('Estudiante') || $user->hasRole('Padre/Tutor');
+        return $user->hasRole('Docente') || $user->hasRole('Estudiante');
     }
 
     private function permiteCurso($user, int $courseId, $cursos): bool

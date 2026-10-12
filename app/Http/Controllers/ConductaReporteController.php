@@ -6,7 +6,6 @@ use App\Http\Requests\StoreConductaReporteRequest;
 use App\Models\ConductaReporte;
 use App\Models\Course;
 use App\Models\CourseSubject;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Student;
 use App\Models\Subject;
@@ -381,11 +380,6 @@ class ConductaReporteController extends Controller
             abort_unless($reporte->student_id === $user->student->id, 403);
             return;
         }
-        if ($user->hasRole('Padre/Tutor')) {
-            $hijos = $this->hijosIds($user);
-            abort_unless($hijos->contains($reporte->student_id), 403);
-            return;
-        }
         abort(403);
     }
 
@@ -421,20 +415,8 @@ class ConductaReporteController extends Controller
         if ($user->hasRole('Estudiante') && $user->student) {
             return collect([$user->student]);
         }
-        if ($user->hasRole('Padre/Tutor')) {
-            $guardian = ParentGuardian::where('user_id', $user->id)->first();
-
-            return $guardian ? $guardian->students()->orderBy('apellidos')->get() : collect();
-        }
 
         return collect();
-    }
-
-    private function hijosIds($user)
-    {
-        $guardian = ParentGuardian::where('user_id', $user->id)->first();
-
-        return $guardian ? $guardian->students()->pluck('students.id') : collect();
     }
 
     private function teacherIdPara($user, Course $course, $subjectId): ?int
@@ -464,14 +446,6 @@ class ConductaReporteController extends Controller
             $curso = $user->student->activeCourse();
 
             return $curso ? collect([$curso]) : collect();
-        }
-
-        if ($user->hasRole('Padre/Tutor')) {
-            $courseIds = Registration::where('estado', 'ACTIVA')
-                ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $this->hijosIds($user))->where('estado', 'COMPLETADA'))
-                ->pluck('course_id')->unique()->values();
-
-            return Course::with(['grade', 'section', 'gestion'])->whereIn('id', $courseIds)->ordenadoPorNivel()->get();
         }
 
         return collect();
@@ -514,7 +488,7 @@ class ConductaReporteController extends Controller
 
     private function requiereCurso($user): bool
     {
-        return $user->hasRole('Docente') || $user->hasRole('Estudiante') || $user->hasRole('Padre/Tutor');
+        return $user->hasRole('Docente') || $user->hasRole('Estudiante');
     }
 
     private function permiteCurso($user, int $courseId, $cursos): bool

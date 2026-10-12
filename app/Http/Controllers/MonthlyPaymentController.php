@@ -74,16 +74,8 @@ class MonthlyPaymentController extends Controller
             $mesesPagados = $pagos->where('estado', 'PAGADA')->count();
         }
 
-        // Receptor/facturación: el tutor que paga (usuario actual si es Padre/Tutor, si no su tutor principal)
-        $currentUser = auth()->user();
-        $esTutor = $currentUser && $currentUser->hasRole('Padre/Tutor');
-        $pagador = null;
-        if ($esTutor) {
-            $pagador = ParentGuardian::where('user_id', $currentUser->id)->first();
-        }
-        if (! $pagador) {
-            $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
-        }
+        // Receptor/facturación: el tutor principal del estudiante (los tutores no tienen cuenta)
+        $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
 
         return view('monthly-payments.estudiante', compact(
             'estudiante',
@@ -93,8 +85,7 @@ class MonthlyPaymentController extends Controller
             'totalPagado',
             'mesesPendientes',
             'mesesPagados',
-            'pagador',
-            'esTutor'
+            'pagador'
         ));
     }
 
@@ -146,19 +137,6 @@ class MonthlyPaymentController extends Controller
                 ? 'La mensualidad de este mes ya fue registrada y está pendiente de verificación.'
                 : 'La mensualidad de este mes ya se encuentra pagada.';
             return back()->withErrors(['mes' => $msg])->withInput();
-        }
-
-        $esTutor = auth()->user()->hasRole('Padre/Tutor');
-
-        if ($esTutor) {
-            $cuota->update([
-                'fecha'       => $validated['fecha'],
-                'metodo_pago' => $validated['metodo_pago'],
-                'estado'      => 'ESPERA',
-            ]);
-
-            return redirect()->route('monthly-payments.estudiante', $estudiante)
-                ->with('mensaje', 'Pago registrado correctamente. Está pendiente de verificación por el personal de la institución.');
         }
 
         $generarFactura = $request->boolean('generar_factura', true);
@@ -277,13 +255,6 @@ class MonthlyPaymentController extends Controller
         if (in_array($rol, ['Administrador', 'Secretaría', 'Director'], true)) {
             return;
         }
-        if ($rol === 'Padre/Tutor') {
-            $parent = ParentGuardian::where('user_id', $user->id)->first();
-            if (! $parent) abort(403, 'No tiene perfil de tutor.');
-            $esHijo = $parent->students()->where('students.id', $estudiante->id)->exists();
-            if (! $esHijo) abort(403, 'No tiene permiso para gestionar pagos de este estudiante.');
-            return;
-        }
         abort(403, 'Rol no autorizado para gestionar pagos.');
     }
 
@@ -311,27 +282,10 @@ class MonthlyPaymentController extends Controller
                 'fecha_publicacion' => now(),
                 'estado' => 'PUBLICADO',
             ]);
-            // Destinatarios: tutores principales del estudiante (user_id específico)
-            $tutores = $estudiante->parentGuardians()->wherePivot('es_principal', true)->get();
-            $userIds = collect();
-            foreach ($tutores as $t) {
-                if ($t->user_id) $userIds->push($t->user_id);
-            }
-            // Si el pagador es tutor y no estaba en tutores principales, inclúyelo
-            $current = auth()->user();
-            if ($current && $current->hasRole('Padre/Tutor') && !$userIds->contains($current->id)) {
-                $userIds->push($current->id);
-            }
-            $userIds = $userIds->unique()->filter();
-            if ($userIds->isEmpty()) {
-                // Fallback: tipo PADRES (visible para todos padres, pero mejor que nada)
-                $announcement->recipients()->create(['tipo_destinatario' => 'PADRES']);
-            } else {
-                foreach ($userIds as $uid) {
-                    $announcement->recipients()->create(['tipo_destinatario' => 'PADRES', 'user_id' => $uid]);
-                }
-            }
-            Log::info("Comunicado factura {$nro} creado id {$announcement->id} para userIds: ".implode(',',$userIds->toArray()));
+            // Destinatarios en sistema: los tutores ya no tienen cuenta, así que
+            // el comunicado queda como registro (dirigido a PADRES).
+            $announcement->recipients()->create(['tipo_destinatario' => 'PADRES']);
+            Log::info("Comunicado factura {$nro} creado id {$announcement->id}");
         } catch (\Throwable $e) {
             Log::error('Error creando comunicado factura: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
         }
@@ -344,18 +298,12 @@ class MonthlyPaymentController extends Controller
             $mesNombre = $meses[$mesNum] ?? 'Mes '.$mesNum;
             $estudianteNombre = trim($estudiante->apellidos.' '.$estudiante->nombres);
 
-            // Resolver destinatarios: tutor/es principal/es + usuario actual + estudiante email si existe
+            // Resolver destinatarios: tutor principal del estudiante + email receptor
             $destinatarios = collect();
-            // Todos los tutores principales del estudiante
+            // Tutores principales del estudiante (solo datos de contacto)
             $tutores = $estudiante->parentGuardians()->wherePivot('es_principal', true)->get();
             foreach ($tutores as $t) {
                 if (!empty($t->email) && filter_var($t->email, FILTER_VALIDATE_EMAIL)) $destinatarios->push($t->email);
-                if ($t->user && !empty($t->user->email) && filter_var($t->user->email, FILTER_VALIDATE_EMAIL)) $destinatarios->push($t->user->email);
-            }
-            // Usuario actual solo si es Padre/Tutor (evita enviar copia a admin/secretaria)
-            $currentUser = auth()->user();
-            if ($currentUser && $currentUser->hasRole('Padre/Tutor') && !empty($currentUser->email) && filter_var($currentUser->email, FILTER_VALIDATE_EMAIL)) {
-                $destinatarios->push($currentUser->email);
             }
             // Email receptor de la factura si es distinto
             if (!empty($invoice->email_receptor) && filter_var($invoice->email_receptor, FILTER_VALIDATE_EMAIL)) {
@@ -462,24 +410,12 @@ class MonthlyPaymentController extends Controller
         // Literal en palabras
         $literal = $this->numeroALiteral($monto);
 
-        // Determinar el pagador/receptor: prioriza el usuario actual si es Padre/Tutor,
-        // luego el tutor principal del estudiante. El receptor de la factura es quien paga.
-        $currentUser = auth()->user();
-        $pagador = null;
-        if ($currentUser && $currentUser->hasRole('Padre/Tutor')) {
-            $pagador = ParentGuardian::where('user_id', $currentUser->id)->first();
-        }
-        if (! $pagador) {
-            $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
-        }
+        // Determinar el receptor de la factura: el tutor principal del estudiante (quien paga).
+        $pagador = $estudiante->parentGuardians()->wherePivot('es_principal', true)->first();
 
         $emailReceptor = null;
         if ($pagador && !empty($pagador->email) && filter_var($pagador->email, FILTER_VALIDATE_EMAIL)) {
             $emailReceptor = $pagador->email;
-        } elseif ($currentUser && $currentUser->hasRole('Padre/Tutor') && !empty($currentUser->email)) {
-            $emailReceptor = $currentUser->email;
-        } elseif ($pagador && $pagador->user && !empty($pagador->user->email) && filter_var($pagador->user->email, FILTER_VALIDATE_EMAIL)) {
-            $emailReceptor = $pagador->user->email;
         }
         if (empty($emailReceptor) && !empty($estudiante->email) && filter_var($estudiante->email, FILTER_VALIDATE_EMAIL)) {
             $emailReceptor = $estudiante->email;

@@ -79,7 +79,6 @@ Route::get('/dashboard', function () {
         'Director' => 'dashboard.director',
         'Secretaría' => 'dashboard.secretaria',
         'Docente' => 'dashboard.docente',
-        'Padre/Tutor' => 'dashboard.padre',
         'Estudiante' => 'dashboard.estudiante',
         default => 'dashboard.administrador',
     };
@@ -138,34 +137,6 @@ Route::get('/dashboard', function () {
                 ? $regActiva->monthlyPayments()->with(['electronicInvoice', 'registration.enrollment.academicYear'])->orderBy('mes')->get()
                 : collect();
         }
-    }
-
-    // Para el rol Padre/Tutor: sus hijos de los que es responsable + resumen de mensualidades
-    if ($rol === 'Padre/Tutor') {
-        $parent = \App\Models\ParentGuardian::where('user_id', auth()->id())->first();
-        $hijos = $parent
-            ? $parent->students()
-                ->where('students.estado', 'ACTIVO')
-                ->with(['enrollments.registration.monthlyPayments'])
-                ->get()
-            : collect();
-
-        $hijos->each(function ($hijo) {
-            $reg = $hijo->enrollments
-                ->sortByDesc('fecha')
-                ->firstWhere('estado', 'COMPLETADA')
-                ?->registration;
-            $pagos = $reg?->monthlyPayments ?? collect();
-            $pendientes = $pagos->whereIn('estado', ['PENDIENTE', 'ESPERA']);
-            $hijo->setAttribute('pagos_saldo', (float) $pendientes->sum('monto'));
-            $hijo->setAttribute('pagos_meses_pendientes', $pendientes->count());
-            $hijo->setAttribute('pagos_meses_en_espera', $pagos->where('estado', 'ESPERA')->count());
-            $hijo->setAttribute('pagos_meses_pagados', $pagos->filter(fn ($p) => in_array($p->estado, ['PAGADO', 'PAGADA']))->count());
-            $hijo->setAttribute('pagos_total_meses', $pagos->count());
-            $hijo->setAttribute('pagos_mensualidad', (float) ($reg?->monto_mensual ?? $pagos->first()?->monto ?? 0));
-        });
-
-        $datos['hijos'] = $hijos;
     }
 
     return view($vista, $datos);
@@ -439,8 +410,8 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
         ->name('estudiantes.matricular');
 });
 
-// HU-19: Pagos de mensualidades por estudiante - admin/secretaria/director + Padre/Tutor (solo hijos, verificado en controller)
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'])->prefix('estudiantes')->group(function () {
+// HU-19: Pagos de mensualidades por estudiante - admin/secretaría/director
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
     Route::get('/{estudiante}/pagos', [MonthlyPaymentController::class, 'estudiante'])
         ->name('monthly-payments.estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
@@ -473,7 +444,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
 // HU-27: retirado — el historial viejo por bimestre se reemplazó por Reportes de Asistencia
 
 // HU-44: Reportes de asistencia (día, semana, mes, trimestre) PDF/Excel
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante'])->group(function () {
     Route::get('/reportes-asistencia', [AttendanceReportController::class, 'index'])->name('reportes.asistencia.index');
     Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
 
@@ -546,7 +517,7 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(fu
 });
 
 // HU-53: libreta electrónica / boletín oficial SIE (+ Estudiante ve el propio HU-61)
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Estudiante'])->group(function () {
     Route::get('/boletin/{student}', [BoletinController::class, 'show'])->name('boletin.show');
     Route::get('/boletin/{student}/pdf', [BoletinController::class, 'pdf'])->name('boletin.pdf');
 });
@@ -614,8 +585,8 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('auditoria')->group(fu
     Route::get('/{operationHistory}', [OperationHistoryController::class, 'show'])->name('auditoria.show');
 });
 
-// PDF de facturas accesible a Administrador/Secretaría/Director y Padre/Tutor (propios hijos) - ownership en controller
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director,Padre/Tutor'])->group(function () {
+// PDF de facturas accesible a Administrador/Secretaría/Director - ownership en controller
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
     Route::get('facturacion/facturas/{electronicInvoice}/pdf', [ElectronicInvoiceController::class, 'pdf'])->name('electronic-invoices.pdf');
     Route::get('facturacion/facturas/{electronicInvoice}/download', [ElectronicInvoiceController::class, 'downloadPdf'])->name('electronic-invoices.download');
 });
@@ -686,7 +657,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 });
 
 // HU-65: Diario de aula — bitácora de avances por clase (docente registra; estudiante/padre/director consultan)
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padre/Tutor,Estudiante'])->prefix('diario-aula')->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante'])->prefix('diario-aula')->group(function () {
     Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
     Route::get('/ahora', [DiarioAulaController::class, 'ahora'])->name('diario.ahora');
     Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');
@@ -696,7 +667,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Padr
 });
 
 // HU-65: Reportes de conducta — faltas Leve/Grave/Muy grave + reportes por curso y por estudiante
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Padre/Tutor,Estudiante'])->prefix('conducta')->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Estudiante'])->prefix('conducta')->group(function () {
     Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
     Route::get('/ahora', [ConductaReporteController::class, 'ahora'])->name('conducta.ahora');
     Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');

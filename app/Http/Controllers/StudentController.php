@@ -804,36 +804,7 @@ class StudentController extends Controller
         if ($tutorElegido) {
             $relacion = $vinculos[$tutorElegido->id]['tipo_relacion'] ?? 'TUTOR';
             $student->update(['quien_es_tutor' => $relacion]);
-            $this->crearCuentaUsuarioSiNoExiste($tutorElegido);
         }
-    }
-
-    private function crearCuentaUsuarioSiNoExiste(ParentGuardian $tutor): void
-    {
-        if (! empty($tutor->user_id) || empty($tutor->email)) {
-            return;
-        }
-
-        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
-        if (! $rolPadre) {
-            return;
-        }
-
-        $usuario = User::where('email', $tutor->email)->first();
-
-        if (! $usuario) {
-            $usuario = User::create([
-                'nombre'   => $tutor->nombres,
-                'apellido' => $tutor->apellidos,
-                'email'    => $tutor->email,
-                'password' => Str::random(32),
-                'role_id'  => $rolPadre->id,
-                'telefono' => $tutor->telefono,
-                'estado'   => 'ACTIVO',
-            ]);
-        }
-
-        $tutor->update(['user_id' => $usuario->id]);
     }
 
     private function crearCuentaUsuarioEstudianteSiNoExiste(Student $student): void
