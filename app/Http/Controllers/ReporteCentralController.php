@@ -650,7 +650,7 @@ class ReporteCentralController extends Controller
 
         // HU-66: Diario de Aula y Conducta viven dentro de la Central
         // (se retiran sus links directos de los sidebars).
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante'])) {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Estudiante'])) {
             $existentes[] = [
                 'nombre' => 'Diario de Aula',
                 'descripcion' => 'Bitácora de avances por clase: el docente registra, directivos y familias consultan.',
@@ -660,7 +660,7 @@ class ReporteCentralController extends Controller
             ];
         }
 
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Regente', 'Padre/Tutor', 'Estudiante'])) {
+        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Regente', 'Estudiante'])) {
             $existentes[] = [
                 'nombre' => 'Conducta',
                 'descripcion' => 'Reportes de conducta (LEVE/GRAVE/MUY_GRAVE) por curso y por estudiante, con PDF/Excel.',

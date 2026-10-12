@@ -12,7 +12,6 @@ class ParentGuardian extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'nombres',
         'apellidos',
         'apellido_paterno',
@@ -49,11 +48,6 @@ class ParentGuardian extends Model
         'Licenciatura',
         'Postgrado',
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
 
     public function students(): BelongsToMany
     {

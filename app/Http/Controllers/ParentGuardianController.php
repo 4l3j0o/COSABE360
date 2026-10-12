@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParentGuardian;
-use App\Models\Role;
 use App\Models\Student;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -25,7 +22,7 @@ class ParentGuardianController extends Controller
 
         $tipo = $request->query('tipo', 'tutores');
 
-        $padres = ParentGuardian::with(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos'])
+        $padres = ParentGuardian::with(['students:id,nombres,apellidos'])
             ->where('estado', '!=', 'ELIMINADO')
             ->when($tipo === 'tutores', function ($q) {
                 $q->whereHas('students', function ($c) {
@@ -76,7 +73,7 @@ class ParentGuardianController extends Controller
 
     public function show(ParentGuardian $parentGuardian): View
     {
-        $parentGuardian->load(['user:id,nombre,apellido,email,estado', 'students:id,nombres,apellidos']);
+        $parentGuardian->load(['students:id,nombres,apellidos']);
 
         $estudiantes = Student::where('estado', 'ACTIVO')
             ->orderBy('apellidos')
@@ -132,15 +129,12 @@ class ParentGuardianController extends Controller
         }
 
         $this->sincronizarEstudiantes($padre, $request->input('students', []));
-        $this->sincronizarUsuarioTutor($padre, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $padre->loadCount('students')], 201);
         }
 
-        $mensaje = $hayTutor
-            ? 'Padre/tutor registrado correctamente. Se creó su cuenta de usuario (acceso con Google).'
-            : 'Padre/tutor registrado correctamente.';
+        $mensaje = 'Padre/tutor registrado correctamente.';
 
         return redirect()->route('tutores.index')->with('success', $mensaje);
     }
@@ -178,15 +172,12 @@ class ParentGuardianController extends Controller
         $parentGuardian->update($validated);
 
         $this->sincronizarEstudiantes($parentGuardian, $request->input('students', []));
-        $this->sincronizarUsuarioTutor($parentGuardian, $hayTutor);
 
         if ($request->expectsJson()) {
             return response()->json(['data' => $parentGuardian->fresh()->loadCount('students')]);
         }
 
-        $mensaje = $hayTutor
-            ? 'Padre/tutor actualizado correctamente. Cuenta de usuario verificada (acceso con Google).'
-            : 'Padre/tutor actualizado correctamente.';
+        $mensaje = 'Padre/tutor actualizado correctamente.';
 
         return redirect()->route('tutores.show', $parentGuardian)->with('success', $mensaje);
     }
@@ -269,47 +260,6 @@ class ParentGuardianController extends Controller
         }
 
         $padre->students()->sync($vinculos);
-    }
-
-    private function sincronizarUsuarioTutor(ParentGuardian $padre, bool $esTutor): void
-    {
-        if (! $esTutor || empty($padre->email)) {
-            return;
-        }
-
-        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
-        if (! $rolPadre) {
-            return;
-        }
-
-        if ($padre->user_id) {
-            $usuario = User::find($padre->user_id);
-            if ($usuario) {
-                $usuario->update([
-                    'nombre'   => $padre->nombres,
-                    'apellido' => $padre->apellidos,
-                    'email'    => $padre->email,
-                    'telefono' => $padre->telefono,
-                ]);
-            }
-            return;
-        }
-
-        $usuario = User::where('email', $padre->email)->first();
-
-        if (! $usuario) {
-            $usuario = User::create([
-                'nombre'   => $padre->nombres,
-                'apellido' => $padre->apellidos,
-                'email'    => $padre->email,
-                'password' => Str::random(32),
-                'role_id'  => $rolPadre->id,
-                'telefono' => $padre->telefono,
-                'estado'   => 'ACTIVO',
-            ]);
-        }
-
-        $padre->update(['user_id' => $usuario->id]);
     }
 
     public function destroy(ParentGuardian $parentGuardian): RedirectResponse|JsonResponse

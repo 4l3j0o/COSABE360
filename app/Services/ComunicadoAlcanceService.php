@@ -6,7 +6,6 @@ use App\Models\Announcement;
 use App\Models\Course;
 use App\Models\CourseSubject;
 use App\Models\Level;
-use App\Models\ParentGuardian;
 use App\Models\Section;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -150,7 +149,6 @@ class ComunicadoAlcanceService
             'TODOS' => true,
             'DOCENTES' => $user->hasRole('Docente'),
             'ESTUDIANTES' => $user->hasRole('Estudiante'),
-            'PADRES' => $user->hasRole('Padre/Tutor'),
             'CURSO_ESPECIFICO' => $recipient->course_id !== null && $this->esMiembroDelCurso($user, $recipient->course_id),
             self::TIPO_NIVEL => $recipient->level_id !== null && $this->esDocenteDelNivel($user, $recipient->level_id),
             default => false,
@@ -220,11 +218,6 @@ class ComunicadoAlcanceService
             return true;
         }
 
-        // Padre/tutor con hijo matriculado en el curso
-        if ($user->hasRole('Padre/Tutor') && $this->cursosIdsApoderado($user)->contains($courseId)) {
-            return true;
-        }
-
         // Secretaría/Regente no filtran por curso: ven avisos de curso para operar
         if ($user->hasRole('Secretaría') || $user->hasRole('Regente')) {
             return true;
@@ -248,23 +241,6 @@ class ComunicadoAlcanceService
         $ids = $student->registrations()->where('registrations.estado', 'ACTIVA')->pluck('registrations.course_id');
         if ($student->activeCourse()) {
             $ids->push($student->activeCourse()->id);
-        }
-
-        return $ids->unique()->values();
-    }
-
-    private function cursosIdsApoderado(User $user): Collection
-    {
-        $tutor = ParentGuardian::where('user_id', $user->id)->with('students')->first();
-        if (! $tutor) {
-            return collect();
-        }
-
-        $ids = collect();
-        foreach ($tutor->students as $student) {
-            if ($student->activeCourse()) {
-                $ids->push($student->activeCourse()->id);
-            }
         }
 
         return $ids->unique()->values();

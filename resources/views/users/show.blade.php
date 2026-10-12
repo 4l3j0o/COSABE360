@@ -17,7 +17,6 @@
             'Director'      => 'bg-info/10 text-info',
             'Secretaría'    => 'bg-warning/10 text-warning',
             'Docente'       => 'bg-success/10 text-success',
-            'Padre/Tutor'   => 'bg-neutral-100 text-neutral-600',
             'Estudiante'    => 'bg-info/10 text-info',
         ];
         $rolNombre = $user->rol?->nombre ?? '—';

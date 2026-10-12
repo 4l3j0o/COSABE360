@@ -150,14 +150,4 @@ class HistorialAcademicoTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Historial Académico');
     }
-
-    public function test_padre_tutor_ya_no_accede(): void
-    {
-        $datos = $this->crearDatosHistorial();
-        $rolPadre = Role::where('nombre', 'Padre/Tutor')->first();
-        $userPadre = User::create(['nombre' => 'Padre', 'apellido' => 'Hist', 'email' => 'padre_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolPadre->id, 'estado' => 'ACTIVO']);
-
-        $this->actingAs($userPadre);
-        $this->get('/historial-academico')->assertForbidden();
-    }
 }

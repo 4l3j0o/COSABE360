@@ -10,12 +10,11 @@
             'Director' => 'dashboard.partials._sidebar-director',
             'Secretaría' => 'dashboard.partials._sidebar-secretaria',
             'Docente' => 'dashboard.partials._sidebar-docente',
-            'Padre/Tutor' => 'dashboard.partials._sidebar-tutor',
             'Estudiante' => 'dashboard.partials._sidebar-estudiante',
         ];
         $sidebarView = $sidebarMap[$rol] ?? 'dashboard.partials._sidebar-admin';
     @endphp
-    @if (in_array($rol, ['Director', 'Secretaría', 'Docente', 'Padre/Tutor', 'Estudiante']))
+    @if (in_array($rol, ['Director', 'Secretaría', 'Docente', 'Estudiante']))
         @include($sidebarView)
     @else
         @include('dashboard.partials._sidebar-admin')

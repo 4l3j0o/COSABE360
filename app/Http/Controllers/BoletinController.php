@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourseSubject;
-use App\Models\ParentGuardian;
 use App\Models\Student;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -15,7 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * HU-53: Libreta electrónica / boletín oficial de calificaciones (formato SIE).
  * Genera el boletín de un estudiante con las notas por área (materia), su valoración
  * (ED/DA/DO/DP) y el promedio por gestión. Visible para secretaría/director/admin
- * y para el padre/tutor de su propio hijo.
+ * y para el propio estudiante.
  */
 class BoletinController extends Controller
 {
@@ -95,14 +94,6 @@ class BoletinController extends Controller
             return;
         }
 
-        // Padre/Tutor: solo puede ver el boletín de sus propios hijos
-        if ($user->hasRole('Padre/Tutor')) {
-            $parent = ParentGuardian::where('user_id', $user->id)->first();
-            abort_if(! $parent || ! $parent->students()->where('student_id', $student->id)->exists(), 403);
-
-            return;
-        }
-
         // HU-61: Estudiante solo ve su propio boletín
         if ($user->hasRole('Estudiante')) {
             abort_if($user->student?->id !== $student->id, 403);
@@ -122,8 +113,7 @@ class BoletinController extends Controller
     {
         $user = $request->user();
 
-        $esFamilia = $user->hasRole('Estudiante')
-            || ($user->hasRole('Padre/Tutor') && ParentGuardian::where('user_id', $user->id)->exists());
+        $esFamilia = $user->hasRole('Estudiante');
 
         if (! $esFamilia) {
             return null;

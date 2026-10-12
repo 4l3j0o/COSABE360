@@ -198,8 +198,8 @@ class ElectronicInvoiceController extends Controller
     }
 
     /**
-     * Verifica que Padre/Tutor solo vea facturas de sus hijos.
-     * Admin/Secretaría/Director pasan directo.
+     * Admin/Secretaría/Director pasan directo; cualquier otro rol se rechaza.
+     * (Los tutores no tienen cuenta; la entrega de la factura es por correo.)
      */
     private function autorizarFactura(ElectronicInvoice $invoice): void
     {
@@ -207,22 +207,7 @@ class ElectronicInvoiceController extends Controller
         if (! $user) abort(403, 'No autenticado');
         $rol = $user->rol?->nombre;
         if (in_array($rol, ['Administrador', 'Secretaría', 'Director'], true)) return;
-        if ($rol === 'Padre/Tutor') {
-            $parent = \App\Models\ParentGuardian::where('user_id', $user->id)->first();
-            if (! $parent) abort(403, 'Sin perfil tutor');
-            $hijoIds = $parent->students()->pluck('students.id')->toArray();
-            if (empty($hijoIds)) abort(403, 'Sin hijos asignados');
-            // Factura vinculada via monthly_payments -> registration -> enrollment -> student
-            $esDeHijo = \App\Models\MonthlyPayment::where('electronic_invoice_id', $invoice->id)
-                ->whereHas('registration.enrollment', function ($q) use ($hijoIds) {
-                    $q->whereIn('student_id', $hijoIds);
-                })->exists();
-            if ($esDeHijo) return;
-            // Fallback: si no hay vínculo mensualidad, verificar email receptor coincide con tutor
-            if (!empty($invoice->email_receptor) && $invoice->email_receptor === $user->email) return;
-            abort(403, 'No tiene permiso para ver esta factura.');
-        }
-        abort(403, 'Rol no autorizado');
+        abort(403, 'Rol no autorizado para ver facturas.');
     }
 
     /**

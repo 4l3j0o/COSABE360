@@ -6,7 +6,6 @@ use App\Models\AcademicYear;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSubject;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Schedule;
 use App\Models\Subject;
@@ -230,30 +229,15 @@ class AttendanceReportController extends Controller
             return $curso ? collect([$curso]) : collect();
         }
 
-        if ($user->hasRole('Padre/Tutor')) {
-            $guardian = ParentGuardian::where('user_id', $user->id)->first();
-            $hijosIds = $guardian ? $guardian->students()->pluck('students.id') : collect();
-            $courseIds = Registration::where('estado', 'ACTIVA')
-                ->whereHas('enrollment', fn ($q) => $q->whereIn('student_id', $hijosIds)->where('estado', 'COMPLETADA'))
-                ->pluck('course_id')
-                ->unique()
-                ->values();
-
-            return Course::with(['grade', 'section', 'gestion'])
-                ->whereIn('id', $courseIds)
-                ->ordenadoPorNivel()
-                ->get();
-        }
-
         return collect();
     }
 
     /**
-     * Docente, tutor y estudiante siempre reportan sobre un curso concreto (nada de "todos").
+     * Docente y estudiante siempre reportan sobre un curso concreto (nada de "todos").
      */
     private function requiereCurso($user): bool
     {
-        return $user->hasRole('Docente') || $user->hasRole('Padre/Tutor') || $user->hasRole('Estudiante');
+        return $user->hasRole('Docente') || $user->hasRole('Estudiante');
     }
 
     private function permiteCurso($user, int $courseId, $cursos): bool

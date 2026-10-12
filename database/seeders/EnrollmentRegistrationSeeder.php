@@ -198,16 +198,10 @@ class EnrollmentRegistrationSeeder extends Seeder
             ]
         );
 
-        // Tutores con acceso al sistema y rol de tutor. Solo ellos pueden ser
-        // el padre/tutor principal (es_principal) de un estudiante.
-        $rolTutor = Role::where('nombre', 'Padre/Tutor')->value('id');
-        $padresTutores = ParentGuardian::whereHas('user', function ($q) use ($rolTutor) {
-            $q->where('role_id', $rolTutor)->where('estado', 'ACTIVO');
-        })->orderBy('id')->get();
-
-        // 1) Tutor principal: debe tener acceso al sistema y rol de tutor.
-        if ($padresTutores->isNotEmpty()) {
-            $tutor = $padresTutores->get($semilla % $padresTutores->count());
+        // Tutor principal: solo dato de contacto (los tutores ya no tienen cuenta).
+        $padres = ParentGuardian::orderBy('id')->get();
+        if ($padres->isNotEmpty()) {
+            $tutor = $padres->get($semilla % $padres->count());
             $student->parentGuardians()->syncWithoutDetaching([
                 $tutor->id => [
                     'tipo_relacion' => 'TUTOR',

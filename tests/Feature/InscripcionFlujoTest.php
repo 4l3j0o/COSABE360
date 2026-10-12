@@ -143,10 +143,9 @@ class InscripcionFlujoTest extends TestCase
         $this->assertNotNull($student->user_id);
         $this->assertSame('Estudiante', $student->user->rol->nombre);
 
-        // Tutor vinculado como principal con cuenta
+        // Tutor vinculado como principal (solo dato de contacto, sin cuenta)
         $tutor = $student->parentGuardians()->wherePivot('es_principal', true)->first();
         $this->assertNotNull($tutor);
-        $this->assertNotNull($tutor->user_id);
 
         // Preinscripción PENDIENTE + matrícula INACTIVA preasignada
         $enrollment = Enrollment::where('student_id', $student->id)->where('academic_year_id', $e['gestion']->id)->first();

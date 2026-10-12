@@ -5,8 +5,6 @@
 @section('sidebar')
     @if(auth()->user()->hasRole('Estudiante'))
         @include('dashboard.partials._sidebar-estudiante')
-    @elseif(auth()->user()->hasRole('Padre/Tutor'))
-        @include('dashboard.partials._sidebar-tutor')
     @else
         @include('dashboard.partials._sidebar-by-rol')
     @endif

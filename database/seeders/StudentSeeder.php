@@ -111,23 +111,9 @@ class StudentSeeder extends Seeder
 
         $padresGuardians = [];
         foreach ($padres as $i => $datos) {
-            $email = $datos['email'];
-            $user = User::updateOrCreate(
-                ['email' => $email],
-                [
-                    'nombre' => $datos['nombres'],
-                    'apellido' => $datos['apellidos'],
-                    'password' => $password,
-                    'role_id' => Role::where('nombre', 'Padre/Tutor')->value('id'),
-                    'telefono' => $datos['telefono'],
-                    'estado' => 'ACTIVO',
-                ]
-            );
-
             $padresGuardians[$i] = ParentGuardian::updateOrCreate(
                 ['numero_documento' => $datos['numero_documento']],
                 [
-                    'user_id' => $user->id,
                     'nombres' => $datos['nombres'],
                     'apellidos' => $datos['apellidos'],
                     'tipo_documento' => 'CI',

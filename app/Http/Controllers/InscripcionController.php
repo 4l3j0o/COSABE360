@@ -377,7 +377,6 @@ class InscripcionController extends Controller
 
                 // Padre / madre / tutor
                 $vinculos = [];
-                $principal = null;
                 foreach (['padre' => 'PADRE', 'madre' => 'MADRE', 'tutor' => 'TUTOR'] as $grupo => $relacion) {
                     $pg = $this->obtenerOCrearFamiliar($validated, $grupo);
                     if (! $pg) {
@@ -389,16 +388,9 @@ class InscripcionController extends Controller
                         'es_principal' => $esPrincipal,
                         'convive' => true,
                     ];
-                    if ($esPrincipal) {
-                        $principal = $pg;
-                    }
                 }
                 $student->parentGuardians()->sync($vinculos);
                 $student->update(['quien_es_tutor' => $validated['tutor_principal'] === 'padre' ? 'PADRE' : ($validated['tutor_principal'] === 'madre' ? 'MADRE' : 'TUTOR')]);
-
-                if ($principal) {
-                    $this->crearCuentaTutorSiNoExiste($principal);
-                }
 
                 // Cuenta del estudiante (acceso a Inscripción en Línea)
                 $this->crearCuentaEstudiante($student);
@@ -472,33 +464,6 @@ class InscripcionController extends Controller
                 'estado' => 'ACTIVO',
             ]
         );
-    }
-
-    private function crearCuentaTutorSiNoExiste(ParentGuardian $tutor): void
-    {
-        if (! empty($tutor->user_id) || empty($tutor->email)) {
-            return;
-        }
-
-        $rol = Role::where('nombre', 'Padre/Tutor')->first();
-        if (! $rol) {
-            return;
-        }
-
-        $usuario = User::where('email', $tutor->email)->first();
-        if (! $usuario) {
-            $usuario = User::create([
-                'nombre' => $tutor->nombres,
-                'apellido' => $tutor->apellidos,
-                'email' => $tutor->email,
-                'password' => null,
-                'role_id' => $rol->id,
-                'telefono' => $tutor->telefono,
-                'estado' => 'ACTIVO',
-            ]);
-        }
-
-        $tutor->update(['user_id' => $usuario->id]);
     }
 
     /**

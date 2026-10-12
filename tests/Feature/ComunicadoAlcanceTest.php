@@ -9,7 +9,6 @@ use App\Models\CourseSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
-use App\Models\ParentGuardian;
 use App\Models\Registration;
 use App\Models\Role;
 use App\Models\Section;
@@ -122,23 +121,6 @@ class ComunicadoAlcanceTest extends TestCase
             'fecha' => '2026-03-05',
             'estado' => 'ACTIVA',
         ]);
-
-        return $user;
-    }
-
-    private function apoderadoDe(Student $student): User
-    {
-        $user = $this->usuario('Padre/Tutor');
-        $pg = ParentGuardian::create([
-            'user_id' => $user->id,
-            'nombres' => 'Apoderado',
-            'apellidos' => 'Prueba',
-            'tipo_documento' => 'CI',
-            'numero_documento' => (string) rand(1000000, 9999999),
-            'complemento' => '',
-            'estado' => 'ACTIVO',
-        ]);
-        $student->parentGuardians()->attach($pg->id, ['tipo_relacion' => 'PADRE', 'es_principal' => true, 'convive' => true]);
 
         return $user;
     }
@@ -267,10 +249,6 @@ class ComunicadoAlcanceTest extends TestCase
         $this->assertCount(1, $this->actingAs($alumno)->get(route('comunicados.bandeja'))->viewData('announcements'));
         $this->assertCount(0, $this->actingAs($alumnoOtro)->get(route('comunicados.bandeja'))->viewData('announcements'));
         $this->assertCount(1, $this->actingAs($docente)->get(route('comunicados.bandeja'))->viewData('announcements'));
-
-        // Apoderado del alumno matriculado también lo ve
-        $apoderado = $this->apoderadoDe($alumno->student);
-        $this->assertCount(1, $this->actingAs($apoderado)->get(route('comunicados.bandeja'))->viewData('announcements'));
     }
 
     public function test_bandeja_nivel_solo_docentes_del_nivel(): void
