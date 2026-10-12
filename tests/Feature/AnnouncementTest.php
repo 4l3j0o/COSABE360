@@ -99,23 +99,23 @@ class AnnouncementTest extends TestCase
         $admin = $this->crearUsuario('Administrador');
 
         $response = $this->actingAs($admin)->post(route('announcements.store'), [
-            'titulo' => 'Reunión de padres',
+            'titulo' => 'Reunión de estudiantes',
             'contenido' => 'Se convoca a reunión el viernes',
-            'tipo_destinatario' => 'PADRES',
+            'tipo_destinatario' => 'ESTUDIANTES',
             'fecha_publicacion' => '2026-09-01 08:00:00',
             'estado' => 'PUBLICADO',
         ]);
 
         $response->assertRedirect(route('announcements.index'));
         $this->assertDatabaseHas('announcements', [
-            'titulo' => 'Reunión de padres',
+            'titulo' => 'Reunión de estudiantes',
             'estado' => 'PUBLICADO',
         ]);
-        $ann = Announcement::where('titulo', 'Reunión de padres')->first();
+        $ann = Announcement::where('titulo', 'Reunión de estudiantes')->first();
         $this->assertNotNull($ann->fecha_publicacion);
         $this->assertDatabaseHas('announcement_recipients', [
             'announcement_id' => $ann->id,
-            'tipo_destinatario' => 'PADRES',
+            'tipo_destinatario' => 'ESTUDIANTES',
         ]);
     }
 
@@ -186,7 +186,7 @@ class AnnouncementTest extends TestCase
     public function test_permite_todos_los_tipos_de_destinatario(): void
     {
         $admin = $this->crearUsuario('Administrador');
-        $tipos = ['TODOS', 'DOCENTES', 'ESTUDIANTES', 'PADRES'];
+        $tipos = ['TODOS', 'DOCENTES', 'ESTUDIANTES'];
 
         foreach ($tipos as $tipo) {
             $response = $this->actingAs($admin)->post(route('announcements.store'), [

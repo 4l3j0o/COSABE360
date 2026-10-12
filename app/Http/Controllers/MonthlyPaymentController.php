@@ -151,8 +151,6 @@ class MonthlyPaymentController extends Controller
                 $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada (PDF listo para imprimir/compartir).";
                 $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$validated['mes']);
                 $facturaMsg .= " Enviada por correo al tutor.";
-                $this->crearComunicadoFactura($estudiante, $invoice, (int)$validated['mes']);
-                $facturaMsg .= " Notificación en Comunicados.";
             } catch (\Throwable $e) {
                 Log::error('Error factura auto: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
                 $facturaMsg = ' (Factura no pudo generarse: '.$e->getMessage().')';
@@ -189,8 +187,7 @@ class MonthlyPaymentController extends Controller
         $invoice = $pago->electronicInvoice;
         try {
             $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
-            $this->crearComunicadoFactura($estudiante, $invoice, (int)$pago->mes);
-            return back()->with('mensaje', 'Factura N° '.str_pad($invoice->nro_factura,8,'0',STR_PAD_LEFT).' reenviada por correo a '.($invoice->email_receptor ?? 'tutor').' y notificación en Comunicados. <a href="'.route('electronic-invoices.pdf',$invoice).'" target="_blank" class="underline font-bold text-primary">Ver PDF</a>');
+            return back()->with('mensaje', 'Factura N° '.str_pad($invoice->nro_factura,8,'0',STR_PAD_LEFT).' reenviada por correo a '.($invoice->email_receptor ?? 'tutor').'. <a href="'.route('electronic-invoices.pdf',$invoice).'" target="_blank" class="underline font-bold text-primary">Ver PDF</a>');
         } catch (\Throwable $e) {
             Log::error('Error reenvio factura: '.$e->getMessage());
             return back()->with('error', 'No se pudo reenviar: '.$e->getMessage());
@@ -222,8 +219,7 @@ class MonthlyPaymentController extends Controller
         try {
             $invoice = $this->crearFacturaExenta($estudiante, $pago, ['mes' => (int)$pago->mes]);
             $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
-            $this->crearComunicadoFactura($estudiante, $invoice, (int)$pago->mes);
-            $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada y enviada por correo. Notificación en Comunicados.";
+            $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada y enviada por correo.";
         } catch (\Throwable $e) {
             Log::error('Error factura al aprobar: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
             $facturaMsg = ' (Error al generar factura: '.$e->getMessage().')';
@@ -256,39 +252,6 @@ class MonthlyPaymentController extends Controller
             return;
         }
         abort(403, 'Rol no autorizado para gestionar pagos.');
-    }
-
-    private function crearComunicadoFactura(Student $estudiante, \App\Models\ElectronicInvoice $invoice, int $mesNum): void
-    {
-        try {
-            $meses = [2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre'];
-            $mesNombre = $meses[$mesNum] ?? 'Mes '.$mesNum;
-            $nro = str_pad((string)$invoice->nro_factura, 8, '0', STR_PAD_LEFT);
-            $estudianteNombre = trim($estudiante->apellidos.' '.$estudiante->nombres);
-            $pdfUrl = route('electronic-invoices.pdf', $invoice->id);
-            $downloadUrl = route('electronic-invoices.download', $invoice->id);
-            $titulo = "Factura SFE {$nro} — Mensualidad {$mesNombre} — {$estudiante->codigo}";
-            $contenido = "<p>Se registró el pago de <strong>{$mesNombre} {$invoice->fecha_emision->format('Y')}</strong> de <strong>{$estudianteNombre} ({$estudiante->codigo})</strong>.</p>"
-                ."<p><strong>Factura N° {$nro}</strong> — CUF <code>{$invoice->cuf}</code> — Total <strong>Bs ".number_format($invoice->total_factura,2)."</strong> (Exento IVA/IT)</p>"
-                ."<p>Estado: {$invoice->estado} — Emitida: {$invoice->fecha_emision->format('d/m/Y')} ".substr($invoice->hora_emision,0,5)." — Receptor: {$invoice->razon_social_receptor} (NIT/CI {$invoice->nit_receptor}) — Email: ".($invoice->email_receptor ?? '—')."</p>"
-                ."<p><a href=\"{$pdfUrl}\" target=\"_blank\" style=\"background:#003200;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:bold;\">📄 Ver factura PDF</a> "
-                ."<a href=\"{$downloadUrl}\" style=\"border:1px solid #003200;color:#003200;padding:8px 14px;border-radius:6px;text-decoration:none;margin-left:8px;\">⬇ Descargar PDF</a></p>"
-                ."<p style=\"font-size:12px;color:#64748b;\">Este comunicado confirma el envío por correo a <strong>".($invoice->email_receptor ?? 'tutor registrado')."</strong>. También puede ver la factura desde <em>Pagos de mensualidades → Mensualidad {$mesNombre}</em>. Si no recibió el correo, use <em>Reenviar</em> en la página de pagos.</p>";
-            $authorId = auth()->id() ?? 1;
-            $announcement = \App\Models\Announcement::create([
-                'titulo' => $titulo,
-                'contenido' => $contenido,
-                'author_id' => $authorId,
-                'fecha_publicacion' => now(),
-                'estado' => 'PUBLICADO',
-            ]);
-            // Destinatarios en sistema: los tutores ya no tienen cuenta, así que
-            // el comunicado queda como registro (dirigido a PADRES).
-            $announcement->recipients()->create(['tipo_destinatario' => 'PADRES']);
-            Log::info("Comunicado factura {$nro} creado id {$announcement->id}");
-        } catch (\Throwable $e) {
-            Log::error('Error creando comunicado factura: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
-        }
     }
 
     private function enviarFacturaPorCorreo(Student $estudiante, \App\Models\ElectronicInvoice $invoice, int $mesNum): void

@@ -252,7 +252,6 @@ class ComunicadoAlcanceService
             'TODOS' => 'Todos',
             'DOCENTES' => 'Docentes',
             'ESTUDIANTES' => 'Estudiantes',
-            'PADRES' => 'Padres',
             'CURSO_ESPECIFICO' => 'Curso específico',
             'NIVEL_DOCENTES' => 'Docentes de un nivel',
         ];

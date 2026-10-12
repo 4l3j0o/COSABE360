@@ -4,7 +4,7 @@ Sistema de gestión escolar (Laravel) del Colegio San Bernardo. Trabajo activo s
 
 ## Stack
 
-- Laravel 12, PHP 8.2, SQLite.
+- Laravel 12, PHP 8.2, **MySQL** (base `csb360`; tests en `csb360_test`). Ya NO se usa SQLite.
 - Front: **Blade + Tailwind 4 + JS vanilla**. NO hay Vue/React/Livewire/Inertia — no busques componentes JS ni stores.
 - PDF: `barryvdh/laravel-dompdf` (`Pdf::loadView(...)->download()`).
 - Excel: `phpoffice/phpspreadsheet` (spreadsheets creados a mano; **no** `maatwebsite/excel`).
@@ -25,7 +25,7 @@ No hay CI ni linters configurados. `vendor/bin/pint` existe pero no es parte del
 
 ## Tests
 
-- `tests/Feature/*` con PHPUnit (`RefreshDatabase`, DB `:memory:`). Base: `tests/TestCase.php`.
+- `tests/Feature/*` con PHPUnit (`RefreshDatabase`, DB MySQL `csb360_test`). Base: `tests/TestCase.php`.
 - Solo existe `UserFactory`. El resto de modelos se crea **a mano** con `Model::create([...])` + `fake()`. No esperes factories para Course/Student/Teacher/etc.
 - Patrón de setUp: `$this->seed(['RoleSeeder', 'AdminUserSeeder'])` y luego armar el grafo Level→Grade→Section→AcademicYear→Course→Subject→Teacher→CourseSubject→Student→Enrollment→Registration.
 - Para montar el usuario docente: crear `User` (rol Docente) **y** `Teacher` con `user_id`. Para estudiante: crear `Student` y luego `$student->update(['user_id' => ...])`.
@@ -46,6 +46,10 @@ No hay CI ni linters configurados. `vendor/bin/pint` existe pero no es parte del
 - **No commitear:** `public/build/manifest.json` (artefacto de build, aunque está trackeado — se modifica solo) y `Docs/priv_google.json` (secreto, ignorado). Aparecen como `M`/`??` constantemente; déjalos fuera de los commits de HU.
 - Cada llamada a `shell` es una sesión nueva: procesos en background (`php artisan serve`) no sobreviven entre llamadas. Para levantarlo, usa `Start-Process`.
 - PowerShell se come `$` en `php artisan tinker --execute="..."`. Para scripts con variables, escribe un `.php` temporal y córrelo con `php archivo.php`.
+- **MySQL local:** usa el MySQL de XAMPP (arrancar `C:\xampp\mysql\bin\mysqld.exe --defaults-file=C:\xampp\mysql\bin\my.ini`; existe un `.bat`/servicio con `mysql_installservice`). El PHP del `php.ini` de WinGet ya tiene `pdo_mysql` habilitado. Bases: `csb360` y `csb360_test` (root, sin contraseña).
+- **`max_allowed_packet=64M`** en `my.ini`: el dump de datos reales se importa por sentencias; si baja de ~2 MB vuelve a fallar la importación.
+- **Datos reales (PII):** `database/data/estudiantes_2026.sql` está en **sintaxis MySQL** (generado desde el dump SQLite original en HU-68). `EstudiantesRealesSeeder` lo ejecuta sentencia por sentencia con las FK desactivadas. No lo regeneres a la ligera (contiene PII).
+- **`parent_guardians.numero_documento` usa collation `utf8mb4_bin`** (los datos reales traían documentos/direcciones con diferencias solo de mayúsculas; con la collation CI de MySQL chocaban en el índice único).
 
 ## Flujo Git
 

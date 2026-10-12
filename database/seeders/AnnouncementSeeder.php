@@ -15,7 +15,7 @@ class AnnouncementSeeder extends Seeder
 {
     /**
      * Crea comunicados publicados dirigidos a distintos destinatarios
-     * (TODOS, DOCENTES, ESTUDIANTES, PADRES y CURSO_ESPECIFICO) y siembra el
+     * (TODOS, DOCENTES, ESTUDIANTES y CURSO_ESPECIFICO) y siembra el
      * registro de "no leído" para los usuarios destinatarios, de modo que el panel
      * muestre comunicados sin leer por rol.
      */
@@ -70,10 +70,10 @@ class AnnouncementSeeder extends Seeder
                 'titulo'          => 'Reunión de padres de familia',
                 'contenido'       => 'Invitamos a los padres y tutores a la reunión informativa sobre el rendimiento académico del primer bimestre. Se realizará en el patio central. Los esperamos.',
                 'diasAtras'       => 6,
-                'tipo'            => 'PADRES',
+                'tipo'            => 'TODOS',
                 'course_id'       => null,
                 'user_id'         => null,
-                'destinatarios'   => collect(),
+                'destinatarios'   => null,
             ],
             [
                 'titulo'          => "Feria de la ciencia - curso {$cursoNombre}",
@@ -116,6 +116,7 @@ class AnnouncementSeeder extends Seeder
                 'tipo_destinatario' => $datos['tipo'],
                 'course_id'         => $datos['course_id'],
                 'user_id'           => $datos['user_id'],
+                'level_id'          => $datos['level_id'] ?? null,
             ]);
 
             // Sembrar estado "sin leer" para los destinatarios.
