@@ -431,6 +431,11 @@ class ScheduleController extends Controller
         // para reasignar otra clase, sin perderse el registro.
         $schedule->update(['estado' => 'ELIMINADO']);
 
+        if (! $schedule->section_id) {
+            return redirect()->route('schedules.index')
+                ->with('mensaje', 'Bloque de ocupación eliminado del horario.');
+        }
+
         return redirect()->route('schedules.show', $schedule->section_id)
             ->with('mensaje', 'Clase eliminada del horario. Puedes asignar otra en ese día y hora.');
     }

@@ -86,7 +86,7 @@
                                         <td class="p-2 align-top border-l border-border/60">
                                             @if($clases->isNotEmpty())
                                                 <div class="h-full rounded-lg bg-card border border-border/70 px-2.5 py-2 shadow-sm">
-                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $clases->first()->subject->nombre ?? '—' }}</div>
+                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $clases->first()->subject?->nombre ?? 'Ocupado' }}</div>
                                                     @if($clases->first()->section)
                                                         <div class="mt-1 text-[11px] leading-snug text-muted-foreground">
                                                             {{ $clases->first()->section->grade->nombre ?? $clases->first()->section->nombre }}

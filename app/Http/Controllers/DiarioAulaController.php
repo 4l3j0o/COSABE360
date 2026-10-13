@@ -177,6 +177,7 @@ class DiarioAulaController extends Controller
         return \App\Models\Schedule::where('teacher_id', $teacher->id)
             ->where('dia', $dia)
             ->where('estado', 'ACTIVO')
+            ->whereNotNull('section_id')
             ->orderBy('hora_inicio')
             ->get()
             ->first(fn ($s) => $s->hora_inicio && $s->hora_fin
