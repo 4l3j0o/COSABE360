@@ -306,6 +306,37 @@ class ScheduleController extends Controller
     }
 
     /**
+     * HU-70: editar un horario de visita (docente: solo el suyo).
+     */
+    public function updateVisita(Request $request, Schedule $schedule)
+    {
+        abort_unless($schedule->tipo === 'VISITA', 404, 'Solo se gestionan horarios de visita.');
+
+        $user = $request->user();
+        if ($user->hasRole('Docente')) {
+            $teacher = $user->teacher ?? Teacher::where('user_id', $user->id)->first();
+            abort_unless($teacher && $schedule->teacher_id === $teacher->id, 403, 'Solo puedes gestionar tu propio horario de visita.');
+        }
+
+        $validated = $request->validate([
+            'dia' => ['required', 'in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO'],
+            'hora_inicio' => ['required', 'date_format:H:i'],
+            'hora_fin' => ['required', 'date_format:H:i', 'after:hora_inicio'],
+            'aula' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $error = $this->validarCruceDocente($schedule->teacher_id, $validated['dia'], $validated['hora_inicio'], $validated['hora_fin'], $schedule->id);
+        if ($error) {
+            return back()->withInput()->withErrors(['cruce' => $error]);
+        }
+
+        $schedule->update($validated);
+
+        return redirect()->route('visitas.mis', ['teacher_id' => $schedule->teacher_id])
+            ->with('mensaje', 'Horario de visita actualizado.');
+    }
+
+    /**
      * HU-70: consulta pública de horarios de visita (estudiantes y personal).
      */
     public function visitasIndex(Request $request)
@@ -557,11 +588,12 @@ class ScheduleController extends Controller
         return redirect()->route('schedules.index')->with('mensaje', 'Horario creado correctamente.');
     }
 
-    private function validarCruceDocente($docenteId, $dia, $horaInicio, $horaFin)
+    private function validarCruceDocente($docenteId, $dia, $horaInicio, $horaFin, $excluirId = null)
     {
         $cruce = Schedule::where('teacher_id', $docenteId)
             ->where('estado', 'ACTIVO')
             ->where('dia', $dia)
+            ->when($excluirId, fn ($q) => $q->where('id', '!=', $excluirId))
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio) {
                     $q->where('hora_inicio', '<=', $horaInicio)
@@ -583,7 +615,7 @@ class ScheduleController extends Controller
         return null;
     }
 
-    private function validarCruceAula($aula, $dia, $horaInicio, $horaFin)
+    private function validarCruceAula($aula, $dia, $horaInicio, $horaFin, $excluirId = null)
     {
         if (empty($aula)) {
             return null;
@@ -592,6 +624,7 @@ class ScheduleController extends Controller
         $cruce = Schedule::where('aula', $aula)
             ->where('estado', 'ACTIVO')
             ->where('dia', $dia)
+            ->when($excluirId, fn ($q) => $q->where('id', '!=', $excluirId))
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio) {
                     $q->where('hora_inicio', '<=', $horaInicio)
@@ -618,9 +651,48 @@ class ScheduleController extends Controller
         //
     }
 
+    /**
+     * HU-70: editar un bloque de CLASE (admin/dirección).
+     */
     public function update(Request $request, Schedule $schedule)
     {
-        //
+        abort_unless($schedule->tipo === 'CLASE', 404, 'Solo se editan bloques de clase.');
+
+        $validated = $request->validate([
+            'subject_id' => ['required', 'exists:subjects,id'],
+            'teacher_id' => ['required', 'exists:teachers,id'],
+            'dia' => ['required', 'in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO'],
+            'hora_inicio' => ['required', 'date_format:H:i'],
+            'hora_fin' => ['required', 'date_format:H:i', 'after:hora_inicio'],
+            'aula' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $docenteReal = SectionSubject::where('section_id', $schedule->section_id)
+            ->where('subject_id', $validated['subject_id'])
+            ->value('teacher_id');
+        if ($docenteReal) {
+            $validated['teacher_id'] = $docenteReal;
+        }
+
+        $errorDocente = $this->validarCruceDocente($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin'], $schedule->id);
+        if ($errorDocente) {
+            return back()->withInput()->withErrors(['cruce' => $errorDocente]);
+        }
+
+        $errorAula = $this->validarCruceAula($validated['aula'] ?? null, $validated['dia'], $validated['hora_inicio'], $validated['hora_fin'], $schedule->id);
+        if ($errorAula) {
+            return back()->withInput()->withErrors(['cruce' => $errorAula]);
+        }
+
+        $schedule->update($validated);
+
+        if ($schedule->section_id) {
+            return redirect()->route('schedules.show', $schedule->section_id)
+                ->with('mensaje', 'Clase actualizada correctamente.');
+        }
+
+        return redirect()->route('schedules.index')
+            ->with('mensaje', 'Bloque actualizado correctamente.');
     }
 
     public function destroy(Schedule $schedule)

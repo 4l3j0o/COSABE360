@@ -368,6 +368,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
 Route::middleware(['auth', 'role:Docente,Administrador,Director'])->prefix('horarios')->group(function () {
     Route::get('/visitas', [ScheduleController::class, 'misVisitas'])->name('visitas.mis');
     Route::post('/visitas', [ScheduleController::class, 'storeVisita'])->name('visitas.store');
+    Route::put('/visitas/{schedule}', [ScheduleController::class, 'updateVisita'])->name('visitas.update');
     Route::delete('/visitas/{schedule}', [ScheduleController::class, 'destroyVisita'])->name('visitas.destroy');
 });
 
@@ -378,6 +379,7 @@ Route::middleware(['auth', 'role:Administrador,Director'])->prefix('horarios')->
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
     Route::post('/iniciar', [ScheduleController::class, 'iniciar'])->name('schedules.iniciar');
     Route::delete('/clases/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+    Route::put('/clases/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
     Route::get('/docente/{teacher}', [ScheduleController::class, 'horarioDocente'])->name('schedules.docente');
     Route::get('/{section}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
     Route::get('/{section}', [ScheduleController::class, 'show'])->name('schedules.show');
