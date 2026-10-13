@@ -20,20 +20,14 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  */
 class CargaHorariaSeeder extends Seeder
 {
-    private const PERIODOS = [
-        'Nivel Inicial' => [
-            ['08:00', '08:35'], ['08:35', '09:10'], ['09:40', '10:15'],
-            ['10:15', '10:50'], ['11:00', '11:30'], ['11:30', '12:00'],
-        ],
-        'Nivel Primaria' => [
-            ['07:30', '08:15'], ['08:15', '09:00'], ['09:15', '09:55'],
-            ['09:55', '10:40'], ['10:55', '11:40'], ['11:40', '12:20'],
-        ],
-        'Nivel Secundaria' => [
-            ['14:00', '14:40'], ['14:40', '15:20'], ['15:30', '16:10'],
-            ['16:10', '16:50'], ['17:05', '17:45'], ['17:45', '18:20'], ['18:20', '18:50'],
-        ],
-    ];
+    private function periodos(): array
+    {
+        return [
+            'Nivel Inicial' => Schedule::PERIODOS_NIVEL['INICIAL'],
+            'Nivel Primaria' => Schedule::PERIODOS_NIVEL['PRIMARIA'],
+            'Nivel Secundaria' => Schedule::PERIODOS_NIVEL['SECUNDARIA'],
+        ];
+    }
 
     private const DIAS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
 
@@ -59,7 +53,7 @@ class CargaHorariaSeeder extends Seeder
 
         $sergioId = Teacher::where('apellidos', 'like', 'APARICIO%')->where('estado', 'ACTIVO')->value('id');
 
-        foreach (self::PERIODOS as $sheetName => $periodos) {
+        foreach ($this->periodos() as $sheetName => $periodos) {
             $sh = $wb->getSheetByName($sheetName);
             if (! $sh) {
                 $this->command->warn("Hoja '{$sheetName}' no encontrada, se omite.");

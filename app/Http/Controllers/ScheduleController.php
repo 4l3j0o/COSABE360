@@ -190,15 +190,7 @@ class ScheduleController extends Controller
 
             $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
 
-            $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
-                ->values()
-                ->sortBy(fn ($s) => $s->hora_inicio)
-                ->values();
-
-            $tabla = [];
-            foreach ($dias as $dia) {
-                $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
-            }
+            $grupos = $this->tablasPorGrupo($schedules);
 
             $gestiones = $schedules->map(fn ($s) => $s->section?->gestion?->nombre)
                 ->filter()
@@ -207,7 +199,7 @@ class ScheduleController extends Controller
 
             $bloquesDia = $this->bloquesDia();
 
-            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones', 'bloquesDia'));
+            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia'));
         }
 
         abort(403);
@@ -226,15 +218,7 @@ class ScheduleController extends Controller
 
         $dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
 
-        $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
-            ->values()
-            ->sortBy(fn ($s) => $s->hora_inicio)
-            ->values();
-
-        $tabla = [];
-        foreach ($dias as $dia) {
-            $tabla[$dia] = $schedules->where('dia', $dia)->groupBy(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'));
-        }
+        $grupos = $this->tablasPorGrupo($schedules);
 
         $gestiones = $schedules->map(fn ($s) => $s->section?->gestion?->nombre)
             ->filter()
@@ -243,7 +227,7 @@ class ScheduleController extends Controller
 
         $bloquesDia = $this->bloquesDia();
 
-        return view('schedules.docente', compact('teacher', 'dias', 'horas', 'tabla', 'schedules', 'gestiones', 'bloquesDia'));
+        return view('schedules.docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia'));
     }
 
     private function renderHorarioCurso(string $vista, Section $section, array $extra = [])
@@ -269,6 +253,68 @@ class ScheduleController extends Controller
         $section->load(['grade.level', 'gestion']);
 
         return view($vista, array_merge($extra, compact('section', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia')));
+    }
+
+    /**
+     * Agrupa el horario del docente en tablas por turno:
+     * "Inicial - Primaria" (mañana) y "Secundaria" (tarde).
+     * Cada tabla trae la grilla COMPLETA de periodos de los niveles donde el
+     * docente tiene bloques; solo se marcan sus bloques.
+     */
+    private function tablasPorGrupo($schedules): array
+    {
+        $grupos = [];
+        foreach (Schedule::GRUPOS_TURNO as $turno => $niveles) {
+            $titulo = $turno === 'MANANA' ? 'Inicial - Primaria' : 'Secundaria';
+
+            $enGrupo = $schedules->filter(fn ($s) => in_array($this->nivelDeBloque($s), $niveles, true))->values();
+            if ($enGrupo->isEmpty()) {
+                continue;
+            }
+
+            $nivelesDocente = $enGrupo->map(fn ($s) => $this->nivelDeBloque($s))->unique()->values();
+            $filas = collect();
+            foreach ($nivelesDocente as $nivel) {
+                foreach (Schedule::PERIODOS_NIVEL[$nivel] as [$ini, $fin]) {
+                    $filas->push(['inicio' => $ini, 'fin' => $fin]);
+                }
+            }
+            // Franjas propias fuera del estándar (ej. salida anticipada) también se muestran
+            foreach ($enGrupo as $s) {
+                $clave = $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i');
+                if (! $filas->contains(fn ($f) => $f['inicio'] . '-' . $f['fin'] === $clave)) {
+                    $filas->push(['inicio' => $s->hora_inicio->format('H:i'), 'fin' => $s->hora_fin->format('H:i')]);
+                }
+            }
+            $filas = $filas->sortBy('inicio')->values();
+
+            $tabla = [];
+            foreach (['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as $dia) {
+                $tabla[$dia] = $enGrupo->where('dia', $dia)
+                    ->groupBy(fn ($s) => $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i'));
+            }
+
+            $grupos[] = ['titulo' => $titulo, 'filas' => $filas, 'tabla' => $tabla];
+        }
+
+        return $grupos;
+    }
+
+    private function nivelDeBloque($s): ?string
+    {
+        $nivelNombre = $s->section?->grade?->level?->nombre ?? '';
+        foreach (['INICIAL' => 'inicial', 'PRIMARIA' => 'primaria', 'SECUNDARIA' => 'secundaria'] as $nivel => $aguja) {
+            if (str_contains(mb_strtolower($nivelNombre), $aguja)) {
+                return $nivel;
+            }
+        }
+
+        $nivel = Schedule::nivelDeFranja($s->hora_inicio->format('H:i'), $s->hora_fin->format('H:i'));
+        if ($nivel) {
+            return $nivel;
+        }
+
+        return $s->hora_fin->format('H:i') <= '12:30' ? 'PRIMARIA' : 'SECUNDARIA';
     }
 
     private function tablaSemanal($schedules): array
