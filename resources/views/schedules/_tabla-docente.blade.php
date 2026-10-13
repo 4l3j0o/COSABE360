@@ -32,12 +32,35 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($filas as $fila)
-                        @php $clave = $fila['inicio'] . '-' . $fila['fin']; @endphp
+                    @php
+                        $renglones = collect();
+                        foreach ($filas as $fila) {
+                            $renglones->push(['tipo' => 'clase', 'inicio' => $fila['inicio'], 'fin' => $fila['fin']]);
+                        }
+                        foreach ($recesos as $rec) {
+                            $renglones->push(['tipo' => 'receso', 'inicio' => $rec['inicio'], 'fin' => $rec['fin']]);
+                        }
+                        $renglones = $renglones->sortBy('inicio')->values();
+                    @endphp
+                    @foreach($renglones as $renglon)
+                        @if($renglon['tipo'] === 'receso')
+                            <tr class="border-b border-border">
+                                <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
+                                    <div class="text-sm font-bold text-foreground">{{ $renglon['inicio'] }}</div>
+                                    <div class="text-[11px] text-muted-foreground">{{ $renglon['fin'] }}</div>
+                                </td>
+                                <td colspan="{{ count($dias) }}" class="p-2 align-top border-l border-border/60">
+                                    <div class="h-full rounded-lg bg-warning/10 border border-dashed border-warning/40 px-3 py-2 text-center">
+                                        <span class="text-[13px] font-bold text-warning">Receso</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @else
+                        @php $clave = $renglon['inicio'] . '-' . $renglon['fin']; @endphp
                         <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
                             <td class="px-4 py-2 align-middle whitespace-nowrap bg-muted/40">
-                                <div class="text-sm font-bold text-foreground">{{ $fila['inicio'] }}</div>
-                                <div class="text-[11px] text-muted-foreground">{{ $fila['fin'] }}</div>
+                                <div class="text-sm font-bold text-foreground">{{ $renglon['inicio'] }}</div>
+                                <div class="text-[11px] text-muted-foreground">{{ $renglon['fin'] }}</div>
                             </td>
                             @foreach($dias as $dia)
                                 @php $clases = $tabla[$dia][$clave] ?? collect(); @endphp
@@ -60,6 +83,7 @@
                                 </td>
                             @endforeach
                         </tr>
+                        @endif
                     @endforeach
                 </tbody>
             </table>

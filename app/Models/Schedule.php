@@ -48,15 +48,37 @@ class Schedule extends Model
      */
     public static function nivelDeFranja(string $inicio, string $fin): ?string
     {
+        // 1) Coincidencia exacta con un periodo oficial
         foreach (self::PERIODOS_NIVEL as $nivel => $periodos) {
             foreach ($periodos as [$pi, $pf]) {
-                if ($inicio < $pf && $pi < $fin) {
+                if ($inicio === $pi && $fin === $pf) {
                     return $nivel;
                 }
             }
         }
+        // 2) Un solo nivel traslapado
+        $cruzan = self::nivelesDeFranja($inicio, $fin);
+        if (count($cruzan) === 1) {
+            return $cruzan[0];
+        }
 
         return null;
+    }
+
+    /** Todos los niveles que cruzan la franja. */
+    public static function nivelesDeFranja(string $inicio, string $fin): array
+    {
+        $out = [];
+        foreach (self::PERIODOS_NIVEL as $nivel => $periodos) {
+            foreach ($periodos as [$pi, $pf]) {
+                if ($inicio < $pf && $pi < $fin) {
+                    $out[] = $nivel;
+                    break;
+                }
+            }
+        }
+
+        return $out;
     }
 
     protected $fillable = [

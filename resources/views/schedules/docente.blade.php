@@ -42,7 +42,7 @@
         </div>
     @else
         @foreach($grupos as $grupo)
-            @include('schedules._tabla-docente', ['dias' => $dias, 'diasLabel' => $diasLabel, 'filas' => $grupo['filas'], 'tabla' => $grupo['tabla'], 'titulo' => $grupo['titulo'], 'accent' => $grupo['accent']])
+            @include('schedules._tabla-docente', ['dias' => $dias, 'diasLabel' => $diasLabel, 'filas' => $grupo['filas'], 'recesos' => $grupo['recesos'], 'tabla' => $grupo['tabla'], 'titulo' => $grupo['titulo'], 'accent' => $grupo['accent']])
         @endforeach
 
         <div class="mt-4 flex flex-wrap gap-2 text-[11px] text-muted-foreground">

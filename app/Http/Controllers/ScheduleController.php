@@ -375,10 +375,24 @@ class ScheduleController extends Controller
         ];
 
         $clases = $schedules->where('tipo', 'CLASE')->values();
+
+        // Dos pasadas: primero niveles firmes, luego los ambiguos se resuelven
+        // prefiriendo un nivel que el docente ya ocupa.
+        $asignado = [];
+        foreach ($clases as $s) {
+            $asignado[$s->id] = $this->nivelDeBloque($s);
+        }
+        $nivelesDocente = array_values(array_unique(array_filter($asignado)));
+        foreach ($clases as $s) {
+            if (! $asignado[$s->id]) {
+                $asignado[$s->id] = $this->nivelDeBloque($s, $nivelesDocente);
+            }
+        }
+
         $grupos = [];
 
         foreach ($defs as $nivel => $def) {
-            $enNivel = $clases->filter(fn ($s) => $this->nivelDeBloque($s) === $nivel)->values();
+            $enNivel = $clases->filter(fn ($s) => ($asignado[$s->id] ?? null) === $nivel)->values();
             if ($enNivel->isEmpty()) {
                 continue;
             }
@@ -396,19 +410,29 @@ class ScheduleController extends Controller
             }
             $filas = $filas->sortBy('inicio')->values();
 
+            // Recesos = huecos entre periodos consecutivos del nivel
+            $recesos = collect();
+            foreach (Schedule::PERIODOS_NIVEL[$nivel] as $i => [$pi, $pf]) {
+                $sig = Schedule::PERIODOS_NIVEL[$nivel][$i + 1] ?? null;
+                if ($sig && $pf < $sig[0]) {
+                    $recesos->push(['inicio' => $pf, 'fin' => $sig[0]]);
+                }
+            }
+            $recesos = $recesos->unique(fn ($r) => $r['inicio'] . '-' . $r['fin'])->sortBy('inicio')->values();
+
             $tabla = [];
             foreach (['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as $dia) {
                 $tabla[$dia] = $enNivel->where('dia', $dia)
                     ->groupBy(fn ($s) => $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i'));
             }
 
-            $grupos[] = ['titulo' => $def['titulo'], 'accent' => $def['accent'], 'filas' => $filas, 'tabla' => $tabla];
+            $grupos[] = ['titulo' => $def['titulo'], 'accent' => $def['accent'], 'filas' => $filas, 'recesos' => $recesos, 'tabla' => $tabla];
         }
 
         return $grupos;
     }
 
-    private function nivelDeBloque($s): ?string
+    private function nivelDeBloque($s, array $nivelesDocente = []): ?string
     {
         $nivelNombre = $s->section?->grade?->level?->nombre ?? '';
         foreach (['INICIAL' => 'inicial', 'PRIMARIA' => 'primaria', 'SECUNDARIA' => 'secundaria'] as $nivel => $aguja) {
@@ -417,12 +441,32 @@ class ScheduleController extends Controller
             }
         }
 
-        $nivel = Schedule::nivelDeFranja($s->hora_inicio->format('H:i'), $s->hora_fin->format('H:i'));
+        $ini = $s->hora_inicio->format('H:i');
+        $fin = $s->hora_fin->format('H:i');
+
+        $nivel = Schedule::nivelDeFranja($ini, $fin);
         if ($nivel) {
             return $nivel;
         }
 
-        return $s->hora_fin->format('H:i') <= '12:30' ? 'PRIMARIA' : 'SECUNDARIA';
+        // Franja ambigua (ej. salida anticipada dentro de dos niveles):
+        // con contexto se queda con un nivel que el docente ya ocupa;
+        // sin contexto se deja null para resolver en segunda pasada.
+        foreach (Schedule::nivelesDeFranja($ini, $fin) as $candidato) {
+            if (in_array($candidato, $nivelesDocente, true)) {
+                return $candidato;
+            }
+        }
+
+        $cruzan = Schedule::nivelesDeFranja($ini, $fin);
+        if ($cruzan && ! empty($nivelesDocente)) {
+            return $cruzan[0];
+        }
+        if ($cruzan) {
+            return null;
+        }
+
+        return $fin <= '12:30' ? 'PRIMARIA' : 'SECUNDARIA';
     }
 
     private function tablaSemanal($schedules): array
