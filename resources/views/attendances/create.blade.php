@@ -34,7 +34,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Registrar Asistencia</h1>
-            <p class="text-sm text-muted-foreground mt-1">{{ $section->nombre }} — {{ $materias->firstWhere('id', $subjectId)?->nombre ?? 'General' }} — {{ $fecha }}</p>
+            <p class="text-sm text-muted-foreground mt-1">{{ $section->grade?->nombre }} {{ $section->codigoCorto() }} — {{ $materias->firstWhere('id', $subjectId)?->nombre ?? 'General' }} — {{ $fecha }}</p>
         </div>
         <div class="flex items-center gap-2">
             @if($editando)

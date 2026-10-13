@@ -26,7 +26,7 @@
             <h1 class="text-xl font-bold text-foreground mt-2">Historial de Asistencia</h1>
             <div class="mt-2 flex flex-wrap gap-2">
                 <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $sectionSubject->subject->nombre }}</span>
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->nombre }}</span>
+                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->grade?->nombre }} {{ $sectionSubject->section->codigoCorto() }}</span>
                 @if($section->aula)
                     <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Aula {{ $section->aula }}</span>
                 @endif
