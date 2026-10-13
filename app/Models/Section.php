@@ -48,14 +48,16 @@ class Section extends Model
             ->orderBy('codigo');
     }
 
-    /** Misma ordenación para colecciones ya cargadas (listas de docente, etc.). */
+    /** Misma ordenación para colecciones ya cargadas (listas de docente, etc.).
+     *  Ojo: sortBy con arreglo de closures los trata como comparadores, no
+     *  como claves; por eso se encadena de menor a mayor significancia. */
     public static function ordenarPorNivel(\Illuminate\Support\Collection $secciones): \Illuminate\Support\Collection
     {
-        return $secciones->sortBy([
-            fn ($s) => $s->grade?->level?->orden ?? 999,
-            fn ($s) => $s->grade?->orden ?? 999,
-            fn ($s) => $s->codigo ?? $s->nombre,
-        ])->values();
+        return $secciones
+            ->sortBy(fn ($s) => $s->codigo ?? $s->nombre)
+            ->sortBy(fn ($s) => $s->grade?->orden ?? 999)
+            ->sortBy(fn ($s) => $s->grade?->level?->orden ?? 999)
+            ->values();
     }
 
     public function estaActivo(): bool
