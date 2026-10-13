@@ -35,11 +35,11 @@ class Schedule extends Model
         ],
     ];
 
-    /** Colores por nivel para las tablas (coherentes con HORARIO_PERIODOS.html). */
+    /** Colores de la paleta del sistema por nivel. */
     public const ACCENT_NIVEL = [
-        'inicial' => ['thead' => 'bg-[#085041]', 'chip' => 'bg-[#E1F5EE] text-[#085041]'],
-        'primaria' => ['thead' => 'bg-[#042C53]', 'chip' => 'bg-[#E6F1FB] text-[#042C53]'],
-        'secundaria' => ['thead' => 'bg-[#26215C]', 'chip' => 'bg-[#EEEDFE] text-[#26215C]'],
+        'inicial' => ['thead' => 'bg-primary-800', 'chip' => 'bg-primary-50 text-primary-800'],
+        'primaria' => ['thead' => 'bg-info', 'chip' => 'bg-info/15 text-info'],
+        'secundaria' => ['thead' => 'bg-secondary', 'chip' => 'bg-secondary/15 text-secondary'],
     ];
 
     /**

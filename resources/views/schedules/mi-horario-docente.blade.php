@@ -18,7 +18,7 @@
                 @endif
             </p>
         </div>
-        <a href="{{ route('visitas.mis') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:opacity-90 transition-opacity">Gestionar visitas</a>
+        <a href="{{ route('visitas.mis') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-success text-white text-sm font-medium hover:opacity-90 transition-opacity">Gestionar visitas</a>
     </div>
 
     @php
@@ -54,7 +54,7 @@
                 <div class="bg-card border border-border rounded-xl overflow-hidden">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="bg-emerald-700 text-white">
+                            <tr class="bg-success text-white">
                                 <th class="px-4 py-2.5 text-left font-semibold">Día</th>
                                 <th class="px-4 py-2.5 text-left font-semibold">Hora</th>
                                 <th class="px-4 py-2.5 text-left font-semibold">Lugar</th>

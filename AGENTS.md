@@ -42,7 +42,7 @@ No hay CI ni linters configurados. `vendor/bin/pint` existe pero no es parte del
 
 ## Gotchas
 
-- **Zona horaria:** `config('app.timezone')` es `UTC`, pero toda la lógica de horario/clase actual usa `now('America/La_Paz')` explícitamente. Usa `America/La_Paz` para fechas/horas de negocio, no `now()` a secas.
+- **Zona horaria: America/La_Paz en todo** (sistema de un solo país, UTC-4): `config/app.php`, `date.timezone` del php.ini y MySQL (SYSTEM = hora Windows local). No uses `now()` UTC ni asumas UTC en ningún lado.
 - **No commitear:** `public/build/manifest.json` (artefacto de build, aunque está trackeado — se modifica solo) y `Docs/priv_google.json` (secreto, ignorado). Aparecen como `M`/`??` constantemente; déjalos fuera de los commits de HU.
 - Cada llamada a `shell` es una sesión nueva: procesos en background (`php artisan serve`) no sobreviven entre llamadas. Para levantarlo, usa `Start-Process`.
 - PowerShell se come `$` en `php artisan tinker --execute="..."`. Para scripts con variables, escribe un `.php` temporal y córrelo con `php archivo.php`.

@@ -34,8 +34,12 @@ class HorariosDetalladosSeeder extends Seeder
                 $this->command->warn("Docente sin match: {$detalle['docente']}");
                 continue;
             }
-            foreach ($detalle['bloques'] as [$dia, $nivel, $periodo, $codigo]) {
+            foreach ($detalle['bloques'] as $entrada) {
+                [$dia, $nivel, $periodo, $codigo] = $entrada;
+                $materia = $entrada[4] ?? null;
                 [$ini, $fin] = Schedule::PERIODOS_NIVEL[$nivel][$periodo - 1];
+                $ini = $entrada[5] ?? $ini;
+                $fin = $entrada[6] ?? $fin;
                 $section = Section::where('codigo', $codigo)
                     ->where('academic_year_id', $gestion->id)
                     ->first()
@@ -45,6 +49,10 @@ class HorariosDetalladosSeeder extends Seeder
                     continue;
                 }
 
+                $subjectId = isset($materia)
+                    ? $this->resolverMateria($materia, $section->grade->level_id)?->id
+                    : null;
+
                 $bloque = Schedule::where('teacher_id', $teacher->id)
                     ->where('dia', $dia)
                     ->where('hora_inicio', $ini . ':00')
@@ -53,14 +61,21 @@ class HorariosDetalladosSeeder extends Seeder
                     ->first();
 
                 if ($bloque) {
+                    $cambios = [];
                     if ($bloque->section_id !== $section->id) {
-                        $bloque->update(['section_id' => $section->id]);
+                        $cambios['section_id'] = $section->id;
+                    }
+                    if ($subjectId && $bloque->subject_id !== $subjectId) {
+                        $cambios['subject_id'] = $subjectId;
+                    }
+                    if ($cambios) {
+                        $bloque->update($cambios);
                         $asignados++;
                     }
                 } else {
                     Schedule::create([
                         'section_id' => $section->id,
-                        'subject_id' => null,
+                        'subject_id' => $subjectId,
                         'teacher_id' => $teacher->id,
                         'dia' => $dia,
                         'hora_inicio' => $ini,
@@ -68,7 +83,8 @@ class HorariosDetalladosSeeder extends Seeder
                         'estado' => 'ACTIVO',
                     ]);
                     $creados++;
-                    $this->command->warn("Bloque nuevo (no estaba en Excel): {$detalle['docente']} {$dia} {$ini}-{$fin} {$codigo}");
+                    $quien = is_array($detalle['docente']) ? json_encode($detalle['docente']) : $detalle['docente'];
+                    $this->command->warn("Bloque nuevo (no estaba en Excel): {$quien} {$dia} {$ini}-{$fin} {$codigo}");
                 }
             }
         }
@@ -78,18 +94,23 @@ class HorariosDetalladosSeeder extends Seeder
 
     /**
      * Aplica un detalle arbitrario (usado por tests).
-     * Entradas: [dia, nivel(INICIAL|PRIMARIA|SECUNDARIA), periodo, codigo].
+     * Entradas: [dia, nivel(INICIAL|PRIMARIA|SECUNDARIA), periodo, codigo, materia?, ini?, fin?].
      */
     public function aplicarDetalle(Teacher $teacher, array $entradas, int $gestionId): array
     {
         $stats = ['asignados' => 0, 'creados' => 0];
-        foreach ($entradas as [$dia, $nivel, $periodo, $codigo]) {
+        foreach ($entradas as $entrada) {
+            [$dia, $nivel, $periodo, $codigo] = $entrada;
+            $materia = $entrada[4] ?? null;
             [$ini, $fin] = Schedule::PERIODOS_NIVEL[$nivel][$periodo - 1];
+            $ini = $entrada[5] ?? $ini;
+            $fin = $entrada[6] ?? $fin;
             $section = Section::where('codigo', $codigo)->where('academic_year_id', $gestionId)->first()
                 ?? Section::where('codigo', $codigo)->first();
             if (! $section) {
                 continue;
             }
+            $subjectId = $materia ? $this->resolverMateria($materia, $section->grade->level_id)?->id : null;
             $bloque = Schedule::where('teacher_id', $teacher->id)
                 ->where('dia', $dia)
                 ->where('hora_inicio', $ini . ':00')
@@ -97,13 +118,20 @@ class HorariosDetalladosSeeder extends Seeder
                 ->where('estado', 'ACTIVO')
                 ->first();
             if ($bloque) {
+                $cambios = [];
                 if ($bloque->section_id !== $section->id) {
-                    $bloque->update(['section_id' => $section->id]);
+                    $cambios['section_id'] = $section->id;
+                }
+                if ($subjectId && $bloque->subject_id !== $subjectId) {
+                    $cambios['subject_id'] = $subjectId;
+                }
+                if ($cambios) {
+                    $bloque->update($cambios);
                     $stats['asignados']++;
                 }
             } else {
                 Schedule::create([
-                    'section_id' => $section->id, 'subject_id' => null, 'teacher_id' => $teacher->id,
+                    'section_id' => $section->id, 'subject_id' => $subjectId, 'teacher_id' => $teacher->id,
                     'dia' => $dia, 'hora_inicio' => $ini, 'hora_fin' => $fin, 'estado' => 'ACTIVO',
                 ]);
                 $stats['creados']++;
@@ -111,6 +139,14 @@ class HorariosDetalladosSeeder extends Seeder
         }
 
         return $stats;
+    }
+
+    private function resolverMateria(string $nombre, int $levelId)
+    {
+        return \App\Models\Subject::where('level_id', $levelId)
+            ->where('nombre', 'like', $nombre)
+            ->first()
+            ?? \App\Models\Subject::where('nombre', 'like', $nombre)->first();
     }
 
     private function buscarDocente(array $criterio): ?Teacher
@@ -186,6 +222,35 @@ class HorariosDetalladosSeeder extends Seeder
                     ['VIERNES', 'PRIMARIA', 1, 'P5A'], ['VIERNES', 'PRIMARIA', 2, 'P5A'],
                     ['VIERNES', 'PRIMARIA', 3, 'P4B'], ['VIERNES', 'PRIMARIA', 4, 'P4B'],
                     ['VIERNES', 'PRIMARIA', 5, 'P5B'], ['VIERNES', 'PRIMARIA', 6, 'P5B'],
+                ],
+            ],
+            [
+                'docente' => ['nombres' => 'SERGIO%', 'apellidos' => 'APARICIO%'],
+                'bloques' => [
+                    ['LUNES', 'SECUNDARIA', 1, 'S3C', 'CIENCIAS SOCIALES'],
+                    ['LUNES', 'SECUNDARIA', 2, 'S3C', 'CIENCIAS SOCIALES'],
+                    ['LUNES', 'SECUNDARIA', 3, 'S3A', 'CIENCIAS SOCIALES'],
+                    ['LUNES', 'SECUNDARIA', 4, 'S3A', 'CIENCIAS SOCIALES'],
+                    ['LUNES', 'SECUNDARIA', 5, 'S3B', 'CIENCIAS SOCIALES'],
+                    ['LUNES', 'SECUNDARIA', 6, 'S3B', 'CIENCIAS SOCIALES'],
+                    ['MIERCOLES', 'SECUNDARIA', 1, 'S2B', 'CIENCIAS SOCIALES'],
+                    ['MIERCOLES', 'SECUNDARIA', 2, 'S2B', 'CIENCIAS SOCIALES'],
+                    ['MIERCOLES', 'SECUNDARIA', 3, 'S1B', 'CIENCIAS SOCIALES'],
+                    ['MIERCOLES', 'SECUNDARIA', 4, 'S1B', 'CIENCIAS SOCIALES'],
+                    ['JUEVES', 'SECUNDARIA', 1, 'S1A', 'CIENCIAS SOCIALES'],
+                    ['JUEVES', 'SECUNDARIA', 2, 'S1A', 'CIENCIAS SOCIALES'],
+                    ['JUEVES', 'SECUNDARIA', 3, 'S2A', 'CIENCIAS SOCIALES'],
+                    ['JUEVES', 'SECUNDARIA', 4, 'S2A', 'CIENCIAS SOCIALES'],
+                    ['VIERNES', 'PRIMARIA', 1, 'S6C', 'INVESTIGACIÓN CIENTÍFICA'],
+                    ['VIERNES', 'PRIMARIA', 2, 'S6C', 'INVESTIGACIÓN CIENTÍFICA'],
+                    ['VIERNES', 'PRIMARIA', 3, 'S6B', 'INVESTIGACIÓN CIENTÍFICA'],
+                    ['VIERNES', 'PRIMARIA', 4, 'S6B', 'INVESTIGACIÓN CIENTÍFICA'],
+                    ['VIERNES', 'PRIMARIA', 5, 'S6A', 'INVESTIGACIÓN CIENTÍFICA'],
+                    ['VIERNES', 'PRIMARIA', 6, 'S6A', 'INVESTIGACIÓN CIENTÍFICA', '11:40', '11:50'],
+                    ['VIERNES', 'SECUNDARIA', 1, 'S1C', 'CIENCIAS SOCIALES'],
+                    ['VIERNES', 'SECUNDARIA', 2, 'S1C', 'CIENCIAS SOCIALES'],
+                    ['VIERNES', 'SECUNDARIA', 3, 'S2C', 'CIENCIAS SOCIALES'],
+                    ['VIERNES', 'SECUNDARIA', 4, 'S2C', 'CIENCIAS SOCIALES'],
                 ],
             ],
         ];

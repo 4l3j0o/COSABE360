@@ -60,7 +60,7 @@
                 <input type="text" name="aula" value="{{ old('aula') }}" maxlength="50" placeholder="Ej: Sala de profesores" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
             </div>
             <div class="flex items-end">
-                <button type="submit" class="w-full px-4 py-2.5 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:opacity-90 transition-opacity">Agregar</button>
+                <button type="submit" class="w-full px-4 py-2.5 rounded-lg bg-success text-white text-sm font-medium hover:opacity-90 transition-opacity">Agregar</button>
             </div>
         </form>
     </div>
@@ -68,7 +68,7 @@
     <div class="bg-card border border-border rounded-xl overflow-hidden">
         <table class="w-full text-sm">
             <thead>
-                <tr class="bg-emerald-700 text-white">
+                <tr class="bg-success text-white">
                     <th class="px-4 py-2.5 text-left font-semibold">Día</th>
                     <th class="px-4 py-2.5 text-left font-semibold">Hora</th>
                     <th class="px-4 py-2.5 text-left font-semibold">Lugar</th>

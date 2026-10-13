@@ -8,6 +8,7 @@ use App\Models\Level;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\Section;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
 use Database\Seeders\HorariosDetalladosSeeder;
@@ -30,6 +31,7 @@ class HorariosDetalladosTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Tercero Det', 'orden' => 3, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
         $section = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'P3X', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
+        $subject = Subject::create(['nombre' => 'Materia Det Univoca', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
         $user = User::create(['nombre' => 'Doc', 'apellido' => 'Det', 'email' => 'doc_det@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
@@ -40,11 +42,11 @@ class HorariosDetalladosTest extends TestCase
             'dia' => 'LUNES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO',
         ]);
 
-        $stats = (new HorariosDetalladosSeeder)->aplicarDetalle($teacher, [['LUNES', 'PRIMARIA', 1, 'P3X']], $gestion->id);
+        $stats = (new HorariosDetalladosSeeder)->aplicarDetalle($teacher, [['LUNES', 'PRIMARIA', 1, 'P3X', 'Materia Det Univoca']], $gestion->id);
 
         $this->assertSame(['asignados' => 1, 'creados' => 0], $stats);
         $this->assertDatabaseHas('schedules', [
-            'teacher_id' => $teacher->id, 'dia' => 'LUNES', 'section_id' => $section->id,
+            'teacher_id' => $teacher->id, 'dia' => 'LUNES', 'section_id' => $section->id, 'subject_id' => $subject->id,
         ]);
     }
 

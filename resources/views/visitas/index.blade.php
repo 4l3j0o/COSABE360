@@ -28,7 +28,7 @@
     <div class="bg-card border border-border rounded-xl overflow-hidden">
         <table class="w-full text-sm">
             <thead>
-                <tr class="bg-emerald-700 text-white">
+                <tr class="bg-success text-white">
                     <th class="px-4 py-2.5 text-left font-semibold">Docente</th>
                     <th class="px-4 py-2.5 text-left font-semibold">Día</th>
                     <th class="px-4 py-2.5 text-left font-semibold">Hora</th>
