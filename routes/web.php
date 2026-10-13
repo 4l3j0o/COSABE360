@@ -255,6 +255,7 @@ Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
 // Mis Cursos del docente - evaluaciones por curso/paralelo (section_subject)
 Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
     Route::get('/', [TeacherSectionController::class, 'index'])->name('docente.cursos');
+    Route::get('/{sectionSubject}', [TeacherSectionController::class, 'show'])->name('docente.cursos.show');
     // Evaluaciones por trimestre y criterios (HU-47)
     Route::get('/{sectionSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'index'])->name('evaluations.index');
     Route::post('/{sectionSubject}/evaluaciones-trimestre', [EvaluationPlanController::class, 'guardar'])->name('evaluations.store');

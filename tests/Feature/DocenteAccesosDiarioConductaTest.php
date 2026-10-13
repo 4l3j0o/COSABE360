@@ -42,20 +42,37 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         return compact('curso', 'subject', 'teacher', 'userDocente');
     }
 
-    public function test_mis_cursos_muestra_accesos_diario_y_conducta_del_curso(): void
+    public function test_mis_cursos_muestra_lista_y_detalle_con_accesos(): void
     {
         $d = $this->crearDocenteConCurso();
         $this->actingAs($d['userDocente']);
+        $ss = SectionSubject::where('teacher_id', $d['teacher']->id)->first();
 
+        // Índice: lista limpia con enlace al detalle, sin accesos directos
         $response = $this->get(route('docente.cursos'));
         $response->assertStatus(200);
-        // Botones directos prefiltrados al curso + materia
-        $response->assertSee('section_id=' . $d['curso']->id, false);
-        $response->assertSee('subject_id=' . $d['subject']->id, false);
-        $response->assertSee('Diario');
-        $response->assertSee('Conducta');
+        $response->assertSee(route('docente.cursos.show', $ss), false);
+        $response->assertDontSee('section_id=' . $d['curso']->id, false);
+
+        // Detalle: botones directos prefiltrados al curso + materia
+        $detalle = $this->get(route('docente.cursos.show', $ss));
+        $detalle->assertStatus(200);
+        $detalle->assertSee('section_id=' . $d['curso']->id, false);
+        $detalle->assertSee('subject_id=' . $d['subject']->id, false);
+        $detalle->assertSee('Diario');
+        $detalle->assertSee('Conducta');
         // Sin enlaces genéricos de sidebar
-        $response->assertDontSee('Diario de Aula');
+        $detalle->assertDontSee('Diario de Aula');
+    }
+
+    public function test_detalle_curso_de_otro_docente_da_403(): void
+    {
+        $d1 = $this->crearDocenteConCurso();
+        $d2 = $this->crearDocenteConCurso();
+        $ss1 = SectionSubject::where('teacher_id', $d1['teacher']->id)->first();
+
+        $this->actingAs($d2['userDocente']);
+        $this->get(route('docente.cursos.show', $ss1))->assertStatus(403);
     }
 
     public function test_mis_cursos_sin_icono_notas_duplicado(): void
