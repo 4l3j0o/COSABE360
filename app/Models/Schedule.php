@@ -35,10 +35,11 @@ class Schedule extends Model
         ],
     ];
 
-    /** Turno mañana (Inicial + Primaria) y turno tarde (Secundaria). */
-    public const GRUPOS_TURNO = [
-        'MANANA' => ['INICIAL', 'PRIMARIA'],
-        'TARDE' => ['SECUNDARIA'],
+    /** Colores por nivel para las tablas (coherentes con HORARIO_PERIODOS.html). */
+    public const ACCENT_NIVEL = [
+        'inicial' => ['thead' => 'bg-[#085041]', 'chip' => 'bg-[#E1F5EE] text-[#085041]'],
+        'primaria' => ['thead' => 'bg-[#042C53]', 'chip' => 'bg-[#E6F1FB] text-[#042C53]'],
+        'secundaria' => ['thead' => 'bg-[#26215C]', 'chip' => 'bg-[#EEEDFE] text-[#26215C]'],
     ];
 
     /**
@@ -62,12 +63,15 @@ class Schedule extends Model
         'section_id',
         'subject_id',
         'teacher_id',
+        'tipo',
         'dia',
         'hora_inicio',
         'hora_fin',
         'aula',
         'estado',
     ];
+
+    public const TIPOS = ['CLASE', 'VISITA'];
 
     protected $casts = [
         'hora_inicio' => 'datetime:H:i:s',

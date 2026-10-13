@@ -70,8 +70,8 @@ class HorariosDetalladosTest extends TestCase
         $admin = User::where('email', 'admin@sanber.edu.bo')->first();
         $response = $this->actingAs($admin)->get(route('schedules.docente', $teacher));
         $response->assertStatus(200);
-        $response->assertSee('Inicial - Primaria');
-        $response->assertSee('Secundaria');
+        $response->assertSee('Nivel Primaria');
+        $response->assertSee('Nivel Secundaria');
         // Grilla completa de Primaria (6 periodos) aunque solo marque uno
         $response->assertSee('07:30');
         $response->assertSee('11:40');

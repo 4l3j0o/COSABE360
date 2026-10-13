@@ -198,8 +198,9 @@ class ScheduleController extends Controller
                 ->values();
 
             $bloquesDia = $this->bloquesDia();
+            $visitas = $this->visitasDe($teacher);
 
-            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia'));
+            return view('schedules.mi-horario-docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia', 'visitas'));
         }
 
         abort(403);
@@ -226,8 +227,113 @@ class ScheduleController extends Controller
             ->values();
 
         $bloquesDia = $this->bloquesDia();
+        $visitas = $this->visitasDe($teacher);
 
-        return view('schedules.docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia'));
+        return view('schedules.docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia', 'visitas'));
+    }
+
+    /**
+     * HU-70: horario de visita para padres. El docente gestiona el suyo;
+     * admin/dirección gestionan cualquiera (teacher_id). Los estudiantes y el
+     * personal lo consultan en visitasIndex.
+     */
+    public function misVisitas(Request $request)
+    {
+        $user = $request->user();
+        $teachers = Teacher::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
+
+        if ($user->hasRole('Docente')) {
+            $teacher = $user->teacher ?? Teacher::where('user_id', $user->id)->first();
+            abort_unless($teacher, 403, 'No se encontró un perfil de docente para esta cuenta.');
+        } else {
+            $teacher = $request->query('teacher_id')
+                ? Teacher::findOrFail($request->query('teacher_id'))
+                : $teachers->first();
+            abort_unless($teacher, 404, 'Sin docentes registrados.');
+        }
+
+        $visitas = $this->visitasDe($teacher);
+
+        return view('visitas.mis', compact('teacher', 'teachers', 'visitas'));
+    }
+
+    public function storeVisita(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'teacher_id' => ['nullable', 'exists:teachers,id'],
+            'dia' => ['required', 'in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO'],
+            'hora_inicio' => ['required', 'date_format:H:i'],
+            'hora_fin' => ['required', 'date_format:H:i', 'after:hora_inicio'],
+            'aula' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        if ($user->hasRole('Docente')) {
+            $teacher = $user->teacher ?? Teacher::where('user_id', $user->id)->first();
+            abort_unless($teacher, 403, 'No se encontró un perfil de docente para esta cuenta.');
+            $validated['teacher_id'] = $teacher->id;
+        } else {
+            $request->validate(['teacher_id' => ['required', 'exists:teachers,id']]);
+        }
+
+        $error = $this->validarCruceDocente($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
+        if ($error) {
+            return back()->withInput()->withErrors(['cruce' => $error]);
+        }
+
+        Schedule::create($validated + ['tipo' => 'VISITA', 'estado' => 'ACTIVO']);
+
+        return redirect()->route('visitas.mis', ['teacher_id' => $validated['teacher_id']])
+            ->with('mensaje', 'Horario de visita registrado.');
+    }
+
+    public function destroyVisita(Request $request, Schedule $schedule)
+    {
+        abort_unless($schedule->tipo === 'VISITA', 404, 'Solo se gestionan horarios de visita.');
+
+        $user = $request->user();
+        if ($user->hasRole('Docente')) {
+            $teacher = $user->teacher ?? Teacher::where('user_id', $user->id)->first();
+            abort_unless($teacher && $schedule->teacher_id === $teacher->id, 403, 'Solo puedes gestionar tu propio horario de visita.');
+        }
+
+        $teacherId = $schedule->teacher_id;
+        $schedule->update(['estado' => 'ELIMINADO']);
+
+        return redirect()->route('visitas.mis', ['teacher_id' => $teacherId])
+            ->with('mensaje', 'Horario de visita eliminado.');
+    }
+
+    /**
+     * HU-70: consulta pública de horarios de visita (estudiantes y personal).
+     */
+    public function visitasIndex(Request $request)
+    {
+        $teachers = Teacher::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
+        $teacherId = $request->query('teacher_id');
+
+        $visitas = Schedule::with(['teacher'])
+            ->where('tipo', 'VISITA')
+            ->where('estado', 'ACTIVO')
+            ->when($teacherId, fn ($q) => $q->where('teacher_id', $teacherId))
+            ->orderBy('teacher_id')
+            ->orderByRaw("CASE dia WHEN 'LUNES' THEN 1 WHEN 'MARTES' THEN 2 WHEN 'MIERCOLES' THEN 3 WHEN 'JUEVES' THEN 4 WHEN 'VIERNES' THEN 5 WHEN 'SABADO' THEN 6 END")
+            ->orderBy('hora_inicio')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('visitas.index', compact('teachers', 'visitas', 'teacherId'));
+    }
+
+    private function visitasDe(Teacher $teacher)
+    {
+        return $teacher->schedules()
+            ->where('tipo', 'VISITA')
+            ->where('estado', 'ACTIVO')
+            ->orderByRaw("CASE dia WHEN 'LUNES' THEN 1 WHEN 'MARTES' THEN 2 WHEN 'MIERCOLES' THEN 3 WHEN 'JUEVES' THEN 4 WHEN 'VIERNES' THEN 5 WHEN 'SABADO' THEN 6 END")
+            ->orderBy('hora_inicio')
+            ->get();
     }
 
     private function renderHorarioCurso(string $vista, Section $section, array $extra = [])
@@ -256,31 +362,33 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Agrupa el horario del docente en tablas por turno:
-     * "Inicial - Primaria" (mañana) y "Secundaria" (tarde).
+     * Tablas de CLASES por nivel (Inicial, Primaria, Secundaria por separado).
      * Cada tabla trae la grilla COMPLETA de periodos de los niveles donde el
      * docente tiene bloques; solo se marcan sus bloques.
      */
     private function tablasPorGrupo($schedules): array
     {
-        $grupos = [];
-        foreach (Schedule::GRUPOS_TURNO as $turno => $niveles) {
-            $titulo = $turno === 'MANANA' ? 'Inicial - Primaria' : 'Secundaria';
+        $defs = [
+            'INICIAL' => ['titulo' => 'Nivel Inicial', 'accent' => 'inicial'],
+            'PRIMARIA' => ['titulo' => 'Nivel Primaria', 'accent' => 'primaria'],
+            'SECUNDARIA' => ['titulo' => 'Nivel Secundaria', 'accent' => 'secundaria'],
+        ];
 
-            $enGrupo = $schedules->filter(fn ($s) => in_array($this->nivelDeBloque($s), $niveles, true))->values();
-            if ($enGrupo->isEmpty()) {
+        $clases = $schedules->where('tipo', 'CLASE')->values();
+        $grupos = [];
+
+        foreach ($defs as $nivel => $def) {
+            $enNivel = $clases->filter(fn ($s) => $this->nivelDeBloque($s) === $nivel)->values();
+            if ($enNivel->isEmpty()) {
                 continue;
             }
 
-            $nivelesDocente = $enGrupo->map(fn ($s) => $this->nivelDeBloque($s))->unique()->values();
             $filas = collect();
-            foreach ($nivelesDocente as $nivel) {
-                foreach (Schedule::PERIODOS_NIVEL[$nivel] as [$ini, $fin]) {
-                    $filas->push(['inicio' => $ini, 'fin' => $fin]);
-                }
+            foreach (Schedule::PERIODOS_NIVEL[$nivel] as [$ini, $fin]) {
+                $filas->push(['inicio' => $ini, 'fin' => $fin]);
             }
             // Franjas propias fuera del estándar (ej. salida anticipada) también se muestran
-            foreach ($enGrupo as $s) {
+            foreach ($enNivel as $s) {
                 $clave = $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i');
                 if (! $filas->contains(fn ($f) => $f['inicio'] . '-' . $f['fin'] === $clave)) {
                     $filas->push(['inicio' => $s->hora_inicio->format('H:i'), 'fin' => $s->hora_fin->format('H:i')]);
@@ -290,11 +398,11 @@ class ScheduleController extends Controller
 
             $tabla = [];
             foreach (['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as $dia) {
-                $tabla[$dia] = $enGrupo->where('dia', $dia)
+                $tabla[$dia] = $enNivel->where('dia', $dia)
                     ->groupBy(fn ($s) => $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i'));
             }
 
-            $grupos[] = ['titulo' => $titulo, 'filas' => $filas, 'tabla' => $tabla];
+            $grupos[] = ['titulo' => $def['titulo'], 'accent' => $def['accent'], 'filas' => $filas, 'tabla' => $tabla];
         }
 
         return $grupos;

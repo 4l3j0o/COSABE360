@@ -42,7 +42,38 @@
         </div>
     @else
         @foreach($grupos as $grupo)
-            @include('schedules._tabla-docente', ['dias' => $dias, 'diasLabel' => $diasLabel, 'filas' => $grupo['filas'], 'tabla' => $grupo['tabla'], 'titulo' => $grupo['titulo']])
+            @include('schedules._tabla-docente', ['dias' => $dias, 'diasLabel' => $diasLabel, 'filas' => $grupo['filas'], 'tabla' => $grupo['tabla'], 'titulo' => $grupo['titulo'], 'accent' => $grupo['accent']])
         @endforeach
+
+        <div class="mt-4 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-card border border-border/70 inline-block"></span> Bloque del docente (materia o paralelo)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-muted/20 inline-block"></span> Sin clases</span>
+        </div>
+
+        @if($visitas->isNotEmpty())
+            <div class="mt-6">
+                <h3 class="text-sm font-bold text-foreground mb-2">Horario de visita para padres</h3>
+                <div class="bg-card border border-border rounded-xl overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-emerald-700 text-white">
+                                <th class="px-4 py-2.5 text-left font-semibold">Día</th>
+                                <th class="px-4 py-2.5 text-left font-semibold">Hora</th>
+                                <th class="px-4 py-2.5 text-left font-semibold">Lugar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($visitas as $v)
+                                <tr class="{{ !$loop->last ? 'border-b border-border' : '' }}">
+                                    <td class="px-4 py-2.5">{{ \App\Models\Schedule::DIAS_LABEL[$v->dia] ?? $v->dia }}</td>
+                                    <td class="px-4 py-2.5 whitespace-nowrap">{{ $v->hora_inicio->format('H:i') }} – {{ $v->hora_fin->format('H:i') }}</td>
+                                    <td class="px-4 py-2.5">{{ $v->aula ?? '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     @endif
 @endsection

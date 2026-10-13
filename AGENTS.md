@@ -50,7 +50,7 @@ No hay CI ni linters configurados. `vendor/bin/pint` existe pero no es parte del
 - **`max_allowed_packet=64M`** en `my.ini`: el dump de datos reales se importa por sentencias; si baja de ~2 MB vuelve a fallar la importación.
 - **Datos reales (PII):** `database/data/estudiantes_2026.sql` está en **sintaxis MySQL** (generado desde el dump SQLite original en HU-68). `EstudiantesRealesSeeder` lo ejecuta sentencia por sentencia con las FK desactivadas. No lo regeneres a la ligera (contiene PII).
 - **`parent_guardians.numero_documento` usa collation `utf8mb4_bin`** (los datos reales traían documentos/direcciones con diferencias solo de mayúsculas; con la collation CI de MySQL chocaban en el índice único).
-- **Horarios:** periodos oficiales en `Schedule::PERIODOS_NIVEL` (fuente: `Docs/Horarios/HORARIO_PERIODOS.html`). `CargaHorariaSeeder` carga ocupación desde el xlsx (section/subject NULL); `HorariosDetalladosSeeder` fija el paralelo a bloques existentes (va después). La vista docente agrupa en tablas Inicial-Primaria / Secundaria con grilla completa.
+- **Horarios:** periodos oficiales en `Schedule::PERIODOS_NIVEL` (fuente: `Docs/Horarios/HORARIO_PERIODOS.html`). `CargaHorariaSeeder` carga ocupación desde el xlsx (section/subject NULL); `HorariosDetalladosSeeder` fija el paralelo a bloques existentes (va después). La vista docente agrupa en tablas por nivel (Inicial/Primaria/Secundaria) con grilla completa. `schedules.tipo` (CLASE/VISITA): la visita la gestiona el docente en `visitas.mis` y se consulta en `visitas.index`; las acciones "clase actual" solo usan bloques CLASE con paralelo.
 
 ## Flujo Git
 
