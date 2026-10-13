@@ -85,6 +85,7 @@ class AttendanceController extends Controller
             $bloque = \App\Models\Schedule::where('teacher_id', $teacher->id)
                 ->where('dia', $dia)
                 ->where('estado', 'ACTIVO')
+                ->whereNotNull('section_id')
                 ->orderBy('hora_inicio')
                 ->get()
                 ->first(fn ($s) => $s->hora_inicio && $s->hora_fin
@@ -349,7 +350,7 @@ class AttendanceController extends Controller
                 ->exists();
 
             // También permitir si es responsable del paralelo
-            $esResponsableParalelo = \App\Models\Section::where('id', $section->section_id)
+            $esResponsableParalelo = \App\Models\Section::where('id', $section->id)
                 ->where('teacher_id', $teacher->id)
                 ->exists();
 

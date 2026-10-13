@@ -1,0 +1,128 @@
+
+<style>
+  .sched-wrap { padding: 1rem 0; font-family: var(--font-sans); }
+  .sched-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .level-card { border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+  .level-header { padding: 12px 16px; }
+  .level-header .icon { font-size: 18px; margin-bottom: 4px; }
+  .level-header h2 { margin: 0; font-size: 14px; font-weight: 500; }
+  .level-header p { margin: 2px 0 0; font-size: 11px; opacity: 0.7; }
+  .period-list { padding: 8px 0; }
+  .period-row { display: flex; align-items: center; gap: 10px; padding: 6px 14px; }
+  .period-row:not(:last-child) { border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .period-num { font-size: 10px; font-weight: 500; width: 16px; text-align: center; border-radius: 50%; padding: 2px 0; flex-shrink: 0; }
+  .period-time { font-size: 12px; color: var(--color-text-primary); font-weight: 400; letter-spacing: 0.01em; }
+  .period-dur { font-size: 10px; color: var(--color-text-tertiary); margin-left: auto; }
+
+  /* Inicial – teal */
+  .card-inicial .level-header { background: #E1F5EE; }
+  .card-inicial .level-header h2 { color: #085041; }
+  .card-inicial .level-header p { color: #0F6E56; }
+  .card-inicial .period-num { background: #9FE1CB; color: #085041; }
+  @media (prefers-color-scheme: dark) {
+    .card-inicial .level-header { background: #085041; }
+    .card-inicial .level-header h2 { color: #9FE1CB; }
+    .card-inicial .level-header p { color: #5DCAA5; }
+    .card-inicial .period-num { background: #0F6E56; color: #9FE1CB; }
+  }
+
+  /* Primaria – blue */
+  .card-primaria .level-header { background: #E6F1FB; }
+  .card-primaria .level-header h2 { color: #042C53; }
+  .card-primaria .level-header p { color: #185FA5; }
+  .card-primaria .period-num { background: #B5D4F4; color: #042C53; }
+  @media (prefers-color-scheme: dark) {
+    .card-primaria .level-header { background: #042C53; }
+    .card-primaria .level-header h2 { color: #B5D4F4; }
+    .card-primaria .level-header p { color: #85B7EB; }
+    .card-primaria .period-num { background: #0C447C; color: #B5D4F4; }
+  }
+
+  /* Secundaria – purple */
+  .card-secundaria .level-header { background: #EEEDFE; }
+  .card-secundaria .level-header h2 { color: #26215C; }
+  .card-secundaria .level-header p { color: #534AB7; }
+  .card-secundaria .period-num { background: #CECBF6; color: #26215C; }
+  @media (prefers-color-scheme: dark) {
+    .card-secundaria .level-header { background: #26215C; }
+    .card-secundaria .level-header h2 { color: #CECBF6; }
+    .card-secundaria .level-header p { color: #AFA9EC; }
+    .card-secundaria .period-num { background: #3C3489; color: #CECBF6; }
+  }
+
+  @media (max-width: 540px) {
+    .sched-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="sched-wrap">
+  <div class="sched-grid">
+
+    <!-- INICIAL -->
+    <div class="level-card card-inicial">
+      <div class="level-header">
+        <h2>Nivel Inicial</h2>
+        <p>6 períodos · mañana</p>
+      </div>
+      <div class="period-list" id="inicial"></div>
+    </div>
+
+    <!-- PRIMARIA -->
+    <div class="level-card card-primaria">
+      <div class="level-header">
+        <h2>Nivel Primaria</h2>
+        <p>6 períodos · mañana</p>
+      </div>
+      <div class="period-list" id="primaria"></div>
+    </div>
+
+    <!-- SECUNDARIA -->
+    <div class="level-card card-secundaria">
+      <div class="level-header">
+        <h2>Nivel Secundaria</h2>
+        <p>7 períodos · tarde</p>
+      </div>
+      <div class="period-list" id="secundaria"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const data = {
+  inicial: [
+    ["08:00","08:35"],["08:35","09:10"],["09:40","10:15"],
+    ["10:15","10:50"],["11:00","11:30"],["11:30","12:00"]
+  ],
+  primaria: [
+    ["07:30","08:15"],["08:15","09:00"],["09:15","09:55"],
+    ["09:55","10:40"],["10:55","11:40"],["11:40","12:20"]
+  ],
+  secundaria: [
+    ["14:00","14:40"],["14:40","15:20"],["15:30","16:10"],
+    ["16:10","16:50"],["17:05","17:45"],["17:45","18:20"],["18:20","18:50"]
+  ]
+};
+
+function toMin(t) {
+  const [h,m] = t.split(":").map(Number);
+  return h*60+m;
+}
+
+function renderPeriods(id) {
+  const container = document.getElementById(id);
+  data[id].forEach((p, i) => {
+    const dur = toMin(p[1]) - toMin(p[0]);
+    const row = document.createElement("div");
+    row.className = "period-row";
+    row.innerHTML = `
+      <span class="period-num">${i+1}</span>
+      <span class="period-time">${p[0]} – ${p[1]}</span>
+      <span class="period-dur">${dur} min</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+["inicial","primaria","secundaria"].forEach(renderPeriods);
+</script>

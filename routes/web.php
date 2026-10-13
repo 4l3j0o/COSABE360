@@ -362,16 +362,32 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
 });
 
-// HU-28: Administrar horarios solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(function () {
+// HU-70: horario de visita para padres. El docente gestiona el suyo;
+// admin/dirección gestionan cualquiera. Debe ir ANTES del grupo /horarios
+// para que /visitas no caiga en /{section}.
+Route::middleware(['auth', 'role:Docente,Administrador,Director'])->prefix('horarios')->group(function () {
+    Route::get('/visitas', [ScheduleController::class, 'misVisitas'])->name('visitas.mis');
+    Route::post('/visitas', [ScheduleController::class, 'storeVisita'])->name('visitas.store');
+    Route::put('/visitas/{schedule}', [ScheduleController::class, 'updateVisita'])->name('visitas.update');
+    Route::delete('/visitas/{schedule}', [ScheduleController::class, 'destroyVisita'])->name('visitas.destroy');
+});
+
+// HU-28: Administrar horarios - Administrador y Director (ver y modificar)
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('horarios')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
     Route::post('/iniciar', [ScheduleController::class, 'iniciar'])->name('schedules.iniciar');
     Route::delete('/clases/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+    Route::put('/clases/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
     Route::get('/docente/{teacher}', [ScheduleController::class, 'horarioDocente'])->name('schedules.docente');
     Route::get('/{section}/estudiantes', [ScheduleController::class, 'estudiantes'])->name('schedules.estudiantes');
     Route::get('/{section}', [ScheduleController::class, 'show'])->name('schedules.show');
+});
+
+// HU-70: horarios de visita para padres - consulta de estudiantes y personal
+Route::middleware(['auth', 'role:Estudiante,Docente,Administrador,Director,Secretaría'])->group(function () {
+    Route::get('/horarios-visita', [ScheduleController::class, 'visitasIndex'])->name('visitas.index');
 });
 
 // HU-29: Consultar horario - Estudiante y Docente
