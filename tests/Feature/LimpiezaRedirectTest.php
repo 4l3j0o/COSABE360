@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\AcademicYear;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -71,12 +70,12 @@ class LimpiezaRedirectTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'G', 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'C', 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::create(['nombre' => 'M', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $docente = User::where('email', 'docente@sanber.edu.bo')->first();
         $teacher = Teacher::create(['user_id' => $docente->id, 'nombres' => 'D', 'apellidos' => 'D', 'numero_documento' => '9999999', 'estado' => 'ACTIVO']);
-        $cs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         $this->actingAs($docente)->get(route('docente.notas-curso', $cs))
             ->assertRedirect(route('evaluations.index', $cs));

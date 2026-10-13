@@ -10071,7 +10071,7 @@ INSERT INTO `enrollments` (`id`, `student_id`, `academic_year_id`, `fecha`, `est
 
 -- ==== registrations ====
 DELETE FROM `registrations`;
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1174', '1175', '22', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:57', '2026-09-04 20:26:36'),
 ('1175', '1176', '22', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:57', '2026-09-04 20:26:36'),
 ('1176', '1177', '11', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:57', '2026-09-04 20:26:36'),
@@ -10172,7 +10172,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1271', '1272', '30', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36'),
 ('1272', '1273', '30', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36'),
 ('1273', '1274', '29', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1274', '1275', '30', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36'),
 ('1275', '1276', '7', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36'),
 ('1276', '1277', '14', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:35:59', '2026-09-04 20:26:36'),
@@ -10273,7 +10273,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1371', '1372', '20', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36'),
 ('1372', '1373', '19', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36'),
 ('1373', '1374', '20', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1374', '1375', '20', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36'),
 ('1375', '1376', '20', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36'),
 ('1376', '1377', '19', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:00', '2026-09-04 20:26:36'),
@@ -10374,7 +10374,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1471', '1472', '14', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36'),
 ('1472', '1473', '17', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36'),
 ('1473', '1474', '16', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1474', '1475', '18', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36'),
 ('1475', '1476', '11', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36'),
 ('1476', '1477', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:02', '2026-09-04 20:26:36'),
@@ -10475,7 +10475,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1571', '1572', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36'),
 ('1572', '1573', '36', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36'),
 ('1573', '1574', '6', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1574', '1575', '34', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36'),
 ('1575', '1576', '36', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36'),
 ('1576', '1577', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:04', '2026-09-04 20:26:36'),
@@ -10576,7 +10576,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1671', '1672', '36', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36'),
 ('1672', '1673', '19', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36'),
 ('1673', '1674', '35', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1674', '1675', '21', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36'),
 ('1675', '1676', '18', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36'),
 ('1676', '1677', '25', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:05', '2026-09-04 20:26:36'),
@@ -10677,7 +10677,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1771', '1772', '34', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36'),
 ('1772', '1773', '10', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36'),
 ('1773', '1774', '33', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1774', '1775', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36'),
 ('1775', '1776', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36'),
 ('1776', '1777', '10', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:07', '2026-09-04 20:26:36'),
@@ -10778,7 +10778,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1871', '1872', '39', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36'),
 ('1872', '1873', '33', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36'),
 ('1873', '1874', '17', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1874', '1875', '5', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36'),
 ('1875', '1876', '16', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36'),
 ('1876', '1877', '32', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:09', '2026-09-04 20:26:36'),
@@ -10879,7 +10879,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('1971', '1972', '12', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36'),
 ('1972', '1973', '2', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36'),
 ('1973', '1974', '25', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('1974', '1975', '6', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36'),
 ('1975', '1976', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36'),
 ('1976', '1977', '39', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:10', '2026-09-04 20:26:36'),
@@ -10980,7 +10980,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2071', '2072', '26', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36'),
 ('2072', '2073', '28', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36'),
 ('2073', '2074', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2074', '2075', '15', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36'),
 ('2075', '2076', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36'),
 ('2076', '2077', '25', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:12', '2026-09-04 20:26:36'),
@@ -11081,7 +11081,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2171', '2172', '8', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36'),
 ('2172', '2173', '4', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36'),
 ('2173', '2174', '3', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2174', '2175', '40', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36'),
 ('2175', '2176', '8', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36'),
 ('2176', '2177', '4', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:14', '2026-09-04 20:26:36'),
@@ -11182,7 +11182,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2271', '2272', '4', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36'),
 ('2272', '2273', '2', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36'),
 ('2273', '2274', '7', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2274', '2275', '9', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36'),
 ('2275', '2276', '35', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36'),
 ('2276', '2277', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:16', '2026-09-04 20:26:36'),
@@ -11283,7 +11283,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2371', '2372', '26', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36'),
 ('2372', '2373', '26', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36'),
 ('2373', '2374', '36', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2374', '2375', '25', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36'),
 ('2375', '2376', '27', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36'),
 ('2376', '2377', '27', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:18', '2026-09-04 20:26:36'),
@@ -11384,7 +11384,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2471', '2472', '9', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36'),
 ('2472', '2473', '32', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36'),
 ('2473', '2474', '40', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2474', '2475', '6', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36'),
 ('2475', '2476', '27', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36'),
 ('2476', '2477', '29', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:20', '2026-09-04 20:26:36'),
@@ -11485,7 +11485,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2571', '2572', '32', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36'),
 ('2572', '2573', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36'),
 ('2573', '2574', '26', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2574', '2575', '13', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36'),
 ('2575', '2576', '24', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36'),
 ('2576', '2577', '1', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:22', '2026-09-04 20:26:36'),
@@ -11586,7 +11586,7 @@ INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto
 ('2671', '2672', '35', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36'),
 ('2672', '2673', '16', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36'),
 ('2673', '2674', '11', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36');
-INSERT INTO `registrations` (`id`, `enrollment_id`, `course_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
+INSERT INTO `registrations` (`id`, `enrollment_id`, `section_id`, `fecha`, `monto_mensual`, `observaciones`, `estado`, `created_at`, `updated_at`) VALUES
 ('2674', '2675', '37', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36'),
 ('2675', '2676', '31', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36'),
 ('2676', '2677', '27', '2026-09-04', '785.5', NULL, 'ACTIVA', '2026-09-04 19:36:24', '2026-09-04 20:26:36'),

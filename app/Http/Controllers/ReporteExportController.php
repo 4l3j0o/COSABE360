@@ -135,9 +135,9 @@ HTML;
 
     public function administrativoMatriculas(Request $request)
     {
-        $query = Registration::with(['enrollment.estudiante', 'course.grade', 'course.section', 'enrollment.academicYear'])
+        $query = Registration::with(['enrollment.estudiante', 'section.grade', 'section', 'enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
-            ->when($request->course_id, fn ($q, $v) => $q->where('course_id', $v))
+            ->when($request->section_id, fn ($q, $v) => $q->where('section_id', $v))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->orderByDesc('id')->limit(500)->get();
 
@@ -146,23 +146,23 @@ HTML;
             $rows = $query->map(fn ($m) => [
                 $m->enrollment?->estudiante ? $m->enrollment->estudiante->nombres . ' ' . $m->enrollment->estudiante->apellidos : 'N/A',
                 $m->enrollment?->estudiante?->codigo ?? '',
-                ($m->course?->grade?->nombre ?? '') . ' ' . ($m->course?->section?->nombre ?? '') . ' - ' . ($m->course?->nombre ?? ''),
+                ($m->section?->codigoCorto() ?? ''),
                 $m->enrollment?->academicYear?->nombre ?? '',
                 $m->estado,
             ]);
             return $this->excelResponse('reporte_matriculas_' . date('Ymd_His'), $headers, $rows);
         }
 
-        $rowsHtml = $query->map(fn ($m) => '<tr><td>' . e($m->enrollment?->estudiante?->nombres . ' ' . $m->enrollment?->estudiante?->apellidos) . '</td><td>' . e($m->enrollment?->estudiante?->codigo) . '</td><td>' . e(($m->course?->grade?->nombre ?? '') . ' ' . ($m->course?->section?->nombre ?? '') . ' - ' . ($m->course?->nombre ?? '')) . '</td><td>' . e($m->enrollment?->academicYear?->nombre) . '</td><td>' . e($m->estado) . '</td></tr>')->implode('');
+        $rowsHtml = $query->map(fn ($m) => '<tr><td>' . e($m->enrollment?->estudiante?->nombres . ' ' . $m->enrollment?->estudiante?->apellidos) . '</td><td>' . e($m->enrollment?->estudiante?->codigo) . '</td><td>' . e(($m->section?->codigoCorto() ?? '')) . '</td><td>' . e($m->enrollment?->academicYear?->nombre) . '</td><td>' . e($m->estado) . '</td></tr>')->implode('');
         $body = '<table><thead><tr><th>Estudiante</th><th>Código</th><th>Curso</th><th>Gestión</th><th>Estado</th></tr></thead><tbody>' . $rowsHtml . '</tbody></table>';
         return $this->pdfDownload('Reporte Matrículas', $body, 'reporte_matriculas_' . date('Ymd_His'));
     }
 
     public function administrativoPagos(Request $request)
     {
-        $query = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.course', 'registration.enrollment.academicYear'])
+        $query = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.section', 'registration.enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('registration.enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
-            ->when($request->course_id, fn ($q, $v) => $q->whereHas('registration', fn ($rq) => $rq->where('course_id', $v)))
+            ->when($request->section_id, fn ($q, $v) => $q->whereHas('registration', fn ($rq) => $rq->where('section_id', $v)))
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->limit(500)->get();
 

@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -37,13 +36,13 @@ class EvaluationLogicTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Log', 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Log', 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Materia Log'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDoc = Role::where('nombre', 'Docente')->first();
         $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Log', 'email' => 'doc_log_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDoc->id, 'nombres' => 'Doc', 'apellidos' => 'Log', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
-        $cs = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         $estudiantes = [];
         foreach (['001', '002'] as $n) {
@@ -57,7 +56,7 @@ class EvaluationLogicTest extends TestCase
                 'estado' => 'ACTIVO',
             ]);
             $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-            Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+            Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
             $estudiantes[] = $est;
         }
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationCriterion;
 use App\Models\EvaluationPlan;
 use App\Models\Student;
@@ -17,74 +17,74 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class EvaluationPlanController extends Controller
 {
     /**
-     * Evaluaciones (planes) por trimestre de un course_subject (curso-materia-docente).
+     * Evaluaciones (planes) por trimestre de un section_subject (curso-materia-docente).
      */
-    public function index(Request $request, CourseSubject $courseSubject): View
+    public function index(Request $request, SectionSubject $sectionSubject): View
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
-        $courseSubject->load(['subject', 'course.grade', 'course.section', 'course.gestion']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion']);
 
-        $plans = $courseSubject->evaluationPlans()
+        $plans = $sectionSubject->evaluationPlans()
             ->withCount('criteria')
             ->orderBy('trimestre')
             ->get();
 
-        return view('evaluations.index', compact('courseSubject', 'plans'));
+        return view('evaluations.index', compact('sectionSubject', 'plans'));
     }
 
     /**
      * Crea (si no existe) el plan de un trimestre y sus 4 criterios por defecto.
      */
-    public function guardar(Request $request, CourseSubject $courseSubject): RedirectResponse
+    public function guardar(Request $request, SectionSubject $sectionSubject): RedirectResponse
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
         $validated = $request->validate([
             'trimestre' => ['required', 'integer', 'in:1,2,3'],
         ]);
 
         $service = app(EvaluationService::class);
-        $service->obtenerOCrearPlan($courseSubject, $validated['trimestre']);
+        $service->obtenerOCrearPlan($sectionSubject, $validated['trimestre']);
 
-        $plan = EvaluationPlan::where('course_subject_id', $courseSubject->id)
+        $plan = EvaluationPlan::where('section_subject_id', $sectionSubject->id)
             ->where('trimestre', $validated['trimestre'])
             ->first();
 
-        return redirect()->route('evaluations.show', [$courseSubject, $plan])
+        return redirect()->route('evaluations.show', [$sectionSubject, $plan])
             ->with('success', 'Evaluación del trimestre '.$validated['trimestre'].' creada.');
     }
 
     /**
      * Detalle del plan: criterios, actividades y notas por estudiante.
      */
-    public function show(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): View
+    public function show(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): View
     {
-        $this->autorizar($request, $courseSubject);
-        abort_unless($plan->course_subject_id === $courseSubject->id, 404);
+        $this->autorizar($request, $sectionSubject);
+        abort_unless($plan->section_subject_id === $sectionSubject->id, 404);
 
-        $courseSubject->load(['subject', 'course.grade', 'course.section', 'course.gestion']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion']);
 
         $plan->load(['criteria.activities.grades', 'criteria.activities.grades.student']);
         $service = app(EvaluationService::class);
 
         // Estudiantes del curso (matriculados y activos)
-        $students = $courseSubject->course->students()
+        $students = $sectionSubject->section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
             ->get();
 
         $estado = $plan->estado;
 
-        return view('evaluations.show', compact('courseSubject', 'plan', 'students', 'service', 'estado'));
+        return view('evaluations.show', compact('sectionSubject', 'plan', 'students', 'service', 'estado'));
     }
 
     /**
      * Agrega una actividad a un criterio (SABER/HACER).
      */
-    public function agregarActividad(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): RedirectResponse
+    public function agregarActividad(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
         $validated = $request->validate([
             'evaluation_criteria_id' => ['required', 'integer', 'exists:evaluation_criteria,id'],
@@ -105,7 +105,7 @@ class EvaluationPlanController extends Controller
             $orden ?: 1
         );
 
-        return redirect()->route('evaluations.show', [$courseSubject, $plan])
+        return redirect()->route('evaluations.show', [$sectionSubject, $plan])
             ->with('success', 'Actividad agregada al criterio '.$criterion->codigo.'.');
     }
 
@@ -113,9 +113,9 @@ class EvaluationPlanController extends Controller
      * Registra/actualiza las notas de todos los estudiantes en una o varias actividades
      * de un criterio (formato notas[activity_id][student_id] = valor).
      */
-    public function guardarNotas(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): RedirectResponse
+    public function guardarNotas(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
         $validated = $request->validate([
             'notas' => ['required', 'array'],
@@ -165,7 +165,7 @@ class EvaluationPlanController extends Controller
             }
         }
 
-        $redirect = redirect()->route('evaluations.show', [$courseSubject, $plan]);
+        $redirect = redirect()->route('evaluations.show', [$sectionSubject, $plan]);
 
         if (! empty($errores)) {
             return $redirect->with('error', 'Se guardaron '.$contador.' notas, pero se omitieron valores fuera de rango: '.implode(' | ', array_slice($errores, 0, 3)).(count($errores) > 3 ? ' (+'.(count($errores) - 3).' más)' : ''));
@@ -177,13 +177,13 @@ class EvaluationPlanController extends Controller
     /**
      * Descarga la plantilla Excel de la evaluación del trimestre (HU-48).
      */
-    public function descargarPlantilla(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): StreamedResponse
+    public function descargarPlantilla(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): StreamedResponse
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
         $contenido = app(EvaluationTemplateService::class)->exportar($plan->load('criteria.activities'));
 
-        $nombre = 'evaluacion_trim'.$plan->trimestre.'_'.$courseSubject->id.'_'.now()->format('Ymd').'.xlsx';
+        $nombre = 'evaluacion_trim'.$plan->trimestre.'_'.$sectionSubject->id.'_'.now()->format('Ymd').'.xlsx';
 
         return response()->streamDownload(function () use ($contenido) {
             echo $contenido;
@@ -193,9 +193,9 @@ class EvaluationPlanController extends Controller
     /**
      * Sube una plantilla Excel completada y actualiza actividades/notas (HU-48).
      */
-    public function subirPlantilla(Request $request, CourseSubject $courseSubject, EvaluationPlan $plan): RedirectResponse
+    public function subirPlantilla(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
-        $this->autorizar($request, $courseSubject);
+        $this->autorizar($request, $sectionSubject);
 
         $validated = $request->validate([
             'archivo' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
@@ -210,7 +210,7 @@ class EvaluationPlanController extends Controller
         }
 
         if (! empty($resultado['formato_invalido'])) {
-            return redirect()->route('evaluations.show', [$courseSubject, $plan])
+            return redirect()->route('evaluations.show', [$sectionSubject, $plan])
                 ->with('error', 'Formato no válido: el archivo no es una plantilla de evaluación del sistema. Descargue la plantilla con el botón «Descargar (.xlsx)» y cargue las notas sobre ese archivo.');
         }
 
@@ -227,14 +227,14 @@ class EvaluationPlanController extends Controller
             }
         }
 
-        return redirect()->route('evaluations.show', [$courseSubject, $plan])
+        return redirect()->route('evaluations.show', [$sectionSubject, $plan])
             ->with($resultado['errores'] ? 'error' : 'success', $mensaje);
     }
 
-    private function autorizar(Request $request, CourseSubject $courseSubject): void
+    private function autorizar(Request $request, SectionSubject $sectionSubject): void
     {
         $teacher = $request->user()->teacher;
 
-        abort_if(! $teacher || $teacher->id !== $courseSubject->teacher_id, 403);
+        abort_if(! $teacher || $teacher->id !== $sectionSubject->teacher_id, 403);
     }
 }

@@ -14,10 +14,10 @@
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso</label>
-        <select name="course_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+        <select name="section_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
             <option value="">Todos los cursos</option>
-            @foreach($cursos as $course)
-                <option value="{{ $course->id }}" {{ request('course_id') == $course->id ? 'selected' : '' }}>{{ $course->codigoCorto() }}</option>
+            @foreach($cursos as $section)
+                <option value="{{ $section->id }}" {{ request('section_id') == $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
             @endforeach
         </select>
     </div>

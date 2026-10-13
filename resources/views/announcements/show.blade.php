@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('titulo', 'Ver Comunicado')
 
 @section('sidebar')
@@ -51,8 +51,8 @@
                         @foreach($announcement->recipients as $dest)
                             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                 {{ ($dest->tipo_destinatario === 'TODOS') ? 'Todos' : mb_strtolower(str_replace('_', ' ', $dest->tipo_destinatario)) }}
-                                @if($dest->course)
-                                    ({{ $dest->course->nombre }})
+                                @if($dest->section)
+                                    ({{ $dest->section->nombre }})
                                 @endif
                             </span>
                         @endforeach
@@ -124,14 +124,14 @@
                         @error('destinatarios.*.tipo_destinatario') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
                     </div>
                     <div id="campo-curso" style="display:none;">
-                        <label for="course_id" class="block text-sm font-medium text-foreground mb-1.5">Curso *</label>
-                        <select id="course_id" name="destinatarios[0][course_id]" class="{{ $claseInput }}">
+                        <label for="section_id" class="block text-sm font-medium text-foreground mb-1.5">Curso *</label>
+                        <select id="section_id" name="destinatarios[0][section_id]" class="{{ $claseInput }}">
                             <option value="">Seleccione un curso...</option>
-                            @foreach($courses as $course)
-                                <option value="{{ $course->id }}" @selected((int) old('destinatarios.0.course_id', $destEditar?->course_id) === (int) $course->id)>{{ $course->nombre }}</option>
+                            @foreach($sections as $section)
+                                <option value="{{ $section->id }}" @selected((int) old('destinatarios.0.section_id', $destEditar?->section_id) === (int) $section->id)>{{ $section->nombre }}</option>
                             @endforeach
                         </select>
-                        @error('destinatarios.*.course_id') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
+                        @error('destinatarios.*.section_id') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -165,7 +165,7 @@
         function initCampoCurso() {
             var selectTipo = document.getElementById('tipo_destinatario');
             var campoCurso = document.getElementById('campo-curso');
-            var selectCurso = document.getElementById('course_id');
+            var selectCurso = document.getElementById('section_id');
             if (!selectTipo || !campoCurso) return;
             var mostrarCurso = selectTipo.value === 'CURSO_ESPECIFICO';
             campoCurso.style.display = mostrarCurso ? '' : 'none';

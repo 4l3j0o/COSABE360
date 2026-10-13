@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Assessment;
 use App\Models\Attendance;
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationPlan;
 use App\Models\Level;
 use App\Models\Schedule;
@@ -43,7 +43,7 @@ class MateriasLibretaSeeder extends Seeder
             if ($cn) {
                 // CN en S1 se pliega en BIO-GEO según libreta, pero el colegio
                 // la dicta (asignaciones Excel): solo se elimina si no se usa.
-                $enUso = CourseSubject::where('subject_id', $cn->id)->exists()
+                $enUso = SectionSubject::where('subject_id', $cn->id)->exists()
                     || Assessment::where('subject_id', $cn->id)->exists()
                     || Schedule::where('subject_id', $cn->id)->exists()
                     || Attendance::where('subject_id', $cn->id)->exists();
@@ -78,15 +78,15 @@ class MateriasLibretaSeeder extends Seeder
         Schedule::where('subject_id', $vieja->id)->update(['subject_id' => $canonica->id]);
         Attendance::where('subject_id', $vieja->id)->update(['subject_id' => $canonica->id]);
 
-        foreach (CourseSubject::where('subject_id', $vieja->id)->get() as $cs) {
-            $existente = CourseSubject::where('course_id', $cs->course_id)
+        foreach (SectionSubject::where('subject_id', $vieja->id)->get() as $cs) {
+            $existente = SectionSubject::where('section_id', $cs->section_id)
                 ->where('subject_id', $canonica->id)
                 ->where('teacher_id', $cs->teacher_id)
                 ->first();
 
             if ($existente) {
-                Assessment::where('course_subject_id', $cs->id)->update(['course_subject_id' => $existente->id]);
-                EvaluationPlan::where('course_subject_id', $cs->id)->update(['course_subject_id' => $existente->id]);
+                Assessment::where('section_subject_id', $cs->id)->update(['section_subject_id' => $existente->id]);
+                EvaluationPlan::where('section_subject_id', $cs->id)->update(['section_subject_id' => $existente->id]);
                 $cs->delete();
             } else {
                 $cs->update(['subject_id' => $canonica->id]);

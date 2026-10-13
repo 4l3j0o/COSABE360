@@ -211,7 +211,7 @@
                                 <dl class="space-y-1.5 text-sm">
                                     <div class="flex justify-between">
                                         <dt class="text-muted-foreground">Curso</dt>
-                                        <dd class="text-foreground">{{ $matriculaPeriodo->course?->nombre ?? '—' }}</dd>
+                                        <dd class="text-foreground">{{ $matriculaPeriodo->section?->nombre ?? '—' }}</dd>
                                     </div>
                                     <div class="flex justify-between">
                                         <dt class="text-muted-foreground">Fecha</dt>
@@ -644,9 +644,9 @@
                         <form method="POST" action="{{ route('estudiantes.matricular', $student) }}" class="space-y-4">
                             @csrf
                             <div>
-                                @php $cursoSeleccionadoBuscador = $cursos->firstWhere('id', old('course_id')); @endphp
+                                @php $cursoSeleccionadoBuscador = $cursos->firstWhere('id', old('section_id')); @endphp
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso (grado y paralelo) <span class="text-error">*</span></label>
-                                <input type="hidden" name="course_id" id="mat-course_id" value="{{ old('course_id') }}">
+                                <input type="hidden" name="section_id" id="mat-section_id" value="{{ old('section_id') }}">
                                 <div id="mat-curso-picker" style="position:relative;">
                                     <input type="text" id="mat-curso-picker-input" placeholder="Buscar curso (grado, paralelo o nombre)..." autocomplete="off" value="{{ $cursoSeleccionadoBuscador?->nombre ?? '' }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <div id="mat-curso-picker-lista" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60; max-height:240px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:0.5rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.15);">
@@ -661,7 +661,7 @@
                                     </div>
                                 </div>
                                 <p class="text-xs text-muted-foreground mt-1">Escriba para filtrar por grado, paralelo o nombre.</p>
-                                @error('course_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Fecha de matrícula <span class="text-error">*</span></label>
@@ -791,7 +791,7 @@
         }
 
         function matSeleccionarCurso(el) {
-            document.getElementById('mat-course_id').value = el.getAttribute('data-curso-id');
+            document.getElementById('mat-section_id').value = el.getAttribute('data-curso-id');
             document.getElementById('mat-curso-picker-input').value = el.getAttribute('data-curso-label');
             document.getElementById('mat-curso-picker-lista').style.display = 'none';
         }
@@ -823,7 +823,7 @@
             document.addEventListener('click', matCerrarListaCurso);
         }
 
-        @if(old('course_id') && $errors->any())
+        @if(old('section_id') && $errors->any())
             abrirMatricula();
         @elseif($errors->any())
             activarEdicion();

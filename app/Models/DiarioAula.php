@@ -10,7 +10,7 @@ class DiarioAula extends Model
     protected $table = 'diario_aulas';
 
     protected $fillable = [
-        'course_id',
+        'section_id',
         'subject_id',
         'teacher_id',
         'fecha',
@@ -24,9 +24,9 @@ class DiarioAula extends Model
         'fecha' => 'date',
     ];
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Section::class);
     }
 
     public function subject(): BelongsTo

@@ -11,7 +11,7 @@
     </div>
 </div>
 
-@if($courseSubjects->isEmpty())
+@if($sectionSubjects->isEmpty())
     <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
         <p class="text-sm text-muted-foreground">No tiene cursos asignados para generar reportes.</p>
     </div>
@@ -19,11 +19,11 @@
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
-        <select name="course_subject_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+        <select name="section_subject_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
             <option value="">Seleccionar curso…</option>
-            @foreach($courseSubjects as $cs)
-                <option value="{{ $cs->id }}" {{ request('course_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
-                    {{ $cs->course->nombre }} - {{ $cs->subject->nombre }}
+            @foreach($sectionSubjects as $cs)
+                <option value="{{ $cs->id }}" {{ request('section_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
+                    {{ $cs->section->nombre }} - {{ $cs->subject->nombre }}
                 </option>
             @endforeach
         </select>

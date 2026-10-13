@@ -20,7 +20,7 @@ class ConductaReporte extends Model
 
     protected $fillable = [
         'student_id',
-        'course_id',
+        'section_id',
         'subject_id',
         'teacher_id',
         'tipo_falta',
@@ -39,9 +39,9 @@ class ConductaReporte extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Section::class);
     }
 
     public function subject(): BelongsTo

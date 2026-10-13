@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
  *
  * - Enriquece las materias existentes (match por nombre normalizado dentro del
  *   nivel) con código, sigla, área y grupo; crea las faltantes.
- * - No toca asignaciones (course_subjects) ni desactiva nada.
+ * - No toca asignaciones (section_subjects) ni desactiva nada.
  * - Idempotente: se puede correr varias veces.
  * - Misma sigla en varios grupos -> una fila canónica; `grupo` acumula las
  *   listas donde aplica y `codigo` conserva el del primer grupo.

@@ -3,13 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Role;
 use App\Models\Schedule;
-use App\Models\Section;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
@@ -32,13 +31,13 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Sexto Acc ' . fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Acc ' . fake()->unique()->numerify('##'), 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Tecnología Acc'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
         $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Acc', 'email' => 'doc_acc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'nombres' => 'Docente', 'apellidos' => 'Acc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
-        CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         return compact('curso', 'subject', 'teacher', 'userDocente');
     }
@@ -51,7 +50,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         $response = $this->get(route('docente.cursos'));
         $response->assertStatus(200);
         // Botones directos prefiltrados al curso + materia
-        $response->assertSee('course_id=' . $d['curso']->id, false);
+        $response->assertSee('section_id=' . $d['curso']->id, false);
         $response->assertSee('subject_id=' . $d['subject']->id, false);
         $response->assertSee('Diario');
         $response->assertSee('Conducta');
@@ -90,7 +89,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
             return false;
         }
         Schedule::create([
-            'course_id' => $d['curso']->id,
+            'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
             'teacher_id' => $d['teacher']->id,
             'dia' => $dias[$hoy],
@@ -111,7 +110,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
 
         $this->actingAs($d['userDocente']);
         $this->get(route('diario.ahora'))
-            ->assertRedirect(route('diario.index', ['course_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
+            ->assertRedirect(route('diario.index', ['section_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
     }
 
     public function test_diario_ahora_fuera_de_horario_avisa_y_va_a_mis_cursos(): void
@@ -133,7 +132,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
 
         $this->actingAs($d['userDocente']);
         $this->get(route('conducta.ahora'))
-            ->assertRedirect(route('conducta.index', ['course_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
+            ->assertRedirect(route('conducta.index', ['section_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
     }
 
     public function test_conducta_ahora_fuera_de_horario_avisa_y_va_a_mis_cursos(): void

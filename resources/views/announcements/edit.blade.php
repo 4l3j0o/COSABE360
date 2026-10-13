@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('titulo', 'Editar comunicado')
 
 @section('sidebar')
@@ -63,14 +63,14 @@
             </div>
 
             <div id="campo-curso" style="display:none;">
-                <label for="course_id" class="block text-sm font-medium text-foreground mb-1.5">Curso *</label>
-                <select id="course_id" name="destinatarios[0][course_id]" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                <label for="section_id" class="block text-sm font-medium text-foreground mb-1.5">Curso *</label>
+                <select id="section_id" name="destinatarios[0][section_id]" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
                     <option value="">Seleccione un curso...</option>
-                    @foreach($courses as $course)
-                        <option value="{{ $course->id }}" @selected(($dest?->course_id ?? null) === $course->id)>{{ $course->nombre }}</option>
+                    @foreach($sections as $section)
+                        <option value="{{ $section->id }}" @selected(($dest?->section_id ?? null) === $section->id)>{{ $section->nombre }}</option>
                     @endforeach
                 </select>
-                @error('destinatarios.*.course_id') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
+                @error('destinatarios.*.section_id') <p class="mt-1 text-xs text-error">{{ $message }}</p> @enderror
             </div>
 
             <div class="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-primary">
@@ -90,7 +90,7 @@
     (function () {
         const selectTipo = document.getElementById('tipo_destinatario');
         const campoCurso = document.getElementById('campo-curso');
-        const selectCurso = document.getElementById('course_id');
+        const selectCurso = document.getElementById('section_id');
         if (!selectTipo || !campoCurso) return;
         function toggleCurso() {
             const visible = selectTipo.value === 'CURSO_ESPECIFICO';

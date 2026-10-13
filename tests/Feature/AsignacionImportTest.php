@@ -3,12 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
@@ -26,9 +25,9 @@ class AsignacionImportTest extends TestCase
     {
         $nivel = Level::create(['nombre' => 'Primaria Comunitaria Vocacional', 'orden' => 2, 'estado' => 'ACTIVO']);
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => '1ro Primaria', 'orden' => 1, 'estado' => 'ACTIVO']);
-        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'T1A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::create(['nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'T1A', 'estado' => 'ACTIVO']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'T1A', 'academic_year_id' => $gestion->id, 'capacidad' => 10, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $mat = Subject::create(['nombre' => 'MATEMÁTICA', 'codigo' => '06', 'sigla' => 'MAT', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->firstOrCreate(['nombre' => 'Docente']);
@@ -62,8 +61,8 @@ class AsignacionImportTest extends TestCase
         $stats = $svc->importar($path, $b['gestion']->id);
         $this->assertSame(1, $stats['creadas']);
 
-        $cs = CourseSubject::first();
-        $this->assertSame($b['curso']->id, $cs->course_id);
+        $cs = SectionSubject::first();
+        $this->assertSame($b['curso']->id, $cs->section_id);
         $this->assertSame($b['mat']->id, $cs->subject_id);
         $this->assertSame($b['teacher']->id, $cs->teacher_id);
         $this->assertSame(4, (int) $cs->horas_semanales);
@@ -72,7 +71,7 @@ class AsignacionImportTest extends TestCase
         $stats = $svc->importar($path, $b['gestion']->id);
         $this->assertSame(0, $stats['creadas']);
         $this->assertSame(1, $stats['existentes']);
-        $this->assertSame(1, CourseSubject::count());
+        $this->assertSame(1, SectionSubject::count());
 
         @unlink($path);
     }
@@ -90,7 +89,7 @@ class AsignacionImportTest extends TestCase
         $stats = app(AsignacionImportService::class)->importar($path, $b['gestion']->id);
         $this->assertSame(0, $stats['creadas']);
         $this->assertCount(3, $stats['omitidas']);
-        $this->assertSame(0, CourseSubject::count());
+        $this->assertSame(0, SectionSubject::count());
 
         @unlink($path);
     }

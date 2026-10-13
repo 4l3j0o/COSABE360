@@ -26,15 +26,15 @@ No hay CI ni linters configurados. `vendor/bin/pint` existe pero no es parte del
 ## Tests
 
 - `tests/Feature/*` con PHPUnit (`RefreshDatabase`, DB MySQL `csb360_test`). Base: `tests/TestCase.php`.
-- Solo existe `UserFactory`. El resto de modelos se crea **a mano** con `Model::create([...])` + `fake()`. No esperes factories para Course/Student/Teacher/etc.
-- Patrón de setUp: `$this->seed(['RoleSeeder', 'AdminUserSeeder'])` y luego armar el grafo Level→Grade→Section→AcademicYear→Course→Subject→Teacher→CourseSubject→Student→Enrollment→Registration.
+- Solo existe `UserFactory`. El resto de modelos se crea **a mano** con `Model::create([...])` + `fake()`. No esperes factories para Section/Student/Teacher/etc.
+- Patrón de setUp: `$this->seed(['RoleSeeder', 'AdminUserSeeder'])` y luego armar el grafo Level→Grade→Section(=paralelo/clase)→AcademicYear→Subject→Teacher→SectionSubject→Student→Enrollment→Registration. La sección lleva `academic_year_id` y `aula`.
 - Para montar el usuario docente: crear `User` (rol Docente) **y** `Teacher` con `user_id`. Para estudiante: crear `Student` y luego `$student->update(['user_id' => ...])`.
 - Fechas dependientes del día actual: los tests de "clase actual" se saltan si es domingo (`markTestSkipped`). Mantén ese patrón.
 - Referencia canónica de roles/ownership: `tests/Feature/AttendanceTest.php`.
 
 ## Autorización (no hay Policies)
 
-- 6 roles fijos: Administrador, Director, Secretaría, Docente, Estudiante, Regente (`roles` en BD). Los tutores/padres NO son rol ni tienen cuenta: son datos en `parent_guardians` ligados al estudiante vía `student_parent`.
+- 6 roles fijos: Administrador, Director, Secretaría, Docente, Estudiante, Regente (`roles` en BD). Los tutores/padres NO son rol ni tienen cuenta: son datos en `parent_guardians` ligados al estudiante vía `student_parent`. **No existe `courses`**: el paralelo (`sections`) es la unidad-clase (grado + gestión + aula) y todo apunta a `section_id`; la asignación materia↔paralelo↔docente es `section_subjects` (`SectionSubject`).
 - Middleware alias en `bootstrap/app.php`: `role:Admin,Director` (acepta lista separada por comas) y `admin` (solo Administrador). Rol no autorizado → redirect a `/acceso-denegado`.
 - Matriz de módulos por rol en `config/permisos.php` (`User::canAccess()`; Admin = `*`). Gate `access-module`.
 - Blade: `@role('Docente')`, `@hasanyrole('A,B')` (definidas en `AppServiceProvider`).

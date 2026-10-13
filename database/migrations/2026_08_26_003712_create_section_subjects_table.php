@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('course_subjects', function (Blueprint $table) {
+        Schema::create('section_subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subject_id')->constrained()->restrictOnDelete();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('section_id')->constrained()->cascadeOnDelete();
             $table->foreignId('teacher_id')->constrained()->restrictOnDelete();
             $table->timestamps();
-            $table->unique(['subject_id', 'course_id', 'teacher_id'], 'uk_course_subject_docente');
-            $table->index('course_id', 'idx_curso');
+            $table->unique(['subject_id', 'section_id', 'teacher_id'], 'uk_section_subject_docente');
+            $table->index('section_id', 'idx_curso');
             $table->index('teacher_id', 'idx_docente');
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('course_subjects');
+        Schema::dropIfExists('section_subjects');
     }
 };

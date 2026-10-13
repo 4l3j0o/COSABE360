@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\Student;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -27,12 +27,12 @@ class BoletinController extends Controller
         }
 
         $student->load(['rudeRecord']);
-        $curso = $student->activeCourse();
-        $materias = $curso ? $curso->courseSubjects()->with('subject')->get() : collect();
+        $curso = $student->activeSection();
+        $materias = $curso ? $curso->sectionSubjects()->with('subject')->get() : collect();
 
         $service = app(EvaluationService::class);
 
-        $filas = $materias->map(function (CourseSubject $cs) use ($student, $service) {
+        $filas = $materias->map(function (SectionSubject $cs) use ($student, $service) {
             $nota = $service->promedioAnual($cs, $student);
 
             return [
@@ -59,11 +59,11 @@ class BoletinController extends Controller
         }
 
         $student->load(['rudeRecord']);
-        $curso = $student->activeCourse();
-        $materias = $curso ? $curso->courseSubjects()->with('subject')->get() : collect();
+        $curso = $student->activeSection();
+        $materias = $curso ? $curso->sectionSubjects()->with('subject')->get() : collect();
 
         $service = app(EvaluationService::class);
-        $filas = $materias->map(function (CourseSubject $cs) use ($student, $service) {
+        $filas = $materias->map(function (SectionSubject $cs) use ($student, $service) {
             $nota = $service->promedioAnual($cs, $student);
 
             return [

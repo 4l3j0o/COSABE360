@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('conducta_reportes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('students');
-            $table->foreignId('course_id')->constrained('courses');
+            $table->foreignId('section_id')->constrained('sections');
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->nullOnDelete();
             $table->foreignId('teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
             $table->string('tipo_falta', 16);
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('registered_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['course_id', 'fecha'], 'conducta_curso_fecha_idx');
+            $table->index(['section_id', 'fecha'], 'conducta_curso_fecha_idx');
             $table->index(['student_id', 'fecha'], 'conducta_estudiante_fecha_idx');
         });
     }

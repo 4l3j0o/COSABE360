@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\AcademicYear;
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
@@ -29,18 +29,18 @@ class AttendanceSeeder extends Seeder
 
         $fechas = $this->fechasPorBimestre($gestion, 3);
 
-        $courses = Course::where('estado', 'ACTIVO')->get();
+        $sections = Section::where('estado', 'ACTIVO')->get();
 
-        foreach ($courses as $course) {
-            $registrante = CourseSubject::where('course_id', $course->id)
+        foreach ($sections as $section) {
+            $registrante = SectionSubject::where('section_id', $section->id)
                 ->whereNotNull('teacher_id')
                 ->first()?->teacher?->user_id;
 
             foreach ($fechas as $fecha) {
-                $students = $course->students()->orderBy('students.id')->get();
+                $students = $section->students()->orderBy('students.id')->get();
 
                 foreach ($students as $student) {
-                    $semilla = $course->id + $student->id + (int) substr($fecha, 8, 2) + (int) substr($fecha, 5, 2);
+                    $semilla = $section->id + $student->id + (int) substr($fecha, 8, 2) + (int) substr($fecha, 5, 2);
 
                     $estado = 'PRESENTE';
                     if ($semilla % 17 === 0) {
@@ -53,7 +53,7 @@ class AttendanceSeeder extends Seeder
 
                     Attendance::updateOrCreate(
                         [
-                            'course_id'  => $course->id,
+                            'section_id'  => $section->id,
                             'student_id' => $student->id,
                             'fecha'      => Carbon::parse($fecha),
                         ],

@@ -4,13 +4,12 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\InscripcionController;
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,9 +31,9 @@ class InscripcionFlujoTest extends TestCase
     {
         $nivel = Level::firstOrCreate(['nombre' => $nivelNombre], ['orden' => 2, 'estado' => 'ACTIVO']);
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Ins ' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
-        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Ins ' . $sufijo, 'estado' => 'ACTIVO']);
+        $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'academic_year_id' => $gestion->id, 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
 
         return compact('nivel', 'grado', 'seccion', 'gestion', 'curso');
     }
@@ -60,7 +59,7 @@ class InscripcionFlujoTest extends TestCase
             'tipo_documento' => 'CI',
             'numero_documento' => $ci,
             'complemento' => '',
-            'course_id' => $cursoId,
+            'section_id' => $cursoId,
             'tutor_principal' => 'tutor',
             'tutor_nombres' => 'Tutor',
             'tutor_apellidos' => 'Apoderado',
@@ -112,8 +111,8 @@ class InscripcionFlujoTest extends TestCase
         // El formulario solo lista cursos de su nivel
         $response = $this->actingAs($director)->get(route('inscripciones.create'));
         $response->assertOk();
-        $response->assertSee($prim['curso']->nombre);
-        $response->assertDontSee($sec['curso']->nombre);
+        $response->assertSee($prim['nivel']->nombre);
+        $response->assertDontSee($sec['nivel']->nombre);
 
         // Intentar inscribir en otro nivel -> 403
         $response = $this->actingAs($director)->post(route('inscripciones.store'), $this->datosInscripcion($sec['curso']->id, '4444444'));
@@ -151,7 +150,7 @@ class InscripcionFlujoTest extends TestCase
         $enrollment = Enrollment::where('student_id', $student->id)->where('academic_year_id', $e['gestion']->id)->first();
         $this->assertSame('PENDIENTE', $enrollment->estado);
         $this->assertSame('INACTIVA', $enrollment->registration->estado);
-        $this->assertSame($e['curso']->id, $enrollment->registration->course_id);
+        $this->assertSame($e['curso']->id, $enrollment->registration->section_id);
 
         // Documentos de inscripción en línea pendientes
         $this->assertSame(count(\App\Http\Controllers\InscripcionController::DOCS_LINEA), $student->documents()->count());
@@ -183,7 +182,7 @@ class InscripcionFlujoTest extends TestCase
         $this->actingAs($admin)->patch(route('inscripciones.verificar-pago', $enrollment));
 
         $response = $this->actingAs($admin)->post(route('estudiantes.matricular', $student), [
-            'course_id' => $e['curso']->id,
+            'section_id' => $e['curso']->id,
             'fecha' => '2026-03-01',
         ]);
         $response->assertRedirect();

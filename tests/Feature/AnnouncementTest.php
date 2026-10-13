@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Announcement;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -199,7 +199,7 @@ class AnnouncementTest extends TestCase
         }
     }
 
-    public function test_curso_especifico_requiere_course_id(): void
+    public function test_curso_especifico_requiere_section_id(): void
     {
         $admin = $this->crearUsuario('Administrador');
         $response = $this->actingAs($admin)->post(route('announcements.store'), [
@@ -208,17 +208,17 @@ class AnnouncementTest extends TestCase
             'tipo_destinatario' => 'CURSO_ESPECIFICO',
         ]);
 
-        $response->assertSessionHasErrors('course_id');
+        $response->assertSessionHasErrors('section_id');
     }
 
-    public function test_curso_especifico_con_course_id_valido(): void
+    public function test_curso_especifico_con_section_id_valido(): void
     {
         $admin = $this->crearUsuario('Administrador');
         // Necesitamos un curso existente; si no hay, crearlo via DB directo
-        if (\Illuminate\Support\Facades\Schema::hasTable('courses')) {
-            $hasColumns = \Illuminate\Support\Facades\Schema::hasColumn('courses', 'grade_id');
+        if (\Illuminate\Support\Facades\Schema::hasTable('sections')) {
+            $hasColumns = \Illuminate\Support\Facades\Schema::hasColumn('sections', 'grade_id');
             if ($hasColumns) {
-                // crear level/grade/section/course mínimo para test
+                // crear level/grade/section/section mínimo para test
                 $levelId = \Illuminate\Support\Facades\DB::table('levels')->insertGetId([
                     'nombre' => 'Primaria Test', 'orden' => 1, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now(),
                 ]);
@@ -228,33 +228,30 @@ class AnnouncementTest extends TestCase
                 $sectionId = \Illuminate\Support\Facades\DB::table('sections')->insertGetId([
                     'grade_id' => $gradeId, 'nombre' => 'A', 'capacidad' => 30, 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now(),
                 ]);
-                // academic_year
+                // academic_year (requerido por validación de curso específico)
                 $yearId = \Illuminate\Support\Facades\DB::table('academic_years')->insertGetId([
                     'nombre' => '2026', 'fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA', 'created_at' => now(), 'updated_at' => now(),
-                ]);
-                $courseId = \Illuminate\Support\Facades\DB::table('courses')->insertGetId([
-                    'grade_id' => $gradeId, 'section_id' => $sectionId, 'academic_year_id' => $yearId, 'nombre' => '1ro A 2026', 'estado' => 'ACTIVO', 'created_at' => now(), 'updated_at' => now(),
                 ]);
 
                 $response = $this->actingAs($admin)->post(route('announcements.store'), [
                     'titulo' => 'Curso esp ok',
                     'contenido' => 'Contenido',
                     'tipo_destinatario' => 'CURSO_ESPECIFICO',
-                    'course_id' => $courseId,
+                    'section_id' => $sectionId,
                 ]);
 
                 $response->assertRedirect(route('announcements.index'));
                 $ann = Announcement::where('titulo', 'Curso esp ok')->first();
                 $this->assertDatabaseHas('announcement_recipients', [
                     'announcement_id' => $ann->id,
-                    'course_id' => $courseId,
+                    'section_id' => $sectionId,
                     'tipo_destinatario' => 'CURSO_ESPECIFICO',
                 ]);
 
                 return;
             }
         }
-        $this->markTestSkipped('courses table not ready for curso específico test');
+        $this->markTestSkipped('sections table not ready for curso específico test');
     }
 
     public function test_publicar_cambia_estado_y_fecha(): void

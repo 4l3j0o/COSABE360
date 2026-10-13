@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
-            $table->foreignId('course_id')->constrained('courses')->cascadeOnDelete();
+            $table->foreignId('section_id')->constrained('sections')->cascadeOnDelete();
             $table->foreignId('subject_id')->nullable()->constrained('subjects')->nullOnDelete();
             $table->date('fecha');
             $table->enum('estado', ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO', 'LICENCIA']);
@@ -22,8 +22,8 @@ return new class extends Migration
             $table->foreignId('registered_by_user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
             
-            $table->unique(['student_id', 'fecha', 'course_id', 'subject_id'], 'uk_estudiante_fecha_curso_materia');
-            $table->index('course_id');
+            $table->unique(['student_id', 'fecha', 'section_id', 'subject_id'], 'uk_estudiante_fecha_curso_materia');
+            $table->index('section_id');
             $table->index('subject_id');
             $table->index('fecha');
             $table->index('estado');

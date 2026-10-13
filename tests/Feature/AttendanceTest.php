@@ -4,13 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -35,7 +34,7 @@ class AttendanceTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Primero A Test ' . fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Test ' . fake()->unique()->numerify('##'), 'estado' => 'ACTIVO']);
+        $curso = $seccion;
 
         $subject = Subject::firstOrCreate(['nombre' => 'Matemáticas'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
@@ -44,7 +43,7 @@ class AttendanceTest extends TestCase
         $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Test', 'email' => 'docente_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'codigo' => 'DOC-ATT-' . fake()->unique()->numerify('####'), 'nombres' => 'Docente', 'apellidos' => 'Test', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
-        $courseSubject = CourseSubject::create(['course_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
+        $sectionSubject = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
         // Estudiantes con matrícula ACTIVA
         $estudiantes = collect();
@@ -59,11 +58,11 @@ class AttendanceTest extends TestCase
                 'estado' => 'ACTIVO',
             ]);
             $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-            Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+            Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
             $estudiantes->push($est);
         }
 
-        return compact('curso', 'teacher', 'userDocente', 'estudiantes', 'gestion', 'courseSubject');
+        return compact('curso', 'teacher', 'userDocente', 'estudiantes', 'gestion', 'sectionSubject');
     }
 
     public function test_asistencias_index_requires_auth(): void
@@ -85,7 +84,7 @@ class AttendanceTest extends TestCase
     {
         $datos = $this->crearCursoConEstudiantes();
         $this->actingAs($datos['userDocente']);
-        $response = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01');
+        $response = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01');
         $response->assertStatus(200);
         $response->assertSee($datos['estudiantes'][0]->nombres);
         $response->assertSee('PRESENTE');
@@ -101,8 +100,8 @@ class AttendanceTest extends TestCase
         $this->actingAs($datos['userDocente']);
 
         $response = $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE', 'justificacion' => null],
@@ -123,8 +122,8 @@ class AttendanceTest extends TestCase
         $this->actingAs($datos['userDocente']);
 
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-02',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PERMISO', 'justificacion' => 'Cita médica'],
@@ -142,8 +141,8 @@ class AttendanceTest extends TestCase
         $this->actingAs($datos['userDocente']);
 
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-03',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'INVENTADO'],
@@ -159,15 +158,15 @@ class AttendanceTest extends TestCase
         $this->actingAs($datos['userDocente']);
 
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-04',
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'PRESENTE']],
         ])->assertRedirect();
 
         $response = $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-04',
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA', 'justificacion' => 'Actualizado']],
         ]);
@@ -193,7 +192,7 @@ class AttendanceTest extends TestCase
         Teacher::create(['user_id' => $otroUser->id, 'codigo' => 'DOC-OTRO-' . fake()->unique()->numerify('####'), 'nombres' => 'Otro', 'apellidos' => 'Doc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $this->actingAs($otroUser);
-        $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-05')->assertStatus(403);
+        $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-05')->assertStatus(403);
     }
 
     public function test_docente_ve_asistencia_de_su_curso(): void
@@ -202,8 +201,8 @@ class AttendanceTest extends TestCase
         $fecha = now()->toDateString();
         $this->actingAs($datos['userDocente']);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => $fecha,
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
@@ -211,7 +210,7 @@ class AttendanceTest extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('docente.asistencias', $datos['courseSubject']));
+        $response = $this->get(route('docente.asistencias', $datos['sectionSubject']));
         $response->assertStatus(200);
         $response->assertSee('Asistencia de ' . $datos['curso']->nombre);
         $response->assertSee($datos['estudiantes'][0]->apellidos);
@@ -226,19 +225,19 @@ class AttendanceTest extends TestCase
         $diae = now()->format('d/m');
         $this->actingAs($datos['userDocente']);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => $fecha,
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
         ]);
 
         // El mes actual sí incluye la fecha registrada (hoy)
-        $resp1 = $this->get(route('docente.asistencias', ['courseSubject' => $datos['courseSubject'], 'mes' => now()->format('Y-m')]));
+        $resp1 = $this->get(route('docente.asistencias', ['sectionSubject' => $datos['sectionSubject'], 'mes' => now()->format('Y-m')]));
         $resp1->assertStatus(200);
         $resp1->assertSee($diae);
 
         // Un mes anterior no la incluye
-        $resp2 = $this->get(route('docente.asistencias', ['courseSubject' => $datos['courseSubject'], 'mes' => now()->subMonth()->format('Y-m')]));
+        $resp2 = $this->get(route('docente.asistencias', ['sectionSubject' => $datos['sectionSubject'], 'mes' => now()->subMonth()->format('Y-m')]));
         $resp2->assertStatus(200);
         $resp2->assertDontSee($diae);
         $resp2->assertSee('No hay asistencias registradas');
@@ -249,7 +248,7 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(1);
         $this->actingAs($datos['userDocente']);
 
-        $response = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01');
+        $response = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01');
         $response->assertStatus(200);
         $response->assertSee('value="FALTA" checked', false);
         $response->assertDontSee('value="PRESENTE" checked', false);
@@ -260,8 +259,8 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(2);
         $this->actingAs($datos['userDocente']);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
@@ -270,7 +269,7 @@ class AttendanceTest extends TestCase
         ]);
 
         // Reingreso: solo lectura, sin formulario editable
-        $respuesta = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01');
+        $respuesta = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01');
         $respuesta->assertStatus(200);
         $respuesta->assertSee('Ya registrada');
         $respuesta->assertSee('solo lectura');
@@ -282,7 +281,7 @@ class AttendanceTest extends TestCase
         $respuesta->assertDontSee('Guardar Cambios');
 
         // Al pulsar el icono de editar se muestra el formulario con lo guardado
-        $editar = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-04-01&editar=1');
+        $editar = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01&editar=1');
         $editar->assertStatus(200);
         $editar->assertSee('Guardar Cambios');
         $editar->assertSee('value="PRESENTE" checked', false);
@@ -294,8 +293,8 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(2);
         $this->actingAs($datos['userDocente']);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
@@ -305,8 +304,8 @@ class AttendanceTest extends TestCase
 
         // El docente vuelve a entrar y solo cambia al estudiante que trajo justificante
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
@@ -326,7 +325,7 @@ class AttendanceTest extends TestCase
         Teacher::create(['user_id' => $otroUser->id, 'codigo' => 'DOC-OTRO2-' . fake()->unique()->numerify('####'), 'nombres' => 'Otro', 'apellidos' => 'Doc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $this->actingAs($otroUser);
-        $this->get(route('docente.asistencias', $datos['courseSubject']))->assertForbidden();
+        $this->get(route('docente.asistencias', $datos['sectionSubject']))->assertForbidden();
     }
 
     public function test_docente_solo_registra_el_dia_actual(): void
@@ -334,8 +333,8 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(1);
         $this->actingAs($datos['userDocente']);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2020-01-01',
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'PRESENTE']],
         ])->assertRedirect();
@@ -343,7 +342,7 @@ class AttendanceTest extends TestCase
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'fecha' => now()->format('Y-m-d 00:00:00'), 'estado' => 'PRESENTE']);
         $this->assertDatabaseMissing('attendances', ['fecha' => '2020-01-01 00:00:00']);
 
-        $respuesta = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2020-01-01');
+        $respuesta = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2020-01-01');
         $respuesta->assertStatus(200);
         $respuesta->assertSee(now()->format('Y-m-d'));
     }
@@ -355,8 +354,8 @@ class AttendanceTest extends TestCase
         $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Test', 'email' => 'admin_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
         $this->actingAs($admin);
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2020-06-15',
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
         ])->assertRedirect();
@@ -369,29 +368,29 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(1);
         $nivel = Level::where('nombre', 'Primaria')->first();
         $biologia = Subject::firstOrCreate(['nombre' => 'Biología'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
-        CourseSubject::create(['course_id' => $datos['curso']->id, 'subject_id' => $biologia->id, 'teacher_id' => $datos['teacher']->id]);
+        SectionSubject::create(['section_id' => $datos['curso']->id, 'subject_id' => $biologia->id, 'teacher_id' => $datos['teacher']->id]);
 
         $fecha = now()->toDateString();
         $this->actingAs($datos['userDocente']);
 
         // En Matemáticas llegó con FALTA
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => $fecha,
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
         ])->assertRedirect();
 
         // En Biología asistió (PRESENTE) el mismo día
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
+            'section_id' => $datos['curso']->id,
             'subject_id' => $biologia->id,
             'fecha' => $fecha,
             'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'PRESENTE']],
         ])->assertRedirect();
 
         $this->assertDatabaseCount('attendances', 2);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $datos['courseSubject']->subject_id, 'estado' => 'FALTA']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'estado' => 'FALTA']);
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $biologia->id, 'estado' => 'PRESENTE']);
     }
 
@@ -404,14 +403,14 @@ class AttendanceTest extends TestCase
 
         // Queda una falta de hace semanas en Matemáticas
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-03-10',
             'asistencias' => [$datos['estudiantes'][1]->id => ['estado' => 'FALTA']],
         ])->assertRedirect();
 
         // El admin elige materia + fecha y ve la falta cargada (solo lectura)
-        $vista = $this->get('/asistencias/crear?course_id=' . $datos['curso']->id . '&subject_id=' . $datos['courseSubject']->subject_id . '&fecha=2026-03-10');
+        $vista = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-03-10');
         $vista->assertStatus(200);
         $vista->assertSee('Matemáticas');
         $vista->assertSee('Ya registrada');
@@ -420,15 +419,15 @@ class AttendanceTest extends TestCase
 
         // Edita y cambia el estado a JUSTIFICADO
         $this->post('/asistencias', [
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-03-10',
             'asistencias' => [
                 $datos['estudiantes'][1]->id => ['estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde'],
             ],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'subject_id' => $datos['courseSubject']->subject_id, 'fecha' => '2026-03-10 00:00:00', 'estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'fecha' => '2026-03-10 00:00:00', 'estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde']);
     }
 
     public function test_ahora_lleva_a_clase_actual_segun_horario(): void
@@ -440,8 +439,8 @@ class AttendanceTest extends TestCase
 
         if ($dia) {
             \App\Models\Schedule::create([
-                'course_id' => $datos['curso']->id,
-                'subject_id' => $datos['courseSubject']->subject_id,
+                'section_id' => $datos['curso']->id,
+                'subject_id' => $datos['sectionSubject']->subject_id,
                 'teacher_id' => $datos['teacher']->id,
                 'dia' => $dia,
                 'hora_inicio' => '00:00:00',
@@ -456,8 +455,8 @@ class AttendanceTest extends TestCase
 
         if ($dia) {
             $respuesta->assertRedirect(route('asistencias.create', [
-                'course_id' => $datos['curso']->id,
-                'subject_id' => $datos['courseSubject']->subject_id,
+                'section_id' => $datos['curso']->id,
+                'subject_id' => $datos['sectionSubject']->subject_id,
             ]));
         } else {
             $respuesta->assertRedirect(route('docente.cursos'));
@@ -478,8 +477,8 @@ class AttendanceTest extends TestCase
             }
         }
         \App\Models\Schedule::create([
-            'course_id' => $datos['curso']->id,
-            'subject_id' => $datos['courseSubject']->subject_id,
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
             'teacher_id' => $datos['teacher']->id,
             'dia' => $otroDia,
             'hora_inicio' => '07:20:00',

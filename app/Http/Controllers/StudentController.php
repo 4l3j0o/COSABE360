@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\MonthlyPayment;
 use App\Models\OperationHistory;
@@ -328,12 +328,12 @@ class StudentController extends Controller
             $inscripcionPeriodo = \App\Models\Enrollment::where('student_id', $student->id)
                 ->where('academic_year_id', $periodoActivo->id)
                 ->where('estado', '!=', 'ANULADA')
-                ->with(['gestion', 'registration.course'])
+                ->with(['gestion', 'registration.section'])
                 ->latest('fecha')
                 ->first();
             $matriculaPeriodo = $inscripcionPeriodo?->registration;
 
-            $cursos = \App\Models\Course::with(['grade', 'section'])
+            $cursos = \App\Models\Section::with(['grade'])
                 ->where('academic_year_id', $periodoActivo->id)
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()
@@ -483,7 +483,7 @@ class StudentController extends Controller
 
         $cursos = collect();
         if ($periodo) {
-            $cursos = Course::with(['grade', 'section'])
+            $cursos = Section::with(['grade'])
                 ->where('academic_year_id', $periodo->id)
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()
@@ -500,7 +500,7 @@ class StudentController extends Controller
     public function matricular(Request $request, Student $estudiante)
     {
         $validated = $request->validate([
-            'course_id'          => 'required|exists:courses,id',
+            'section_id'          => 'required|exists:sections,id',
             'fecha'              => 'required|date',
             'monto_mensual'      => 'nullable|numeric|min:0',
             'observaciones'      => 'nullable|string|max:500',
@@ -526,14 +526,14 @@ class StudentController extends Controller
         }
 
         // CA-18-01: el curso (grado + paralelo) debe pertenecer al período activo
-        $curso = Course::where('id', $validated['course_id'])
+        $curso = Section::where('id', $validated['section_id'])
             ->where('academic_year_id', $periodo->id)
             ->where('estado', 'ACTIVO')
             ->first();
 
         if (! $curso) {
             return back()->withErrors([
-                'course_id' => 'El curso seleccionado no es válido para el período académico activo.',
+                'section_id' => 'El curso seleccionado no es válido para el período académico activo.',
             ])->withInput();
         }
 
@@ -559,7 +559,7 @@ class StudentController extends Controller
             $registration = $inscripcion->registration;
             if ($registration && $registration->estado === 'INACTIVA') {
                 $registration->update([
-                    'course_id' => $curso->id,
+                    'section_id' => $curso->id,
                     'fecha' => $validated['fecha'],
                     'monto_mensual' => $montoMensual,
                     'observaciones' => $validated['observaciones'] ?? $registration->observaciones,
@@ -567,7 +567,7 @@ class StudentController extends Controller
                 ]);
             } else {
                 $registration = $inscripcion->registration()->create([
-                    'course_id'          => $curso->id,
+                    'section_id'          => $curso->id,
                     'fecha'              => $validated['fecha'],
                     'monto_mensual'      => $montoMensual,
                     'observaciones'      => $validated['observaciones'] ?? null,

@@ -1,4 +1,4 @@
-﻿@if ($paginator->hasPages())
+@if ($paginator->hasPages())
     <div class="flex items-center justify-between">
         <p class="text-xs text-muted-foreground">
             Mostrando {{ $paginator->firstItem() }} al {{ $paginator->lastItem() }} de {{ $paginator->total() }} resultados

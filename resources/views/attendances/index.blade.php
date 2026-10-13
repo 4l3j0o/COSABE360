@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('titulo', 'Cursos')
 
@@ -53,11 +53,11 @@
                         <tbody class="divide-y divide-border">
                             @foreach($cursosRegistro as $curso)
                                 <tr class="hover:bg-muted/20">
-                                    <td class="px-4 py-3 font-medium text-foreground">{{ $curso->section?->codigoCompleto() ?? $curso->nombre }}</td>
+                                    <td class="px-4 py-3 font-medium text-foreground">{{ $curso->codigoCompleto() ?: $curso->nombre }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $curso->aula ?? '—' }}</td>
                                     <td class="px-4 py-3 text-right">
                                         <form method="GET" action="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2">
-                                            <input type="hidden" name="course_id" value="{{ $curso->id }}">
+                                            <input type="hidden" name="section_id" value="{{ $curso->id }}">
                                             @php $materias = $materiasPorCurso[$curso->id] ?? collect(); @endphp
                                             @if($materias->isNotEmpty())
                                                 <select name="subject_id" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
@@ -110,8 +110,8 @@
                     <tbody class="divide-y divide-border">
                         @foreach($cursos as $curso)
                             <tr class="hover:bg-muted/20">
-                                <td class="px-4 py-3 font-medium text-foreground" data-course-name="{{ $curso->nombre }}">{{ $curso->grade?->nombre ?? '—' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->section?->nombre ?? '—' }}</td>
+                                <td class="px-4 py-3 font-medium text-foreground" data-section-name="{{ $curso->nombre }}">{{ $curso->grade?->nombre ?? '—' }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->codigo ?: $curso->nombre ?: '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $curso->gestion?->nombre ?? '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $curso->aula ?? '—' }}</td>
                                 <td class="px-4 py-3">
@@ -123,7 +123,7 @@
 <td class="px-4 py-3 text-right">
                                                         <div class="flex items-center justify-end gap-1">
                                                             @if(auth()->user()->hasRole('Administrador'))
-<form method="POST" action="{{ route('courses.toggle', $curso) }}" onsubmit="return confirm('¿Seguro que deseas {{ $curso->estado === 'ACTIVO' ? 'desactivar' : 'activar' }} este curso?')" class="inline">
+<form method="POST" action="{{ route('sections.toggle', $curso) }}" onsubmit="return confirm('¿Seguro que deseas {{ $curso->estado === 'ACTIVO' ? 'desactivar' : 'activar' }} este curso?')" class="inline">
                                                                     @csrf
                                                                     @method('PATCH')
                                                                     <button type="submit" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="{{ $curso->estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}">
@@ -134,7 +134,7 @@
                                                                         @endif
                                                                     </button>
                                                                 </form>
-                                                                <form method="POST" action="{{ route('courses.destroy', $curso) }}" onsubmit="return confirm('¿Seguro que deseas eliminar este curso? Quedará oculto del listado.')" class="inline">
+                                                                <form method="POST" action="{{ route('sections.destroy', $curso) }}" onsubmit="return confirm('¿Seguro que deseas eliminar este curso? Quedará oculto del listado.')" class="inline">
                                                                     @csrf
                                                                     @method('DELETE')
                                                                     <button type="submit" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Eliminar">
@@ -142,7 +142,7 @@
                                                                     </button>
                                                                 </form>
                                                         @endif
-                                                        <a href="{{ route('courses.show', $curso) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer inline-flex" title="Ver curso">
+                                                        <a href="{{ route('sections.show', $curso) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer inline-flex" title="Ver curso">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </a>
                                                                 </div>
@@ -170,7 +170,7 @@
                             <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
-                    <form method="POST" action="{{ route('courses.store') }}" style="padding:1.5rem;">
+                    <form method="POST" action="{{ route('sections.store') }}" style="padding:1.5rem;">
                         @csrf
                         @if($errors->any())
                             <div class="mb-4 px-3 py-2 rounded-lg bg-error/10 border border-error/20 text-error text-sm">{{ $errors->first() }}</div>

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -31,19 +31,19 @@ class AttendanceController extends Controller
         if ($user->hasRole('Docente')) {
             $teacher = Teacher::where('user_id', $user->id)->first();
             if ($teacher) {
-                $cursoIds = CourseSubject::where('teacher_id', $teacher->id)
-                    ->pluck('course_id')
+                $cursoIds = SectionSubject::where('teacher_id', $teacher->id)
+                    ->pluck('section_id')
                     ->unique()
                     ->values();
 
-                $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])->whereIn('id', $cursoIds)
-                    ->with(['grade', 'section', 'gestion'])
+                $base = Section::whereIn('estado', ['ACTIVO', 'INACTIVO'])->whereIn('id', $cursoIds)
+                    ->with(['grade', 'gestion'])
                     ->ordenadoPorNivel();
                 $puede = true;
             }
         } elseif ($user->hasAnyRole('Director,Administrador,Secretaría')) {
-            $base = Course::whereIn('estado', ['ACTIVO', 'INACTIVO'])
-                ->with(['grade', 'section', 'gestion'])
+            $base = Section::whereIn('estado', ['ACTIVO', 'INACTIVO'])
+                ->with(['grade', 'gestion'])
                 ->ordenadoPorNivel();
             $puede = true;
         }
@@ -54,8 +54,8 @@ class AttendanceController extends Controller
         }
 
         $materiasPorCurso = $cursosRegistro instanceof \Illuminate\Pagination\LengthAwarePaginator
-            ? $cursosRegistro->getCollection()->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)])
-            : $cursosRegistro->mapWithKeys(fn (Course $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
+            ? $cursosRegistro->getCollection()->mapWithKeys(fn (Section $curso) => [$curso->id => $this->materiasDeCurso($curso)])
+            : $cursosRegistro->mapWithKeys(fn (Section $curso) => [$curso->id => $this->materiasDeCurso($curso)]);
 
         $grados = \App\Models\Grade::with('level')->where('estado', '!=', 'ELIMINADO')->orderBy('orden')->orderBy('nombre')->get();
         $paralelos = \App\Models\Section::where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
@@ -93,7 +93,7 @@ class AttendanceController extends Controller
 
             if ($bloque) {
                 return redirect()->route('asistencias.create', [
-                    'course_id' => $bloque->course_id,
+                    'section_id' => $bloque->section_id,
                     'subject_id' => $bloque->subject_id,
                 ]);
             }
@@ -109,12 +109,12 @@ class AttendanceController extends Controller
     public function create(Request $request): View
     {
         $request->validate([
-            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['nullable', 'integer'],
             'fecha' => ['nullable', 'date'],
         ]);
 
-        $course = Course::with(['grade', 'section', 'gestion'])->findOrFail($request->query('course_id'));
+        $section = Section::with(['grade', 'gestion'])->findOrFail($request->query('section_id'));
 
         // El docente solo registra la asistencia del día actual; las demás fechas son para roles administrativos.
         $user = auth()->user();
@@ -122,13 +122,13 @@ class AttendanceController extends Controller
             ? now()->toDateString()
             : ($request->query('fecha') ? Carbon::parse($request->query('fecha'))->toDateString() : now()->toDateString());
 
-        $this->authorizeDocenteDelCurso($course);
+        $this->authorizeDocenteDelCurso($section);
 
-        $materias = $this->materiasDeCurso($course);
+        $materias = $this->materiasDeCurso($section);
         $subjectId = $this->resolverMateriaOLaPrimera($request, $materias);
 
-        $estudiantes = $this->estudiantesDelCurso($course);
-        $asistenciasExistentes = Attendance::where('course_id', $course->id)
+        $estudiantes = $this->estudiantesDelCurso($section);
+        $asistenciasExistentes = Attendance::where('section_id', $section->id)
             ->whereDate('fecha', $fecha)
             ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId), fn ($q) => $q->whereNull('subject_id'))
             ->get()
@@ -136,7 +136,7 @@ class AttendanceController extends Controller
 
         $editar = $request->boolean('editar');
 
-        return view('attendances.create', compact('course', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId'));
+        return view('attendances.create', compact('section', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId'));
     }
 
     /**
@@ -145,7 +145,7 @@ class AttendanceController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['nullable', 'integer'],
             'fecha' => ['required', 'date'],
             'asistencias' => ['required', 'array'],
@@ -153,10 +153,10 @@ class AttendanceController extends Controller
             'asistencias.*.justificacion' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $course = Course::findOrFail($validated['course_id']);
-        $this->authorizeDocenteDelCurso($course);
+        $section = Section::findOrFail($validated['section_id']);
+        $this->authorizeDocenteDelCurso($section);
 
-        $estudiantes = $this->estudiantesDelCurso($course)->pluck('id')->toArray();
+        $estudiantes = $this->estudiantesDelCurso($section)->pluck('id')->toArray();
 
         // El docente solo puede guardar la asistencia del día actual.
         $user = auth()->user();
@@ -164,7 +164,7 @@ class AttendanceController extends Controller
             ? now()->toDateString()
             : \Carbon\Carbon::parse($validated['fecha'])->toDateString();
 
-        $materias = $this->materiasDeCurso($course);
+        $materias = $this->materiasDeCurso($section);
         $subjectId = $this->resolverMateriaOLaPrimera($request, $materias);
 
         foreach ($validated['asistencias'] as $studentId => $data) {
@@ -173,7 +173,7 @@ class AttendanceController extends Controller
             }
 
             $existente = Attendance::where('student_id', $studentId)
-                ->where('course_id', $course->id)
+                ->where('section_id', $section->id)
                 ->whereDate('fecha', $fechaNormalizada)
                 ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId), fn ($q) => $q->whereNull('subject_id'))
                 ->first();
@@ -187,7 +187,7 @@ class AttendanceController extends Controller
             } else {
                 Attendance::create([
                     'student_id' => $studentId,
-                    'course_id' => $course->id,
+                    'section_id' => $section->id,
                     'subject_id' => $subjectId,
                     'fecha' => $fechaNormalizada,
                     'estado' => $data['estado'],
@@ -204,18 +204,18 @@ class AttendanceController extends Controller
      * Asistencia de un curso del docente: vista por mes de cada estudiante,
      * ordenada por nombre (por defecto el mes actual).
      */
-    public function porCurso(Request $request, CourseSubject $courseSubject): View
+    public function porCurso(Request $request, SectionSubject $sectionSubject): View
     {
         $teacher = $request->user()->teacher;
-        abort_if (! $teacher || $teacher->id !== $courseSubject->teacher_id, 403);
+        abort_if (! $teacher || $teacher->id !== $sectionSubject->teacher_id, 403);
 
-        $courseSubject->load(['subject', 'course.grade', 'course.section', 'course.gestion', 'schedules']);
+        $sectionSubject->load(['subject', 'section.grade', 'section', 'section.gestion', 'schedules']);
 
-        $course = $courseSubject->course;
+        $section = $sectionSubject->section;
 
-        $anio = $course->gestion?->fecha_inicio?->year ?? now()->year;
-        $mesIni = $course->gestion?->fecha_inicio?->month ?? 2;
-        $mesFin = $course->gestion?->fecha_fin?->month ?? 11;
+        $anio = $section->gestion?->fecha_inicio?->year ?? now()->year;
+        $mesIni = $section->gestion?->fecha_inicio?->month ?? 2;
+        $mesFin = $section->gestion?->fecha_fin?->month ?? 11;
         $mesIni = max((int) $mesIni, 2);
         $mesFin = min((int) $mesFin, 11);
         $mesesDisponibles = $mesIni <= $mesFin ? range($mesIni, $mesFin) : range(2, 11);
@@ -232,14 +232,14 @@ class AttendanceController extends Controller
         $anio = (int) $inicioMes->year;
         $mes = (int) $inicioMes->month;
 
-        $students = $course->students()
+        $students = $section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('apellidos')
             ->orderBy('nombres')
             ->get();
 
-        $asistencias = Attendance::where('course_id', $course->id)
-            ->where('subject_id', $courseSubject->subject_id)
+        $asistencias = Attendance::where('section_id', $section->id)
+            ->where('subject_id', $sectionSubject->subject_id)
             ->whereYear('fecha', $anio)
             ->whereMonth('fecha', $mes)
             ->whereIn('student_id', $students->pluck('id'))
@@ -263,14 +263,14 @@ class AttendanceController extends Controller
             'asistencias' => $porEstudiante->get($s->id, collect()),
         ])->values();
 
-        $dias = $courseSubject->schedules
+        $dias = $sectionSubject->schedules
             ->pluck('dia')
             ->unique()
             ->values();
 
         return view('attendances.por-curso', compact(
-            'courseSubject',
-            'course',
+            'sectionSubject',
+            'section',
             'students',
             'filas',
             'fechas',
@@ -282,11 +282,11 @@ class AttendanceController extends Controller
         ));
     }
 
-    private function estudiantesDelCurso(Course $course)
+    private function estudiantesDelCurso(Section $section)
     {
         // Estudiantes con matrícula ACTIVA en el curso
-        return Student::whereHas('enrollments.registration', function ($q) use ($course) {
-            $q->where('course_id', $course->id)->where('registrations.estado', 'ACTIVA');
+        return Student::whereHas('enrollments.registration', function ($q) use ($section) {
+            $q->where('section_id', $section->id)->where('registrations.estado', 'ACTIVA');
         })->where('estado', 'ACTIVO')
             ->orderBy('apellidos')
             ->orderBy('nombres')
@@ -297,10 +297,10 @@ class AttendanceController extends Controller
      * Materias disponibles de un curso según el rol: para el docente solo las que él imparte;
      * para roles administrativos todas las materias del curso.
      */
-    private function materiasDeCurso(Course $course)
+    private function materiasDeCurso(Section $section)
     {
         $user = auth()->user();
-        $materias = CourseSubject::where('course_id', $course->id);
+        $materias = SectionSubject::where('section_id', $section->id);
 
         if ($user->hasRole('Docente')) {
             $teacher = Teacher::where('user_id', $user->id)->first();
@@ -331,7 +331,7 @@ class AttendanceController extends Controller
         return $subjectId ?? $materias->first()?->id;
     }
 
-    private function authorizeDocenteDelCurso(Course $course): void
+    private function authorizeDocenteDelCurso(Section $section): void
     {
         $user = auth()->user();
 
@@ -344,12 +344,12 @@ class AttendanceController extends Controller
             if (!$teacher) {
                 abort(403, 'No tiene perfil docente.');
             }
-            $esResponsable = CourseSubject::where('teacher_id', $teacher->id)
-                ->where('course_id', $course->id)
+            $esResponsable = SectionSubject::where('teacher_id', $teacher->id)
+                ->where('section_id', $section->id)
                 ->exists();
 
             // También permitir si es responsable del paralelo
-            $esResponsableParalelo = \App\Models\Section::where('id', $course->section_id)
+            $esResponsableParalelo = \App\Models\Section::where('id', $section->section_id)
                 ->where('teacher_id', $teacher->id)
                 ->exists();
 

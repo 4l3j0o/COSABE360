@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Regente - ' . $course->nombre)
+@section('titulo', 'Regente - ' . $section->nombre)
 @section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
 
 @section('contenido')
@@ -16,8 +16,8 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
         @include('layouts._volver', ['href' => route('regente.cursos'), 'texto' => 'Volver a cursos'])
-        <h1 class="text-xl font-bold text-foreground mt-2">{{ $course->nombre }}</h1>
-        <p class="text-sm text-muted-foreground mt-1">{{ $course->grade?->nombre }} {{ $course->section?->nombre }} · Gestión {{ $course->gestion?->nombre }}</p>
+        <h1 class="text-xl font-bold text-foreground mt-2">{{ $section->nombre }}</h1>
+        <p class="text-sm text-muted-foreground mt-1">{{ $section->grade?->nombre }} {{ $section->nombre }} · Gestión {{ $section->gestion?->nombre }}</p>
     </div>
     <form method="GET" class="flex items-center gap-2">
         <input type="date" name="fecha" value="{{ $fecha->toDateString() }}" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
@@ -34,7 +34,7 @@
         </div>
         <span class="text-xs text-muted-foreground">{{ count($students) }} estudiantes</span>
     </div>
-    <form method="POST" action="{{ route('regente.guardarAsistencia', $course) }}">
+    <form method="POST" action="{{ route('regente.guardarAsistencia', $section) }}">
         @csrf
         <input type="hidden" name="fecha" value="{{ $fecha->toDateString() }}">
         <div class="overflow-x-auto">
@@ -77,7 +77,7 @@
 {{-- Registro de licencia por estudiante --}}
 <div class="bg-card border border-border rounded-xl p-5">
     <h3 class="font-semibold text-foreground mb-3">Registrar licencia a un estudiante</h3>
-    <form method="POST" action="{{ route('regente.licencia', ['course' => $course, 'student' => ':student_id']) }}" id="form-licencia">
+    <form method="POST" action="{{ route('regente.licencia', ['section' => $section, 'student' => ':student_id']) }}" id="form-licencia">
         @csrf
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             <div>

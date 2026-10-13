@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -35,7 +34,7 @@ class EvaluationReportTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Eval ' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso Eval ' . $sufijo, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Materia Eval ' . $sufijo], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $est = Student::create([
@@ -48,7 +47,7 @@ class EvaluationReportTest extends TestCase
             'estado' => 'ACTIVO',
         ]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
-        Registration::create(['enrollment_id' => $enrollment->id, 'course_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         return compact('curso', 'subject', 'est', 'gestion');
     }
@@ -67,8 +66,8 @@ class EvaluationReportTest extends TestCase
         $a = $this->crearCurso('E1');
         $b = $this->crearCurso('E2');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        CourseSubject::create(['course_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('evaluation-reports.index'));
@@ -81,10 +80,10 @@ class EvaluationReportTest extends TestCase
     {
         $a = $this->crearCurso('E3');
         $doc = $this->crearDocente();
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('evaluation-reports.index', ['course_subject_id' => $cs->id, 'trimestre' => 1]));
+        $response = $this->get(route('evaluation-reports.index', ['section_subject_id' => $cs->id, 'trimestre' => 1]));
         $response->assertStatus(200);
         $response->assertSee('Aprobados');
         $response->assertSee('ApellidoEvalE3');
@@ -97,8 +96,8 @@ class EvaluationReportTest extends TestCase
         $a = $this->crearCurso('E4');
         $b = $this->crearCurso('E5');
         $doc = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        CourseSubject::create(['course_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        SectionSubject::create(['section_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
         $response = $this->get(route('evaluation-reports.export', ['format' => 'pdf']));
@@ -110,10 +109,10 @@ class EvaluationReportTest extends TestCase
     {
         $a = $this->crearCurso('E6');
         $doc = $this->crearDocente();
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('evaluation-reports.export', ['course_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'pdf']));
+        $response = $this->get(route('evaluation-reports.export', ['section_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'pdf']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
     }
@@ -122,10 +121,10 @@ class EvaluationReportTest extends TestCase
     {
         $a = $this->crearCurso('E7');
         $doc = $this->crearDocente();
-        $cs = CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $cs = SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('evaluation-reports.export', ['course_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'excel']));
+        $response = $this->get(route('evaluation-reports.export', ['section_subject_id' => $cs->id, 'trimestre' => 1, 'format' => 'excel']));
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
@@ -146,11 +145,11 @@ class EvaluationReportTest extends TestCase
         $b = $this->crearCurso('E9');
         $doc = $this->crearDocente();
         $otro = $this->crearDocente();
-        CourseSubject::create(['course_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
-        $csAjeno = CourseSubject::create(['course_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $otro['teacher']->id]);
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+        $csAjeno = SectionSubject::create(['section_id' => $b['curso']->id, 'subject_id' => $b['subject']->id, 'teacher_id' => $otro['teacher']->id]);
 
         $this->actingAs($doc['user']);
-        $response = $this->get(route('evaluation-reports.index', ['course_subject_id' => $csAjeno->id, 'trimestre' => 1]));
+        $response = $this->get(route('evaluation-reports.index', ['section_subject_id' => $csAjeno->id, 'trimestre' => 1]));
         $response->assertStatus(403);
     }
 }

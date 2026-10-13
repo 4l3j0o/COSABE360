@@ -15,7 +15,7 @@ class StoreConductaReporteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['nullable', 'exists:subjects,id'],
             'student_id' => ['required', 'exists:students,id'],
             'tipo_falta' => ['required', 'in:'.implode(',', ConductaReporte::TIPOS)],
@@ -28,7 +28,7 @@ class StoreConductaReporteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'course_id.required' => 'Seleccione el curso.',
+            'section_id.required' => 'Seleccione el curso.',
             'student_id.required' => 'Seleccione el estudiante.',
             'tipo_falta.in' => 'El tipo de falta debe ser Leve, Grave o Muy grave.',
             'fecha.before_or_equal' => 'La fecha no puede ser futura.',

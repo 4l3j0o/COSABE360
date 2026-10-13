@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDiarioAulaRequest;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\DiarioAula;
 use App\Models\Registration;
 use App\Models\Subject;
@@ -24,19 +24,19 @@ class DiarioAulaController extends Controller
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
 
-        if (! $request->query('course_id') && $cursos->count() === 1) {
-            $request->merge(['course_id' => $cursos->first()->id]);
+        if (! $request->query('section_id') && $cursos->count() === 1) {
+            $request->merge(['section_id' => $cursos->first()->id]);
         }
 
-        $courseId = $request->query('course_id');
+        $sectionId = $request->query('section_id');
         $subjectId = $request->query('subject_id');
 
-        $course = $courseId ? Course::with(['grade', 'section', 'gestion'])->find($courseId) : null;
-        if ($course && ! $this->permiteCurso($user, $course->id, $cursos)) {
+        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
+        if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
-        $materias = $this->materiasVisibles($user, $courseId, $cursos);
+        $materias = $this->materiasVisibles($user, $sectionId, $cursos);
         if ($subjectId && ! $materias->contains('id', (int) $subjectId)) {
             $subjectId = null;
         }
@@ -44,10 +44,10 @@ class DiarioAulaController extends Controller
         // Docente y estudiante siempre trabajan sobre un curso concreto
         $requiereCurso = $this->requiereCurso($user);
         $entradas = collect();
-        if (! $requiereCurso || $courseId) {
-            $entradas = DiarioAula::with(['course.grade', 'course.section', 'subject', 'teacher'])
-                ->when($courseId, fn ($q) => $q->where('course_id', $courseId),
-                    fn ($q) => $q->whereIn('course_id', $cursos->pluck('id')))
+        if (! $requiereCurso || $sectionId) {
+            $entradas = DiarioAula::with(['section.grade', 'section', 'subject', 'teacher'])
+                ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId),
+                    fn ($q) => $q->whereIn('section_id', $cursos->pluck('id')))
                 ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
                 ->orderByDesc('fecha')
                 ->orderByDesc('id')
@@ -58,10 +58,10 @@ class DiarioAulaController extends Controller
         return view('diario-aula.index', [
             'cursos' => $cursos,
             'materias' => $materias,
-            'course' => $course,
+            'section' => $section,
             'entradas' => $entradas,
-            'requiereCurso' => $requiereCurso && ! $courseId,
-            'filtros' => $request->only(['course_id', 'subject_id']),
+            'requiereCurso' => $requiereCurso && ! $sectionId,
+            'filtros' => $request->only(['section_id', 'subject_id']),
         ]);
     }
 
@@ -79,7 +79,7 @@ class DiarioAulaController extends Controller
         }
 
         return redirect()->route('diario.index', [
-            'course_id' => $bloque->course_id,
+            'section_id' => $bloque->section_id,
             'subject_id' => $bloque->subject_id,
         ]);
     }
@@ -91,17 +91,17 @@ class DiarioAulaController extends Controller
     {
         $this->authorizeRegistro($request->user());
 
-        $courseId = $request->query('course_id');
+        $sectionId = $request->query('section_id');
         $cursos = $this->cursosRegistro($request->user());
-        $course = $courseId
-            ? $cursos->firstWhere('id', (int) $courseId)
+        $section = $sectionId
+            ? $cursos->firstWhere('id', (int) $sectionId)
             : ($cursos->count() === 1 ? $cursos->first() : null);
 
-        $materias = $course ? $this->materiasRegistro($request->user(), $course) : collect();
+        $materias = $section ? $this->materiasRegistro($request->user(), $section) : collect();
 
         return view('diario-aula.create', [
             'cursos' => $cursos,
-            'course' => $course,
+            'section' => $section,
             'materias' => $materias,
             'hoy' => now()->toDateString(),
         ]);
@@ -112,28 +112,28 @@ class DiarioAulaController extends Controller
         $user = $request->user();
         $this->authorizeRegistro($user);
 
-        $course = Course::findOrFail($request->validated()['course_id']);
-        $this->authorizeDocenteDelCurso($user, $course);
+        $section = Section::findOrFail($request->validated()['section_id']);
+        $this->authorizeDocenteDelCurso($user, $section);
 
         $data = $request->validated();
-        $this->authorizeMateria($user, $course, (int) $data['subject_id']);
+        $this->authorizeMateria($user, $section, (int) $data['subject_id']);
 
         DiarioAula::create($data + [
-            'teacher_id' => $this->teacherIdPara($user, $course),
+            'teacher_id' => $this->teacherIdPara($user, $section),
             'registered_by_user_id' => $user->id,
         ]);
 
-        return redirect()->route('diario.index', ['course_id' => $course->id])
+        return redirect()->route('diario.index', ['section_id' => $section->id])
             ->with('mensaje', 'Bitácora registrada en el diario de aula.');
     }
 
     public function show(Request $request, DiarioAula $diario): View
     {
         $user = $request->user();
-        if (! $this->permiteCurso($user, $diario->course_id, $this->cursosPermitidos($user))) {
+        if (! $this->permiteCurso($user, $diario->section_id, $this->cursosPermitidos($user))) {
             abort(403, 'No tiene acceso a esta bitácora.');
         }
-        $diario->load(['course.grade', 'course.section', 'subject', 'teacher']);
+        $diario->load(['section.grade', 'section', 'subject', 'teacher']);
 
         return view('diario-aula.show', ['entrada' => $diario]);
     }
@@ -147,10 +147,10 @@ class DiarioAulaController extends Controller
 
         abort_unless($puede, 403, 'Solo el autor o la dirección puede eliminar esta bitácora.');
 
-        $courseId = $diario->course_id;
+        $sectionId = $diario->section_id;
         $diario->delete();
 
-        return redirect()->route('diario.index', ['course_id' => $courseId])
+        return redirect()->route('diario.index', ['section_id' => $sectionId])
             ->with('mensaje', 'Bitácora eliminada.');
     }
 
@@ -192,15 +192,15 @@ class DiarioAulaController extends Controller
         );
     }
 
-    private function authorizeDocenteDelCurso($user, Course $course): void
+    private function authorizeDocenteDelCurso($user, Section $section): void
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
             return;
         }
         if ($user->hasRole('Docente') && $user->teacher) {
-            $asignado = CourseSubject::where('teacher_id', $user->teacher->id)
-                ->where('course_id', $course->id)->exists()
-                || \App\Models\Section::where('id', $course->section_id)
+            $asignado = SectionSubject::where('teacher_id', $user->teacher->id)
+                ->where('section_id', $section->id)->exists()
+                || \App\Models\Section::where('id', $section->section_id)
                     ->where('teacher_id', $user->teacher->id)->exists();
             if ($asignado) {
                 return;
@@ -209,25 +209,25 @@ class DiarioAulaController extends Controller
         abort(403, 'No está asignado a este curso.');
     }
 
-    private function authorizeMateria($user, Course $course, int $subjectId): void
+    private function authorizeMateria($user, Section $section, int $subjectId): void
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
             return;
         }
-        $ok = CourseSubject::where('course_id', $course->id)
+        $ok = SectionSubject::where('section_id', $section->id)
             ->where('subject_id', $subjectId)
             ->where('teacher_id', $user->teacher->id)
             ->exists();
         abort_unless($ok, 403, 'Esa materia no le corresponde en este curso.');
     }
 
-    private function teacherIdPara($user, Course $course): ?int
+    private function teacherIdPara($user, Section $section): ?int
     {
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->id;
         }
         // Registro administrativo: docente titular de la materia si existe
-        return CourseSubject::where('course_id', $course->id)
+        return SectionSubject::where('section_id', $section->id)
             ->where('subject_id', request('subject_id'))
             ->value('teacher_id');
     }
@@ -235,17 +235,17 @@ class DiarioAulaController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            return $user->teacher->courseSubjects()
-                ->with(['course.grade', 'course.section', 'course.gestion'])
-                ->get()->map(fn ($cs) => $cs->course)->unique('id')->pipe(fn ($c) => Course::ordenarPorNivel($c));
+            return $user->teacher->sectionSubjects()
+                ->with(['section.grade', 'section', 'section.gestion'])
+                ->get()->map(fn ($cs) => $cs->section)->unique('id')->pipe(fn ($c) => Section::ordenarPorNivel($c));
         }
 
         if ($user->hasRole('Estudiante') && $user->student) {
-            $curso = $user->student->activeCourse();
+            $curso = $user->student->activeSection();
 
             return $curso ? collect([$curso]) : collect();
         }
@@ -257,19 +257,19 @@ class DiarioAulaController extends Controller
     {
         // Para registrar: el docente solo sus cursos; admin ve todos los activos
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Course::with(['grade', 'section'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
+            return Section::with(['grade'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();
     }
 
-    private function materiasVisibles($user, $courseId, $cursos)
+    private function materiasVisibles($user, $sectionId, $cursos)
     {
-        $q = CourseSubject::with('subject');
-        if ($courseId) {
-            $q->where('course_id', $courseId);
+        $q = SectionSubject::with('subject');
+        if ($sectionId) {
+            $q->where('section_id', $sectionId);
         } else {
-            $q->whereIn('course_id', $cursos->pluck('id'));
+            $q->whereIn('section_id', $cursos->pluck('id'));
         }
         if ($user->hasRole('Docente') && $user->teacher) {
             $q->where('teacher_id', $user->teacher->id);
@@ -278,9 +278,9 @@ class DiarioAulaController extends Controller
         return $q->get()->map(fn ($cs) => $cs->subject)->unique('id')->values();
     }
 
-    private function materiasRegistro($user, Course $course)
+    private function materiasRegistro($user, Section $section)
     {
-        $q = CourseSubject::where('course_id', $course->id);
+        $q = SectionSubject::where('section_id', $section->id);
         if ($user->hasRole('Docente') && $user->teacher) {
             $q->where('teacher_id', $user->teacher->id);
         }
@@ -294,12 +294,12 @@ class DiarioAulaController extends Controller
         return $user->hasRole('Docente') || $user->hasRole('Estudiante');
     }
 
-    private function permiteCurso($user, int $courseId, $cursos): bool
+    private function permiteCurso($user, int $sectionId, $cursos): bool
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
             return true;
         }
 
-        return $cursos->contains('id', $courseId);
+        return $cursos->contains('id', $sectionId);
     }
 }

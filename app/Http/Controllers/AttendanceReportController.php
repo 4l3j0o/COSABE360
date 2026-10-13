@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\Attendance;
-use App\Models\Course;
-use App\Models\CourseSubject;
+use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Registration;
 use App\Models\Schedule;
 use App\Models\Subject;
@@ -31,11 +31,11 @@ class AttendanceReportController extends Controller
         $cursos = $this->cursosPermitidos($user);
 
         // Con un solo curso permitido se preselecciona directo
-        if (! $request->query('course_id') && $cursos->count() === 1) {
-            $request->merge(['course_id' => $cursos->first()->id]);
+        if (! $request->query('section_id') && $cursos->count() === 1) {
+            $request->merge(['section_id' => $cursos->first()->id]);
         }
 
-        $filtros = $request->only(['rango', 'fecha', 'course_id', 'subject_id']);
+        $filtros = $request->only(['rango', 'fecha', 'section_id', 'subject_id']);
 
         $resultado = $this->build($request, $user, $cursos);
 
@@ -55,13 +55,13 @@ class AttendanceReportController extends Controller
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
 
-        if ($this->requiereCurso($user) && ! $request->query('course_id')) {
+        if ($this->requiereCurso($user) && ! $request->query('section_id')) {
             return back()->with('error', 'Selecciona un curso para generar el reporte.');
         }
 
         // Con un solo curso permitido se preselecciona directo
-        if (! $request->query('course_id') && $cursos->count() === 1) {
-            $request->merge(['course_id' => $cursos->first()->id]);
+        if (! $request->query('section_id') && $cursos->count() === 1) {
+            $request->merge(['section_id' => $cursos->first()->id]);
         }
 
         $resultado = $this->build($request, $user, $cursos);
@@ -79,28 +79,28 @@ class AttendanceReportController extends Controller
     {
         $fecha = $request->query('fecha') ? \Carbon\Carbon::parse($request->query('fecha')) : now();
         $rango = $request->query('rango', 'mes');
-        $courseId = $request->query('course_id');
+        $sectionId = $request->query('section_id');
         $subjectId = $request->query('subject_id');
 
         [$desde, $hasta] = $this->rangoFechas($rango, $fecha);
 
-        $course = $courseId ? Course::with(['grade', 'section', 'gestion'])->find($courseId) : null;
+        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
 
-        if ($course && ! $this->permiteCurso($user, $course->id, $cursos)) {
+        if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
 
         // Materias del curso elegido (o de todos los permitidos si no hay curso fijo)
-        $materias = CourseSubject::with('subject')
-            ->when($courseId,
-                fn ($q) => $q->where('course_id', $courseId),
-                fn ($q) => $q->whereIn('course_id', $cursos->pluck('id')))
+        $materias = SectionSubject::with('subject')
+            ->when($sectionId,
+                fn ($q) => $q->where('section_id', $sectionId),
+                fn ($q) => $q->whereIn('section_id', $cursos->pluck('id')))
             ->get()
             ->unique('subject_id')
             ->values();
 
         // Docente y tutor trabajan siempre sobre un curso concreto
-        if ($this->requiereCurso($user) && ! $courseId) {
+        if ($this->requiereCurso($user) && ! $sectionId) {
             return [
                 'fecha' => $fecha->format('d/m/Y'),
                 'rango' => $rango,
@@ -120,7 +120,7 @@ class AttendanceReportController extends Controller
         // Registration -> enrollment -> estudiante (no existe relación directa `student`)
         $studentsQuery = Registration::where('estado', 'ACTIVA')
             ->with('enrollment.estudiante')
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->whereHas('enrollment.estudiante', fn ($q) => $q->where('estado', 'ACTIVO'));
 
         $students = $studentsQuery->get()->map(fn ($r) => $r->enrollment?->estudiante)->filter()->unique('id')->values();
@@ -133,20 +133,20 @@ class AttendanceReportController extends Controller
         // Asistencias dentro del rango, opcional por materia
         $attendanceQuery = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->whereIn('estado', self::ESTADOS)
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId));
 
         $attendanceByStudent = $attendanceQuery->get()->groupBy('student_id');
 
         // Días de clase del curso (por horario) dentro del rango, para el total esperado
         $diasClase = Schedule::where('estado', 'ACTIVO')
-            ->when($courseId, fn ($q) => $q->where('course_id', $courseId))
+            ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->pluck('dia')
             ->map(fn ($d) => strtolower($d))
             ->unique()
             ->values();
 
-        $filas = $students->map(function ($student) use ($attendanceByStudent, $desde, $hasta, $diasClase, $courseId) {
+        $filas = $students->map(function ($student) use ($attendanceByStudent, $desde, $hasta, $diasClase, $sectionId) {
             $registros = $attendanceByStudent->get($student->id, collect());
             $conteo = [];
             foreach (self::ESTADOS as $e) {
@@ -167,10 +167,10 @@ class AttendanceReportController extends Controller
         })->sortByDesc('porcentaje')->values();
 
         $curso = null;
-        if ($course) {
-            $curso = $course->codigoCorto();
-        } elseif ($courseId) {
-            $curso = 'Curso #'.$courseId;
+        if ($section) {
+            $curso = $section->codigoCorto();
+        } elseif ($sectionId) {
+            $curso = 'Curso #'.$sectionId;
         } else {
             $curso = 'Todos los cursos';
         }
@@ -211,20 +211,20 @@ class AttendanceReportController extends Controller
     private function cursosPermitidos($user)
     {
         if ($user->hasAnyRole(['Administrador', 'Director'])) {
-            return Course::with(['grade', 'section', 'gestion'])->ordenadoPorNivel()->get();
+            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            return $user->teacher->courseSubjects()
-                ->with(['course.grade', 'course.section', 'course.gestion', 'subject'])
+            return $user->teacher->sectionSubjects()
+                ->with(['section.grade', 'section', 'section.gestion', 'subject'])
                 ->get()
-                ->map(fn ($cs) => $cs->course)
+                ->map(fn ($cs) => $cs->section)
                 ->unique('id')
-                ->pipe(fn ($c) => Course::ordenarPorNivel($c));
+                ->pipe(fn ($c) => Section::ordenarPorNivel($c));
         }
 
         if ($user->hasRole('Estudiante') && $user->student) {
-            $curso = $user->student->activeCourse();
+            $curso = $user->student->activeSection();
 
             return $curso ? collect([$curso]) : collect();
         }
@@ -240,13 +240,13 @@ class AttendanceReportController extends Controller
         return $user->hasRole('Docente') || $user->hasRole('Estudiante');
     }
 
-    private function permiteCurso($user, int $courseId, $cursos): bool
+    private function permiteCurso($user, int $sectionId, $cursos): bool
     {
         if ($user->hasAnyRole(['Administrador', 'Director'])) {
             return true;
         }
 
-        return $cursos->contains('id', $courseId);
+        return $cursos->contains('id', $sectionId);
     }
 
     private function exportPdf(array $resultado)

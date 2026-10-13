@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\CodigoReserva;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\DataConsent;
 use App\Models\Enrollment;
 use App\Models\Level;
@@ -100,7 +100,7 @@ class InscripcionController extends Controller
             return collect();
         }
 
-        $query = Course::with(['grade.level', 'section'])
+        $query = Section::with(['grade.level'])
             ->where('academic_year_id', $periodo->id)
             ->where('estado', 'ACTIVO');
 
@@ -246,7 +246,7 @@ class InscripcionController extends Controller
             'direccion' => ['nullable', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:20'],
             'codigo_rude' => ['nullable', 'string', 'max:50'],
-            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => ['required', 'exists:sections,id'],
             'tutor_principal' => ['required', 'in:padre,madre,tutor'],
             'reserva_id' => ['nullable', 'integer', 'exists:codigo_reservas,id'],
             // Padre (opcional, pero si se llena nombres se exige apellidos + CI válido)
@@ -314,9 +314,9 @@ class InscripcionController extends Controller
         }
 
         // Curso válido del período activo y del nivel permitido
-        $curso = Course::with('grade.level')->find($validated['course_id']);
+        $curso = Section::with('grade.level')->find($validated['section_id']);
         if (! $curso || $curso->academic_year_id !== $periodo->id || $curso->estado !== 'ACTIVO') {
-            return back()->withErrors(['course_id' => 'El curso no es válido para el período activo.'])->withInput();
+            return back()->withErrors(['section_id' => 'El curso no es válido para el período activo.'])->withInput();
         }
         if (! $user->puedeInscribirNivel($curso->grade->level_id)) {
             abort(403, 'No puede inscribir en ese nivel.');
@@ -405,7 +405,7 @@ class InscripcionController extends Controller
                     'observaciones' => 'Preinscripción HU-59 (pago por verificar).',
                 ]);
                 $enrollment->registration()->create([
-                    'course_id' => $curso->id,
+                    'section_id' => $curso->id,
                     'fecha' => now()->toDateString(),
                     'monto_mensual' => $montoMensual,
                     'observaciones' => 'Curso preasignado en preinscripción.',
@@ -538,7 +538,7 @@ class InscripcionController extends Controller
         $student = $request->user()->student;
         abort_if(! $student, 403, 'Sin perfil de estudiante.');
 
-        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.course.grade.level']);
+        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.section.grade.level']);
         $inscripcion = $this->inscripcionActiva($student);
         $pasos = $this->progreso($student, $inscripcion);
         $pasos[3]['docs'] = $this->docsPaso3($student, $inscripcion);
@@ -687,7 +687,7 @@ class InscripcionController extends Controller
         abort_if(! $student, 403, 'Sin perfil de estudiante.');
         $this->verificarNoFinalizado($student);
 
-        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.course.grade.level']);
+        $student->load(['documents', 'parentGuardians', 'rudeRecord', 'enrollments.registration.section.grade.level']);
         $inscripcion = $this->inscripcionActiva($student);
         $pasos = $this->progreso($student, $inscripcion);
         $docs = $this->docsPaso3($student, $inscripcion);
@@ -781,7 +781,7 @@ class InscripcionController extends Controller
         $relaciones = $student->parentGuardians->map(fn ($pg) => $pg->pivot?->tipo_relacion)->all();
         $tienePadre = in_array('PADRE', $relaciones, true);
         $tieneMadre = in_array('MADRE', $relaciones, true);
-        $esInicial = (int) ($inscripcion?->registration?->course?->grade?->level?->orden ?? 0) === 1;
+        $esInicial = (int) ($inscripcion?->registration?->section?->grade?->level?->orden ?? 0) === 1;
 
         $tipos = ['CI_ANVERSO', 'CI_REVERSO', 'CERT_NACIMIENTO', 'COMPROBANTE_PAGO', 'ANEXO_CONFORMIDAD'];
         if ($tienePadre) {
@@ -855,7 +855,7 @@ class InscripcionController extends Controller
 
     private function datosContrato(Student $student): array
     {
-        $student->load(['parentGuardians', 'rudeRecord', 'enrollments.registration.course.grade.level']);
+        $student->load(['parentGuardians', 'rudeRecord', 'enrollments.registration.section.grade.level']);
 
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
         $inscripcion = $student->enrollments()
@@ -864,7 +864,7 @@ class InscripcionController extends Controller
             ->latest('fecha')
             ->first();
 
-        $curso = $inscripcion?->registration?->course;
+        $curso = $inscripcion?->registration?->section;
         $tutor = $student->parentGuardians->firstWhere('pivot.es_principal', 1)
             ?? $student->parentGuardians->first();
 

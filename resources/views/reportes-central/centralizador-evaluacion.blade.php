@@ -12,7 +12,7 @@
 </div>
 
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'eval', 'form' => null, 'cursoSel' => request('course_id'), 'materiaSel' => request('subject_id')])
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'eval', 'form' => null, 'cursoSel' => request('section_id'), 'materiaSel' => request('subject_id')])
     <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90">Ver reporte</button>
     @if(! $resultado['requiere_curso'])
     <div class="flex gap-2 ml-auto">

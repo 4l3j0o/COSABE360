@@ -2940,13 +2940,13 @@ class Docentes2026Seeder extends Seeder
             if (! $sec || ! $teacher || ! isset($subjectIds[$a['materia']])) {
                 continue;
             }
-            $course = DB::table('courses')->where('section_id', $sec->id)->where('academic_year_id', $año)->first();
-            if (! $course) {
+            $section = DB::table('sections')->where('id', $sec->id)->where('academic_year_id', $año)->first();
+            if (! $section) {
                 continue;
             }
-            $exists = DB::table('course_subjects')->where('course_id', $course->id)->where('subject_id', $subjectIds[$a['materia']])->where('teacher_id', $teacher->id)->exists();
+            $exists = DB::table('section_subjects')->where('section_id', $section->id)->where('subject_id', $subjectIds[$a['materia']])->where('teacher_id', $teacher->id)->exists();
             if (! $exists) {
-                DB::table('course_subjects')->insert(['course_id' => $course->id, 'subject_id' => $subjectIds[$a['materia']], 'teacher_id' => $teacher->id, 'created_at' => now(), 'updated_at' => now()]);
+                DB::table('section_subjects')->insert(['section_id' => $section->id, 'subject_id' => $subjectIds[$a['materia']], 'teacher_id' => $teacher->id, 'created_at' => now(), 'updated_at' => now()]);
             }
         }
 

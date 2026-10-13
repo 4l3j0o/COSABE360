@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('titulo', 'Horario - ' . $teacher->nombres . ' ' . $teacher->apellidos)
 
 @section('sidebar')
@@ -87,11 +87,11 @@
                                             @if($clases->isNotEmpty())
                                                 <div class="h-full rounded-lg bg-card border border-border/70 px-2.5 py-2 shadow-sm">
                                                     <div class="text-[13px] font-bold leading-tight text-foreground">{{ $clases->first()->subject->nombre ?? '—' }}</div>
-                                                    @if($clases->first()->course)
+                                                    @if($clases->first()->section)
                                                         <div class="mt-1 text-[11px] leading-snug text-muted-foreground">
-                                                            {{ $clases->first()->course->grade->nombre ?? $clases->first()->course->nombre }}
-                                                            @if($clases->first()->course->section?->nombre)
-                                                                <span class="italic">"{{ $clases->first()->course->section->nombre }}"</span>
+                                                            {{ $clases->first()->section->grade->nombre ?? $clases->first()->section->nombre }}
+                                                            @if($clases->first()->section?->nombre)
+                                                                <span class="italic">"{{ $clases->first()->section->nombre }}"</span>
                                                             @endif
                                                         </div>
                                                     @endif

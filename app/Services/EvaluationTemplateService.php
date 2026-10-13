@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\EvaluationPlan;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -114,8 +114,8 @@ class EvaluationTemplateService
      */
     public function exportar(EvaluationPlan $plan): string
     {
-        $plan->load(['courseSubject.subject', 'courseSubject.course.grade', 'courseSubject.course.section', 'criteria.activities']);
-        $cs = $plan->courseSubject;
+        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section', 'criteria.activities']);
+        $cs = $plan->sectionSubject;
         $criterios = $this->criteriosOrdenados($plan);
 
         $spreadsheet = new Spreadsheet;
@@ -138,7 +138,7 @@ class EvaluationTemplateService
         // Metadatos
         $meta = [
             ['Colegio', $this->colegio],
-            ['Curso', $cs->course->nombre],
+            ['Curso', $cs->section->nombre],
             ['Materia', $cs->subject->nombre],
             ['Docente', $cs->teacher?->nombreCompleto() ?? '—'],
             ['Trimestre', $plan->trimestre.'°'],
@@ -240,8 +240,8 @@ class EvaluationTemplateService
      */
     public function exportarCentralizador(EvaluationPlan $plan): string
     {
-        $plan->load(['courseSubject.subject', 'courseSubject.course.grade', 'courseSubject.course.section', 'courseSubject.course.gestion', 'criteria.activities']);
-        $cs = $plan->courseSubject;
+        $plan->load(['sectionSubject.subject', 'sectionSubject.section.grade', 'sectionSubject.section', 'sectionSubject.section.gestion', 'criteria.activities']);
+        $cs = $plan->sectionSubject;
 
         $spreadsheet = new Spreadsheet;
         $sheetN = $spreadsheet->getActiveSheet();
@@ -262,7 +262,7 @@ class EvaluationTemplateService
     private function construirHojaNotas(
         \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheetN,
         EvaluationPlan $plan,
-        CourseSubject $cs,
+        SectionSubject $cs,
         Collection $criterios,
         Collection $estudiantes,
         bool $conFormulas
@@ -276,7 +276,7 @@ class EvaluationTemplateService
             ? 'PLANILLA DE EVALUACIÓN POR CRITERIOS — TRIMESTRE ' . $plan->trimestre
             : 'CENTRALIZADOR DE CALIFICACIONES POR TRIMESTRE ' . $plan->trimestre . '°');
         $sheetN->mergeCells('D2:H2');
-        $sheetN->setCellValue('D3', 'Registro de notas por criterio (SE/SA/HA/AU)  ·  Gestión '.($cs->course->gestion->nombre ?? now()->year));
+        $sheetN->setCellValue('D3', 'Registro de notas por criterio (SE/SA/HA/AU)  ·  Gestión '.($cs->section->gestion->nombre ?? now()->year));
         $sheetN->mergeCells('D3:H3');
         $sheetN->setCellValue('D4', 'DOCENTE');
         $sheetN->mergeCells('D4:E4');
@@ -284,7 +284,7 @@ class EvaluationTemplateService
         $sheetN->mergeCells('F4:H4');
         $sheetN->setCellValue('D5', 'CURSO');
         $sheetN->mergeCells('D5:E5');
-        $sheetN->setCellValue('F5', $cs->course->nombre);
+        $sheetN->setCellValue('F5', $cs->section->nombre);
         $sheetN->mergeCells('F5:H5');
         $sheetN->setCellValue('D6', 'MATERIA');
         $sheetN->mergeCells('D6:E6');
@@ -523,7 +523,7 @@ class EvaluationTemplateService
         $highestRow = $sheetN->getHighestRow();
         $highestCol = $sheetN->getHighestColumn();
 
-        $estudiantes = $this->estudiantes($plan->courseSubject);
+        $estudiantes = $this->estudiantes($plan->sectionSubject);
         $estByNombre = [];
         foreach ($estudiantes as $st) {
             $estByNombre[mb_strtolower(trim($st->apellidos.' '.$st->nombres))] = $st;
@@ -576,9 +576,9 @@ class EvaluationTemplateService
         ];
     }
 
-    private function estudiantes(CourseSubject $cs): Collection
+    private function estudiantes(SectionSubject $cs): Collection
     {
-        return $cs->course->students()
+        return $cs->section->students()
             ->where('students.estado', 'ACTIVO')
             ->orderBy('students.apellidos')
             ->orderBy('students.nombres')

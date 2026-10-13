@@ -3,13 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Registration;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,13 +51,13 @@ class RegistrationTest extends TestCase
         ]);
     }
 
-    private function crearCurso(AcademicYear $periodo): Course
+    private function crearCurso(AcademicYear $periodo): Section
     {
         $nivel = Level::where('nombre', 'Primaria')->firstOrFail();
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Primero '.fake()->unique()->numerify('##'), 'orden' => 1, 'estado' => 'ACTIVO']);
         $paralelo = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
 
-        return Course::create([
+        return Section::create([
             'grade_id' => $grado->id,
             'section_id' => $paralelo->id,
             'academic_year_id' => $periodo->id,
@@ -86,7 +85,7 @@ class RegistrationTest extends TestCase
         $inscripcion = $this->crearInscripcion($est, $periodo, 'COMPLETADA');
 
         $this->post(route('estudiantes.matricular', $est), [
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-05',
             'monto_mensual' => 350.00,
             'observaciones' => 'Matrícula 2026',
@@ -96,7 +95,7 @@ class RegistrationTest extends TestCase
         // CA-18-02: registra costo de matrícula y mensualidad
         $this->assertDatabaseHas('registrations', [
             'enrollment_id' => $inscripcion->id,
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'monto_mensual' => 350.00,
             'estado' => 'ACTIVA',
         ]);
@@ -113,7 +112,7 @@ class RegistrationTest extends TestCase
         $this->crearInscripcion($est, $periodo, 'PENDIENTE');
 
         $response = $this->post(route('estudiantes.matricular', $est), [
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-05',
             'monto_mensual' => 350.00,
         ]);
@@ -131,7 +130,7 @@ class RegistrationTest extends TestCase
         $curso = $this->crearCurso($periodo);
 
         $response = $this->post(route('estudiantes.matricular', $est), [
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-05',
             'monto_mensual' => 350.00,
         ]);
@@ -150,14 +149,14 @@ class RegistrationTest extends TestCase
 
         Registration::create([
             'enrollment_id' => $inscripcion->id,
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-05',
             'monto_mensual' => 350.00,
             'estado' => 'ACTIVA',
         ]);
 
         $response = $this->post(route('estudiantes.matricular', $est), [
-            'course_id' => $curso->id,
+            'section_id' => $curso->id,
             'fecha' => '2026-03-06',
             'monto_mensual' => 350.00,
         ]);

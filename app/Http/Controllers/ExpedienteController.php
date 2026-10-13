@@ -147,7 +147,7 @@ class ExpedienteController extends Controller
 
     private function nivelEstudiante(Student $student): ?string
     {
-        $curso = $student->activeCourse();
+        $curso = $student->activeSection();
 
         return match ($curso?->grade?->level?->orden) {
             1 => 'INICIAL',

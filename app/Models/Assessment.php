@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Assessment extends Model
 {
     protected $fillable = [
-        'course_subject_id',
+        'section_subject_id',
         'subject_id',
         'academic_year_id',
         'nombre',
@@ -39,9 +39,9 @@ class Assessment extends Model
         return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
-    public function courseSubject(): BelongsTo
+    public function sectionSubject(): BelongsTo
     {
-        return $this->belongsTo(CourseSubject::class, 'course_subject_id');
+        return $this->belongsTo(SectionSubject::class, 'section_subject_id');
     }
 
     public function gradeScores(): HasMany

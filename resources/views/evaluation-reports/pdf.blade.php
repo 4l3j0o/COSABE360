@@ -44,10 +44,7 @@
         <div class="brand-sub">Sistema de Gestión Escolar CSB 360</div>
         <div class="doc-title">Reporte de Evaluación — Aprobados, reprobados, mejores calificaciones y asistencia</div>
         <div class="meta">
-          <b>Curso:</b> {{ $resultado['curso']?->course->nombre ?? '—' }}
-          · <b>Materia:</b> {{ $resultado['curso']?->subject->nombre ?? '—' }}
-          · <b>Trimestre:</b> {{ $resultado['trimestre'] }}°
-          · <b>Gestión:</b> {{ $resultado['curso']?->course->gestion->nombre ?? now()->year }}
+          <b>Curso:</b> {{ $resultado['curso']?->section?->codigoCorto() ?? '—' }}<b>Materia:</b> {{ $resultado['curso']?->subject->nombre ?? '—' }}<b>Trimestre:</b> {{ $resultado['trimestre'] }}°<b>Gestión:</b> {{ $resultado['curso']?->section?->gestion?->nombre ?? now()->year }}
           @if($resultado['curso']?->teacher)
             · <b>Docente:</b> {{ trim(($resultado['curso']->teacher->nombres ?? '').' '.($resultado['curso']->teacher->apellidos ?? '')) }}
           @endif

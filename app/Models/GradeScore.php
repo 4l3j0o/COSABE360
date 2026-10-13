@@ -47,8 +47,8 @@ class GradeScore extends Model
     {
         $scores = static::where('student_id', $student->id)
             ->whereHas('assessment', function ($q) use ($assessment) {
-                if ($assessment->course_subject_id) {
-                    $q->where('course_subject_id', $assessment->course_subject_id)
+                if ($assessment->section_subject_id) {
+                    $q->where('section_subject_id', $assessment->section_subject_id)
                         ->where('bimestre', $assessment->bimestre);
                 } else {
                     $q->where('subject_id', $assessment->subject_id)

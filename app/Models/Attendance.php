@@ -11,7 +11,7 @@ class Attendance extends Model
 
     protected $fillable = [
         'student_id',
-        'course_id',
+        'section_id',
         'subject_id',
         'fecha',
         'estado',
@@ -31,9 +31,9 @@ class Attendance extends Model
         return $this->belongsTo(Student::class, 'student_id');
     }
 
-    public function course(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Section::class, 'section_id');
     }
 
     public function subject(): BelongsTo
@@ -46,9 +46,9 @@ class Attendance extends Model
         return $this->belongsTo(User::class, 'registered_by_user_id');
     }
 
-    public function scopeDelCurso($query, int $courseId)
+    public function scopeDelCurso($query, int $sectionId)
     {
-        return $query->where('course_id', $courseId);
+        return $query->where('section_id', $sectionId);
     }
 
     public function scopeDeFecha($query, string $fecha)

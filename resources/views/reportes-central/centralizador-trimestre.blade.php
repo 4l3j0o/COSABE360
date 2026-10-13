@@ -22,7 +22,7 @@
 </div>
 
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'courseSubjects' => $courseSubjects, 'uid' => 'trim', 'form' => null, 'cursoSel' => request('course_id'), 'materiaSel' => request('subject_id')])
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'trim', 'form' => null, 'cursoSel' => request('section_id'), 'materiaSel' => request('subject_id')])
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
         <select name="trimestre" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">

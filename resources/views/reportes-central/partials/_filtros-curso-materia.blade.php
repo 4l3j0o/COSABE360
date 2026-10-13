@@ -1,13 +1,13 @@
 {{-- Filtros en cascada: primero paralelo, luego se habilita materia.
-  Vars: $cursos, $courseSubjects, $uid (sufijo único), $form (id form o null),
+  Vars: $cursos, $sectionSubjects, $uid (sufijo único), $form (id form o null),
         $cursoSel, $materiaSel --}}
 <div>
     <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo</label>
-    <select name="course_id" id="curso-{{ $uid }}" @if(! empty($form)) form="{{ $form }}" @endif
+    <select name="section_id" id="curso-{{ $uid }}" @if(! empty($form)) form="{{ $form }}" @endif
         class="js-cascada-curso px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm" data-materia="materia-{{ $uid }}">
         <option value="">Seleccionar paralelo…</option>
-        @foreach($cursos as $course)
-            <option value="{{ $course->id }}" {{ (string) $cursoSel === (string) $course->id ? 'selected' : '' }}>{{ $course->codigoCorto() }}</option>
+        @foreach($cursos as $section)
+            <option value="{{ $section->id }}" {{ (string) $cursoSel === (string) $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
         @endforeach
     </select>
 </div>
@@ -16,8 +16,8 @@
     <select name="subject_id" id="materia-{{ $uid }}" @if(! empty($form)) form="{{ $form }}" @endif
         class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm" {{ $cursoSel ? '' : 'disabled' }}>
         <option value="">Primero elija paralelo…</option>
-        @foreach($courseSubjects as $cs)
-            <option value="{{ $cs->subject_id }}" data-curso="{{ $cs->course_id }}" {{ (string) $materiaSel === (string) $cs->subject_id ? 'selected' : '' }}>{{ $cs->subject->nombre }}</option>
+        @foreach($sectionSubjects as $cs)
+            <option value="{{ $cs->subject_id }}" data-curso="{{ $cs->section_id }}" {{ (string) $materiaSel === (string) $cs->subject_id ? 'selected' : '' }}>{{ $cs->subject->nombre }}</option>
         @endforeach
     </select>
 </div>

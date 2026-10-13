@@ -7,9 +7,9 @@
 
 @section('contenido')
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('conducta.index', ['course_id' => $reporte->course_id]), 'texto' => 'Volver al reporte del curso'])
+        @include('layouts._volver', ['href' => route('conducta.index', ['section_id' => $reporte->section_id]), 'texto' => 'Volver al reporte del curso'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $reporte->student->apellidos }} {{ $reporte->student->nombres }}</h1>
-        <p class="text-sm text-muted-foreground">{{ $reporte->course->nombre }} · {{ $reporte->subject->nombre ?? 'General' }} · {{ $reporte->fecha->format('d/m/Y') }}{{ $reporte->hora ? ' · '.substr($reporte->hora, 0, 5) : '' }}</p>
+        <p class="text-sm text-muted-foreground">{{ $reporte->section->nombre }} · {{ $reporte->subject->nombre ?? 'General' }} · {{ $reporte->fecha->format('d/m/Y') }}{{ $reporte->hora ? ' · '.substr($reporte->hora, 0, 5) : '' }}</p>
     </div>
 
     <div class="max-w-3xl space-y-4">

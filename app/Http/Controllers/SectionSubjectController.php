@@ -2,32 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CourseSubject;
+use App\Models\SectionSubject;
 use App\Models\Schedule;
 use App\Models\Teacher;
 use App\Models\Subject;
-use App\Models\Course;
+use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class CourseSubjectController extends Controller
+class SectionSubjectController extends Controller
 {
     public function index()
     {
-        $courseSubjects = CourseSubject::with(['teacher', 'subject', 'course', 'schedules'])
+        $sectionSubjects = SectionSubject::with(['teacher', 'subject', 'section', 'schedules'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('course_subjects.index', compact('courseSubjects'));
+        return view('section_subjects.index', compact('sectionSubjects'));
     }
 
     public function create()
     {
         $teachers = Teacher::all();
         $subjects = Subject::all();
-        $courses = Course::all();
+        $sections = Section::all();
 
-        return view('course_subjects.create', compact('teachers', 'subjects', 'courses'));
+        return view('section_subjects.create', compact('teachers', 'subjects', 'sections'));
     }
 
     public function store(Request $request)
@@ -35,7 +35,7 @@ class CourseSubjectController extends Controller
         $validated = $request->validate([
             'teacher_id' => 'required|exists:teachers,id',
             'subject_id' => 'required|exists:subjects,id',
-            'course_id' => 'required|exists:courses,id',
+            'section_id' => 'required|exists:sections,id',
             'dia' => 'required|in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
@@ -45,16 +45,16 @@ class CourseSubjectController extends Controller
         DB::beginTransaction();
 
         try {
-            $courseSubject = CourseSubject::create([
+            $sectionSubject = SectionSubject::create([
                 'teacher_id' => $validated['teacher_id'],
                 'subject_id' => $validated['subject_id'],
-                'course_id' => $validated['course_id'],
+                'section_id' => $validated['section_id'],
             ]);
 
             $this->validarCruceHorario($validated['teacher_id'], $validated['dia'], $validated['hora_inicio'], $validated['hora_fin']);
 
             Schedule::create([
-                'course_id' => $validated['course_id'],
+                'section_id' => $validated['section_id'],
                 'subject_id' => $validated['subject_id'],
                 'teacher_id' => $validated['teacher_id'],
                 'dia' => $validated['dia'],
@@ -65,7 +65,7 @@ class CourseSubjectController extends Controller
 
             DB::commit();
 
-            return redirect()->route('course_subjects.index')->with('mensaje', 'Asignación creada correctamente.');
+            return redirect()->route('section_subjects.index')->with('mensaje', 'Asignación creada correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -96,22 +96,22 @@ class CourseSubjectController extends Controller
         }
     }
 
-    public function show(CourseSubject $courseSubject)
+    public function show(SectionSubject $sectionSubject)
     {
         //
     }
 
-    public function edit(CourseSubject $courseSubject)
+    public function edit(SectionSubject $sectionSubject)
     {
         //
     }
 
-    public function update(Request $request, CourseSubject $courseSubject)
+    public function update(Request $request, SectionSubject $sectionSubject)
     {
         //
     }
 
-    public function destroy(CourseSubject $courseSubject)
+    public function destroy(SectionSubject $sectionSubject)
     {
         //
     }

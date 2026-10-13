@@ -18,7 +18,7 @@
         <div class="flex justify-between"><dt class="text-muted-foreground">Código</dt><dd class="text-foreground font-medium">{{ $student->codigo }}</dd></div>
         <div class="flex justify-between"><dt class="text-muted-foreground">CI</dt><dd class="text-foreground">{{ trim(($student->numero_documento ?? '') . ' ' . ($student->complemento ?? '')) }}</dd></div>
         <div class="flex justify-between"><dt class="text-muted-foreground">RUDE</dt><dd class="text-foreground">{{ $student->rudeRecord?->codigo_rude ?? '—' }}</dd></div>
-        <div class="flex justify-between"><dt class="text-muted-foreground">Curso</dt><dd class="text-foreground">{{ $inscripcion?->registration?->course?->codigoCorto() ?? '—' }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted-foreground">Curso</dt><dd class="text-foreground">{{ $inscripcion?->registration?->section?->codigoCorto() ?? '—' }}</dd></div>
         <div class="flex justify-between"><dt class="text-muted-foreground">Domicilio</dt><dd class="text-foreground">{{ $student->rudeRecord?->dir_latitud && $student->rudeRecord?->dir_longitud ? $student->rudeRecord->dir_latitud . ', ' . $student->rudeRecord->dir_longitud : '—' }}</dd></div>
         <div class="flex justify-between"><dt class="text-muted-foreground">NIT facturación</dt><dd class="text-foreground">{{ $inscripcion?->nit_facturacion ?? '—' }}</dd></div>
         <div class="flex justify-between"><dt class="text-muted-foreground">Razón social</dt><dd class="text-foreground">{{ $inscripcion?->razon_social_facturacion ?? '—' }}</dd></div>

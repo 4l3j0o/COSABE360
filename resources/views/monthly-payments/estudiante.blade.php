@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('titulo', 'Pagos de ' . $estudiante->apellidos . ', ' . $estudiante->nombres)
 
 @section('sidebar')

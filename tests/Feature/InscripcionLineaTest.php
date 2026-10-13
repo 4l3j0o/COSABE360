@@ -4,12 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\AcademicYear;
 use App\Models\CodigoReserva;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\Level;
 use App\Models\Role;
-use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentRudeRecord;
 use App\Models\Subject;
@@ -36,7 +35,7 @@ class InscripcionLineaTest extends TestCase
         $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado L' . $sufijo, 'orden' => 1, 'estado' => 'ACTIVO']);
         $seccion = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'capacidad' => 10, 'estado' => 'ACTIVO']);
         $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
-        $curso = Course::create(['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $gestion->id, 'nombre' => 'Curso L' . $sufijo, 'estado' => 'ACTIVO']);
+        $curso = $seccion;
         $subject = Subject::firstOrCreate(['nombre' => 'Materia L' . $sufijo], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
@@ -47,7 +46,7 @@ class InscripcionLineaTest extends TestCase
         $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Lin', 'email' => 'est_l' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $userEst->id]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'PENDIENTE']);
-        $enrollment->registration()->create(['course_id' => $curso->id, 'fecha' => '2026-03-01', 'monto_mensual' => 0, 'estado' => 'INACTIVA']);
+        $enrollment->registration()->create(['section_id' => $curso->id, 'fecha' => '2026-03-01', 'monto_mensual' => 0, 'estado' => 'INACTIVA']);
 
         return compact('admin', 'est', 'userEst', 'enrollment', 'curso', 'gestion');
     }

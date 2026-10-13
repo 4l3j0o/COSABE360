@@ -3,10 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
+use App\Models\Section;
 use App\Models\Grade;
 use App\Models\Level;
-use App\Models\Section;
 use Illuminate\Database\Seeder;
 
 class EstructuraAcademicaSeeder extends Seeder
@@ -67,34 +66,21 @@ class EstructuraAcademicaSeeder extends Seeder
                 );
 
                 foreach ($gradoData['paralelos'] as $paralelo) {
-                    $seccion = Section::updateOrCreate(
-                        ['grade_id' => $grado->id, 'nombre' => $paralelo],
+                    // HU-69: el paralelo ES la unidad-clase (lleva gestión y aula).
+                    Section::updateOrCreate(
+                        ['grade_id' => $grado->id, 'nombre' => $paralelo, 'academic_year_id' => $añoActivo?->id],
                         [
                             'capacidad' => 40,
                             'estado' => 'ACTIVO',
                             'codigo' => $this->codigo($nivel, $grado, $paralelo),
+                            'aula' => null,
                         ]
                     );
-
-                    if ($añoActivo) {
-                        $curso = Course::firstOrCreate(
-                            ['grade_id' => $grado->id, 'section_id' => $seccion->id, 'academic_year_id' => $añoActivo->id],
-                            [
-                                'nombre' => $grado->nombre.' "'.$seccion->nombre.'" - '.$añoActivo->nombre,
-                                'estado' => 'ACTIVO',
-                            ]
-                        );
-
-                        // Mantener el nombre del curso alineado con el grado (renombres)
-                        $curso->update([
-                            'nombre' => $grado->nombre.' "'.$seccion->nombre.'" - '.$añoActivo->nombre,
-                        ]);
-                    }
                 }
             }
         }
 
-        $this->command->info('Estructura académica (niveles, grados, paralelos y cursos) actualizada correctamente.');
+        $this->command->info('Estructura académica (niveles, grados y paralelos) actualizada correctamente.');
     }
 
     /**

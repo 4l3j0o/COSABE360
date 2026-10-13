@@ -37,9 +37,9 @@ class Subject extends Model
         return $this->hasMany(Assessment::class, 'subject_id');
     }
 
-    public function courseSubjects(): HasMany
+    public function sectionSubjects(): HasMany
     {
-        return $this->hasMany(CourseSubject::class, 'subject_id');
+        return $this->hasMany(SectionSubject::class, 'subject_id');
     }
 
     public function schedules(): HasMany
