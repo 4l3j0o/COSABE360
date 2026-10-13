@@ -88,10 +88,10 @@ class AttendanceTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee($datos['estudiantes'][0]->nombres);
         $response->assertSee('PRESENTE');
-        $response->assertSee('FALTA');
-        $response->assertSee('ATRASO');
-        $response->assertSee('PERMISO');
-        $response->assertSee('JUSTIFICADO');
+        $response->assertSee('AUSENTE');
+        $response->assertSee('RETRASO');
+        $response->assertSee('LICENCIA');
+        $response->assertSee('RETIRO_JUSTIFICADO');
     }
 
     public function test_docente_registra_asistencia_con_5_estados(): void
@@ -105,18 +105,18 @@ class AttendanceTest extends TestCase
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE', 'justificacion' => null],
-                $datos['estudiantes'][1]->id => ['estado' => 'FALTA', 'justificacion' => 'Enfermo'],
-                $datos['estudiantes'][2]->id => ['estado' => 'ATRASO', 'justificacion' => 'Tráfico'],
+                $datos['estudiantes'][1]->id => ['estado' => 'AUSENTE', 'justificacion' => 'Enfermo'],
+                $datos['estudiantes'][2]->id => ['estado' => 'RETRASO', 'justificacion' => 'Tráfico'],
             ],
         ]);
 
         $response->assertRedirect(route('asistencias.index'));
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'PRESENTE', 'fecha' => now()->format('Y-m-d 00:00:00')]);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'FALTA']);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][2]->id, 'estado' => 'ATRASO']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'AUSENTE']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][2]->id, 'estado' => 'RETRASO']);
     }
 
-    public function test_asistencia_con_permiso_y_justificado(): void
+    public function test_asistencia_con_licencia_y_retiro(): void
     {
         $datos = $this->crearCursoConEstudiantes(2);
         $this->actingAs($datos['userDocente']);
@@ -126,13 +126,13 @@ class AttendanceTest extends TestCase
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-02',
             'asistencias' => [
-                $datos['estudiantes'][0]->id => ['estado' => 'PERMISO', 'justificacion' => 'Cita médica'],
-                $datos['estudiantes'][1]->id => ['estado' => 'JUSTIFICADO', 'justificacion' => 'Certificado'],
+                $datos['estudiantes'][0]->id => ['estado' => 'LICENCIA', 'justificacion' => 'Cita médica'],
+                $datos['estudiantes'][1]->id => ['estado' => 'RETIRO_JUSTIFICADO', 'justificacion' => 'Certificado'],
             ],
         ]);
 
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'PERMISO', 'justificacion' => 'Cita médica']);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'JUSTIFICADO']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'LICENCIA', 'justificacion' => 'Cita médica']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'RETIRO_JUSTIFICADO']);
     }
 
     public function test_no_permite_estado_invalido(): void
@@ -168,7 +168,7 @@ class AttendanceTest extends TestCase
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-04-04',
-            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA', 'justificacion' => 'Actualizado']],
+            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'AUSENTE', 'justificacion' => 'Actualizado']],
         ]);
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();
@@ -176,11 +176,11 @@ class AttendanceTest extends TestCase
         $this->assertDatabaseCount('attendances', 1);
         $att = Attendance::first();
         // debug
-        if ($att->estado !== 'FALTA') {
+        if ($att->estado !== 'AUSENTE') {
             dump($att->toArray());
             dump($response->getContent());
         }
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'FALTA', 'justificacion' => 'Actualizado']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'AUSENTE', 'justificacion' => 'Actualizado']);
     }
 
     public function test_docente_no_asignado_no_puede_registrar(): void
@@ -206,7 +206,7 @@ class AttendanceTest extends TestCase
             'fecha' => $fecha,
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
-                $datos['estudiantes'][1]->id => ['estado' => 'FALTA', 'justificacion' => 'Enfermo'],
+                $datos['estudiantes'][1]->id => ['estado' => 'AUSENTE', 'justificacion' => 'Enfermo'],
             ],
         ]);
 
@@ -228,7 +228,7 @@ class AttendanceTest extends TestCase
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => $fecha,
-            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
+            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'AUSENTE']],
         ]);
 
         // El mes actual sí incluye la fecha registrada (hoy)
@@ -243,15 +243,27 @@ class AttendanceTest extends TestCase
         $resp2->assertSee('No hay asistencias registradas');
     }
 
-    public function test_formulario_nuevo_por_defecto_marca_falta(): void
+    public function test_formulario_nuevo_por_defecto_marca_ausente(): void
     {
         $datos = $this->crearCursoConEstudiantes(1);
         $this->actingAs($datos['userDocente']);
 
         $response = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01');
         $response->assertStatus(200);
-        $response->assertSee('value="FALTA" checked', false);
+        $response->assertSee('value="AUSENTE" checked', false);
         $response->assertDontSee('value="PRESENTE" checked', false);
+    }
+
+    public function test_formulario_trae_boton_presentes_a_todos(): void
+    {
+        $datos = $this->crearCursoConEstudiantes(1);
+        $this->actingAs($datos['userDocente']);
+
+        $response = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-04-01');
+        $response->assertStatus(200);
+        $response->assertSee('Presentes a todos');
+        $response->assertSee('presentesATodos()', false);
+        $response->assertSee('value="LICENCIA"', false);
     }
 
     public function test_al_reingresar_muestra_solo_lectura_hasta_pulsar_editar(): void
@@ -264,7 +276,7 @@ class AttendanceTest extends TestCase
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
-                $datos['estudiantes'][1]->id => ['estado' => 'FALTA', 'justificacion' => 'Sin justificante'],
+                $datos['estudiantes'][1]->id => ['estado' => 'AUSENTE', 'justificacion' => 'Sin justificante'],
             ],
         ]);
 
@@ -275,9 +287,9 @@ class AttendanceTest extends TestCase
         $respuesta->assertSee('solo lectura');
         $respuesta->assertSee($datos['estudiantes'][0]->apellidos);
         $respuesta->assertSee('presente');
-        $respuesta->assertSee('falta');
+        $respuesta->assertSee('ausente');
         $respuesta->assertSee('Sin justificante');
-        $respuesta->assertDontSee('value="FALTA" checked', false);
+        $respuesta->assertDontSee('value="AUSENTE" checked', false);
         $respuesta->assertDontSee('Guardar Cambios');
 
         // Al pulsar el icono de editar se muestra el formulario con lo guardado
@@ -285,7 +297,7 @@ class AttendanceTest extends TestCase
         $editar->assertStatus(200);
         $editar->assertSee('Guardar Cambios');
         $editar->assertSee('value="PRESENTE" checked', false);
-        $editar->assertSee('value="FALTA" checked', false);
+        $editar->assertSee('value="AUSENTE" checked', false);
     }
 
     public function test_al_editar_conserva_los_demas_estudiantes(): void
@@ -298,7 +310,7 @@ class AttendanceTest extends TestCase
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
-                $datos['estudiantes'][1]->id => ['estado' => 'FALTA'],
+                $datos['estudiantes'][1]->id => ['estado' => 'AUSENTE'],
             ],
         ]);
 
@@ -309,12 +321,12 @@ class AttendanceTest extends TestCase
             'fecha' => '2026-04-01',
             'asistencias' => [
                 $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
-                $datos['estudiantes'][1]->id => ['estado' => 'JUSTIFICADO', 'justificacion' => 'Llegó con justificante'],
+                $datos['estudiantes'][1]->id => ['estado' => 'RETIRO_JUSTIFICADO', 'justificacion' => 'Llegó con justificante'],
             ],
         ]);
 
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'estado' => 'PRESENTE']);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'JUSTIFICADO', 'justificacion' => 'Llegó con justificante']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'estado' => 'RETIRO_JUSTIFICADO', 'justificacion' => 'Llegó con justificante']);
     }
 
     public function test_docente_no_asignado_no_ve_asistencia_de_otro_curso(): void
@@ -357,10 +369,10 @@ class AttendanceTest extends TestCase
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2020-06-15',
-            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
+            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'AUSENTE']],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'fecha' => '2020-06-15 00:00:00', 'estado' => 'FALTA']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'fecha' => '2020-06-15 00:00:00', 'estado' => 'AUSENTE']);
     }
 
     public function test_asistencia_es_por_curso_y_materia(): void
@@ -373,12 +385,12 @@ class AttendanceTest extends TestCase
         $fecha = now()->toDateString();
         $this->actingAs($datos['userDocente']);
 
-        // En Matemáticas llegó con FALTA
+        // En Matemáticas llegó con AUSENTE
         $this->post('/asistencias', [
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => $fecha,
-            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'FALTA']],
+            'asistencias' => [$datos['estudiantes'][0]->id => ['estado' => 'AUSENTE']],
         ])->assertRedirect();
 
         // En Biología asistió (PRESENTE) el mismo día
@@ -390,44 +402,44 @@ class AttendanceTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseCount('attendances', 2);
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'estado' => 'FALTA']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'estado' => 'AUSENTE']);
         $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][0]->id, 'subject_id' => $biologia->id, 'estado' => 'PRESENTE']);
     }
 
-    public function test_administrador_edita_falta_pasada_por_materia(): void
+    public function test_administrador_edita_ausencia_pasada_por_materia(): void
     {
         $datos = $this->crearCursoConEstudiantes(2);
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
         $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Edita', 'email' => 'admin_edita_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
         $this->actingAs($admin);
 
-        // Queda una falta de hace semanas en Matemáticas
+        // Queda una ausencia de hace semanas en Matemáticas
         $this->post('/asistencias', [
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-03-10',
-            'asistencias' => [$datos['estudiantes'][1]->id => ['estado' => 'FALTA']],
+            'asistencias' => [$datos['estudiantes'][1]->id => ['estado' => 'AUSENTE']],
         ])->assertRedirect();
 
-        // El admin elige materia + fecha y ve la falta cargada (solo lectura)
+        // El admin elige materia + fecha y ve la ausencia cargada (solo lectura)
         $vista = $this->get('/asistencias/crear?section_id=' . $datos['curso']->id . '&subject_id=' . $datos['sectionSubject']->subject_id . '&fecha=2026-03-10');
         $vista->assertStatus(200);
         $vista->assertSee('Matemáticas');
         $vista->assertSee('Ya registrada');
         $vista->assertSee($datos['estudiantes'][1]->apellidos);
-        $vista->assertSee('falta');
+        $vista->assertSee('ausente');
 
-        // Edita y cambia el estado a JUSTIFICADO
+        // Edita y cambia el estado a RETIRO_JUSTIFICADO
         $this->post('/asistencias', [
             'section_id' => $datos['curso']->id,
             'subject_id' => $datos['sectionSubject']->subject_id,
             'fecha' => '2026-03-10',
             'asistencias' => [
-                $datos['estudiantes'][1]->id => ['estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde'],
+                $datos['estudiantes'][1]->id => ['estado' => 'RETIRO_JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde'],
             ],
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'fecha' => '2026-03-10 00:00:00', 'estado' => 'JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $datos['estudiantes'][1]->id, 'subject_id' => $datos['sectionSubject']->subject_id, 'fecha' => '2026-03-10 00:00:00', 'estado' => 'RETIRO_JUSTIFICADO', 'justificacion' => 'Justificante entregado tarde']);
     }
 
     public function test_ahora_lleva_a_clase_actual_segun_horario(): void

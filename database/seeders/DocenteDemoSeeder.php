@@ -237,7 +237,7 @@ class DocenteDemoSeeder extends Seeder
             foreach ($fechas as $fecha) {
                 foreach ($estudiantes as $est) {
                     $r = rand(1, 100);
-                    $estado = $r <= 85 ? 'PRESENTE' : ($r <= 93 ? 'ATRASO' : ($r <= 98 ? 'FALTA' : 'PERMISO'));
+                    $estado = $r <= 85 ? 'PRESENTE' : ($r <= 93 ? 'RETRASO' : ($r <= 98 ? 'AUSENTE' : 'LICENCIA'));
                     Attendance::create([
                         'student_id' => $est->id,
                         'section_id' => $cs->section_id,

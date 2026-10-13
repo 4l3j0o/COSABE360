@@ -44,11 +44,11 @@ class AttendanceSeeder extends Seeder
 
                     $estado = 'PRESENTE';
                     if ($semilla % 17 === 0) {
-                        $estado = 'FALTA';
+                        $estado = 'AUSENTE';
                     } elseif ($semilla % 13 === 0) {
-                        $estado = 'ATRASO';
+                        $estado = 'RETRASO';
                     } elseif ($semilla % 11 === 0) {
-                        $estado = 'PERMISO';
+                        $estado = 'LICENCIA';
                     }
 
                     Attendance::updateOrCreate(
@@ -59,7 +59,7 @@ class AttendanceSeeder extends Seeder
                         ],
                         [
                             'estado'                => $estado,
-                            'justificacion'         => $estado === 'FALTA' ? 'Falta registrada por el docente' : null,
+                            'justificacion'         => $estado === 'AUSENTE' ? 'Ausencia registrada por el docente' : null,
                             'registered_by_user_id' => $registrante,
                         ]
                     );

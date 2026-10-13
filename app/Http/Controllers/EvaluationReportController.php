@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class EvaluationReportController extends Controller
 {
-    private const ESTADOS_ASISTENCIA = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO'];
+    private const ESTADOS_ASISTENCIA = ['PRESENTE', 'AUSENTE', 'LICENCIA', 'RETRASO', 'RETIRO_JUSTIFICADO'];
 
     public function index(Request $request): View
     {
@@ -284,7 +284,7 @@ class EvaluationReportController extends Controller
         $fila = $filaCabecera + 1;
         foreach ($resultado['filas'] as $i => $f) {
             $detalle = $f->asistencia['detalle'] ?? [];
-            $asistCorta = 'P:'.($detalle['PRESENTE'] ?? 0).' F:'.($detalle['FALTA'] ?? 0).' A:'.($detalle['ATRASO'] ?? 0);
+            $asistCorta = 'P:'.($detalle['PRESENTE'] ?? 0).' A:'.($detalle['AUSENTE'] ?? 0).' R:'.($detalle['RETRASO'] ?? 0);
 
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f->student->apellidos.' '.$f->student->nombres);

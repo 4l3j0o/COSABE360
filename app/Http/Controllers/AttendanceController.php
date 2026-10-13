@@ -150,7 +150,7 @@ class AttendanceController extends Controller
             'subject_id' => ['nullable', 'integer'],
             'fecha' => ['required', 'date'],
             'asistencias' => ['required', 'array'],
-            'asistencias.*.estado' => ['required', 'in:PRESENTE,FALTA,ATRASO,PERMISO,JUSTIFICADO'],
+            'asistencias.*.estado' => ['required', 'in:PRESENTE,AUSENTE,LICENCIA,RETRASO,RETIRO_JUSTIFICADO'],
             'asistencias.*.justificacion' => ['nullable', 'string', 'max:500'],
         ]);
 
