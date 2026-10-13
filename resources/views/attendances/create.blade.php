@@ -17,18 +17,18 @@
         $rutaBase = ['section_id' => $section->id, 'subject_id' => $subjectId, 'fecha' => $fecha];
         $badges = [
             'PRESENTE' => 'bg-success/10 text-success border-success/30',
-            'FALTA' => 'bg-error/10 text-error border-error/30',
-            'ATRASO' => 'bg-warning/10 text-warning border-warning/30',
-            'PERMISO' => 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-            'JUSTIFICADO' => 'bg-purple-500/10 text-purple-600 border-purple-500/30',
+            'AUSENTE' => 'bg-error/10 text-error border-error/30',
+            'LICENCIA' => 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+            'RETRASO' => 'bg-warning/10 text-warning border-warning/30',
+            'RETIRO_JUSTIFICADO' => 'bg-purple-500/10 text-purple-600 border-purple-500/30',
         ];
-        $estados = ['P' => 'PRESENTE', 'F' => 'FALTA', 'A' => 'ATRASO', 'PE' => 'PERMISO', 'J' => 'JUSTIFICADO'];
+        $estados = ['P' => 'PRESENTE', 'A' => 'AUSENTE', 'L' => 'LICENCIA', 'R' => 'RETRASO', 'RJ' => 'RETIRO_JUSTIFICADO'];
         $chip = [
             'PRESENTE' => 'peer-checked:bg-success/10 peer-checked:text-success peer-checked:border-success/40',
-            'FALTA' => 'peer-checked:bg-error/10 peer-checked:text-error peer-checked:border-error/40',
-            'ATRASO' => 'peer-checked:bg-warning/10 peer-checked:text-warning peer-checked:border-warning/40',
-            'PERMISO' => 'peer-checked:bg-blue-500/10 peer-checked:text-blue-600 peer-checked:border-blue-500/40',
-            'JUSTIFICADO' => 'peer-checked:bg-purple-500/10 peer-checked:text-purple-600 peer-checked:border-purple-500/40',
+            'AUSENTE' => 'peer-checked:bg-error/10 peer-checked:text-error peer-checked:border-error/40',
+            'LICENCIA' => 'peer-checked:bg-blue-500/10 peer-checked:text-blue-600 peer-checked:border-blue-500/40',
+            'RETRASO' => 'peer-checked:bg-warning/10 peer-checked:text-warning peer-checked:border-warning/40',
+            'RETIRO_JUSTIFICADO' => 'peer-checked:bg-purple-500/10 peer-checked:text-purple-600 peer-checked:border-purple-500/40',
         ];
     @endphp
     <div class="flex items-center justify-between mb-6">
@@ -110,6 +110,14 @@
             <input type="hidden" name="subject_id" value="{{ $subjectId }}">
             <input type="hidden" name="fecha" value="{{ $fecha }}">
 
+            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/30">
+                <p class="text-xs text-muted-foreground">Marca PRESENTE a todos (se respetan las licencias ya registradas) y luego ajusta los casos.</p>
+                <button type="button" onclick="presentesATodos()" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/10 text-success border border-success/30 text-xs font-semibold hover:bg-success hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Presentes a todos
+                </button>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 border-b border-border">
@@ -125,7 +133,7 @@
                         @foreach($estudiantes as $index => $est)
                             @php
                                 $existente = $asistenciasExistentes[$est->id] ?? null;
-                                $estadoActual = old("asistencias.{$est->id}.estado", $existente?->estado ?? 'FALTA');
+                                $estadoActual = old("asistencias.{$est->id}.estado", $existente?->estado ?? 'AUSENTE');
                                 $justificacionActual = old("asistencias.{$est->id}.justificacion", $existente?->justificacion ?? '');
                             @endphp
                             <tr class="hover:bg-muted/20">
@@ -159,4 +167,22 @@
             </div>
         </form>
     @endif
+
+    @push('scripts')
+    <script>
+        // HU-71: marca PRESENTE a todos, excepto quienes ya tienen LICENCIA.
+        function presentesATodos() {
+            document.querySelectorAll('input[type="radio"][name$="[estado]"]').forEach(function (radio) {
+                var name = radio.getAttribute('name');
+                var lic = document.querySelector('input[type="radio"][name="' + name + '"][value="LICENCIA"]');
+                if (lic && lic.checked) {
+                    return;
+                }
+                if (radio.value === 'PRESENTE') {
+                    radio.checked = true;
+                }
+            });
+        }
+    </script>
+    @endpush
 @endsection

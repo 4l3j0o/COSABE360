@@ -6,11 +6,10 @@
 @php
     $estilos = [
         'PRESENTE' => 'bg-success/10 text-success border-success/30',
-        'FALTA' => 'bg-error/10 text-error border-error/30',
-        'ATRASO' => 'bg-warning/10 text-warning border-warning/30',
-        'PERMISO' => 'bg-info/10 text-info border-info/30',
-        'JUSTIFICADO' => 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-        'LICENCIA' => 'bg-violet-500/10 text-violet-600 border-violet-500/30',
+        'AUSENTE' => 'bg-error/10 text-error border-error/30',
+        'LICENCIA' => 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+        'RETRASO' => 'bg-warning/10 text-warning border-warning/30',
+        'RETIRO_JUSTIFICADO' => 'bg-purple-500/10 text-purple-600 border-purple-500/30',
     ];
 @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">

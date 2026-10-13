@@ -10,13 +10,13 @@
         $mesesNombres = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
         $diasSemana = [1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'];
         $etiquetaMes = $mesesNombres[$mes] . ' ' . $anio;
-        $iniciales = ['PRESENTE' => 'P', 'FALTA' => 'F', 'ATRASO' => 'A', 'PERMISO' => 'PE', 'JUSTIFICADO' => 'J'];
+        $iniciales = ['PRESENTE' => 'P', 'AUSENTE' => 'A', 'LICENCIA' => 'L', 'RETRASO' => 'R', 'RETIRO_JUSTIFICADO' => 'RJ'];
         $badges = [
             'PRESENTE' => 'bg-success/10 text-success',
-            'FALTA' => 'bg-error/10 text-error',
-            'ATRASO' => 'bg-warning/10 text-warning',
-            'PERMISO' => 'bg-blue-500/10 text-blue-600',
-            'JUSTIFICADO' => 'bg-purple-500/10 text-purple-600',
+            'AUSENTE' => 'bg-error/10 text-error',
+            'LICENCIA' => 'bg-blue-500/10 text-blue-600',
+            'RETRASO' => 'bg-warning/10 text-warning',
+            'RETIRO_JUSTIFICADO' => 'bg-purple-500/10 text-purple-600',
         ];
     @endphp
 

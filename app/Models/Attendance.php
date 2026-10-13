@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
-    public const ESTADOS = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO', 'LICENCIA'];
+    public const ESTADOS = ['PRESENTE', 'AUSENTE', 'LICENCIA', 'RETRASO', 'RETIRO_JUSTIFICADO'];
+
+    /** Letras cortas para los chips de la lista (P/A/L/R/RJ). */
+    public const LETRAS = [
+        'PRESENTE' => 'P',
+        'AUSENTE' => 'A',
+        'LICENCIA' => 'L',
+        'RETRASO' => 'R',
+        'RETIRO_JUSTIFICADO' => 'RJ',
+    ];
 
     protected $fillable = [
         'student_id',

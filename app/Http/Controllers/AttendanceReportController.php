@@ -18,8 +18,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceReportController extends Controller
 {
-    /** Estados válidos de asistencia (RB17). */
-    private const ESTADOS = ['PRESENTE', 'FALTA', 'ATRASO', 'PERMISO', 'JUSTIFICADO'];
+    /** Estados válidos de asistencia (HU-71). */
+    private const ESTADOS = ['PRESENTE', 'AUSENTE', 'LICENCIA', 'RETRASO', 'RETIRO_JUSTIFICADO'];
 
     /**
      * HU-44: reporte de asistencia por día, semana, mes o trimestre.
@@ -153,7 +153,7 @@ class AttendanceReportController extends Controller
                 $conteo[$e] = $registros->where('estado', $e)->count();
             }
             $total = array_sum($conteo);
-            $asistio = $conteo['PRESENTE'] + $conteo['PERMISO'] + $conteo['ATRASO'] + $conteo['JUSTIFICADO'];
+            $asistio = $conteo['PRESENTE'] + $conteo['LICENCIA'] + $conteo['RETRASO'] + $conteo['RETIRO_JUSTIFICADO'];
             $porcentaje = $total > 0 ? round($asistio / $total * 100, 1) : 0;
 
             return [
@@ -271,7 +271,7 @@ class AttendanceReportController extends Controller
 
         $sheet->setCellValue('A1', $titulo);
 
-        $cabecera = ['N.º', 'Código', 'Estudiante', 'Presente', 'Falta', 'Atraso', 'Permiso', 'Justificado', 'Total', 'Asistencia (%)'];
+        $cabecera = ['N.º', 'Código', 'Estudiante', 'Presente', 'Ausente', 'Licencia', 'Retraso', 'Retiro just.', 'Total', 'Asistencia (%)'];
         $filaCabecera = 3;
         foreach ($cabecera as $i => $texto) {
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($i + 1).$filaCabecera, $texto);
@@ -284,10 +284,10 @@ class AttendanceReportController extends Controller
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['codigo']);
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['nombre']);
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['PRESENTE']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['FALTA']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['ATRASO']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['PERMISO']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['JUSTIFICADO']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['AUSENTE']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['RETRASO']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['LICENCIA']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['conteo']['RETIRO_JUSTIFICADO']);
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['total']);
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++).$fila, $filaDatos['porcentaje']);
             $fila++;
