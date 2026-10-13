@@ -362,8 +362,8 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
 });
 
-// HU-28: Administrar horarios solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('horarios')->group(function () {
+// HU-28: Administrar horarios - Administrador y Director (ver y modificar)
+Route::middleware(['auth', 'role:Administrador,Director'])->prefix('horarios')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
