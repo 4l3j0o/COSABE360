@@ -68,6 +68,34 @@
             document.body.style.overflow = '';
         }
 
+        // Persiste abierto/cerrado de los grupos del sidebar entre páginas.
+        (function () {
+            var KEY = 'sidebar-groups';
+            function leer() {
+                try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; }
+            }
+            function guardar(estados) {
+                try { localStorage.setItem(KEY, JSON.stringify(estados)); } catch (e) {}
+            }
+            function aplicar() {
+                var estados = leer();
+                Array.prototype.forEach.call(document.querySelectorAll('details[data-sidebar-group]'), function (d) {
+                    var g = d.getAttribute('data-sidebar-group');
+                    if (Object.prototype.hasOwnProperty.call(estados, g)) {
+                        d.open = !!estados[g];
+                    } else if (d.querySelector('a[href="' + window.location.pathname + '"]')) {
+                        d.open = true;
+                    }
+                    d.addEventListener('toggle', function () {
+                        var e2 = leer();
+                        e2[g] = d.open;
+                        guardar(e2);
+                    });
+                });
+            }
+            document.addEventListener('DOMContentLoaded', aplicar);
+        })();
+
         function pickNormalizar(s) { return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
         function pickItemVisible(it) { return it.style.display !== 'none'; }
 
