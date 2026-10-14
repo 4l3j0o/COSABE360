@@ -74,6 +74,7 @@ class DocenteUsuariosSeeder extends Seeder
             53 => ['CLAUDIA EVELIN', 'VACAFLOR JIJENA', 'cvacaflor@cosabe.edu.bo'],
             54 => ['MARINA', 'URZAGASTE ALFARO', 'murzagaste@cosabe.edu.bo'],
             55 => ['BERTHY', 'VACA GOMEZ', 'bvaca@cosabe.edu.bo'],
+            57 => ['EVA MARIELA', 'MENDOZA COLQUE', 'mmendoza@cosabe.edu.bo'],
         ];
 
         $rolDocente = Role::where('nombre', 'Docente')->value('id');

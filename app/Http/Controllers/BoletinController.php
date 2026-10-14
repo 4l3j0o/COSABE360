@@ -32,15 +32,7 @@ class BoletinController extends Controller
 
         $service = app(EvaluationService::class);
 
-        $filas = $materias->map(function (SectionSubject $cs) use ($student, $service) {
-            $nota = $service->promedioAnual($cs, $student);
-
-            return [
-                'materia' => $cs->subject->nombre,
-                'nota' => $nota,
-                'valoracion' => $nota !== null ? EvaluationService::valoracion($nota) : null,
-            ];
-        });
+        $filas = $this->filasBoletin($materias, $student, $service);
 
         $notasValidas = $filas->pluck('nota')->filter();
         $promedioGeneral = $notasValidas->count() > 0 ? round($notasValidas->avg()) : null;
@@ -63,15 +55,7 @@ class BoletinController extends Controller
         $materias = $curso ? $curso->sectionSubjects()->with('subject')->get() : collect();
 
         $service = app(EvaluationService::class);
-        $filas = $materias->map(function (SectionSubject $cs) use ($student, $service) {
-            $nota = $service->promedioAnual($cs, $student);
-
-            return [
-                'materia' => $cs->subject->nombre,
-                'nota' => $nota,
-                'valoracion' => $nota !== null ? EvaluationService::valoracion($nota) : null,
-            ];
-        });
+        $filas = $this->filasBoletin($materias, $student, $service);
         $notasValidas = $filas->pluck('nota')->filter();
         $promedioGeneral = $notasValidas->count() > 0 ? round($notasValidas->avg()) : null;
         $periodo = $curso?->gestion?->nombre ?? now()->year;
@@ -84,6 +68,41 @@ class BoletinController extends Controller
             'boletin_'.$student->codigo.'_'.now()->format('Ymd').'.pdf',
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    /**
+     * Filas del boletín: las subcategorías (hijas) se promedian en su padre
+     * y solo el padre sale. Ej. LELO 80 + LE 70 → CL 75.
+     */
+    private function filasBoletin($materias, Student $student, EvaluationService $service)
+    {
+        $subjectIds = $materias->map(fn (SectionSubject $cs) => $cs->subject_id)->unique();
+
+        $esHija = [];
+        $hijasDe = [];
+        foreach ($materias as $cs) {
+            $padreId = $cs->subject->parent_id ?? null;
+            if ($padreId && $subjectIds->contains($padreId)) {
+                $esHija[$cs->subject_id] = true;
+                $hijasDe[$padreId][] = $cs;
+            }
+        }
+
+        return $materias->map(function (SectionSubject $cs) use ($student, $service, $esHija, $hijasDe) {
+            if (isset($esHija[$cs->subject_id])) {
+                return null; // la hija no sale en el boletín
+            }
+
+            $nota = isset($hijasDe[$cs->subject_id])
+                ? $service->promedioAnualPadre(collect($hijasDe[$cs->subject_id]), $student)
+                : $service->promedioAnual($cs, $student);
+
+            return [
+                'materia' => $cs->subject->nombre,
+                'nota' => $nota,
+                'valoracion' => $nota !== null ? EvaluationService::valoracion($nota) : null,
+            ];
+        })->filter()->values();
     }
 
     private function autorizar(Request $request, Student $student): void

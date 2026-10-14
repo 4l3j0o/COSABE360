@@ -16,6 +16,7 @@ class Subject extends Model
         'grupo',
         'descripcion',
         'level_id',
+        'parent_id',
         'horas_semanales',
         'estado',
     ];
@@ -30,6 +31,17 @@ class Subject extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class, 'level_id');
+    }
+
+    /** Materia padre (subcategorías como LELO/LE promedian en CL). */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(Subject::class, 'parent_id');
     }
 
     public function assessments(): HasMany

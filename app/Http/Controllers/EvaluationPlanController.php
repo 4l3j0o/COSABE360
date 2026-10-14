@@ -30,7 +30,9 @@ class EvaluationPlanController extends Controller
             ->orderBy('trimestre')
             ->get();
 
-        return view('evaluations.index', compact('sectionSubject', 'plans'));
+        $hijas = app(EvaluationService::class)->hijasDe($sectionSubject);
+
+        return view('evaluations.index', compact('sectionSubject', 'plans', 'hijas'));
     }
 
     /**
@@ -39,6 +41,10 @@ class EvaluationPlanController extends Controller
     public function guardar(Request $request, SectionSubject $sectionSubject): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+
+        if ($redir = $this->bloquearSiPadre($sectionSubject)) {
+            return $redir;
+        }
 
         $validated = $request->validate([
             'trimestre' => ['required', 'integer', 'in:1,2,3'],
@@ -75,8 +81,9 @@ class EvaluationPlanController extends Controller
             ->get();
 
         $estado = $plan->estado;
+        $hijas = $service->hijasDe($sectionSubject);
 
-        return view('evaluations.show', compact('sectionSubject', 'plan', 'students', 'service', 'estado'));
+        return view('evaluations.show', compact('sectionSubject', 'plan', 'students', 'service', 'estado', 'hijas'));
     }
 
     /**
@@ -85,6 +92,10 @@ class EvaluationPlanController extends Controller
     public function agregarActividad(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+
+        if ($redir = $this->bloquearSiPadre($sectionSubject)) {
+            return $redir;
+        }
 
         $validated = $request->validate([
             'evaluation_criteria_id' => ['required', 'integer', 'exists:evaluation_criteria,id'],
@@ -116,6 +127,10 @@ class EvaluationPlanController extends Controller
     public function guardarNotas(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+
+        if ($redir = $this->bloquearSiPadre($sectionSubject)) {
+            return $redir;
+        }
 
         $validated = $request->validate([
             'notas' => ['required', 'array'],
@@ -197,6 +212,10 @@ class EvaluationPlanController extends Controller
     {
         $this->autorizar($request, $sectionSubject);
 
+        if ($redir = $this->bloquearSiPadre($sectionSubject)) {
+            return $redir;
+        }
+
         $validated = $request->validate([
             'archivo' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
         ]);
@@ -236,5 +255,21 @@ class EvaluationPlanController extends Controller
         $teacher = $request->user()->teacher;
 
         abort_if(! $teacher || $teacher->id !== $sectionSubject->teacher_id, 403);
+    }
+
+    /**
+     * Las materias padre (CL, CN) no reciben notas directas: su nota se
+     * promedia automáticamente de sus submaterias.
+     */
+    private function bloquearSiPadre(SectionSubject $sectionSubject): ?RedirectResponse
+    {
+        $hijas = app(EvaluationService::class)->hijasDe($sectionSubject);
+        if ($hijas->isEmpty()) {
+            return null;
+        }
+
+        $nombres = $hijas->map(fn ($h) => $h->subject->sigla ?: $h->subject->nombre)->unique()->implode(', ');
+
+        return back()->with('error', "Esta materia es padre: su nota se promedia automáticamente de {$nombres}. Registra las notas en cada submateria.");
     }
 }

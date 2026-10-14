@@ -403,6 +403,13 @@ class Docentes2026Seeder extends Seeder
                 'especialidad' => 'TECNOLOGÍA',
                 'numero_documento' => '90000056',
             ],
+            56 => [
+                'codigo' => 'DOC-0057',
+                'nombres' => 'EVA MARIELA',
+                'apellidos' => 'MENDOZA COLQUE',
+                'especialidad' => 'LENGUA ESPAÑOLA',
+                'numero_documento' => '90000057',
+            ],
         ];
 
         $niveles = ['Inicial en Familia Comunitaria' => 1, 'Primaria Comunitaria Vocacional' => 2, 'Secundaria Comunitaria Productiva' => 3];

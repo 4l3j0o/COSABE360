@@ -214,7 +214,6 @@ class CargaHorariaSeeder extends Seeder
             'GIONNA CUEVAS' => ['nombres' => 'GIOVANNA%', 'apellidos' => 'CUEVAS%'],
             'FANNY ORTEGA' => ['nombres' => '%FANI%', 'apellidos' => '%ORTEGA%'],
             'ISLEN LOPEZ' => ['nombres' => 'ILSEN%', 'apellidos' => 'LOPEZ%'],
-            'EVA MARIELA MENDOZA COLQUE' => ['nombres' => 'MARTHA%', 'apellidos' => 'SANCHEZ%'],
             'PROFE NUEVO' => ['nombres' => 'JONATHAN%', 'apellidos' => 'VIDEZ%'],
             'BERTHY RAFAEL VACA SALDANA' => ['nombres' => 'BERTHY%', 'apellidos' => 'VACA%'],
         ];
