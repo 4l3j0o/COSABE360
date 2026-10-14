@@ -6,20 +6,18 @@
 @endsection
 
 @section('contenido')
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3 min-w-0">
-            @include('layouts._volver', ['href' => route('teachers.index'), 'texto' => 'Volver a docentes'])
-            <div class="min-w-0">
-                <h1 class="text-xl font-bold text-foreground truncate">{{ $teacher->nombres }} {{ $teacher->apellidos }}</h1>
-                <p class="text-sm text-muted-foreground">
-                    Horario semanal de clases
-                    @if($gestiones->isNotEmpty())
-                        @foreach($gestiones as $gestion)
-                            <span class="inline-flex items-center px-2 py-0.5 ml-1 rounded-full bg-primary/10 text-primary text-xs font-medium">Gestión {{ $gestion }}</span>
-                        @endforeach
-                    @endif
-                </p>
-            </div>
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('teachers.index'), 'texto' => 'Volver a docentes'])
+        <div class="mt-1">
+            <h1 class="text-xl font-bold text-foreground truncate">{{ $teacher->nombres }} {{ $teacher->apellidos }}</h1>
+            <p class="text-sm text-muted-foreground mt-1">
+                Horario semanal de clases
+                @if($gestiones->isNotEmpty())
+                    @foreach($gestiones as $gestion)
+                        <span class="inline-flex items-center px-2 py-0.5 ml-1 rounded-full bg-primary/10 text-primary text-xs font-medium">Gestión {{ $gestion }}</span>
+                    @endforeach
+                @endif
+            </p>
         </div>
     </div>
 

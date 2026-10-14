@@ -6,13 +6,11 @@
 @endsection
 
 @section('contenido')
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div class="flex items-center gap-3 min-w-0">
-            @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a horarios'])
-            <div class="min-w-0">
-                <h1 class="text-xl font-bold text-foreground truncate">Estudiantes Matriculados</h1>
-                <p class="text-sm text-muted-foreground">{{ $section->grade?->level?->nombre }} · {{ $section->grade?->nombre }} {{ $section->codigoCompleto() }}{{ $section->aula ? ' · Aula ' . $section->aula : '' }} ({{ $section->gestion?->nombre ?? '' }})</p>
-            </div>
+    <div class="mb-6">
+        @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a horarios'])
+        <div class="mt-1">
+            <h1 class="text-xl font-bold text-foreground">Estudiantes Matriculados</h1>
+            <p class="text-sm text-muted-foreground mt-1">{{ $section->grade?->level?->nombre }} · {{ $section->grade?->nombre }} {{ $section->codigoCompleto() }}{{ $section->aula ? ' · Aula ' . $section->aula : '' }} ({{ $section->gestion?->nombre ?? '' }})</p>
         </div>
     </div>
 

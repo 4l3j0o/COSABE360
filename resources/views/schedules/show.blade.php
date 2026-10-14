@@ -6,15 +6,14 @@
 @endsection
 
 @section('contenido')
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3 min-w-0">
-            @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a paralelos'])
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a paralelos'])
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <div class="min-w-0">
                 <h1 class="text-xl font-bold text-foreground truncate">{{ $section->codigo ?: $section->nombre }}</h1>
                 <p class="text-sm text-muted-foreground">{{ $section->grade?->level?->nombre }} · {{ $section->grade?->nombre }}{{ $section->aula ? ' · Aula ' . $section->aula : '' }} — Horario semanal de clases</p>
             </div>
-        </div>
-        <button onclick="abrirModalAgregarClase()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
+            <button onclick="abrirModalAgregarClase()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Agregar Clase
         </button>
