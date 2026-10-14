@@ -13,14 +13,14 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $paralelos = Section::withCount(['schedules' => function ($query) {
+        $paralelos = Section::with(['grade.level'])->withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
             ->ordenadoPorNivel()
             ->paginate(10)
             ->withQueryString();
 
-        $cursosSinHorario = Section::withCount(['schedules' => function ($query) {
+        $cursosSinHorario = Section::with(['grade.level'])->withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
             ->ordenadoPorNivel()
@@ -95,8 +95,15 @@ class ScheduleController extends Controller
             $docentesLabel[$t->id] = trim($t->nombres.' '.$t->apellidos);
         }
 
-        // Franjas de clase libres por día para "Agregar Clase"
-        $franjasClase = collect($this->bloquesDia()->where('tipo', 'clase'))->map(fn ($b) => [$b['inicio'], $b['fin']]);
+        // Nivel del paralelo (sus periodos oficiales: secundaria pasa en la tarde)
+        $nivelSeccion = $this->nivelDeSection($section);
+
+        // Franjas de clase libres por día para "Agregar Clase": periodos
+        // oficiales del nivel, no los bloques fijos de la mañana.
+        $periodosNivel = $nivelSeccion ? Schedule::PERIODOS_NIVEL[$nivelSeccion] : null;
+        $franjasClase = $periodosNivel
+            ? collect($periodosNivel)->map(fn ($p) => [$p[0], $p[1]])
+            : collect($this->bloquesDia()->where('tipo', 'clase'))->map(fn ($b) => [$b['inicio'], $b['fin']]);
 
         $ocupados = Schedule::where('section_id', $section->id)
             ->get(['dia', 'hora_inicio', 'hora_fin'])
@@ -119,7 +126,35 @@ class ScheduleController extends Controller
             }
         }
 
-        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
+        // Recesos del nivel = huecos entre sus periodos oficiales
+        $recesos = collect();
+        if ($nivelSeccion) {
+            $periodos = Schedule::PERIODOS_NIVEL[$nivelSeccion];
+            foreach ($periodos as $i => [$pi, $pf]) {
+                $sig = $periodos[$i + 1] ?? null;
+                if ($sig && $pf < $sig[0]) {
+                    $recesos->push(['inicio' => $pf, 'fin' => $sig[0]]);
+                }
+            }
+        }
+
+        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
+    }
+
+    /**
+     * Nivel oficial del paralelo (INICIAL/PRIMARIA/SECUNDARIA) por el nombre
+     * del nivel. Null si no se reconoce.
+     */
+    private function nivelDeSection(Section $section): ?string
+    {
+        $nombreNivel = mb_strtolower($section->grade?->level?->nombre ?? '');
+        foreach (['INICIAL' => 'inicial', 'PRIMARIA' => 'primaria', 'SECUNDARIA' => 'secundaria'] as $nivel => $aguja) {
+            if (str_contains($nombreNivel, $aguja)) {
+                return $nivel;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -229,34 +264,31 @@ class ScheduleController extends Controller
         $bloquesDia = $this->bloquesDia();
         $visitas = $this->visitasDe($teacher);
 
-        return view('schedules.docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia', 'visitas'));
+        // Para detallar bloques de ocupación (asignar paralelo/materia)
+        $sections = Section::with(['grade.level'])->ordenadoPorNivel()->get();
+        $subjects = Subject::with('level')->orderBy('level_id')->orderBy('nombre')->get();
+
+        // Detallado acotado al docente: sus cursos y materias primero.
+        $asignaciones = SectionSubject::where('teacher_id', $teacher->id)->get(['section_id', 'subject_id']);
+        $misSectionIds = $asignaciones->pluck('section_id')->unique()->values();
+        $misSubjectIds = $asignaciones->pluck('subject_id')->unique()->values();
+        $mapaDetalle = [];
+        foreach ($asignaciones as $a) {
+            $mapaDetalle[$a->section_id][] = $a->subject_id;
+        }
+        $misSections = $sections->whereIn('id', $misSectionIds)->values();
+        $otrasSections = $sections->whereNotIn('id', $misSectionIds)->values();
+        $misSubjects = $subjects->whereIn('id', $misSubjectIds)->values();
+        $otrosSubjects = $subjects->whereNotIn('id', $misSubjectIds)->values();
+
+        return view('schedules.docente', compact('teacher', 'dias', 'grupos', 'schedules', 'gestiones', 'bloquesDia', 'visitas', 'sections', 'subjects', 'misSections', 'otrasSections', 'misSubjects', 'otrosSubjects', 'mapaDetalle'));
     }
 
     /**
-     * HU-70: horario de visita para padres. El docente gestiona el suyo;
-     * admin/dirección gestionan cualquiera (teacher_id). Los estudiantes y el
-     * personal lo consultan en visitasIndex.
+     * HU-70: horario de visita para padres. Se gestiona DENTRO de los horarios:
+     * el docente en su Mi Horario; admin/dirección en el horario del docente.
+     * (La consulta pública sigue en visitasIndex.)
      */
-    public function misVisitas(Request $request)
-    {
-        $user = $request->user();
-        $teachers = Teacher::where('estado', 'ACTIVO')->orderBy('apellidos')->get();
-
-        if ($user->hasRole('Docente')) {
-            $teacher = $user->teacher ?? Teacher::where('user_id', $user->id)->first();
-            abort_unless($teacher, 403, 'No se encontró un perfil de docente para esta cuenta.');
-        } else {
-            $teacher = $request->query('teacher_id')
-                ? Teacher::findOrFail($request->query('teacher_id'))
-                : $teachers->first();
-            abort_unless($teacher, 404, 'Sin docentes registrados.');
-        }
-
-        $visitas = $this->visitasDe($teacher);
-
-        return view('visitas.mis', compact('teacher', 'teachers', 'visitas'));
-    }
-
     public function storeVisita(Request $request)
     {
         $user = $request->user();
@@ -284,8 +316,20 @@ class ScheduleController extends Controller
 
         Schedule::create($validated + ['tipo' => 'VISITA', 'estado' => 'ACTIVO']);
 
-        return redirect()->route('visitas.mis', ['teacher_id' => $validated['teacher_id']])
-            ->with('mensaje', 'Horario de visita registrado.');
+        return $this->redirectTrasVisita($request, $validated['teacher_id'], 'Horario de visita registrado.');
+    }
+
+    /**
+     * Tras guardar/eliminar una visita se vuelve al horario donde se gestionó:
+     * el docente a su Mi Horario; admin/dirección al horario del docente.
+     */
+    private function redirectTrasVisita(Request $request, int $teacherId, string $mensaje)
+    {
+        if ($request->user()->hasRole('Docente')) {
+            return redirect()->route('schedules.mi-horario')->with('mensaje', $mensaje);
+        }
+
+        return redirect()->route('schedules.docente', $teacherId)->with('mensaje', $mensaje);
     }
 
     public function destroyVisita(Request $request, Schedule $schedule)
@@ -301,8 +345,7 @@ class ScheduleController extends Controller
         $teacherId = $schedule->teacher_id;
         $schedule->update(['estado' => 'ELIMINADO']);
 
-        return redirect()->route('visitas.mis', ['teacher_id' => $teacherId])
-            ->with('mensaje', 'Horario de visita eliminado.');
+        return $this->redirectTrasVisita($request, $teacherId, 'Horario de visita eliminado.');
     }
 
     /**
@@ -332,8 +375,7 @@ class ScheduleController extends Controller
 
         $schedule->update($validated);
 
-        return redirect()->route('visitas.mis', ['teacher_id' => $schedule->teacher_id])
-            ->with('mensaje', 'Horario de visita actualizado.');
+        return $this->redirectTrasVisita($request, $schedule->teacher_id, 'Horario de visita actualizado.');
     }
 
     /**
@@ -385,11 +427,45 @@ class ScheduleController extends Controller
 
         $tabla = $this->tablaSemanal($schedules);
 
-        $bloquesDia = $this->bloquesDia();
-
+        // Grilla según el nivel del paralelo (secundaria en la tarde).
         $section->load(['grade.level', 'gestion']);
+        $bloquesDia = $this->bloquesDiaNivel($section, $schedules);
 
         return view($vista, array_merge($extra, compact('section', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia')));
+    }
+
+    /**
+     * Filas de la grilla de un paralelo: periodos oficiales de su nivel +
+     * recesos + cualquier franja real fuera del estándar (para no ocultar
+     * clases ya asignadas). Mismo formato que bloquesDia().
+     */
+    private function bloquesDiaNivel(Section $section, $schedules)
+    {
+        $nivel = $this->nivelDeSection($section);
+
+        $filas = collect();
+        if ($nivel) {
+            $periodos = Schedule::PERIODOS_NIVEL[$nivel];
+            foreach ($periodos as [$pi, $pf]) {
+                $filas->push(['inicio' => $pi, 'fin' => $pf, 'tipo' => 'clase']);
+            }
+            foreach ($periodos as $i => [$pi, $pf]) {
+                $sig = $periodos[$i + 1] ?? null;
+                if ($sig && $pf < $sig[0]) {
+                    $filas->push(['inicio' => $pf, 'fin' => $sig[0], 'tipo' => 'receso', 'nombre' => 'Receso']);
+                }
+            }
+        } else {
+            $filas = $this->bloquesDia();
+        }
+        foreach ($schedules as $s) {
+            $clave = $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i');
+            if (! $filas->contains(fn ($f) => $f['inicio'].'-'.$f['fin'] === $clave)) {
+                $filas->push(['inicio' => $s->hora_inicio->format('H:i'), 'fin' => $s->hora_fin->format('H:i'), 'tipo' => 'clase']);
+            }
+        }
+
+        return $filas->sortBy('inicio')->values();
     }
 
     /**
@@ -590,7 +666,7 @@ class ScheduleController extends Controller
 
     private function validarCruceDocente($docenteId, $dia, $horaInicio, $horaFin, $excluirId = null)
     {
-        $cruce = Schedule::where('teacher_id', $docenteId)
+        $conflicto = Schedule::where('teacher_id', $docenteId)
             ->where('estado', 'ACTIVO')
             ->where('dia', $dia)
             ->when($excluirId, fn ($q) => $q->where('id', '!=', $excluirId))
@@ -606,9 +682,13 @@ class ScheduleController extends Controller
                         ->where('hora_fin', '<=', $horaFin);
                 });
             })
-            ->exists();
+            ->first();
 
-        if ($cruce) {
+        if ($conflicto) {
+            if (is_null($conflicto->section_id) && is_null($conflicto->subject_id)) {
+                return 'El docente figura como ocupado en ese horario (sin paralelo asignado). Detállalo desde Docentes → Ver horario.';
+            }
+
             return 'El docente ya tiene una clase asignada en ese horario.';
         }
 
@@ -652,14 +732,17 @@ class ScheduleController extends Controller
     }
 
     /**
-     * HU-70: editar un bloque de CLASE (admin/dirección).
+     * HU-70: editar un bloque de CLASE (admin/dirección). También sirve para
+     * detallar un bloque de ocupación: asignarle paralelo (section_id) y/o
+     * materia (subject_id); ambos opcionales para avance incremental.
      */
     public function update(Request $request, Schedule $schedule)
     {
         abort_unless($schedule->tipo === 'CLASE', 404, 'Solo se editan bloques de clase.');
 
         $validated = $request->validate([
-            'subject_id' => ['required', 'exists:subjects,id'],
+            'section_id' => ['nullable', 'exists:sections,id'],
+            'subject_id' => ['nullable', 'exists:subjects,id'],
             'teacher_id' => ['required', 'exists:teachers,id'],
             'dia' => ['required', 'in:LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO'],
             'hora_inicio' => ['required', 'date_format:H:i'],
@@ -667,9 +750,15 @@ class ScheduleController extends Controller
             'aula' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $docenteReal = SectionSubject::where('section_id', $schedule->section_id)
-            ->where('subject_id', $validated['subject_id'])
-            ->value('teacher_id');
+        // Paralelo/materia efectivos (los enviados, o los que ya tenía).
+        $sectionId = array_key_exists('section_id', $validated) ? $validated['section_id'] : $schedule->section_id;
+        $subjectId = array_key_exists('subject_id', $validated) ? $validated['subject_id'] : $schedule->subject_id;
+
+        $docenteReal = ($sectionId && $subjectId)
+            ? SectionSubject::where('section_id', $sectionId)
+                ->where('subject_id', $subjectId)
+                ->value('teacher_id')
+            : null;
         if ($docenteReal) {
             $validated['teacher_id'] = $docenteReal;
         }
@@ -686,27 +775,40 @@ class ScheduleController extends Controller
 
         $schedule->update($validated);
 
-        if ($schedule->section_id) {
-            return redirect()->route('schedules.show', $schedule->section_id)
-                ->with('mensaje', 'Clase actualizada correctamente.');
+        $mensaje = $schedule->section_id ? 'Clase actualizada correctamente.' : 'Bloque actualizado correctamente.';
+
+        // Si se editó desde el horario del docente, quedarse ahí.
+        $volver = $request->input('volver');
+        if ($volver && str_starts_with($volver, url('/'))) {
+            return redirect($volver)->with('mensaje', $mensaje);
         }
 
-        return redirect()->route('schedules.index')
-            ->with('mensaje', 'Bloque actualizado correctamente.');
+        if ($schedule->section_id) {
+            return redirect()->route('schedules.show', $schedule->section_id)
+                ->with('mensaje', $mensaje);
+        }
+
+        return redirect()->route('schedules.docente', $schedule->teacher_id)
+            ->with('mensaje', $mensaje);
     }
 
-    public function destroy(Schedule $schedule)
+    public function destroy(Request $request, Schedule $schedule)
     {
         // Borrado lógico: se marca ELIMINADO para que el día/hora queden libres
         // para reasignar otra clase, sin perderse el registro.
         $schedule->update(['estado' => 'ELIMINADO']);
 
-        if (! $schedule->section_id) {
-            return redirect()->route('schedules.index')
-                ->with('mensaje', 'Bloque de ocupación eliminado del horario.');
+        $volver = $request->input('volver');
+        if ($volver && str_starts_with($volver, url('/'))) {
+            return redirect($volver)->with('mensaje', 'Bloque eliminado del horario.');
         }
 
-        return redirect()->route('schedules.show', $schedule->section_id)
-            ->with('mensaje', 'Clase eliminada del horario. Puedes asignar otra en ese día y hora.');
+        if ($schedule->section_id) {
+            return redirect()->route('schedules.show', $schedule->section_id)
+                ->with('mensaje', 'Clase eliminada del horario. Puedes asignar otra en ese día y hora.');
+        }
+
+        return redirect()->route('schedules.docente', $schedule->teacher_id)
+            ->with('mensaje', 'Bloque eliminado del horario.');
     }
 }

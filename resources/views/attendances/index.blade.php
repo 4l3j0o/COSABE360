@@ -111,7 +111,7 @@
                         @foreach($cursos as $curso)
                             <tr class="hover:bg-muted/20">
                                 <td class="px-4 py-3 font-medium text-foreground" data-section-name="{{ $curso->nombre }}">{{ $curso->grade?->nombre ?? '—' }}</td>
-                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->codigo ?: $curso->nombre ?: '—' }}</td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ $curso->codigoCompleto() }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $curso->gestion?->nombre ?? '—' }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $curso->aula ?? '—' }}</td>
                                 <td class="px-4 py-3">
@@ -211,7 +211,7 @@
                                     <select name="section_id" id="curso-section_id" onchange="actualizarVistaCurso()" required class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                         <option value="">Seleccionar paralelo...</option>
                                         @foreach($paralelos as $paralelo)
-                                            <option value="{{ $paralelo->id }}" data-grade-id="{{ $paralelo->grade_id }}" {{ old('section_id') == $paralelo->id ? 'selected' : '' }}>{{ $paralelo->nombre }}</option>
+                                            <option value="{{ $paralelo->id }}" data-grade-id="{{ $paralelo->grade_id }}" {{ old('section_id') == $paralelo->id ? 'selected' : '' }}>{{ $paralelo->codigoCompleto() }}</option>
                                         @endforeach
                                     </select>
                                     @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror

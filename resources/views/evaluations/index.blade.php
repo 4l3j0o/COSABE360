@@ -35,6 +35,12 @@
     @error('trimestre') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
 </div>
 
+@if(($hijas ?? collect())->isNotEmpty())
+    <div class="bg-info/10 border border-info/30 rounded-xl px-4 py-3 mb-5 text-sm text-foreground">
+        <span class="font-bold">Materia padre:</span> su nota se promedia automáticamente de {{ $hijas->map(fn($h) => $h->subject->sigla ?: $h->subject->nombre)->unique()->implode(', ') }}. Aquí no se registran notas.
+    </div>
+@endif
+
 @if($plans->isEmpty())
     <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
         <p class="text-sm text-muted-foreground">Este curso aún no tiene evaluaciones por trimestre. Cree una con el formulario de arriba.</p>

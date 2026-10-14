@@ -6,10 +6,20 @@
 @endsection
 
 @section('contenido')
+    @if(! empty($nivelActual))
+        <div class="mb-6">
+            @include('layouts._volver', ['href' => route('levels.index'), 'texto' => 'Volver a Niveles'])
+        </div>
+    @endif
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Grados</h1>
-            <p class="text-sm text-muted-foreground">Gestión de grados por nivel educativo</p>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <h1 class="text-xl font-bold text-foreground">Grados</h1>
+                @if(! empty($nivelActual))
+                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary w-fit">{{ $nivelActual->nombre }}</span>
+                @endif
+            </div>
+            <p class="text-sm text-muted-foreground">{{ ! empty($nivelActual) ? 'Grados del nivel seleccionado' : 'Gestión de grados por nivel educativo' }}</p>
         </div>
         <button onclick="openModal('modal-create')" title="Nuevo Grado" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -76,6 +86,9 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ route('sections.index', ['grade_id' => $grade->id]) }}" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-primary cursor-pointer" title="Ver paralelos">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </a>
                                         <button onclick="editarGrado({{ $grade->id }}, '{{ $grade->level_id }}', '{{ $grade->nombre }}', '{{ $grade->orden }}', '{{ $grade->estado }}')" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>

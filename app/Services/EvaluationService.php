@@ -155,6 +155,67 @@ class EvaluationService
     }
 
     /**
+     * Hijas (asignaciones curso-materia) de una materia padre dentro del
+     * mismo paralelo. Ej. CL → LELO + LE (Primaria), CN → BIO+QUIM+FIS (S1-S2).
+     */
+    public function hijasDe(SectionSubject $sectionSubject): Collection
+    {
+        return SectionSubject::where('section_id', $sectionSubject->section_id)
+            ->whereHas('subject', fn ($q) => $q->where('parent_id', $sectionSubject->subject_id))
+            ->with('subject')
+            ->get();
+    }
+
+    /**
+     * Nota del trimestre de una materia padre = promedio de las notas de
+     * trimestre de sus hijas (estricto: todas deben tener nota).
+     * Ej. LELO 80 + LE 70 → CL 75.
+     */
+    public function notaTrimestrePadre(Collection $hijas, Student $student, int $trimestre): ?float
+    {
+        if ($hijas->isEmpty()) {
+            return null;
+        }
+
+        $notas = [];
+        foreach ($hijas as $hija) {
+            $plan = EvaluationPlan::where('section_subject_id', $hija->id)
+                ->where('trimestre', $trimestre)
+                ->with('criteria.activities')
+                ->first();
+
+            if (! $plan) {
+                return null;
+            }
+
+            $nota = $this->notaTrimestre($plan, $student);
+            if ($nota === null) {
+                return null;
+            }
+            $notas[] = $nota;
+        }
+
+        return (float) round(array_sum($notas) / count($notas));
+    }
+
+    /**
+     * Promedio anual del padre = promedio de sus 3 trimestres (estricto).
+     */
+    public function promedioAnualPadre(Collection $hijas, Student $student): ?float
+    {
+        $notas = [];
+        for ($t = 1; $t <= 3; $t++) {
+            $nota = $this->notaTrimestrePadre($hijas, $student, $t);
+            if ($nota === null) {
+                return null;
+            }
+            $notas[] = $nota;
+        }
+
+        return (float) round(array_sum($notas) / 3);
+    }
+
+    /**
      * Clasifica una nota (0-100) según la escala oficial.
      * Retorna [codigo, nombre, promovido].
      */

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
      * Orden:
      *  1. Base del sistema (roles, admin, configuración tributaria).
      *  2. Estructura académica oficial (niveles, grados, paralelos, cursos).
-     *  3. Materias, docentes y asignaciones curso-materia-docente (docentes 2026).
+     *  3. Catálogo oficial de planes/materias + dictadas por paralelo (PlanesEstudioSeeder).
      *  4. Tipos de descuento / becas de la mensualidad.
      *  5. Datos reales de estudiantes, tutores, matrículas y RUDE (PII).
      *
@@ -49,20 +49,11 @@ class DatabaseSeeder extends Seeder
             // HU-59: tutores de curso (docente responsable de cada paralelo)
             TutoresCursoSeeder::class,
 
-            // HU-59: materias oficiales por nivel y curso (código/sigla/área/grupo)
-            MateriasOficialesSeeder::class,
+            // Los 8 planes oficiales con su tipo de evaluación
+            StudyPlansSeeder::class,
 
-            // HU-59: normaliza duplicadas (fusiona con remapeo, elimina sin uso)
-            NormalizarMateriasSeeder::class,
-
-            // HU-59: aplica lista oficial de libretas (fusiones CL/CFIL, TEC S1-2)
-            MateriasLibretaSeeder::class,
-
-            // HU-59: asignaciones curso-materia-docente desde Excel oficial 2026
-            AsignacionesExcelSeeder::class,
-
-            // HU-59: fusiona asignaciones con nivel cruzado en la fila correcta
-            LimpiarCruceNivelSeeder::class,
+            // Catálogo oficial de planes de estudio + materias dictadas por paralelo
+            PlanesEstudioSeeder::class,
 
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,

@@ -31,6 +31,7 @@ use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDocumentController;
+use App\Http\Controllers\StudyPlanController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ContingencyQueueController;
 use App\Http\Controllers\DailyCufdController;
@@ -302,11 +303,17 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(fun
     Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
 });
 
-// HU-16: Asignar docentes a materias y cursos solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('asignaciones-docentes')->group(function () {
-    Route::get('/', [SectionSubjectController::class, 'index'])->name('section_subjects.index');
-    Route::get('/crear', [SectionSubjectController::class, 'create'])->name('section_subjects.create');
-    Route::post('/', [SectionSubjectController::class, 'store'])->name('section_subjects.store');
+// Planes de Estudio: los 8 planes oficiales + asignación por curso.
+// Solo Administrador (igual que la anterior Asignaciones).
+Route::middleware(['auth', 'role:Administrador'])->prefix('planes-estudio')->group(function () {
+    Route::get('/', [StudyPlanController::class, 'index'])->name('study_plans.index');
+    Route::get('/asignacion-por-curso', [StudyPlanController::class, 'asignacionPorCurso'])->name('study_plans.asignacion');
+    Route::get('/asignacion-por-curso/{section}', [StudyPlanController::class, 'verParalelo'])->name('study_plans.paralelo');
+    Route::post('/asignacion-por-curso/{section}', [StudyPlanController::class, 'guardarAsignacion'])->name('study_plans.guardar');
+    Route::post('/{studyPlan}/materias', [StudyPlanController::class, 'storeMateria'])->name('study_plans.materias.store');
+    Route::put('/{studyPlan}/materias/{subject}', [StudyPlanController::class, 'updateMateria'])->name('study_plans.materias.update');
+    Route::delete('/{studyPlan}/materias/{subject}', [StudyPlanController::class, 'destroyMateria'])->name('study_plans.materias.destroy');
+    Route::get('/{studyPlan}', [StudyPlanController::class, 'show'])->name('study_plans.show');
 });
 
 // HU-08: Registrar padres/tutores solo Administrador
@@ -363,11 +370,9 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
     Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
 });
 
-// HU-70: horario de visita para padres. El docente gestiona el suyo;
-// admin/dirección gestionan cualquiera. Debe ir ANTES del grupo /horarios
-// para que /visitas no caiga en /{section}.
+// HU-70: horario de visita para padres. Se gestiona dentro de los horarios
+// (docente: Mi Horario; admin/dirección: horario del docente).
 Route::middleware(['auth', 'role:Docente,Administrador,Director'])->prefix('horarios')->group(function () {
-    Route::get('/visitas', [ScheduleController::class, 'misVisitas'])->name('visitas.mis');
     Route::post('/visitas', [ScheduleController::class, 'storeVisita'])->name('visitas.store');
     Route::put('/visitas/{schedule}', [ScheduleController::class, 'updateVisita'])->name('visitas.update');
     Route::delete('/visitas/{schedule}', [ScheduleController::class, 'destroyVisita'])->name('visitas.destroy');

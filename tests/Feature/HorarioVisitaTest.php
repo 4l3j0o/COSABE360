@@ -36,11 +36,43 @@ class HorarioVisitaTest extends TestCase
 
         $this->post(route('visitas.store'), [
             'dia' => 'MIERCOLES', 'hora_inicio' => '10:00', 'hora_fin' => '11:00', 'aula' => 'Sala de profesores',
-        ])->assertRedirect(route('visitas.mis', ['teacher_id' => $d['teacher']->id]));
+        ])->assertRedirect(route('schedules.mi-horario'));
 
         $this->assertDatabaseHas('schedules', [
             'teacher_id' => $d['teacher']->id, 'tipo' => 'VISITA', 'dia' => 'MIERCOLES',
         ]);
+
+        // La visita se gestiona dentro de Mi Horario (no hay módulo aparte)
+        $this->get(route('schedules.mi-horario'))->assertStatus(200)
+            ->assertSee('Agregar Visita', false)
+            ->assertSee('Sala de profesores');
+    }
+
+    public function test_admin_registra_visita_desde_horario_docente(): void
+    {
+        $d = $this->docente();
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+
+        $this->actingAs($admin);
+        $this->post(route('visitas.store'), [
+            'teacher_id' => $d['teacher']->id,
+            'dia' => 'JUEVES', 'hora_inicio' => '15:00', 'hora_fin' => '16:00', 'aula' => 'Dirección',
+        ])->assertRedirect(route('schedules.docente', $d['teacher']->id));
+
+        $this->assertDatabaseHas('schedules', [
+            'teacher_id' => $d['teacher']->id, 'tipo' => 'VISITA', 'dia' => 'JUEVES',
+        ]);
+
+        $this->get(route('schedules.docente', $d['teacher']->id))->assertStatus(200)
+            ->assertSee('Agregar Visita', false)
+            ->assertSee('Dirección');
+    }
+
+    public function test_modulo_visitas_separado_ya_no_existe(): void
+    {
+        $d = $this->docente();
+        $this->actingAs($d['user']);
+        $this->get('/horarios/visitas')->assertNotFound();
     }
 
     public function test_visita_no_puede_cruzarse_con_clase(): void
@@ -99,7 +131,7 @@ class HorarioVisitaTest extends TestCase
         $this->actingAs($d['user']);
         $this->put(route('visitas.update', $visita), [
             'dia' => 'MARTES', 'hora_inicio' => '10:00', 'hora_fin' => '11:00', 'aula' => 'Sala 2',
-        ])->assertRedirect(route('visitas.mis', ['teacher_id' => $d['teacher']->id]));
+        ])->assertRedirect(route('schedules.mi-horario'));
 
         $this->assertDatabaseHas('schedules', ['id' => $visita->id, 'dia' => 'MARTES', 'aula' => 'Sala 2']);
     }

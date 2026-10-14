@@ -260,7 +260,7 @@
                                 <select name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar paralelo...</option>
                                     @foreach($sections as $section)
-                                        <option value="{{ $section->id }}" {{ old('section_id')==$section->id?'selected':'' }}>{{ $section->codigo ?: $section->nombre }} · {{ $section->grade->nombre }}</option>
+                                        <option value="{{ $section->id }}" {{ old('section_id')==$section->id?'selected':'' }}>{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
@@ -335,7 +335,7 @@
                                 <select name="section_id" id="edit-section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <option value="">Seleccionar paralelo...</option>
                                     @foreach($sections as $section)
-                                        <option value="{{ $section->id }}">{{ $section->codigo ?: $section->nombre }} · {{ $section->grade->nombre }}</option>
+                                        <option value="{{ $section->id }}">{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
                             </div>
