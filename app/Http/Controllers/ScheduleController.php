@@ -119,7 +119,26 @@ class ScheduleController extends Controller
             }
         }
 
-        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
+        // Recesos del nivel = huecos entre sus periodos oficiales
+        $nivelSeccion = null;
+        $nombreNivel = mb_strtolower($section->grade?->level?->nombre ?? '');
+        foreach (['INICIAL' => 'inicial', 'PRIMARIA' => 'primaria', 'SECUNDARIA' => 'secundaria'] as $nivel => $aguja) {
+            if (str_contains($nombreNivel, $aguja)) {
+                $nivelSeccion = $nivel;
+            }
+        }
+        $recesos = collect();
+        if ($nivelSeccion) {
+            $periodos = Schedule::PERIODOS_NIVEL[$nivelSeccion];
+            foreach ($periodos as $i => [$pi, $pf]) {
+                $sig = $periodos[$i + 1] ?? null;
+                if ($sig && $pf < $sig[0]) {
+                    $recesos->push(['inicio' => $pf, 'fin' => $sig[0]]);
+                }
+            }
+        }
+
+        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
     }
 
     /**

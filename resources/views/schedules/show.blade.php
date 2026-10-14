@@ -60,7 +60,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($bloquesDia as $bloque)
+                        @php
+                            $renglones = collect();
+                            foreach ($horas as $h) {
+                                $renglones->push(['tipo' => 'clase', 'inicio' => $h->hora_inicio->format('H:i'), 'fin' => $h->hora_fin->format('H:i')]);
+                            }
+                            foreach ($recesos as $rec) {
+                                $renglones->push(['tipo' => 'receso', 'inicio' => $rec['inicio'], 'fin' => $rec['fin']]);
+                            }
+                            $renglones = $renglones->sortBy('inicio')->values();
+                        @endphp
+                        @foreach($renglones as $bloque)
                             @php
                                 $clave = $bloque['inicio'] . '-' . $bloque['fin'];
                             @endphp
@@ -108,7 +118,7 @@
                                                             </button>
                                                         </form>
                                                     </div>
-                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject->nombre ?? '—' }}</div>
+                                                    <div class="text-[13px] font-bold leading-tight text-foreground">{{ $celda->subject?->nombre ?? 'Ocupado' }}</div>
                                                     @if($celda->teacher)
                                                         <div class="mt-1 text-[11px] leading-snug text-muted-foreground">{{ $celda->teacher->nombres }} {{ $celda->teacher->apellidos }}</div>
                                                     @endif
