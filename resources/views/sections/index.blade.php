@@ -75,7 +75,10 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 font-medium text-foreground">
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-muted font-bold text-foreground">{{ $section->nombre }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-muted font-bold text-foreground shrink-0">{{ $section->nombre }}</span>
+                                        <span>{{ $section->codigoCompleto() }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">
                                     @if($section->responsable)

@@ -11,7 +11,7 @@
             @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a horarios'])
             <div class="min-w-0">
                 <h1 class="text-xl font-bold text-foreground truncate">Estudiantes Matriculados</h1>
-                <p class="text-sm text-muted-foreground">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }} ({{ $section->gestion->nombre ?? '' }})</p>
+                <p class="text-sm text-muted-foreground">{{ $section->grade?->level?->nombre }} · {{ $section->grade?->nombre }} {{ $section->codigoCompleto() }}{{ $section->aula ? ' · Aula ' . $section->aula : '' }} ({{ $section->gestion?->nombre ?? '' }})</p>
             </div>
         </div>
     </div>
