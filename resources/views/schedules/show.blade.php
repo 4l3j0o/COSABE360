@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Horario - ' . $section->nombre)
+@section('titulo', 'Horario - ' . ($section->codigo ?: $section->nombre))
 
 @section('sidebar')
     @include('dashboard.partials._sidebar-admin')
@@ -10,8 +10,8 @@
         <div class="flex items-center gap-3 min-w-0">
             @include('layouts._volver', ['href' => route('schedules.index'), 'texto' => 'Volver a paralelos'])
             <div class="min-w-0">
-                <h1 class="text-xl font-bold text-foreground truncate">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }}</h1>
-                <p class="text-sm text-muted-foreground">Horario semanal de clases</p>
+                <h1 class="text-xl font-bold text-foreground truncate">{{ $section->codigo ?: $section->nombre }}</h1>
+                <p class="text-sm text-muted-foreground">{{ $section->grade?->level?->nombre }} · {{ $section->grade?->nombre }}{{ $section->aula ? ' · Aula ' . $section->aula : '' }} — Horario semanal de clases</p>
             </div>
         </div>
         <button onclick="abrirModalAgregarClase()" class="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">
