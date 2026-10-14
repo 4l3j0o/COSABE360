@@ -44,7 +44,10 @@
                                         <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                         </div>
-                                        <div class="font-medium text-foreground">{{ $paralelo->nombre }} - {{ $paralelo->aula ?? 's/a' }}</div>
+                                        <div>
+                                            <div class="font-medium text-foreground">{{ $paralelo->codigo ?: $paralelo->nombre }}</div>
+                                            <div class="text-xs text-muted-foreground">{{ $paralelo->grade?->level?->nombre }} · {{ $paralelo->grade?->nombre }}{{ $paralelo->aula ? ' · Aula ' . $paralelo->aula : '' }}</div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
@@ -107,7 +110,7 @@
                             placeholder="Buscar curso..."
                             searchHint="Escriba para buscar el curso."
                             value="{{ old('section_id') }}"
-                            :items="$cursosSinHorario->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre . ' - ' . ($c->aula ?? 's/a'), 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                            :items="$cursosSinHorario->map(fn($c) => ['value' => $c->id, 'label' => ($c->codigo ?: $c->nombre) . ' · ' . ($c->grade?->nombre ?? ''), 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => ($c->codigo ?: $c->nombre) . ' ' . ($c->grade?->nombre ?? '') . ' aula ' . ($c->aula ?? '')])"
                         />
                         @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                     </div>

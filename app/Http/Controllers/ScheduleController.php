@@ -13,14 +13,14 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $paralelos = Section::withCount(['schedules' => function ($query) {
+        $paralelos = Section::with(['grade.level'])->withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
             ->ordenadoPorNivel()
             ->paginate(10)
             ->withQueryString();
 
-        $cursosSinHorario = Section::withCount(['schedules' => function ($query) {
+        $cursosSinHorario = Section::with(['grade.level'])->withCount(['schedules' => function ($query) {
             $query->where('estado', 'ACTIVO')->whereHas('subject')->whereHas('teacher');
         }])
             ->ordenadoPorNivel()
