@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\AcademicYear;
 use App\Models\Schedule;
 use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Teacher;
 use Illuminate\Database\Seeder;
 
@@ -49,9 +50,7 @@ class HorariosDetalladosSeeder extends Seeder
                     continue;
                 }
 
-                $subjectId = isset($materia)
-                    ? $this->resolverMateria($materia, $section->grade->level_id)?->id
-                    : null;
+                $subjectId = $this->resolverMateriaDetalle($materia ?? null, $section->grade->level_id, $section->id, $teacher->id);
 
                 $bloque = Schedule::where('teacher_id', $teacher->id)
                     ->where('dia', $dia)
@@ -110,7 +109,7 @@ class HorariosDetalladosSeeder extends Seeder
             if (! $section) {
                 continue;
             }
-            $subjectId = $materia ? $this->resolverMateria($materia, $section->grade->level_id)?->id : null;
+            $subjectId = $this->resolverMateriaDetalle($materia ?? null, $section->grade->level_id, $section->id, $teacher->id);
             $bloque = Schedule::where('teacher_id', $teacher->id)
                 ->where('dia', $dia)
                 ->where('hora_inicio', $ini . ':00')
@@ -147,6 +146,28 @@ class HorariosDetalladosSeeder extends Seeder
             ->where('nombre', 'like', $nombre)
             ->first()
             ?? \App\Models\Subject::where('nombre', 'like', $nombre)->first();
+    }
+
+    /**
+     * Materia del bloque: la indicada por nombre; si no viene (o no resuelve)
+     * se usa la única que el docente dicta en ese paralelo (asignaciones).
+     * Null si hay ambigüedad (se detalla por pantalla).
+     */
+    private function resolverMateriaDetalle(?string $nombre, int $levelId, int $sectionId, int $teacherId): ?int
+    {
+        if ($nombre) {
+            $id = $this->resolverMateria($nombre, $levelId)?->id;
+            if ($id) {
+                return $id;
+            }
+        }
+
+        $candidatas = SectionSubject::where('section_id', $sectionId)
+            ->where('teacher_id', $teacherId)
+            ->pluck('subject_id')
+            ->unique();
+
+        return $candidatas->count() === 1 ? $candidatas->first() : null;
     }
 
     private function buscarDocente(array $criterio): ?Teacher

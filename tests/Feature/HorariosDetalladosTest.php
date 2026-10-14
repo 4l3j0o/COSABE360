@@ -298,4 +298,59 @@ class HorariosDetalladosTest extends TestCase
         // Nombres de otros profesores fuera del modal
         $response->assertDontSee('Zzotro');
     }
+
+    private function escenarioFallback(string $codigo): array
+    {
+        $nivel = Level::firstOrCreate(['nombre' => 'Primaria Fallback'], ['orden' => 2, 'estado' => 'ACTIVO']);
+        $grado = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Grado Fb ' . $codigo, 'orden' => 1, 'estado' => 'ACTIVO']);
+        $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $section = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => $codigo, 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
+
+        $rol = Role::where('nombre', 'Docente')->first();
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Fb', 'email' => 'doc_fb_' . strtolower($codigo) . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Fb', 'numero_documento' => '99903' . substr($codigo, 1, 2), 'estado' => 'ACTIVO']);
+
+        return compact('nivel', 'section', 'gestion', 'teacher');
+    }
+
+    public function test_detalle_sin_materia_usa_unica_del_docente(): void
+    {
+        $e = $this->escenarioFallback('PFB1');
+        $subject = Subject::create(['nombre' => 'Materia Fb Univoca', 'sigla' => 'MFB', 'level_id' => $e['nivel']->id, 'estado' => 'ACTIVO']);
+        SectionSubject::create(['section_id' => $e['section']->id, 'subject_id' => $subject->id, 'teacher_id' => $e['teacher']->id]);
+        Schedule::create([
+            'section_id' => null, 'subject_id' => null, 'teacher_id' => $e['teacher']->id,
+            'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO',
+        ]);
+
+        // Entrada sin materia (formato [dia, nivel, periodo, codigo])
+        $stats = (new HorariosDetalladosSeeder)->aplicarDetalle($e['teacher'], [['LUNES', 'PRIMARIA', 1, 'PFB1']], $e['gestion']->id);
+
+        $this->assertSame(['asignados' => 1, 'creados' => 0], $stats);
+        $this->assertDatabaseHas('schedules', [
+            'teacher_id' => $e['teacher']->id, 'dia' => 'LUNES',
+            'section_id' => $e['section']->id, 'subject_id' => $subject->id,
+        ]);
+    }
+
+    public function test_detalle_sin_materia_ambiguo_no_adivina(): void
+    {
+        $e = $this->escenarioFallback('PFB2');
+        $s1 = Subject::create(['nombre' => 'Materia Fb Uno', 'sigla' => 'MF1', 'level_id' => $e['nivel']->id, 'estado' => 'ACTIVO']);
+        $s2 = Subject::create(['nombre' => 'Materia Fb Dos', 'sigla' => 'MF2', 'level_id' => $e['nivel']->id, 'estado' => 'ACTIVO']);
+        SectionSubject::create(['section_id' => $e['section']->id, 'subject_id' => $s1->id, 'teacher_id' => $e['teacher']->id]);
+        SectionSubject::create(['section_id' => $e['section']->id, 'subject_id' => $s2->id, 'teacher_id' => $e['teacher']->id]);
+        Schedule::create([
+            'section_id' => null, 'subject_id' => null, 'teacher_id' => $e['teacher']->id,
+            'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO',
+        ]);
+
+        (new HorariosDetalladosSeeder)->aplicarDetalle($e['teacher'], [['LUNES', 'PRIMARIA', 1, 'PFB2']], $e['gestion']->id);
+
+        // Paralelo sí, materia no (se detalla por pantalla)
+        $this->assertDatabaseHas('schedules', [
+            'teacher_id' => $e['teacher']->id, 'dia' => 'LUNES',
+            'section_id' => $e['section']->id, 'subject_id' => null,
+        ]);
+    }
 }
