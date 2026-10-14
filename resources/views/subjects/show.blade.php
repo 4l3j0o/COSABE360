@@ -18,7 +18,7 @@
         ];
     @endphp
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('subjects.index'), 'texto' => 'Volver al listado'])
+        @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('subjects.index'), 'texto' => 'Volver al listado'])
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $subject->nombre }}</h1>
             @if($subject->estado !== 'ELIMINADO' && auth()->user()->esAdmin())

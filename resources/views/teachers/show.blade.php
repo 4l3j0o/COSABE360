@@ -18,7 +18,7 @@
         ];
     @endphp
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('teachers.index'), 'texto' => 'Volver al listado'])
+        @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('teachers.index'), 'texto' => 'Volver al listado'])
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <h1 class="text-xl font-bold text-foreground">{{ $teacher->apellidos }}, {{ $teacher->nombres }}</h1>
             <div class="flex items-center gap-2">

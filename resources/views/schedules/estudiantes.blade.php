@@ -8,7 +8,7 @@
 @section('contenido')
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div class="flex items-center gap-3 min-w-0">
-            @include('layouts._volver', ['href' => route('schedules.index'), 'texto' => 'Volver a horarios'])
+            @include('layouts._volver', ['href' => request('volver') && str_starts_with(request('volver'), url('/')) ? request('volver') : route('schedules.index'), 'texto' => 'Volver a horarios'])
             <div class="min-w-0">
                 <h1 class="text-xl font-bold text-foreground truncate">Estudiantes Matriculados</h1>
                 <p class="text-sm text-muted-foreground">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }} ({{ $section->gestion->nombre ?? '' }})</p>
