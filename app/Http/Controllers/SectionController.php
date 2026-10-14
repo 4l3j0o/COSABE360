@@ -40,7 +40,11 @@ class SectionController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('sections.index', compact('sections', 'levels', 'grados', 'docentes', 'gestiones'));
+        $gradoActual = $request->query('grade_id')
+            ? Grade::with('level')->find($request->query('grade_id'))
+            : null;
+
+        return view('sections.index', compact('sections', 'levels', 'grados', 'docentes', 'gestiones', 'gradoActual'));
     }
 
     private function apiIndex(Request $request): AnonymousResourceCollection

@@ -6,10 +6,20 @@
 @endsection
 
 @section('contenido')
+    @if(! empty($gradoActual))
+        <div class="mb-6">
+            @include('layouts._volver', ['href' => route('grados.index', ['level_id' => $gradoActual->level_id]), 'texto' => 'Volver a Grados'])
+        </div>
+    @endif
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-xl font-bold text-foreground">Paralelos</h1>
-            <p class="text-sm text-muted-foreground">Gestión de paralelos por grado (A, B, C, etc.)</p>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <h1 class="text-xl font-bold text-foreground">Paralelos</h1>
+                @if(! empty($gradoActual))
+                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary w-fit">{{ $gradoActual->level->nombre }} · {{ $gradoActual->nombre }}</span>
+                @endif
+            </div>
+            <p class="text-sm text-muted-foreground">{{ ! empty($gradoActual) ? 'Paralelos del grado seleccionado' : 'Gestión de paralelos por grado (A, B, C, etc.)' }}</p>
         </div>
         <button onclick="openModal('modal-create')" title="Nuevo Paralelo" class="inline-flex items-center justify-center w-9 h-9 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>

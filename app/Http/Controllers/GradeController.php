@@ -30,7 +30,11 @@ class GradeController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('grades.index', compact('grades', 'levels'));
+        $nivelActual = $request->query('level_id')
+            ? Level::find($request->query('level_id'))
+            : null;
+
+        return view('grades.index', compact('grades', 'levels', 'nivelActual'));
     }
 
     private function apiIndex(Request $request): JsonResponse
