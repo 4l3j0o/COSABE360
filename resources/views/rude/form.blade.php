@@ -63,36 +63,10 @@
                     <label class="text-xs font-medium text-muted-foreground">2.2 Lugar de nacimiento</label>
                     <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->lugar_nacimiento ?? '—' }}</p>
                 </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.4 Fecha de nacimiento</label>
-                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->fecha_nacimiento?->format('d/m/Y') ?? '—' }}</p>
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.7 Sexo</label>
-                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->sexo === 'M' ? 'Masculino' : 'Femenino' }}</p>
-                </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.5 Tipo Documento</label>
-                    <select name="tipo_documento" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                        <option value="">—</option>
-                        @foreach($R::DOCUMENTOS as $val => $label)
-                            <option value="{{ $val }}" {{ old('tipo_documento', $student->tipo_documento) === $val ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.5 CI / N.º Documento</label>
-                    <input type="text" name="numero_documento" value="{{ old('numero_documento', $student->numero_documento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.5 Complemento</label>
-                    <input type="text" name="complemento" value="{{ old('complemento', $student->complemento) }}" placeholder="Ej: 1A, SC" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.3 Certificado ↓</label>
-                    <p class="text-xs text-muted-foreground mt-1">Oficialía / Libro / Partida / Folio / Año</p>
+                <div class="sm:col-span-2 lg:col-span-4">
+                    <p class="text-xs font-semibold text-foreground uppercase tracking-wide">2.3 Certificado de nacimiento <span class="text-muted-foreground normal-case font-normal">— Oficialía / Libro / Partida / Folio / Año</span></p>
                 </div>
                 <div>
                     <label class="text-xs font-medium text-muted-foreground">2.3 Oficialía</label>
@@ -115,12 +89,25 @@
                     <input type="text" name="anio_nacimiento" value="{{ old('anio_nacimiento', $rude->anio_nacimiento) }}" placeholder="YYYY" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.8 Discapacidad</label>
-                    <input type="text" name="discapacidad" value="{{ old('discapacidad', $student->discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <label class="text-xs font-medium text-muted-foreground">2.4 Fecha de nacimiento</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->fecha_nacimiento?->format('d/m/Y') ?? '—' }}</p>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted-foreground">2.9 N.º Registro Discapacidad IBC</label>
-                    <input type="text" name="nro_registro_discapacidad" value="{{ old('nro_registro_discapacidad', $rude->nro_registro_discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                    <label class="text-xs font-medium text-muted-foreground">2.5 Tipo Documento</label>
+                    <select name="tipo_documento" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                        <option value="">—</option>
+                        @foreach($R::DOCUMENTOS as $val => $label)
+                            <option value="{{ $val }}" {{ old('tipo_documento', $student->tipo_documento) === $val ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.5 CI / N.º Documento</label>
+                    <input type="text" name="numero_documento" value="{{ old('numero_documento', $student->numero_documento) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.5 Complemento</label>
+                    <input type="text" name="complemento" value="{{ old('complemento', $student->complemento) }}" placeholder="Ej: 1A, SC" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
                 <div class="sm:col-span-2">
                     <label class="text-xs font-medium text-muted-foreground">2.5.1 Solo extranjeros: tipo de documento presentado</label>
@@ -131,9 +118,21 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
+                <div class="sm:col-span-2 lg:col-span-1">
                     <label class="text-xs font-medium text-muted-foreground">2.5.2 Código del documento (extranjeros)</label>
                     <input type="text" name="codigo_doc_extranjero" value="{{ old('codigo_doc_extranjero', $rude->codigo_doc_extranjero) }}" placeholder="Adjunte fotocopia" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.7 Sexo</label>
+                    <p class="mt-1 px-3 py-2 rounded-lg bg-muted text-foreground text-sm">{{ $student->sexo === 'M' ? 'Masculino' : 'Femenino' }}</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.8 Discapacidad</label>
+                    <input type="text" name="discapacidad" value="{{ old('discapacidad', $student->discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted-foreground">2.9 N.º Registro Discapacidad IBC</label>
+                    <input type="text" name="nro_registro_discapacidad" value="{{ old('nro_registro_discapacidad', $rude->nro_registro_discapacidad) }}" class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
                 </div>
             </div>
             <div class="mt-3 bg-muted/30 rounded-lg p-3 text-xs">
@@ -195,13 +194,16 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label class="text-xs font-medium text-muted-foreground">4.1.2 Idioma(s) de uso frecuente</label>
-                    <select name="idiomas_uso_frecuente[]" multiple class="w-full mt-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                <div class="sm:col-span-2">
+                    <span class="text-xs font-medium text-muted-foreground">4.1.2 Idioma(s) de uso frecuente <span class="text-muted-foreground/70">(marca los que usa)</span></span>
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 mt-2">
                         @foreach($R::IDIOMAS as $idioma)
-                            <option value="{{ $idioma }}" {{ $check(old('idiomas_uso_frecuente', $rude->idiomas_uso_frecuente), $idioma) ? 'selected' : '' }}>{{ $idioma }}</option>
+                            <label class="inline-flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                                <input type="checkbox" name="idiomas_uso_frecuente[]" value="{{ $idioma }}" {{ $check(old('idiomas_uso_frecuente', $rude->idiomas_uso_frecuente), $idioma) ? 'checked' : '' }} class="accent-primary">
+                                {{ $idioma }}
+                            </label>
                         @endforeach
-                    </select>
+                    </div>
                 </div>
                 <div>
                     <label class="text-xs font-medium text-muted-foreground">4.1.3 Autoidentificación cultural</label>

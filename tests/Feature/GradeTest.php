@@ -240,6 +240,16 @@ class GradeTest extends TestCase
         $this->assertDatabaseHas('grades', ['id' => $grade->id, 'estado' => 'ELIMINADO']);
     }
 
+    public function test_eliminar_vuelve_con_filtros(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = Level::where('nombre', 'Inicial')->firstOrFail();
+        $grade = Grade::create(['level_id' => $nivel->id, 'nombre' => 'Kinder Filtro', 'orden' => 9]);
+
+        $this->delete(route('grados.destroy', $grade), ['_f' => ['level_id' => $nivel->id, 'estado' => 'ACTIVO'], 'page' => '2'])
+            ->assertRedirect(route('grados.index', ['level_id' => $nivel->id, 'estado' => 'ACTIVO', 'page' => '2']));
+    }
+
     public function test_lista_grados_filtrando_por_nivel(): void
     {
         $this->loginAsAdmin();

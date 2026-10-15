@@ -16,6 +16,17 @@
         </button>
     </div>
 
+    @if(($revisarCount ?? 0) > 0)
+        <div class="bg-warning/10 border border-warning/30 rounded-xl px-4 py-3 mb-4 text-sm flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+            <span class="text-foreground"><span class="font-bold">{{ $revisarCount }}</span> {{ Str::plural('tutor', $revisarCount) }} con datos corridos (dirección en el nombre o sin documento válido). {{ request('revisar') ? 'Mostrando solo esos.' : '' }}</span>
+            @if(request('revisar'))
+                <a href="{{ route('tutores.index', array_merge(request()->only(['tipo', 'buscar', 'estado']), ['revisar' => null])) }}" class="shrink-0 px-3 py-1.5 rounded-lg border border-input text-xs font-medium hover:bg-muted transition-colors">Ver todos</a>
+            @else
+                <a href="{{ route('tutores.index', array_merge(request()->only(['tipo', 'buscar', 'estado']), ['revisar' => 1])) }}" class="shrink-0 px-3 py-1.5 rounded-lg bg-warning text-white text-xs font-medium hover:opacity-90 transition-opacity">Por revisar</a>
+            @endif
+        </div>
+    @endif
+
     
     @if($errors->any())
         <div class="bg-error/10 border border-error/20 text-error rounded-lg px-4 py-3 mb-4 text-sm">
@@ -81,6 +92,10 @@
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-foreground">{{ $padre->apellidos }} {{ $padre->nombres }}</div>
                                     <div class="text-xs font-mono text-muted-foreground">{{ $padre->tipo_documento }} {{ $padre->numero_documento }}{{ $padre->complemento ? '-' . $padre->complemento : '' }}</div>
+                                    @php $datoCorrido = ! preg_match('/\d{5,}/', (string) ($padre->numero_documento ?? '')) || trim(($padre->nombres ?? '') . ($padre->apellidos ?? '')) === ''; @endphp
+                                    @if($datoCorrido)
+                                        <span class="inline-flex mt-1 items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">Por revisar</span>
+                                    @endif
                                     @if($tutorizados->isNotEmpty())
                                         <span class="inline-flex mt-1 items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -154,6 +169,7 @@
                 </div>
                 <form method="POST" action="{{ route('tutores.store') }}" style="padding:1.5rem;">
                     @csrf
+                    @include('layouts._filtros-actuales')
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos Personales</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

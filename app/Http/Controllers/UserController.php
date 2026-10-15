@@ -59,7 +59,7 @@ class UserController extends Controller
 
         User::create($validated);
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente. El acceso es con Google Workspace.');
+        return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'Usuario creado correctamente. El acceso es con Google Workspace.');
     }
 
     public function edit(User $user)
@@ -117,7 +117,7 @@ class UserController extends Controller
     public function toggle(User $user)
     {
         if ($user->is(auth()->user())) {
-            return redirect()->route('users.index')->with('error', 'No puedes desactivar tu propia cuenta.');
+            return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes desactivar tu propia cuenta.', 'error');
         }
 
         $nuevoEstado = $user->estaActivo() ? 'INACTIVO' : 'ACTIVO';
@@ -126,17 +126,17 @@ class UserController extends Controller
 
         $accion = $nuevoEstado === 'ACTIVO' ? 'activado' : 'desactivado';
 
-        return redirect()->route('users.index')->with('success', "Usuario {$accion} correctamente.");
+        return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], "Usuario {$accion} correctamente.");
     }
 
     public function destroy(User $user)
     {
         if ($user->is(auth()->user())) {
-            return redirect()->route('users.index')->with('error', 'No puedes eliminar tu propia cuenta.');
+            return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes eliminar tu propia cuenta.', 'error');
         }
 
         $user->update(['estado' => 'ELIMINADO']);
 
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
+        return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'Usuario eliminado correctamente.');
     }
 }

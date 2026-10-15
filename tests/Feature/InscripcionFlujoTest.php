@@ -119,6 +119,37 @@ class InscripcionFlujoTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_formulario_usa_cascada_nivel_grado_paralelo(): void
+    {
+        $e = $this->crearEstructura('CASC');
+        $admin = $this->crearUsuario('Administrador', 'admin_casc@sanber.edu.bo');
+
+        $response = $this->actingAs($admin)->get(route('inscripciones.create'));
+        $response->assertOk();
+        // Tres selects en cascada (el paralelo guarda section_id)
+        $response->assertSee('id="cur-nivel"', false);
+        $response->assertSee('id="cur-grado"', false);
+        $response->assertSee('name="section_id" id="cur-paralelo"', false);
+        $response->assertSee('Seleccionar nivel');
+        // Datos para la cascada JS con el curso disponible
+        $response->assertSee('"id":' . $e['curso']->id, false);
+        $response->assertSee($e['grado']->nombre);
+        // El select único anterior ya no existe
+        $response->assertDontSee('Seleccionar curso');
+    }
+
+    public function test_inscripcion_rechaza_nombres_tutor_con_numeros(): void
+    {
+        $e = $this->crearEstructura('NUM');
+        $admin = $this->crearUsuario('Administrador', 'admin_num@sanber.edu.bo');
+
+        $datos = $this->datosInscripcion($e['curso']->id, '6666666');
+        $datos['tutor_nombres'] = 'Calle Falsa 123';
+
+        $this->actingAs($admin)->post(route('inscripciones.store'), $datos)
+            ->assertSessionHasErrors('tutor_nombres');
+    }
+
     public function test_store_crea_preinscripcion_completa(): void
     {
         $e = $this->crearEstructura('S1');

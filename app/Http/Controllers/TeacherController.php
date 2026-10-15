@@ -83,7 +83,7 @@ class TeacherController extends Controller
             }
         });
 
-        return redirect()->route('teachers.index')->with('success', 'Docente registrado correctamente. Se creó su cuenta de usuario (acceso con Google).');
+        return $this->deVuelta('teachers.index', ['buscar', 'estado', 'page'], 'Docente registrado correctamente. Se creó su cuenta de usuario (acceso con Google).');
     }
 
     public function edit(Teacher $teacher)
@@ -159,13 +159,13 @@ class TeacherController extends Controller
         $teacher->update(['estado' => $nuevo]);
         $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
 
-        return redirect()->route('teachers.index')->with('success', "Docente {$accion} correctamente.");
+        return $this->deVuelta('teachers.index', ['buscar', 'estado', 'page'], "Docente {$accion} correctamente.");
     }
 
     public function destroy(Teacher $teacher)
     {
         $teacher->update(['estado' => 'ELIMINADO']);
 
-        return redirect()->route('teachers.index')->with('success', 'Docente eliminado correctamente.');
+        return $this->deVuelta('teachers.index', ['buscar', 'estado', 'page'], 'Docente eliminado correctamente.');
     }
 }

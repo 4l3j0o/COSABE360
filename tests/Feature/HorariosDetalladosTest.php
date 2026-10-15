@@ -84,6 +84,10 @@ class HorariosDetalladosTest extends TestCase
         // Paralelos marcados
         $response->assertSee('P4Y');
         $response->assertSee('S1Y');
+        // Pestañas por nivel (docente con clases en 2 niveles → 2 pestañas)
+        $response->assertSee('data-niv-tab="0"', false);
+        $response->assertSee('data-niv-tab="1"', false);
+        $response->assertDontSee('data-niv-tab="2"', false);
     }
 
     public function test_modal_agregar_clase_usa_horas_del_nivel(): void
@@ -352,5 +356,83 @@ class HorariosDetalladosTest extends TestCase
             'teacher_id' => $e['teacher']->id, 'dia' => 'LUNES',
             'section_id' => $e['section']->id, 'subject_id' => null,
         ]);
+    }
+
+    public function test_paralelo_secundaria_con_clase_de_manana_tiene_pestana(): void
+    {
+        $sec = Level::firstOrCreate(['nombre' => 'Secundaria Par Man'], ['orden' => 3, 'estado' => 'ACTIVO']);
+        $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $section = Section::create([
+            'grade_id' => Grade::create(['level_id' => $sec->id, 'nombre' => 'Grado Par Man', 'orden' => 5, 'estado' => 'ACTIVO'])->id,
+            'nombre' => 'A', 'codigo' => 'SPM1', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO',
+        ]);
+        $subject = Subject::create(['nombre' => 'Mat Par Man', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
+        $rol = Role::where('nombre', 'Docente')->first();
+        $u = User::create(['nombre' => 'Doc', 'apellido' => 'Pm', 'email' => 'doc_pm@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $teacher = Teacher::create(['user_id' => $u->id, 'nombres' => 'Doc', 'apellidos' => 'Pm', 'numero_documento' => '9990801', 'estado' => 'ACTIVO']);
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '14:00', 'hora_fin' => '14:40', 'estado' => 'ACTIVO']);
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'MARTES', 'hora_inicio' => '09:15', 'hora_fin' => '09:55', 'estado' => 'ACTIVO']);
+
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+        $response = $this->actingAs($admin)->get(route('schedules.show', $section));
+        $response->assertStatus(200);
+        $response->assertSee('Horario de la tarde');
+        $response->assertSee('Secundaria Mañana');
+        $response->assertSee('data-par-tab="0"', false);
+        $response->assertSee('data-par-tab="1"', false);
+    }
+
+    public function test_docente_secundaria_con_clases_de_manana_tiene_pestana(): void
+    {
+        $sec = Level::firstOrCreate(['nombre' => 'Secundaria Mañana Tab'], ['orden' => 3, 'estado' => 'ACTIVO']);
+        $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $section = Section::create([
+            'grade_id' => Grade::create(['level_id' => $sec->id, 'nombre' => 'Grado Sec Man', 'orden' => 6, 'estado' => 'ACTIVO'])->id,
+            'nombre' => 'A', 'codigo' => 'SMAN', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO',
+        ]);
+        $subject = Subject::create(['nombre' => 'Mat Man Univoca', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
+
+        $rol = Role::where('nombre', 'Docente')->first();
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Man', 'email' => 'doc_man@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Man', 'numero_documento' => '9990777', 'estado' => 'ACTIVO']);
+
+        // Una clase de tarde y una de mañana (misma sección secundaria)
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '14:00', 'hora_fin' => '14:40', 'estado' => 'ACTIVO']);
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'MARTES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO']);
+
+        $admin = User::where('email', 'admin@sanber.edu.bo')->first();
+        $response = $this->actingAs($admin)->get(route('schedules.docente', $teacher));
+        $response->assertStatus(200);
+        $response->assertSee('Nivel Secundaria');
+        $response->assertSee('Secundaria Mañana');
+        $response->assertSee('14:00');
+        $response->assertSee('07:30');
+    }
+
+    public function test_estudiante_secundaria_con_clase_de_manana_tiene_pestana(): void
+    {
+        $sec = Level::firstOrCreate(['nombre' => 'Secundaria Man Est'], ['orden' => 3, 'estado' => 'ACTIVO']);
+        $grado = Grade::create(['level_id' => $sec->id, 'nombre' => 'Grado Sec Man Est', 'orden' => 6, 'estado' => 'ACTIVO']);
+        $gestion = AcademicYear::firstOrCreate(['nombre' => '2026'], ['fecha_inicio' => '2026-02-01', 'fecha_fin' => '2026-11-30', 'estado' => 'ACTIVA']);
+        $section = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'SME1', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
+        $subject = Subject::create(['nombre' => 'Inv Man Univoca', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
+
+        $rol = Role::where('nombre', 'Docente')->first();
+        $ud = User::create(['nombre' => 'Doc', 'apellido' => 'Men', 'email' => 'doc_men@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $teacher = Teacher::create(['user_id' => $ud->id, 'nombres' => 'Doc', 'apellidos' => 'Men', 'numero_documento' => '9990778', 'estado' => 'ACTIVO']);
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '14:00', 'hora_fin' => '14:40', 'estado' => 'ACTIVO']);
+        Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'MIERCOLES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO']);
+
+        $rolEst = Role::where('nombre', 'Estudiante')->first();
+        $ue = User::create(['nombre' => 'Est', 'apellido' => 'Men', 'email' => 'est_men@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $est = Student::create(['codigo' => 'EST-MAN-1', 'nombres' => 'Est', 'apellidos' => 'Men', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '9990779', 'estado' => 'ACTIVO', 'user_id' => $ue->id]);
+        $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
+        Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $section->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
+
+        $response = $this->actingAs($ue)->get(route('schedules.mi-horario'));
+        $response->assertStatus(200);
+        $response->assertSee('Mi Horario');
+        $response->assertSee('Mi horario mañana');
+        $response->assertSee('07:30');
     }
 }

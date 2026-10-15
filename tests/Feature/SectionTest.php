@@ -166,6 +166,24 @@ class SectionTest extends TestCase
         $this->assertDatabaseHas('sections', ['id' => $sec->id, 'estado' => 'ELIMINADO']);
     }
 
+    public function test_acciones_vuelven_con_filtros_y_volver(): void
+    {
+        $this->loginAsAdmin();
+        $grado = $this->crearGrado();
+        $sec = Section::create(['grade_id' => $grado->id, 'nombre' => 'B', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+
+        // Con filtros del listado
+        $this->delete("/paralelos/{$sec->id}", ['_f' => ['grade_id' => $grado->id, 'estado' => 'ACTIVO'], 'page' => '3'])
+            ->assertRedirect(route('sections.index', ['grade_id' => $grado->id, 'estado' => 'ACTIVO', 'page' => '3']));
+
+        // Desde Asistencias (otro módulo): vuelve ahí, no a Paralelos
+        $sec2 = Section::create(['grade_id' => $grado->id, 'nombre' => 'C', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $volver = url('/asistencias?page=2');
+        $this->patch(route('sections.toggle', $sec2), ['volver' => $volver])
+            ->assertRedirect($volver);
+        $this->assertSame('INACTIVO', $sec2->fresh()->estado);
+    }
+
     public function test_no_elimina_paralelo_con_estudiantes_matriculados(): void
     {
         $this->loginAsAdmin();

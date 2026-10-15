@@ -89,6 +89,63 @@ class UpdateStudentRegresionTest extends TestCase
         ]);
     }
 
+    public function test_update_rechaza_familiar_con_numeros_en_nombre(): void
+    {
+        $this->actingAs($this->adminUser());
+
+        $student = Student::create([
+            'codigo' => 'EST-2026-0002',
+            'nombres' => 'Luis',
+            'apellidos' => 'Perez',
+            'fecha_nacimiento' => '2010-01-01',
+            'sexo' => 'M',
+            'tipo_documento' => 'CI',
+            'numero_documento' => '101',
+            'estado' => 'ACTIVO',
+            'email' => 'luis@test.com',
+        ]);
+
+        $response = $this->put(route('students.update', $student), [
+            'nombres' => 'Luis',
+            'apellidos' => 'Perez',
+            'fecha_nacimiento' => '2010-01-01',
+            'lugar_nacimiento' => 'SCZ',
+            'sexo' => 'M',
+            'tipo_documento' => 'CI',
+            'numero_documento' => '101',
+            'complemento' => '',
+            'direccion' => 'Av. Z',
+            'telefono' => '',
+            'email_estudiante' => 'luis@test.com',
+            'idioma' => '',
+            'cultura' => '',
+            'discapacidad' => '',
+            'estado' => 'ACTIVO',
+            'familiares' => [
+                [
+                    'nombres' => 'Calle Falsa 123',
+                    'apellidos' => 'Perez',
+                    'tipo_doc' => 'CI',
+                    'num_doc' => '201',
+                    'relacion' => 'PADRE',
+                    'es_tutor' => '1',
+                    'email' => 'calle@test.com',
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('familiares.0.nombres');
+    }
+
+    public function test_eliminar_vuelve_con_filtros(): void
+    {
+        $this->actingAs($this->adminUser());
+        $student = $this->crearEstudiante(['numero_documento' => '8822334']);
+
+        $this->delete(route('students.destroy', $student), ['_f' => ['buscar' => 'Alumno', 'estado' => 'ACTIVO'], 'page' => '2'])
+            ->assertRedirect(route('students.index', ['buscar' => 'Alumno', 'estado' => 'ACTIVO', 'page' => '2']));
+    }
+
     private function crearEstudiante(array $atributos): Student
     {
         return Student::create(array_merge([

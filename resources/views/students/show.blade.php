@@ -284,7 +284,8 @@
                             <li class="p-3 rounded-lg border {{ $esTutor ? 'border-primary/30 bg-primary/5' : 'border-border' }}">
                                 <div class="text-xs font-semibold uppercase tracking-wider {{ $esTutor ? 'text-primary' : 'text-muted-foreground' }}">{{ $etiqueta }}{{ $esTutor ? ' · Tutor' : '' }}</div>
                                 <div class="text-foreground font-medium">{{ $persona->nombres }} {{ $persona->apellidos }}</div>
-                                <div class="text-muted-foreground text-xs">{{ $persona->numero_documento ? 'CI ' . $persona->numero_documento : '' }}{{ $esTutor && $persona->email ? ' · ' . $persona->email : '' }}</div>
+                                @php $docTutor = $persona->numero_documento ? ((preg_match('/\d{5,}/', (string) $persona->numero_documento) ? 'CI ' : '') . $persona->numero_documento) : ''; @endphp
+                                <div class="text-muted-foreground text-xs">{{ $docTutor }}{{ $esTutor && $persona->email ? ($docTutor ? ' · ' : '') . $persona->email : '' }}</div>
                             </li>
                         @endforeach
                     </ul>

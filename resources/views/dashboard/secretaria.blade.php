@@ -30,6 +30,8 @@
         </div>
     </div>
 
+    @include('dashboard.partials._splash-comunicados')
+
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="Total Estudiantes" :value="$totEstudiantes" color="primary" />
         <x-ui.stat-card label="Estudiantes matriculados" :value="$totMatriculados" color="success" />

@@ -129,12 +129,21 @@
                 <input type="text" name="codigo_rude" value="{{ old('codigo_rude') }}" maxlength="50" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
             </div>
             <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso *</label>
-                <select name="section_id" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
-                    <option value="">Seleccionar curso…</option>
-                    @foreach($cursos as $curso)
-                        <option value="{{ $curso->id }}" {{ old('section_id') == $curso->id ? 'selected' : '' }}>{{ $curso->grade->level->nombre }} — {{ $curso->codigoCorto() }}</option>
-                    @endforeach
+                <label class="block text-xs font-semibold text-muted-foreground mb-1">Nivel *</label>
+                <select id="cur-nivel" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
+                    <option value="">Seleccionar nivel…</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-muted-foreground mb-1">Grado *</label>
+                <select id="cur-grado" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
+                    <option value="">Primero elija nivel…</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo *</label>
+                <select name="section_id" id="cur-paralelo" required class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm w-full">
+                    <option value="">Primero elija grado…</option>
                 </select>
             </div>
         </div>
@@ -230,6 +239,68 @@ selProv.addEventListener('change', function () {
 selCiudad.addEventListener('change', function () {
     otraWrap.classList.toggle('hidden', selCiudad.value !== 'Otra');
 });
+
+// Cascada Nivel → Grado → Paralelo (el paralelo guarda section_id)
+@php
+$cursosJson = [];
+foreach ($cursos as $c) {
+    $cursosJson[] = ['id' => $c->id, 'nivel_id' => $c->grade->level_id, 'nivel' => $c->grade->level->nombre, 'grado_id' => $c->grade_id, 'grado' => $c->grade->nombre, 'codigo' => $c->codigoCorto()];
+}
+@endphp
+const CURSOS = @json($cursosJson);
+const OLD_CURSO = @json(old('section_id'));
+const selNivelCur = document.getElementById('cur-nivel');
+const selGradoCur = document.getElementById('cur-grado');
+const selParCur = document.getElementById('cur-paralelo');
+
+function llenarCursos(sel, items, placeholder) {
+    sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = placeholder;
+    sel.appendChild(ph);
+    items.forEach(function (it) {
+        const opt = document.createElement('option');
+        opt.value = it.value; opt.textContent = it.text;
+        sel.appendChild(opt);
+    });
+}
+function unicos(lista, campoId, campoNombre) {
+    const vistos = {};
+    const out = [];
+    lista.forEach(function (it) {
+        if (!vistos[it[campoId]]) {
+            vistos[it[campoId]] = true;
+            out.push({ value: String(it[campoId]), text: it[campoNombre] });
+        }
+    });
+    return out;
+}
+function gradosDe(nivelId) {
+    return unicos(CURSOS.filter(function (c) { return String(c.nivel_id) === String(nivelId); }), 'grado_id', 'grado');
+}
+function paralelosDe(gradoId) {
+    return CURSOS.filter(function (c) { return String(c.grado_id) === String(gradoId); })
+        .map(function (c) { return { value: String(c.id), text: c.codigo }; });
+}
+selNivelCur.addEventListener('change', function () {
+    llenarCursos(selGradoCur, selNivelCur.value ? gradosDe(selNivelCur.value) : [], 'Seleccionar grado…');
+    llenarCursos(selParCur, [], 'Primero elija grado…');
+});
+selGradoCur.addEventListener('change', function () {
+    llenarCursos(selParCur, selGradoCur.value ? paralelosDe(selGradoCur.value) : [], 'Seleccionar paralelo…');
+});
+// Init + restaurar selección tras error de validación
+(function initCascadaCurso() {
+    llenarCursos(selNivelCur, unicos(CURSOS, 'nivel_id', 'nivel'), 'Seleccionar nivel…');
+    if (!OLD_CURSO) return;
+    const curso = CURSOS.find(function (c) { return String(c.id) === String(OLD_CURSO); });
+    if (!curso) return;
+    selNivelCur.value = String(curso.nivel_id);
+    llenarCursos(selGradoCur, gradosDe(curso.nivel_id), 'Seleccionar grado…');
+    selGradoCur.value = String(curso.grado_id);
+    llenarCursos(selParCur, paralelosDe(curso.grado_id), 'Seleccionar paralelo…');
+    selParCur.value = String(curso.id);
+})();
 
 // Preview del email automático: inicial + paterno + código
 function ascii(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }

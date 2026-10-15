@@ -27,7 +27,7 @@ class DiscountTypeController extends Controller
 
         DiscountType::create($validated);
 
-        return redirect()->route('discount-types.index')->with('success', 'Tipo de descuento creado correctamente.');
+        return $this->deVuelta('discount-types.index', ['q', 'estado', 'page'], 'Tipo de descuento creado correctamente.');
     }
 
     public function update(Request $request, DiscountType $discountType): RedirectResponse
@@ -36,14 +36,14 @@ class DiscountTypeController extends Controller
 
         $discountType->update($validated);
 
-        return redirect()->route('discount-types.index')->with('success', 'Tipo de descuento actualizado.');
+        return $this->deVuelta('discount-types.index', ['q', 'estado', 'page'], 'Tipo de descuento actualizado.');
     }
 
     public function destroy(DiscountType $discountType): RedirectResponse
     {
         $discountType->delete();
 
-        return redirect()->route('discount-types.index')->with('success', 'Tipo de descuento eliminado.');
+        return $this->deVuelta('discount-types.index', ['q', 'estado', 'page'], 'Tipo de descuento eliminado.');
     }
 
     private function validar(Request $request, ?DiscountType $discountType): array

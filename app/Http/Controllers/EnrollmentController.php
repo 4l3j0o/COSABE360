@@ -31,11 +31,11 @@ class EnrollmentController extends Controller
                 'observaciones' => $validated['observaciones'] ?? $existente->observaciones,
             ]);
 
-            return redirect()->route('students.index')->with('mensaje', 'Inscripción actualizada correctamente.');
+            return $this->deVuelta('students.index', ['buscar', 'estado', 'page'], 'Inscripción actualizada correctamente.');
         }
 
         Enrollment::create($validated);
 
-        return redirect()->route('students.index')->with('mensaje', 'Inscripción registrada correctamente.');
+        return $this->deVuelta('students.index', ['buscar', 'estado', 'page'], 'Inscripción registrada correctamente.');
     }
 }

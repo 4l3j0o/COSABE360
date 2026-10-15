@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,6 +33,15 @@ class AppServiceProvider extends ServiceProvider
         // Gates para verificar permisos a módulos
         Gate::define('access-module', function ($user, string $modulo) {
             return $user->canAccess($modulo);
+        });
+
+        // Campana del topbar: comunicados publicados visibles sin leer.
+        View::composer('layouts.app', function ($view) {
+            $count = 0;
+            if (auth()->check()) {
+                $count = app(\App\Services\ComunicadoAlcanceService::class)->noLeidosPara(auth()->user());
+            }
+            $view->with('comunicadosNoLeidos', $count);
         });
     }
 }

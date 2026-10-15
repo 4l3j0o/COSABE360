@@ -42,9 +42,7 @@
             <p class="text-muted-foreground text-sm">No tiene clases asignadas en ningún curso.</p>
         </div>
     @else
-        @foreach($grupos as $grupo)
-            @include('schedules._tabla-docente', ['dias' => $dias, 'diasLabel' => $diasLabel, 'filas' => $grupo['filas'], 'recesos' => $grupo['recesos'], 'tabla' => $grupo['tabla'], 'titulo' => $grupo['titulo'], 'accent' => $grupo['accent']])
-        @endforeach
+        @include('schedules._tabs-niveles', ['grupos' => $grupos, 'dias' => $dias, 'diasLabel' => $diasLabel])
 
         <div class="mt-4 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
             <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-card border border-border/70 inline-block"></span> Bloque del docente (materia o paralelo)</span>

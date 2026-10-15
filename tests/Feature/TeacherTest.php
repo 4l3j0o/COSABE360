@@ -86,6 +86,27 @@ class TeacherTest extends TestCase
         $this->assertSame('ACTIVO', $teacher->fresh()->estado, 'Al alternar de nuevo debe reactivarse');
     }
 
+    public function test_acciones_vuelven_con_filtros_y_pagina(): void
+    {
+        $this->actingAs($this->admin);
+        $teacher = \App\Models\Teacher::create([
+            'nombres' => 'Juan', 'apellidos' => 'Perez',
+            'tipo_documento' => 'CI', 'numero_documento' => '112', 'complemento' => '',
+            'estado' => 'ACTIVO',
+        ]);
+
+        $this->patch("/docentes/{$teacher->id}/alternar", ['_f' => ['buscar' => 'Juan', 'estado' => 'ACTIVO'], 'page' => '2'])
+            ->assertRedirect(route('teachers.index', ['buscar' => 'Juan', 'estado' => 'ACTIVO', 'page' => '2']));
+
+        $this->delete(route('teachers.destroy', $teacher), ['_f' => ['buscar' => 'Juan'], 'page' => '2'])
+            ->assertRedirect(route('teachers.index', ['buscar' => 'Juan', 'page' => '2']));
+
+        // El formulario del listado lleva los filtros ocultos
+        $response = $this->get(route('teachers.index', ['buscar' => 'Juan']));
+        $response->assertOk();
+        $response->assertSee('name="buscar" value="Juan"', false);
+    }
+
     public function test_requiere_campos_obligatorios(): void
     {
         $this->actingAs($this->admin);

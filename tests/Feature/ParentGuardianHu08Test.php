@@ -296,4 +296,65 @@ class ParentGuardianHu08Test extends TestCase
 
         $this->assertDatabaseMissing('users', ['email' => 'pedro.mamani@example.com']);
     }
+
+    public function test_store_rechaza_nombres_con_numeros(): void
+    {
+        $this->loginAsAdmin();
+
+        $this->post(route('tutores.store'), [
+            'nombres'          => 'Av Siempre Viva 123',
+            'apellidos'        => 'Perez',
+            'numero_documento' => '7654321',
+        ])->assertSessionHasErrors('nombres');
+
+        $this->assertDatabaseMissing('parent_guardians', ['numero_documento' => '7654321']);
+    }
+
+    public function test_filtro_por_revisar_muestra_datos_corridos(): void
+    {
+        $this->loginAsAdmin();
+        $est1 = $this->crearEstudiante();
+        $est2 = $this->crearEstudiante();
+
+        $malo = ParentGuardian::create([
+            'nombres' => 'Mayo Esq Gral Trigo', 'apellidos' => '26 De',
+            'numero_documento' => 'VILLA AVAROA', 'estado' => 'ACTIVO',
+        ]);
+        $bueno = ParentGuardian::create([
+            'nombres' => 'Juan', 'apellidos' => 'Perez',
+            'numero_documento' => '7654321', 'estado' => 'ACTIVO',
+        ]);
+        $malo->students()->attach($est1->id, ['tipo_relacion' => 'TUTOR', 'es_principal' => true, 'convive' => true]);
+        $bueno->students()->attach($est2->id, ['tipo_relacion' => 'TUTOR', 'es_principal' => true, 'convive' => true]);
+
+        $response = $this->get(route('tutores.index', ['revisar' => 1]));
+        $response->assertOk();
+        $response->assertSee('Mayo Esq Gral Trigo');
+        $response->assertSee('Por revisar');
+        $response->assertDontSee('7654321');
+
+        // Sin filtro aparecen ambos
+        $response = $this->get(route('tutores.index'));
+        $response->assertSee('Mayo Esq Gral Trigo');
+        $response->assertSee('7654321');
+    }
+
+    public function test_acciones_vuelven_con_filtros(): void
+    {
+        $this->loginAsAdmin();
+        $est = $this->crearEstudiante();
+        $pg = ParentGuardian::create([
+            'nombres' => 'Pedro', 'apellidos' => 'Soto',
+            'numero_documento' => '4455667', 'estado' => 'ACTIVO',
+        ]);
+        $pg->students()->attach($est->id, ['tipo_relacion' => 'PADRE', 'es_principal' => false, 'convive' => true]);
+
+        // Eliminar bloqueado por vínculo: vuelve con filtros y mensaje
+        $this->delete(route('tutores.destroy', $pg), ['_f' => ['buscar' => 'Soto', 'tipo' => 'todos'], 'page' => '2'])
+            ->assertRedirect(route('tutores.index', ['buscar' => 'Soto', 'tipo' => 'todos', 'page' => '2']));
+
+        $pg->students()->detach();
+        $this->delete(route('tutores.destroy', $pg), ['_f' => ['buscar' => 'Soto']])
+            ->assertRedirect(route('tutores.index', ['buscar' => 'Soto']));
+    }
 }

@@ -264,6 +264,23 @@ class SubjectTest extends TestCase
         $this->assertDatabaseHas('subjects', ['id' => $id, 'estado' => 'ELIMINADO']);
     }
 
+    public function test_eliminar_vuelve_con_filtros(): void
+    {
+        $this->loginAsAdmin();
+        $nivel = DB::table('levels')->first();
+
+        $id = DB::table('subjects')->insertGetId([
+            'level_id'   => $nivel->id,
+            'nombre'     => 'Artes Filtro',
+            'estado'     => 'ACTIVO',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->delete(route('subjects.destroy', $id), ['_f' => ['level_id' => $nivel->id, 'estado' => 'ACTIVO']])
+            ->assertRedirect(route('subjects.index', ['level_id' => $nivel->id, 'estado' => 'ACTIVO']));
+    }
+
     public function test_no_elimina_materia_con_evaluaciones_o_calificaciones(): void
     {
         // CA-14-03: no se debe permitir eliminar una materia con evaluaciones o calificaciones

@@ -130,6 +130,16 @@ class GestionarUsuariosTest extends TestCase
         $this->assertSame('ACTIVO', $user->fresh()->estado);
     }
 
+    public function test_acciones_vuelven_con_filtros(): void
+    {
+        $this->actingAsAdmin();
+
+        $user = User::factory()->create(['estado' => 'ACTIVO']);
+
+        $this->patch("/usuarios/{$user->id}/alternar", ['_f' => ['buscar' => 'Test', 'rol' => '3'], 'page' => '2'])
+            ->assertRedirect(route('users.index', ['buscar' => 'Test', 'rol' => '3', 'page' => '2']));
+    }
+
     public function test_admin_no_puede_desactivar_su_propia_cuenta(): void
     {
         $admin = $this->actingAsAdmin();

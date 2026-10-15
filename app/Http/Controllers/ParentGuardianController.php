@@ -22,7 +22,7 @@ class ParentGuardianController extends Controller
 
         $tipo = $request->query('tipo', 'tutores');
 
-        $padres = ParentGuardian::with(['students:id,nombres,apellidos'])
+        $base = ParentGuardian::with(['students:id,nombres,apellidos'])
             ->where('estado', '!=', 'ELIMINADO')
             ->when($tipo === 'tutores', function ($q) {
                 $q->whereHas('students', function ($c) {
@@ -46,7 +46,14 @@ class ParentGuardianController extends Controller
                 );
             })
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
-            ->orderBy('apellidos')
+            ->orderBy('apellidos');
+
+        // Datos con dirección en el nombre o sin documento válido (importados
+        // con columnas corridas): se corrigen uno por uno.
+        $revisarCount = (clone $base)->where(fn ($w) => $this->soloPorRevisar($w))->count();
+
+        $padres = (clone $base)
+            ->when($request->query('revisar'), fn ($q) => $q->where(fn ($w) => $this->soloPorRevisar($w)))
             ->paginate(10)
             ->withQueryString();
 
@@ -57,7 +64,18 @@ class ParentGuardianController extends Controller
 
         return view('parent_guardians.index', compact('padres', 'estudiantes') + [
             'estudiantesConTutor' => $this->estudiantesConTutorIds(),
+            'revisarCount' => $revisarCount,
         ]);
+    }
+
+    /**
+     * Filas con datos corridos: documento sin dígitos o nombre vacío.
+     */
+    private function soloPorRevisar($query): void
+    {
+        $query->whereRaw("numero_documento NOT REGEXP '[0-9]{5}'")
+            ->orWhereNull('numero_documento')
+            ->orWhereRaw("TRIM(CONCAT(IFNULL(nombres,''), IFNULL(apellidos,''))) = ''");
     }
 
     private function apiIndex(Request $request): JsonResponse
@@ -92,8 +110,8 @@ class ParentGuardianController extends Controller
         $hayTutor = $this->tieneTutor($request);
 
         $validated = $request->validate([
-            'nombres'   => ['required', 'string', 'max:150'],
-            'apellidos' => ['required', 'string', 'max:150'],
+            'nombres'   => ['required', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
+            'apellidos' => ['required', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
             'tipo_documento' => ['sometimes', 'string', 'in:CI,PASAPORTE,OTRO'],
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
@@ -136,7 +154,7 @@ class ParentGuardianController extends Controller
 
         $mensaje = 'Padre/tutor registrado correctamente.';
 
-        return redirect()->route('tutores.index')->with('success', $mensaje);
+        return $this->deVuelta('tutores.index', ['buscar', 'tipo', 'estado', 'revisar', 'page'], $mensaje);
     }
 
     public function update(Request $request, ParentGuardian $parentGuardian): RedirectResponse|JsonResponse
@@ -144,8 +162,8 @@ class ParentGuardianController extends Controller
         $hayTutor = $this->tieneTutor($request);
 
         $validated = $request->validate([
-            'nombres'   => ['sometimes', 'string', 'max:150'],
-            'apellidos' => ['sometimes', 'string', 'max:150'],
+            'nombres'   => ['sometimes', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
+            'apellidos' => ['sometimes', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
             'tipo_documento' => ['sometimes', 'string', 'in:CI,PASAPORTE,OTRO'],
             'numero_documento' => ['sometimes', 'string', 'max:20'],
             'complemento'     => ['nullable', 'string', 'max:5'],
@@ -271,7 +289,7 @@ class ParentGuardianController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('tutores.index')->with('error', 'No se puede eliminar el padre/tutor porque está asociado a uno o más estudiantes.');
+            return $this->deVuelta('tutores.index', ['buscar', 'tipo', 'estado', 'revisar', 'page'], 'No se puede eliminar el padre/tutor porque está asociado a uno o más estudiantes.', 'error');
         }
 
         $parentGuardian->update(['estado' => 'ELIMINADO']);
@@ -280,6 +298,6 @@ class ParentGuardianController extends Controller
             return response()->json(['message' => 'Padre/tutor eliminado correctamente.']);
         }
 
-        return redirect()->route('tutores.index')->with('success', 'Padre/tutor eliminado correctamente.');
+        return $this->deVuelta('tutores.index', ['buscar', 'tipo', 'estado', 'revisar', 'page'], 'Padre/tutor eliminado correctamente.');
     }
 }

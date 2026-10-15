@@ -137,6 +137,18 @@ class LevelTest extends TestCase
         $this->assertDatabaseHas('levels', ['id' => $level->id, 'estado' => 'ELIMINADO']);
     }
 
+    public function test_eliminar_vuelve_con_filtros(): void
+    {
+        $this->loginAsAdmin();
+        $id = DB::table('levels')->insertGetId([
+            'nombre' => 'Nivel Filtro', 'descripcion' => 'x', 'orden' => 9, 'estado' => 'ACTIVO',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->delete(route('levels.destroy', $id), ['_f' => ['estado' => 'ACTIVO'], 'page' => '2'])
+            ->assertRedirect(route('levels.index', ['estado' => 'ACTIVO', 'page' => '2']));
+    }
+
     public function test_muestra_nivel(): void
     {
         $this->loginAsAdmin();
