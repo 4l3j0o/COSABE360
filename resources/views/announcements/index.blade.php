@@ -70,14 +70,14 @@
                         data-fecha="{{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}"
                         data-nuevo="{{ $announcement->es_nuevo ? '1' : '0' }}"
                         data-leido-url="{{ route('comunicados.bandeja.leido', $announcement) }}"
-                        class="text-left group bg-card border {{ $announcement->es_nuevo ? 'border-primary/40' : 'border-border' }} rounded-xl p-5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 flex items-start gap-4 cursor-pointer w-full">
+                        class="text-left group bg-card border {{ $announcement->es_nuevo ? 'border-primary/40' : 'border-border' }} rounded-xl p-5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 flex items-start gap-4 cursor-pointer w-full min-w-0">
                     <div class="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl {{ $announcement->es_nuevo ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground' }}">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     </div>
 
                     <div class="min-w-0 flex-1">
                         <div class="flex items-start justify-between gap-3">
-                            <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors text-sm leading-snug">{{ $announcement->titulo }}</h3>
+                            <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors text-sm leading-snug break-words">{{ $announcement->titulo }}</h3>
                             @if($announcement->destacado)
                                 <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-warning/15 text-warning">Importante</span>
                             @elseif($announcement->es_nuevo)
@@ -92,21 +92,18 @@
                         @endif
 
                         @if($announcement->contenido)
-                            <p class="text-xs text-muted-foreground line-clamp-2 mt-1 mb-3">{{ \Illuminate\Support\Str::limit(strip_tags($announcement->contenido), 120) }}</p>
+                            <p class="text-xs text-muted-foreground line-clamp-2 break-words mt-1 mb-3">{{ \Illuminate\Support\Str::limit(strip_tags($announcement->contenido), 120) }}</p>
                         @endif
 
-                        <div class="flex items-center justify-between gap-3 text-xs text-muted-foreground pt-3 border-t {{ $announcement->es_nuevo ? 'border-primary/15' : 'border-border' }}">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="inline-flex items-center gap-1.5">
-                                    <span class="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                                        {{ substr($announcement->author?->nombre ?? 'U', 0, 1) }}{{ substr($announcement->author?->apellido ?? '', 0, 1) }}
-                                    </span>
-                                    <span class="truncate">{{ trim(($announcement->author?->nombre ?? '') . ' ' . ($announcement->author?->apellido ?? '')) ?: 'Sistema' }}</span>
+                        <div class="flex items-center justify-between gap-3 pt-3 border-t {{ $announcement->es_nuevo ? 'border-primary/15' : 'border-border' }}">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="shrink-0 w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground">
+                                    {{ substr($announcement->author?->nombre ?? 'U', 0, 1) }}{{ substr($announcement->author?->apellido ?? '', 0, 1) }}
                                 </span>
-                                <span class="inline-flex items-center gap-1 shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    {{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}
-                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-medium text-foreground truncate">{{ trim(($announcement->author?->nombre ?? '') . ' ' . ($announcement->author?->apellido ?? '')) ?: 'Sistema' }}</p>
+                                    <p class="text-[11px] text-muted-foreground/70 truncate">{{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}</p>
+                                </div>
                             </div>
                             <svg class="w-4 h-4 text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
@@ -422,7 +419,7 @@
                 </div>
 
                 <div style="flex:1; overflow-y:auto; padding:1.5rem;">
-                    <h3 id="com-titulo" class="text-lg font-bold text-foreground leading-snug"></h3>
+                    <h3 id="com-titulo" class="text-lg font-bold text-foreground leading-snug break-words"></h3>
 
                     <div class="flex items-center gap-3 mt-4 mb-6 pb-5 border-b border-border">
                         <div id="com-avatar" class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/15 text-primary text-sm font-bold"></div>
@@ -432,7 +429,7 @@
                         </div>
                     </div>
 
-                    <div id="com-contenido" class="whitespace-pre-wrap text-[15px] text-foreground leading-relaxed"></div>
+                    <div id="com-contenido" class="whitespace-pre-wrap break-words text-[15px] text-foreground leading-relaxed"></div>
                 </div>
 
                 <div style="display:flex; flex-shrink:0; align-items:center; justify-content:space-between; gap:0.75rem; padding:1rem 1.5rem; border-top:1px solid var(--border); border-radius:0 0 1rem 1rem; background:var(--card);">

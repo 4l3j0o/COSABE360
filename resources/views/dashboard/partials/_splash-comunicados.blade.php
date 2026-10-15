@@ -20,11 +20,11 @@
                             @if($dest->imagen_path)
                                 <img src="{{ asset('storage/' . $dest->imagen_path) }}" alt="" class="w-full max-h-64 object-cover rounded-lg mb-4 border border-border">
                             @endif
-                            <h3 class="text-lg font-bold text-foreground leading-snug">{{ $dest->titulo }}</h3>
+                            <h3 class="text-lg font-bold text-foreground leading-snug break-words">{{ $dest->titulo }}</h3>
                             <p class="text-xs text-muted-foreground mt-1 mb-3">
                                 {{ trim(($dest->author?->nombre ?? '') . ' ' . ($dest->author?->apellido ?? '')) ?: 'Administración' }} · {{ $dest->fecha_publicacion?->format('d/m/Y H:i') }}
                             </p>
-                            <div class="whitespace-pre-wrap text-[15px] text-foreground leading-relaxed max-h-56 overflow-y-auto">{{ $dest->contenido }}</div>
+                            <div class="whitespace-pre-wrap break-words text-[15px] text-foreground leading-relaxed max-h-56 overflow-y-auto">{{ $dest->contenido }}</div>
                             <form method="POST" action="{{ route('comunicados.bandeja.leido', $dest) }}" class="mt-4">
                                 @csrf
                                 @method('PATCH')
