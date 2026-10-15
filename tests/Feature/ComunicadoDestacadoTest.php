@@ -153,6 +153,27 @@ class ComunicadoDestacadoTest extends TestCase
         $response->assertDontSee('modal-destacados', false);
     }
 
+    public function test_autor_no_recibe_su_propio_comunicado(): void
+    {
+        $admin = $this->admin();
+        $doc = $this->docente('doc_autor@t.bo');
+
+        $a = $this->publicado('Aviso General Para Todos', ['author_id' => $admin->id]);
+        $a->recipients()->create(['tipo_destinatario' => 'TODOS']);
+
+        // El autor NO lo ve en su bandeja de recibidos
+        $this->actingAs($admin)->get(route('comunicados.bandeja'))->assertOk()
+            ->assertDontSee('Aviso General Para Todos');
+
+        // Los demás sí lo reciben
+        $this->actingAs($doc)->get(route('comunicados.bandeja'))->assertOk()
+            ->assertSee('Aviso General Para Todos');
+
+        // Y no suma a su contador de sin leer
+        $this->actingAs($admin)->get(route('dashboard'))->assertOk()
+            ->assertDontSee('Aviso General Para Todos');
+    }
+
     public function test_borrar_vuelve_a_la_pestana_enviados(): void
     {
         $a = $this->publicado('Tit Borrar', ['author_id' => $this->admin()->id]);
