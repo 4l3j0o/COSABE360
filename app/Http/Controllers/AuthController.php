@@ -159,6 +159,8 @@ class AuthController extends Controller
             ?? User::where('email', $email)->first();
 
         if (! $user) {
+            Log::warning('HU-36 login email no registrado', ['email' => $email, 'google_id' => $googleUser->getId()]);
+
             return redirect()->route('login')
                 ->withErrors(['email' => 'Su cuenta Google no está registrada en el sistema. Contacte al administrador.']);
         }

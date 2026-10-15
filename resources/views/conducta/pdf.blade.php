@@ -37,7 +37,7 @@
                     <td>{{ $r->fecha->format('d/m/Y') }}</td>
                     <td>{{ $r->hora ? substr($r->hora, 0, 5) : '-' }}</td>
                     <td>{{ $r->student->apellidos }} {{ $r->student->nombres }}</td>
-                    <td>{{ $r->section->nombre ?? '-' }}</td>
+                    <td>{{ $r->section->codigo ?? $r->section->nombre ?? '-' }}</td>
                     <td>{{ $r->subject->nombre ?? 'General' }}</td>
                     <td class="tipo">{{ $r->tipoLabel() }}</td>
                     <td>{{ $r->descripcion }}</td>

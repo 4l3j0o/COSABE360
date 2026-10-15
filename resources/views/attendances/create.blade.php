@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('titulo', 'Registrar Asistencia - ' . $section->nombre)
+@section('titulo', 'Registrar Asistencia - ' . ($section->codigo ?? $section->nombre))
 
 @section('sidebar')
     @if(auth()->user()->hasRole('Docente'))

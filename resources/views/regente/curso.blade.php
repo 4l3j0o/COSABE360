@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Regente - ' . $section->nombre)
+@section('titulo', 'Regente - ' . ($section->codigo ?? $section->nombre))
 @section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
 
 @section('contenido')
@@ -15,7 +15,7 @@
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
         @include('layouts._volver', ['href' => route('regente.cursos'), 'texto' => 'Volver a cursos'])
-        <h1 class="text-xl font-bold text-foreground mt-2">{{ $section->nombre }}</h1>
+        <h1 class="text-xl font-bold text-foreground mt-2">{{ $section->codigo ?? $section->nombre }}</h1>
         <p class="text-sm text-muted-foreground mt-1">{{ $section->grade?->nombre }} {{ $section->nombre }} · Gestión {{ $section->gestion?->nombre }}</p>
     </div>
     <form method="GET" class="flex items-center gap-2">

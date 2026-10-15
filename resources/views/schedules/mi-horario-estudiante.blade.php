@@ -10,7 +10,7 @@
         <div>
             <h1 class="text-xl font-bold text-foreground">Mi Horario</h1>
             @if($section)
-                <p class="text-sm text-muted-foreground">{{ $section->nombre }} - {{ $section->aula ?? 's/a' }}</p>
+                <p class="text-sm text-muted-foreground">{{ $section->codigo ?? $section->nombre }} - {{ $section->aula ?? 's/a' }}</p>
             @endif
         </div>
     </div>
@@ -60,7 +60,6 @@
 <script>
     (function () {
         var tabs = document.querySelectorAll('[data-alu-tab]');
-        if (!tabs.length) return;
         var panels = document.querySelectorAll('[data-alu-panel]');
         function activar(idx) {
             tabs.forEach(function (t) {

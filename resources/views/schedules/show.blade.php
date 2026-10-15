@@ -199,7 +199,6 @@
         (function () {
             var tabs = document.querySelectorAll('[data-par-tab]');
             var panels = document.querySelectorAll('[data-par-panel]');
-            if (!tabs.length) return;
             function activar(idx) {
                 tabs.forEach(function (t) {
                     var on = t.getAttribute('data-par-tab') === String(idx);
