@@ -138,7 +138,22 @@ class ScheduleController extends Controller
             }
         }
 
-        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel'));
+        // Pestañas del paralelo: tarde (turno del nivel) + "Secundaria Mañana".
+        $gruposParalelo = [];
+        if ($nivelSeccion === 'SECUNDARIA') {
+            $tarde = $schedules->reject(fn ($s) => $this->esManana($s))->values();
+            $manana = $schedules->filter(fn ($s) => $this->esManana($s))->values();
+            if ($tarde->isNotEmpty()) {
+                $gruposParalelo[] = $this->construirGrupo($tarde, 'SECUNDARIA', 'Horario de la tarde', 'secundaria');
+            }
+            if ($manana->isNotEmpty()) {
+                $gruposParalelo[] = $this->construirGrupo($manana, 'PRIMARIA', 'Secundaria Mañana', 'secundaria');
+            }
+        } elseif ($schedules->isNotEmpty()) {
+            $gruposParalelo[] = $this->construirGrupo($schedules, $nivelSeccion ?? 'PRIMARIA', 'Horario semanal', 'primaria');
+        }
+
+        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel', 'gruposParalelo'));
     }
 
     /**
@@ -420,18 +435,33 @@ class ScheduleController extends Controller
             ->orderByRaw("CASE dia WHEN 'LUNES' THEN 1 WHEN 'MARTES' THEN 2 WHEN 'MIERCOLES' THEN 3 WHEN 'JUEVES' THEN 4 WHEN 'VIERNES' THEN 5 WHEN 'SABADO' THEN 6 END")
             ->get();
 
+        $section->load(['grade.level', 'gestion']);
+        $nivelSec = $this->nivelDeSection($section);
+
+        // Tabs: horario normal (turno del nivel) + "Mi horario mañana" si la
+        // secundaria tiene clases por la mañana.
+        $grupos = [];
+        if ($nivelSec === 'SECUNDARIA') {
+            $tarde = $schedules->reject(fn ($s) => $this->esManana($s))->values();
+            $manana = $schedules->filter(fn ($s) => $this->esManana($s))->values();
+            if ($tarde->isNotEmpty()) {
+                $grupos[] = $this->construirGrupo($tarde, 'SECUNDARIA', 'Mi Horario', 'secundaria');
+            }
+            if ($manana->isNotEmpty()) {
+                $grupos[] = $this->construirGrupo($manana, 'PRIMARIA', 'Mi horario mañana', 'primaria');
+            }
+        } elseif ($schedules->isNotEmpty()) {
+            $grupos[] = $this->construirGrupo($schedules, $nivelSec ?? 'PRIMARIA', 'Mi Horario', $nivelSec === 'INICIAL' ? 'inicial' : 'primaria');
+        }
+
         $horas = $schedules->unique(fn ($s) => $s->hora_inicio->format('H:i').'-'.$s->hora_fin->format('H:i'))
             ->values()
             ->sortBy(fn ($s) => $s->hora_inicio)
             ->values();
-
         $tabla = $this->tablaSemanal($schedules);
-
-        // Grilla según el nivel del paralelo (secundaria en la tarde).
-        $section->load(['grade.level', 'gestion']);
         $bloquesDia = $this->bloquesDiaNivel($section, $schedules);
 
-        return view($vista, array_merge($extra, compact('section', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia')));
+        return view($vista, array_merge($extra, compact('section', 'dias', 'horas', 'tabla', 'schedules', 'bloquesDia', 'grupos')));
     }
 
     /**
@@ -469,9 +499,9 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Tablas de CLASES por nivel (Inicial, Primaria, Secundaria por separado).
-     * Cada tabla trae la grilla COMPLETA de periodos de los niveles donde el
-     * docente tiene bloques; solo se marcan sus bloques.
+     * Tablas de CLASES por nivel (Inicial, Primaria, Secundaria). La secundaria
+     * se separa en turno: tarde ("Nivel Secundaria") y mañana ("Secundaria Mañana",
+     * con la grilla de Primaria porque por la mañana rige ese horario).
      */
     private function tablasPorGrupo($schedules): array
     {
@@ -483,8 +513,6 @@ class ScheduleController extends Controller
 
         $clases = $schedules->where('tipo', 'CLASE')->values();
 
-        // Dos pasadas: primero niveles firmes, luego los ambiguos se resuelven
-        // prefiriendo un nivel que el docente ya ocupa.
         $asignado = [];
         foreach ($clases as $s) {
             $asignado[$s->id] = $this->nivelDeBloque($s);
@@ -497,46 +525,68 @@ class ScheduleController extends Controller
         }
 
         $grupos = [];
-
         foreach ($defs as $nivel => $def) {
             $enNivel = $clases->filter(fn ($s) => ($asignado[$s->id] ?? null) === $nivel)->values();
             if ($enNivel->isEmpty()) {
                 continue;
             }
-
-            $filas = collect();
-            foreach (Schedule::PERIODOS_NIVEL[$nivel] as [$ini, $fin]) {
-                $filas->push(['inicio' => $ini, 'fin' => $fin]);
-            }
-            // Franjas propias fuera del estándar (ej. salida anticipada) también se muestran
-            foreach ($enNivel as $s) {
-                $clave = $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i');
-                if (! $filas->contains(fn ($f) => $f['inicio'] . '-' . $f['fin'] === $clave)) {
-                    $filas->push(['inicio' => $s->hora_inicio->format('H:i'), 'fin' => $s->hora_fin->format('H:i')]);
+            if ($nivel === 'SECUNDARIA') {
+                $tarde = $enNivel->reject(fn ($s) => $this->esManana($s))->values();
+                $manana = $enNivel->filter(fn ($s) => $this->esManana($s))->values();
+                if ($tarde->isNotEmpty()) {
+                    $grupos[] = $this->construirGrupo($tarde, 'SECUNDARIA', 'Nivel Secundaria', 'secundaria');
                 }
-            }
-            $filas = $filas->sortBy('inicio')->values();
-
-            // Recesos = huecos entre periodos consecutivos del nivel
-            $recesos = collect();
-            foreach (Schedule::PERIODOS_NIVEL[$nivel] as $i => [$pi, $pf]) {
-                $sig = Schedule::PERIODOS_NIVEL[$nivel][$i + 1] ?? null;
-                if ($sig && $pf < $sig[0]) {
-                    $recesos->push(['inicio' => $pf, 'fin' => $sig[0]]);
+                if ($manana->isNotEmpty()) {
+                    $grupos[] = $this->construirGrupo($manana, 'PRIMARIA', 'Secundaria Mañana', 'secundaria');
                 }
+            } else {
+                $grupos[] = $this->construirGrupo($enNivel, $nivel, $def['titulo'], $def['accent']);
             }
-            $recesos = $recesos->unique(fn ($r) => $r['inicio'] . '-' . $r['fin'])->sortBy('inicio')->values();
-
-            $tabla = [];
-            foreach (['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as $dia) {
-                $tabla[$dia] = $enNivel->where('dia', $dia)
-                    ->groupBy(fn ($s) => $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i'));
-            }
-
-            $grupos[] = ['titulo' => $def['titulo'], 'accent' => $def['accent'], 'filas' => $filas, 'recesos' => $recesos, 'tabla' => $tabla];
         }
 
         return $grupos;
+    }
+
+    /** ¿El bloque cae en el turno de la mañana? */
+    private function esManana($s): bool
+    {
+        return $s->hora_fin->format('H:i') <= '13:00';
+    }
+
+    /**
+     * Arma un grupo (grilla + recesos + tabla) para un conjunto de bloques,
+     * usando como filas base los periodos oficiales de $nivelGrid.
+     */
+    private function construirGrupo($bloques, string $nivelGrid, string $titulo, string $accent): array
+    {
+        $filas = collect();
+        foreach (Schedule::PERIODOS_NIVEL[$nivelGrid] ?? [] as [$ini, $fin]) {
+            $filas->push(['inicio' => $ini, 'fin' => $fin]);
+        }
+        foreach ($bloques as $s) {
+            $clave = $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i');
+            if (! $filas->contains(fn ($f) => $f['inicio'] . '-' . $f['fin'] === $clave)) {
+                $filas->push(['inicio' => $s->hora_inicio->format('H:i'), 'fin' => $s->hora_fin->format('H:i')]);
+            }
+        }
+        $filas = $filas->sortBy('inicio')->values();
+
+        $recesos = collect();
+        foreach (Schedule::PERIODOS_NIVEL[$nivelGrid] ?? [] as $i => [$pi, $pf]) {
+            $sig = Schedule::PERIODOS_NIVEL[$nivelGrid][$i + 1] ?? null;
+            if ($sig && $pf < $sig[0]) {
+                $recesos->push(['inicio' => $pf, 'fin' => $sig[0]]);
+            }
+        }
+        $recesos = $recesos->unique(fn ($r) => $r['inicio'] . '-' . $r['fin'])->sortBy('inicio')->values();
+
+        $tabla = [];
+        foreach (['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as $dia) {
+            $tabla[$dia] = $bloques->where('dia', $dia)
+                ->groupBy(fn ($s) => $s->hora_inicio->format('H:i') . '-' . $s->hora_fin->format('H:i'));
+        }
+
+        return ['titulo' => $titulo, 'accent' => $accent, 'filas' => $filas, 'recesos' => $recesos, 'tabla' => $tabla];
     }
 
     private function nivelDeBloque($s, array $nivelesDocente = []): ?string

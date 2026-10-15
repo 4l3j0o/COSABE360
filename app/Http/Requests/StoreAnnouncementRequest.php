@@ -35,6 +35,8 @@ class StoreAnnouncementRequest extends FormRequest
             'contenido' => ['required', 'string'],
             'fecha_publicacion' => ['nullable', 'date'],
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO'])],
+            'destacado' => ['sometimes', 'boolean'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
             'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
             'section_id' => ['nullable', 'required_if:tipo_destinatario,CURSO_ESPECIFICO', 'integer', 'exists:sections,id'],
             'level_id' => ['nullable', 'required_if:tipo_destinatario,NIVEL_DOCENTES', 'integer', 'exists:levels,id'],
@@ -52,6 +54,9 @@ class StoreAnnouncementRequest extends FormRequest
             'tipo_destinatario.in' => 'Destinatario no válido.',
             'section_id.required_if' => 'Debe seleccionar un curso cuando el destinatario es curso específico.',
             'level_id.required_if' => 'Debe seleccionar un nivel cuando el destinatario es docentes de un nivel.',
+            'imagen.image' => 'El archivo debe ser una imagen.',
+            'imagen.mimes' => 'La imagen debe ser JPG, PNG, GIF o WEBP.',
+            'imagen.max' => 'La imagen no debe pesar más de 2MB.',
         ];
     }
 }

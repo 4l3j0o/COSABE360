@@ -25,3 +25,9 @@ Thumbs.db
 
 # HU-61: credenciales Google fuera del repo
 Docs/priv_google.json
+
+# Datos con PII (solo local, no subir a git)
+Docs/Inscripciones-2026.xlsx
+
+# Archivos temporales de Office
+~$*

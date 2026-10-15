@@ -102,6 +102,52 @@ class RudeTest extends TestCase
         $response->assertSee('Código RUDE');
     }
 
+    public function test_idiomas_uso_frecuente_con_casillas(): void
+    {
+        $user = $this->secretariaUser();
+        $est = $this->crearEstudiante();
+        $this->actingAs($user);
+
+        // El formulario ofrece casillas (no multiselect) para 4.1.2
+        $response = $this->get(route('rude.form', $est));
+        $response->assertStatus(200);
+        $response->assertSee('4.1.2 Idioma(s) de uso frecuente');
+        $response->assertSee('type="checkbox" name="idiomas_uso_frecuente[]"', false);
+        $response->assertDontSee('name="idiomas_uso_frecuente[]" multiple', false);
+
+        // Guardar dos idiomas marcados
+        $response = $this->put(route('rude.update', $est), array_merge($this->basePayload(), [
+            'numero_documento' => '1234567',
+            'idiomas_uso_frecuente' => ['Castellano', 'Quechua'],
+        ]));
+        $response->assertSessionHasNoErrors();
+
+        $rude = $est->fresh()->rudeRecord;
+        $this->assertEquals(['Castellano', 'Quechua'], $rude->idiomas_uso_frecuente);
+
+        // El formulario los muestra marcados
+        $response = $this->get(route('rude.form', $est));
+        $response->assertSee('value="Castellano" checked', false);
+        $response->assertSee('value="Quechua" checked', false);
+    }
+
+    public function test_seccion_ii_ordenada_ascendente(): void
+    {
+        $user = $this->secretariaUser();
+        $est = $this->crearEstudiante();
+        $this->actingAs($user);
+
+        $html = $this->get(route('rude.form', $est))->assertOk()->getContent();
+        $orden = ['2.1 Apellido', '2.2 Lugar', '2.3 Oficialía', '2.4 Fecha', '2.5 Tipo Documento', '2.5 CI', '2.5 Complemento', '2.5.1 Solo extranjeros', '2.5.2 Código', '2.7 Sexo', '2.8 Discapacidad', '2.9 N.º Registro'];
+        $pos = -1;
+        foreach ($orden as $etiqueta) {
+            $p = strpos($html, $etiqueta);
+            $this->assertNotFalse($p, "Falta {$etiqueta}");
+            $this->assertGreaterThan($pos, $p, "{$etiqueta} fuera de orden");
+            $pos = $p;
+        }
+    }
+
     public function test_valida_CI_7_8_digitos(): void
     {
         $user = $this->secretariaUser();

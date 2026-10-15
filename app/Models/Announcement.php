@@ -17,12 +17,15 @@ class Announcement extends Model
         'author_id',
         'fecha_publicacion',
         'estado',
+        'destacado',
+        'imagen_path',
     ];
 
     protected function casts(): array
     {
         return [
             'fecha_publicacion' => 'datetime',
+            'destacado' => 'boolean',
         ];
     }
 

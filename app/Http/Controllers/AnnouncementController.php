@@ -57,6 +57,8 @@ class AnnouncementController extends Controller
             'author_id' => auth()->id(),
             'fecha_publicacion' => $fecha,
             'estado' => $estado,
+            'destacado' => $validated['destacado'] ?? false,
+            'imagen_path' => $request->hasFile('imagen') ? $this->guardarImagenWebp($request->file('imagen')) : null,
         ]);
 
         $announcement->recipients()->create([
@@ -70,7 +72,7 @@ class AnnouncementController extends Controller
             return (new AnnouncementResource($announcement->load(['author', 'recipients'])))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('announcements.index')->with('success', 'Comunicado creado correctamente.');
+        return $this->redirectModulo($request, 'Comunicado creado correctamente.');
     }
 
     public function show(Announcement $announcement): AnnouncementResource
@@ -103,6 +105,15 @@ class AnnouncementController extends Controller
             if ($validated['estado'] === 'PUBLICADO' && ! $announcement->fecha_publicacion && empty($validated['fecha_publicacion'])) {
                 $data['fecha_publicacion'] = now();
             }
+        }
+        if (array_key_exists('destacado', $validated)) {
+            $data['destacado'] = $validated['destacado'];
+        }
+        if ($request->hasFile('imagen')) {
+            if ($announcement->imagen_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($announcement->imagen_path);
+            }
+            $data['imagen_path'] = $this->guardarImagenWebp($request->file('imagen'));
         }
 
         if ($data !== []) {
@@ -138,7 +149,7 @@ class AnnouncementController extends Controller
             return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
         }
 
-        return redirect()->route('announcements.index')->with('success', 'Comunicado actualizado correctamente.');
+        return $this->redirectModulo($request, 'Comunicado actualizado correctamente.');
     }
 
     public function destroy(Announcement $announcement): JsonResponse|RedirectResponse
@@ -147,13 +158,16 @@ class AnnouncementController extends Controller
             return $this->denegarAlcance(request(), 'Solo puedes eliminar tus propios comunicados.');
         }
 
+        if ($announcement->imagen_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($announcement->imagen_path);
+        }
         $announcement->delete();
 
         if (request()->expectsJson()) {
             return response()->json(['message' => 'Comunicado eliminado correctamente.']);
         }
 
-        return redirect()->route('announcements.index')->with('success', 'Comunicado eliminado correctamente.');
+        return $this->redirectModulo(request(), 'Comunicado eliminado correctamente.');
     }
 
     public function publicar(Announcement $announcement): JsonResponse|RedirectResponse
@@ -178,7 +192,7 @@ class AnnouncementController extends Controller
             return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
         }
 
-        return redirect()->route('announcements.index')->with('success', 'Comunicado publicado correctamente.');
+        return $this->redirectModulo(request(), 'Comunicado publicado correctamente.');
     }
 
     public function archivar(Announcement $announcement): JsonResponse|RedirectResponse
@@ -193,7 +207,24 @@ class AnnouncementController extends Controller
             return new AnnouncementResource($announcement->fresh()->load(['author', 'recipients']));
         }
 
-        return redirect()->route('announcements.index')->with('success', 'Comunicado archivado correctamente.');
+        return $this->redirectModulo(request(), 'Comunicado archivado correctamente.');
+    }
+
+    /**
+     * Vuelve al módulo conservando pestaña/filtros si vienen en el
+     * formulario (ver layouts._filtros-actuales); si no, al index sin
+     * pestaña (comportamiento previo).
+     */
+    private function redirectModulo(Request $request, string $mensaje): RedirectResponse
+    {
+        $tab = $request->input('_f.tab');
+        if ($tab !== null && ! in_array($tab, ['recibidos', 'enviados'], true)) {
+            $f = $request->input('_f', []);
+            $f['tab'] = null;
+            $request->merge(['_f' => $f]);
+        }
+
+        return $this->deVuelta('announcements.index', ['tab', 'search', 'estado', 'page'], $mensaje);
     }
 
     // Stubs para compatibilidad con rutas develop (HU30 create/edit y HU31 bandeja) — evita 500 si se accede
@@ -311,6 +342,38 @@ class AnnouncementController extends Controller
             return response()->json(['message' => 'Marcado como leído']);
         }
         return back()->with('success', 'Marcado como leído');
+    }
+
+    /**
+     * Guarda la imagen del comunicado convertida a .webp (máx 1600px, calidad 80).
+     * Retorna la ruta relativa en el disco public.
+     */
+    private function guardarImagenWebp($file): string
+    {
+        $origen = imagecreatefromstring((string) file_get_contents($file->getRealPath()));
+        $ancho = imagesx($origen);
+        $alto = imagesy($origen);
+
+        $max = 1600;
+        if (max($ancho, $alto) > $max) {
+            $factor = $max / max($ancho, $alto);
+            $nueva = imagecreatetruecolor((int) round($ancho * $factor), (int) round($alto * $factor));
+            imagealphablending($nueva, false);
+            imagesavealpha($nueva, true);
+            imagecopyresampled($nueva, $origen, 0, 0, 0, 0, imagesx($nueva), imagesy($nueva), $ancho, $alto);
+            imagedestroy($origen);
+            $origen = $nueva;
+        }
+
+        $nombre = 'com_' . \Illuminate\Support\Str::uuid() . '.webp';
+        $tmp = tempnam(sys_get_temp_dir(), 'com');
+        imagewebp($origen, $tmp, 80);
+        imagedestroy($origen);
+
+        \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('comunicados', new \Illuminate\Http\File($tmp), $nombre);
+        @unlink($tmp);
+
+        return 'comunicados/' . $nombre;
     }
 
     /** Respuesta uniforme cuando el alcance no está permitido (web o JSON). */

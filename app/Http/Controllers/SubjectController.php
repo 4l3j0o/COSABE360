@@ -59,7 +59,7 @@ class SubjectController extends Controller
             return (new SubjectResource($subject->fresh()->load('level')))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('subjects.index')->with('success', 'Materia creada correctamente.');
+        return $this->deVuelta('subjects.index', ['level_id', 'estado', 'page'], 'Materia creada correctamente.');
     }
 
     public function show(Subject $subject): SubjectResource|View
@@ -97,7 +97,7 @@ class SubjectController extends Controller
             return new SubjectResource($subject->fresh()->load('level'));
         }
 
-        return redirect()->route('subjects.index')->with('success', 'Materia actualizada correctamente.');
+        return $this->deVuelta('subjects.index', ['level_id', 'estado', 'page'], 'Materia actualizada correctamente.');
     }
 
     public function destroy(Subject $subject): JsonResponse|RedirectResponse
@@ -129,7 +129,7 @@ class SubjectController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('subjects.index')->with('error', 'No se puede eliminar la materia porque tiene '.implode(' y ', $bloqueadoPor).'.');
+            return $this->deVuelta('subjects.index', ['level_id', 'estado', 'page'], 'No se puede eliminar la materia porque tiene '.implode(' y ', $bloqueadoPor).'.', 'error');
         }
 
         // Borrado lógico: se marca como ELIMINADO en lugar de borrar físicamente.
@@ -139,6 +139,6 @@ class SubjectController extends Controller
             return response()->json(['message' => 'Materia eliminada correctamente.']);
         }
 
-        return redirect()->route('subjects.index')->with('success', 'Materia eliminada correctamente.');
+        return $this->deVuelta('subjects.index', ['level_id', 'estado', 'page'], 'Materia eliminada correctamente.');
     }
 }

@@ -17,7 +17,6 @@ use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteCentralController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RudeController;
-use App\Http\Controllers\SectionSubjectController;
 use App\Http\Controllers\CierreGestionController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\EnrollmentController;
@@ -95,10 +94,14 @@ Route::get('/dashboard', function () {
         'pagosEnEspera' => \App\Models\MonthlyPayment::where('estado', 'ESPERA')->count(),
         'documentosPendientes' => \App\Models\StudentDocument::where('estado', 'PENDIENTE')->count(),
         'periodoActivo' => \App\Models\AcademicYear::where('estado', 'ACTIVA')->first(),
-        'misNoLeidos' => \App\Models\AnnouncementRead::where('user_id', auth()->id())->where('leido', false)->count(),
     ];
 
     $user = auth()->user();
+
+    // Comunicados: sin leer reales + destacados sin leer (pantallazo)
+    $alcance = app(\App\Services\ComunicadoAlcanceService::class);
+    $datos['misNoLeidos'] = $alcance->noLeidosPara($user);
+    $datos['comunicadosDestacados'] = $alcance->destacadosPara($user);
 
     // Para el rol Docente: datos reales de cursos, evaluaciones y horario
     if ($rol === 'Docente') {

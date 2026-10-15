@@ -223,8 +223,8 @@ class StudentController extends Controller
             'email_estudiante'  => 'nullable|email|max:150',
             'familiares'         => 'nullable|array|max:10',
             'familiares.*.id_existente' => 'nullable|integer|exists:parent_guardians,id',
-            'familiares.*.nombres'      => 'nullable|string|max:150',
-            'familiares.*.apellidos'    => 'nullable|string|max:150',
+            'familiares.*.nombres'      => 'nullable|string|max:150|regex:/^[\p{L}\s.\'-]+$/u',
+            'familiares.*.apellidos'    => 'nullable|string|max:150|regex:/^[\p{L}\s.\'-]+$/u',
             'familiares.*.tipo_doc'     => 'nullable|in:CI,PASAPORTE,OTRO',
             'familiares.*.num_doc'      => 'nullable|string|max:20',
             'familiares.*.complemento'  => 'nullable|string|max:5',
@@ -279,7 +279,7 @@ class StudentController extends Controller
 
             DB::commit();
 
-            return redirect()->route('students.index')->with('mensaje', 'Estudiante registrado correctamente.');
+            return $this->deVuelta('students.index', ['buscar', 'estado', 'page'], 'Estudiante registrado correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -451,7 +451,7 @@ class StudentController extends Controller
     public function destroy(Student $student)
     {
         $student->update(['estado' => 'ELIMINADO']);
-        return redirect()->route('students.index')->with('mensaje', 'Estudiante eliminado correctamente.');
+        return $this->deVuelta('students.index', ['buscar', 'estado', 'page'], 'Estudiante eliminado correctamente.');
     }
 
     public function eliminados()

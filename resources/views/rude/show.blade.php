@@ -47,14 +47,16 @@
             <h3 class="font-semibold text-foreground text-sm mb-3">Sección II - Estudiante</h3>
             <dl class="space-y-2 text-sm">
                 <div class="flex justify-between"><dt class="text-muted-foreground">Código RUDE</dt><dd class="font-mono font-bold">{{ $rude->codigo_rude ?? 'POR GENERAR (SIE)' }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Nombres / Apellidos</dt><dd>{{ $student->nombres }} {{ $student->apellidos }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Lugar Nac.</dt><dd>{{ $d($student->lugar_nacimiento) }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Fecha Nac.</dt><dd>{{ $student->fecha_nacimiento?->format('d/m/Y') }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Sexo</dt><dd>{{ $d($student->sexo) }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Documento</dt><dd class="font-mono">{{ $student->numero_documento }} {{ $student->complemento }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Discapacidad</dt><dd>{{ $d($student->discapacidad) }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">N.º Registro Discap. IBC</dt><dd>{{ $d($rude?->nro_registro_discapacidad) }}</dd></div>
-                <div class="flex justify-between"><dt class="text-muted-foreground">Certificado (O/L/P/F/A)</dt><dd class="font-mono text-xs">{{ $d(trim(($rude?->oficialia_nacimiento ?? '') . ' / ' . ($rude?->libro_nacimiento ?? '') . ' / ' . ($rude?->partida_nacimiento ?? '') . ' / ' . ($rude?->folio_nacimiento ?? '') . ' / ' . ($rude?->anio_nacimiento ?? ''))) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.1 Apellido(s) y Nombre(s)</dt><dd>{{ $student->apellidos }} {{ $student->nombres }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.2 Lugar de nacimiento</dt><dd>{{ $d($student->lugar_nacimiento) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.3 Certificado (O/L/P/F/A)</dt><dd class="font-mono text-xs">{{ $d(trim(($rude?->oficialia_nacimiento ?? '') . ' / ' . ($rude?->libro_nacimiento ?? '') . ' / ' . ($rude?->partida_nacimiento ?? '') . ' / ' . ($rude?->folio_nacimiento ?? '') . ' / ' . ($rude?->anio_nacimiento ?? ''))) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.4 Fecha de nacimiento</dt><dd>{{ $student->fecha_nacimiento?->format('d/m/Y') }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.5 Documento</dt><dd class="font-mono">{{ trim(($student->tipo_documento ?? '') . ' ' . $student->numero_documento . ' ' . ($student->complemento ?? '')) ?: '—' }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.5.1 Doc. extranjero</dt><dd>{{ $d($rude?->tipo_doc_extranjero) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.5.2 Código doc. extranjero</dt><dd>{{ $d($rude?->codigo_doc_extranjero) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.7 Sexo</dt><dd>{{ $student->sexo === 'M' ? 'Masculino' : ($student->sexo === 'F' ? 'Femenino' : '—') }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.8 Discapacidad</dt><dd>{{ $d($student->discapacidad) }}</dd></div>
+                <div class="flex justify-between"><dt class="text-muted-foreground">2.9 N.º Registro Discap. IBC</dt><dd>{{ $d($rude?->nro_registro_discapacidad) }}</dd></div>
             </dl>
         </div>
 

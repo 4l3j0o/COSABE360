@@ -71,7 +71,7 @@ class GradeController extends Controller
             return response()->json(['data' => $grade], 201);
         }
 
-        return redirect()->route('grados.index')->with('success', 'Grado creado correctamente.');
+        return $this->deVuelta('grados.index', ['level_id', 'estado', 'page'], 'Grado creado correctamente.');
     }
 
     public function show(Grade $grade)
@@ -105,7 +105,7 @@ class GradeController extends Controller
             return response()->json(['data' => $grade->fresh('level')]);
         }
 
-        return redirect()->route('grados.index')->with('success', 'Grado actualizado correctamente.');
+        return $this->deVuelta('grados.index', ['level_id', 'estado', 'page'], 'Grado actualizado correctamente.');
     }
 
     public function destroy(Grade $grade)
@@ -135,7 +135,7 @@ class GradeController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('grados.index')->with('error', 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.');
+            return $this->deVuelta('grados.index', ['level_id', 'estado', 'page'], 'No se puede eliminar el grado porque tiene '.implode(' y ', $bloqueadoPor).'.', 'error');
         }
 
         $grade->update(['estado' => 'ELIMINADO']);
@@ -144,6 +144,6 @@ class GradeController extends Controller
             return response()->json(['message' => 'Grado eliminado correctamente.']);
         }
 
-        return redirect()->route('grados.index')->with('success', 'Grado eliminado correctamente.');
+        return $this->deVuelta('grados.index', ['level_id', 'estado', 'page'], 'Grado eliminado correctamente.');
     }
 }

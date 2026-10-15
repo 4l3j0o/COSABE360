@@ -64,6 +64,7 @@
                         <button onclick='abrirModal(@json($t))' class="px-2 py-1 border border-input rounded-lg text-xs hover:bg-accent cursor-pointer">Editar</button>
                         <form method="POST" action="{{ route('discount-types.destroy', $t) }}" onsubmit="return confirm('¿Eliminar este tipo de descuento?')">
                             @csrf @method('DELETE')
+                            @include('layouts._filtros-actuales')
                             <button type="submit" class="px-2 py-1 border border-error/30 text-error rounded-lg text-xs hover:bg-error/10 cursor-pointer">Eliminar</button>
                         </form>
                     </td>
@@ -84,6 +85,7 @@
             </div>
             <form id="modal-form" method="POST" action="{{ route('discount-types.store') }}" style="padding:1.5rem;">
                 @csrf
+                @include('layouts._filtros-actuales')
                 <input type="hidden" name="_method" id="campo-method" value="POST">
                 <div class="space-y-4">
                     <div>

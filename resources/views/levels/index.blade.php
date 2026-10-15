@@ -84,6 +84,7 @@
                                         </button>
                                         <form method="POST" action="{{ route('levels.destroy', $level) }}" onsubmit="return confirm('¿Estás seguro de eliminar este nivel?')" class="inline">
                                             @csrf @method('DELETE')
+                                            @include('layouts._filtros-actuales')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
@@ -112,6 +113,7 @@
                 </div>
                 <form method="POST" action="{{ route('levels.store') }}" style="padding:1.5rem;">
                     @csrf
+                    @include('layouts._filtros-actuales')
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Nivel</h3>
                         <div class="grid grid-cols-1 gap-4">
@@ -153,6 +155,7 @@
                 </div>
                 <form id="form-edit" method="POST" style="padding:1.5rem;">
                     @csrf @method('PUT')
+                    @include('layouts._filtros-actuales')
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Nivel</h3>
                         <div class="grid grid-cols-1 gap-4">

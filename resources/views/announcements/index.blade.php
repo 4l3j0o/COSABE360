@@ -78,12 +78,18 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex items-start justify-between gap-3">
                             <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors text-sm leading-snug">{{ $announcement->titulo }}</h3>
-                            @if($announcement->es_nuevo)
+                            @if($announcement->destacado)
+                                <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-warning/15 text-warning">Importante</span>
+                            @elseif($announcement->es_nuevo)
                                 <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-primary text-primary-foreground">
                                     <span class="w-1.5 h-1.5 rounded-full bg-white"></span> Nuevo
                                 </span>
                             @endif
                         </div>
+
+                        @if($announcement->imagen_path)
+                            <img src="{{ asset('storage/' . $announcement->imagen_path) }}" alt="" class="w-full h-28 object-cover rounded-lg mt-2 border border-border">
+                        @endif
 
                         @if($announcement->contenido)
                             <p class="text-xs text-muted-foreground line-clamp-2 mt-1 mb-3">{{ \Illuminate\Support\Str::limit(strip_tags($announcement->contenido), 120) }}</p>
@@ -176,7 +182,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
                                         <button type="button"
-                                            data-announcement='{!! json_encode(['id' => $announcement->id, 'titulo' => $announcement->titulo, 'contenido' => $announcement->contenido, 'estado' => $announcement->estado, 'fecha' => $announcement->fecha_publicacion?->format('Y-m-d\TH:i')], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
+                                            data-announcement='{!! json_encode(['id' => $announcement->id, 'titulo' => $announcement->titulo, 'contenido' => $announcement->contenido, 'estado' => $announcement->estado, 'destacado' => (bool) $announcement->destacado, 'imagen_url' => $announcement->imagen_path ? asset('storage/' . $announcement->imagen_path) : null, 'fecha' => $announcement->fecha_publicacion?->format('Y-m-d\TH:i')], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
                                             data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'section_id' => $recipient?->section_id, 'level_id' => $recipient?->level_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
                                             onclick="editarComunicado(this)" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -184,6 +190,7 @@
                                         @if($announcement->estado !== 'PUBLICADO')
                                         <form method="POST" action="{{ route('announcements.publicar', $announcement) }}" onsubmit="return confirm('¿Publicar este comunicado?')" class="inline">
                                             @csrf @method('PATCH')
+                                            @include('layouts._filtros-actuales')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-success/10 transition-colors text-muted-foreground hover:text-success cursor-pointer" title="Publicar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.5-4.5a2.5 2.5 0 013.5 3.5L13 19l-4 1 1-4 5-6z"/></svg>
                                             </button>
@@ -192,6 +199,7 @@
                                         @if($announcement->estado === 'PUBLICADO')
                                         <form method="POST" action="{{ route('announcements.archivar', $announcement) }}" onsubmit="return confirm('¿Archivar este comunicado?')" class="inline">
                                             @csrf @method('PATCH')
+                                            @include('layouts._filtros-actuales')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-warning/10 transition-colors text-muted-foreground hover:text-warning cursor-pointer" title="Archivar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 012-2h10a2 2 0 012 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
                                             </button>
@@ -199,6 +207,7 @@
                                         @endif
                                         <form method="POST" action="{{ route('announcements.destroy', $announcement) }}" onsubmit="return confirm('¿Eliminar este comunicado?')" class="inline">
                                             @csrf @method('DELETE')
+                                            @include('layouts._filtros-actuales')
                                             <button type="submit" class="p-1.5 rounded-lg hover:bg-error/10 transition-colors text-muted-foreground hover:text-error cursor-pointer" title="Eliminar">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
@@ -230,8 +239,9 @@
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('announcements.store') }}" style="padding:1.5rem;">
+                <form method="POST" action="{{ route('announcements.store') }}" enctype="multipart/form-data" style="padding:1.5rem;">
                     @csrf
+                    @include('layouts._filtros-actuales')
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Comunicado</h3>
                         <div class="grid grid-cols-1 gap-4">
@@ -288,6 +298,17 @@
                                     <option value="PUBLICADO" {{ old('estado')==='PUBLICADO'?'selected':'' }}>Publicado</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Imagen <span class="normal-case font-normal text-muted-foreground">(JPG/PNG/GIF/WEBP hasta 2MB, se guarda en .webp)</span></label>
+                                <input type="file" name="imagen" accept="image/*" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                                @error('imagen') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="inline-flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                                    <input type="checkbox" name="destacado" value="1" {{ old('destacado') ? 'checked' : '' }} class="accent-primary">
+                                    <span class="font-medium">Destacado <span class="text-muted-foreground font-normal">— pantallazo al ingresar hasta marcar Entendido</span></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.75rem; padding-top:1rem; border-top:1px solid var(--border);">
@@ -309,8 +330,9 @@
                         <svg style="width:1.25rem; height:1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <form id="form-edit" method="POST" style="padding:1.5rem;">
+                <form id="form-edit" method="POST" enctype="multipart/form-data" style="padding:1.5rem;">
                     @csrf @method('PUT')
+                    @include('layouts._filtros-actuales')
                     <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05); margin-bottom:1.25rem;">
                         <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Datos del Comunicado</h3>
                         <div class="grid grid-cols-1 gap-4">
@@ -359,6 +381,17 @@
                                     <option value="PUBLICADO">Publicado</option>
                                     <option value="ARCHIVADO">Archivado</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Imagen <span class="normal-case font-normal text-muted-foreground">(reemplaza la actual, hasta 2MB)</span></label>
+                                <div id="edit-imagen-actual" class="mb-2"></div>
+                                <input type="file" name="imagen" accept="image/*" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            </div>
+                            <div>
+                                <label class="inline-flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                                    <input type="checkbox" name="destacado" id="edit-destacado" value="1" class="accent-primary">
+                                    <span class="font-medium">Destacado <span class="text-muted-foreground font-normal">— pantallazo al ingresar</span></span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -439,6 +472,16 @@
             document.getElementById('edit-level_id').value = rec.level_id || '';
             document.getElementById('edit-estado').value = ann.estado || 'BORRADOR';
             document.getElementById('edit-fecha').value = ann.fecha || '';
+            document.getElementById('edit-destacado').checked = !!ann.destacado;
+            var imgBox = document.getElementById('edit-imagen-actual');
+            imgBox.innerHTML = '';
+            if (ann.imagen_url) {
+                var img = document.createElement('img');
+                img.src = ann.imagen_url;
+                img.alt = '';
+                img.style.cssText = 'max-height:6rem;border-radius:0.5rem;border:1px solid var(--border);';
+                imgBox.appendChild(img);
+            }
             toggleSectionSelect('edit');
             openModal('modal-edit');
         }

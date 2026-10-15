@@ -249,9 +249,10 @@ class InscripcionController extends Controller
             'section_id' => ['required', 'exists:sections,id'],
             'tutor_principal' => ['required', 'in:padre,madre,tutor'],
             'reserva_id' => ['nullable', 'integer', 'exists:codigo_reservas,id'],
-            // Padre (opcional, pero si se llena nombres se exige apellidos + CI válido)
-            'padre_nombres' => ['nullable', 'string', 'max:150'],
-            'padre_apellidos' => ['nullable', 'string', 'max:150', 'required_with:padre_nombres'],
+            // Padre (opcional, pero si se llena nombres se exige apellidos + CI válido).
+            // Nombres/apellidos solo letras: evita cargar direcciones en esos campos.
+            'padre_nombres' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
+            'padre_apellidos' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u', 'required_with:padre_nombres'],
             'padre_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:padre_nombres'],
             'padre_complemento' => ['nullable', 'string', Rule::in(config('bolivia.complementos'))],
             'padre_telefono' => ['nullable', 'string', 'max:20'],
@@ -259,8 +260,8 @@ class InscripcionController extends Controller
             'padre_direccion' => ['nullable', 'string', 'max:255'],
             'padre_ocupacion' => ['nullable', 'string', 'max:100'],
             // Madre (igual que padre)
-            'madre_nombres' => ['nullable', 'string', 'max:150'],
-            'madre_apellidos' => ['nullable', 'string', 'max:150', 'required_with:madre_nombres'],
+            'madre_nombres' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
+            'madre_apellidos' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u', 'required_with:madre_nombres'],
             'madre_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:madre_nombres'],
             'madre_complemento' => ['nullable', 'string', Rule::in(config('bolivia.complementos'))],
             'madre_telefono' => ['nullable', 'string', 'max:20'],
@@ -269,8 +270,8 @@ class InscripcionController extends Controller
             'madre_ocupacion' => ['nullable', 'string', 'max:100'],
             // Tutor / apoderado: obligatorio solo si es el tutor principal
             // (se valida abajo según tutor_principal); el resto valida si se llena.
-            'tutor_nombres' => ['nullable', 'string', 'max:150'],
-            'tutor_apellidos' => ['nullable', 'string', 'max:150', 'required_with:tutor_nombres'],
+            'tutor_nombres' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u'],
+            'tutor_apellidos' => ['nullable', 'string', 'max:150', 'regex:/^[\p{L}\s.\'-]+$/u', 'required_with:tutor_nombres'],
             'tutor_num_doc' => ['nullable', 'string', 'regex:/^\d{7,8}$/', 'required_with:tutor_nombres'],
             'tutor_complemento' => ['nullable', 'string', Rule::in(config('bolivia.complementos'))],
             'tutor_telefono' => ['nullable', 'string', 'max:20'],
@@ -282,6 +283,12 @@ class InscripcionController extends Controller
             'padre_num_doc.regex' => 'El CI del padre debe tener 7 u 8 dígitos.',
             'madre_num_doc.regex' => 'El CI de la madre debe tener 7 u 8 dígitos.',
             'tutor_num_doc.regex' => 'El CI del tutor debe tener 7 u 8 dígitos.',
+            'padre_nombres.regex' => 'El nombre del padre solo debe contener letras.',
+            'padre_apellidos.regex' => 'El apellido del padre solo debe contener letras.',
+            'madre_nombres.regex' => 'El nombre de la madre solo debe contener letras.',
+            'madre_apellidos.regex' => 'El apellido de la madre solo debe contener letras.',
+            'tutor_nombres.regex' => 'El nombre del tutor solo debe contener letras.',
+            'tutor_apellidos.regex' => 'El apellido del tutor solo debe contener letras.',
         ]);
 
         // El grupo marcado como tutor principal debe estar completo

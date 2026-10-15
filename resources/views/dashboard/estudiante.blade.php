@@ -13,7 +13,7 @@
         $asistenciaPct = $asistenciaPct ?? null;
         $curso = $curso ?? null;
         $materias = $materias ?? 0;
-        $noLeidos = $misNoLeidos ?? 0;
+        $noLeidos = $misNoLeidos ?? app(\App\Services\ComunicadoAlcanceService::class)->noLeidosPara(auth()->user());
     @endphp
 
     <div class="bg-card border border-border rounded-xl p-6 mb-6">
@@ -35,6 +35,8 @@
             @endif
         </div>
     </div>
+
+    @include('dashboard.partials._splash-comunicados')
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="Promedio General" :value="$promedio ?? '--'" color="primary" />

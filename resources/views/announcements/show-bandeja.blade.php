@@ -33,6 +33,10 @@
 
         <div class="whitespace-pre-wrap text-[15px] text-foreground leading-relaxed">{!! $announcement->contenido !!}</div>
 
+        @if($announcement->imagen_path)
+            <img src="{{ asset('storage/' . $announcement->imagen_path) }}" alt="" class="w-full rounded-lg mt-4 border border-border">
+        @endif
+
         @if($announcement->es_nuevo)
             <form method="POST" action="{{ route('comunicados.bandeja.leido', $announcement) }}" class="mt-6 pt-5 border-t border-border">
                 @csrf @method('PATCH')

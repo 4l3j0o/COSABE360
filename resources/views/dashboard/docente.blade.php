@@ -13,7 +13,7 @@
         $misCursos = $misCursos ?? ($teacher ? \App\Models\SectionSubject::where('teacher_id', $teacher->id)->count() : 0);
         $miHorario = $miHorario ?? ($teacher ? \App\Models\Schedule::where('teacher_id', $teacher->id)->count() : 0);
         $misEvaluaciones = $misEvaluaciones ?? 0;
-        $misNoLeidos = $misNoLeidos ?? \App\Models\AnnouncementRead::where('user_id', $docUser->id)->where('leido', false)->count();
+        $misNoLeidos = $misNoLeidos ?? app(\App\Services\ComunicadoAlcanceService::class)->noLeidosPara($docUser);
     @endphp
     <div class="bg-card border border-border rounded-xl p-6 mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -32,6 +32,8 @@
             </a>
         </div>
     </div>
+
+    @include('dashboard.partials._splash-comunicados')
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <a href="{{ route('docente.cursos') }}">

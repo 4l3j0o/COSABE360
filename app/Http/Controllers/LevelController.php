@@ -44,7 +44,7 @@ class LevelController extends Controller
             return (new LevelResource($level->loadCount('grades')))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('levels.index')->with('success', 'Nivel creado correctamente.');
+        return $this->deVuelta('levels.index', ['estado', 'page'], 'Nivel creado correctamente.');
     }
 
     public function show(Level $level, Request $request): LevelResource|\Illuminate\Contracts\View\View
@@ -71,7 +71,7 @@ class LevelController extends Controller
             return new LevelResource($level->fresh()->loadCount('grades'));
         }
 
-        return redirect()->route('levels.index')->with('success', 'Nivel actualizado correctamente.');
+        return $this->deVuelta('levels.index', ['estado', 'page'], 'Nivel actualizado correctamente.');
     }
 
     public function destroy(Level $level, Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
@@ -82,7 +82,7 @@ class LevelController extends Controller
             if ($request->wantsJson() || $request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => $message], 409);
             }
-            return redirect()->route('levels.index')->with('error', $message);
+            return $this->deVuelta('levels.index', ['estado', 'page'], $message, 'error');
         }
 
         $level->update(['estado' => 'ELIMINADO']);
@@ -91,6 +91,6 @@ class LevelController extends Controller
             return response()->json(['message' => 'Nivel eliminado correctamente.']);
         }
 
-        return redirect()->route('levels.index')->with('success', 'Nivel eliminado correctamente.');
+        return $this->deVuelta('levels.index', ['estado', 'page'], 'Nivel eliminado correctamente.');
     }
 }

@@ -73,7 +73,7 @@ class SectionController extends Controller
             return (new SectionResource($section->fresh()->load(['grade', 'responsable'])))->response()->setStatusCode(201);
         }
 
-        return redirect()->route('sections.index')->with('success', 'Paralelo creado correctamente.');
+        return $this->deVuelta('sections.index', ['level_id', 'grade_id', 'estado', 'page'], 'Paralelo creado correctamente.');
     }
 
     public function show(Section $section)
@@ -93,7 +93,7 @@ class SectionController extends Controller
             return new SectionResource($section->fresh()->load(['grade', 'responsable']));
         }
 
-        return redirect()->route('sections.index')->with('success', 'Paralelo actualizado correctamente.');
+        return $this->deVuelta('sections.index', ['level_id', 'grade_id', 'estado', 'page'], 'Paralelo actualizado correctamente.');
     }
 
     public function toggle(Section $section)
@@ -103,7 +103,7 @@ class SectionController extends Controller
 
         $accion = $nuevo === 'ACTIVO' ? 'activado' : 'desactivado';
 
-        return redirect()->route('sections.index')->with('success', "Paralelo {$accion} correctamente.");
+        return $this->deVuelta('sections.index', ['level_id', 'grade_id', 'estado', 'page'], "Paralelo {$accion} correctamente.");
     }
 
     public function destroy(Section $section)
@@ -121,7 +121,7 @@ class SectionController extends Controller
                 ], 409);
             }
 
-            return redirect()->route('sections.index')->with('error', 'No se puede eliminar el paralelo porque tiene estudiantes matriculados.');
+            return $this->deVuelta('sections.index', ['level_id', 'grade_id', 'estado', 'page'], 'No se puede eliminar el paralelo porque tiene estudiantes matriculados.', 'error');
         }
 
         $section->update(['estado' => 'ELIMINADO']);
@@ -130,6 +130,6 @@ class SectionController extends Controller
             return response()->json(['message' => 'Paralelo eliminado correctamente.']);
         }
 
-        return redirect()->route('sections.index')->with('success', 'Paralelo eliminado correctamente.');
+        return $this->deVuelta('sections.index', ['level_id', 'grade_id', 'estado', 'page'], 'Paralelo eliminado correctamente.');
     }
 }

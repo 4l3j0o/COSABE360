@@ -154,6 +154,51 @@ class ComunicadoAlcanceService
         };
     }
 
+    /**
+     * Bandeja del usuario (publicados visibles para él), más recientes primero.
+     */
+    public function bandejaPara(User $user, ?int $limite = null): Collection
+    {
+        $todos = Announcement::publicados()
+            ->with(['author', 'recipients', 'author.rol'])
+            ->get()
+            ->filter(fn ($a) => $this->visiblePara($user, $a))
+            ->values();
+
+        return $limite !== null ? $todos->take($limite)->values() : $todos;
+    }
+
+    /**
+     * Destacados sin leer para el pantallazo al ingresar.
+     */
+    public function destacadosPara(User $user): Collection
+    {
+        $leidos = \App\Models\AnnouncementRead::where('user_id', $user->id)
+            ->where('leido', true)
+            ->pluck('announcement_id')
+            ->all();
+
+        return $this->bandejaPara($user)
+            ->filter(fn ($a) => $a->destacado && ! in_array($a->id, $leidos, true))
+            ->values();
+    }
+
+    /**
+     * Sin leer para la campana/stat: publicados visibles sin fila de
+     * lectura (o marcada no leída).
+     */
+    public function noLeidosPara(User $user): int
+    {
+        $leidos = \App\Models\AnnouncementRead::where('user_id', $user->id)
+            ->where('leido', true)
+            ->pluck('announcement_id')
+            ->all();
+
+        return $this->bandejaPara($user)
+            ->filter(fn ($a) => ! in_array($a->id, $leidos, true))
+            ->count();
+    }
+
     /** Marca es_nuevo en cada comunicado según lecturas del usuario. */
     public function marcarNovedad(User $user, iterable $announcements): void
     {
