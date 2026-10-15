@@ -181,7 +181,7 @@ class HorarioReal2026Seeder extends Seeder
             DB::table('schedules')->insert($chunk);
         }
 
-        $this->command->info("Horario cargado: {$stats['ok']} bloques, {$asignaciones} asignaciones corregidas.");
+        $this->command->info('Horario cargado: ' . count($filas) . " bloques (1 por periodo) desde {$stats['ok']} celdas del Excel; {$asignaciones} asignaciones corregidas.");
         foreach (['sin_seccion', 'sin_materia', 'sin_docente'] as $k) {
             if ($stats[$k]) {
                 $this->command->warn("{$k} (" . count($stats[$k]) . '): ' . implode(' | ', array_slice(array_unique($stats[$k]), 0, 15)));
