@@ -23,7 +23,7 @@
             <option value="">Seleccionar curso…</option>
             @foreach($sectionSubjects as $cs)
                 <option value="{{ $cs->id }}" {{ request('section_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
-                    {{ $cs->section->nombre }} - {{ $cs->subject->nombre }}
+                    {{ $cs->section->codigo ?? $cs->section->nombre }} - {{ $cs->subject->nombre }}
                 </option>
             @endforeach
         </select>

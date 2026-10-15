@@ -211,7 +211,7 @@
                                 <dl class="space-y-1.5 text-sm">
                                     <div class="flex justify-between">
                                         <dt class="text-muted-foreground">Curso</dt>
-                                        <dd class="text-foreground">{{ $matriculaPeriodo->section?->nombre ?? '—' }}</dd>
+                                        <dd class="text-foreground">{{ $matriculaPeriodo->section ? $matriculaPeriodo->section->codigoCorto().' · '.$matriculaPeriodo->section->grade?->nombre.' '.$matriculaPeriodo->section->nombre : '—' }}</dd>
                                     </div>
                                     <div class="flex justify-between">
                                         <dt class="text-muted-foreground">Fecha</dt>

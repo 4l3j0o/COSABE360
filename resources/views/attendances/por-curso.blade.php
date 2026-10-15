@@ -54,7 +54,7 @@
 
     <div class="bg-card border border-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border">
-            <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Asistencia de {{ $section->nombre }} — {{ $etiquetaMes }}</h2>
+            <h2 class="text-sm font-semibold text-foreground uppercase tracking-wider">Asistencia de {{ $section->codigo ?? $section->nombre }} — {{ $etiquetaMes }}</h2>
         </div>
 
         @if($fechas->isEmpty())
