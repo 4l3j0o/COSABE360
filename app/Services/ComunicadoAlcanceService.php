@@ -135,6 +135,11 @@ class ComunicadoAlcanceService
     /** ¿El comunicado publicado es visible para el usuario en su bandeja? */
     public function visiblePara(User $user, Announcement $announcement): bool
     {
+        // Quien lo envió no se lo "recibe" a sí mismo (aunque sea para "Todos").
+        if ((int) $announcement->author_id === (int) $user->id) {
+            return false;
+        }
+
         if ($user->esAdmin() || $user->hasRole('Director')) {
             return true;
         }
