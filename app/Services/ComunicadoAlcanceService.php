@@ -231,10 +231,7 @@ class ComunicadoAlcanceService
         }
 
         $porMateria = SectionSubject::where('teacher_id', $teacherId)->pluck('section_id');
-        $secciones = Section::where('teacher_id', $teacherId)->pluck('id');
-        $porTutoria = $secciones->isNotEmpty()
-            ? Section::whereIn('section_id', $secciones)->pluck('id')
-            : collect();
+        $porTutoria = Section::where('teacher_id', $teacherId)->pluck('id');
 
         return $porMateria->merge($porTutoria)->unique()->values();
     }
