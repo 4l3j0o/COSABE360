@@ -359,13 +359,12 @@ class EvaluationTemplateService
                 }
                 if ($nAct > 0) {
                     if ($conFormulas) {
-                        // HU-81: promedio con 2 decimales (las actividades son enteras).
-                        // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),2),"")
+                        // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),0),"")
                         // El rango cubre todas las actividades del criterio (los vacíos los ignora AVERAGE)
                         $rango = $this->colLetter($inicio).$filaDatos.':'.$this->colLetter($inicio + $nAct - 1).$filaDatos;
                         $sheetN->setCellValue(
                             $this->colLetter($promCols[$criterion->codigo]).$filaDatos,
-                            "=IFERROR(ROUND(AVERAGE($rango),2),\"\")"
+                            "=IFERROR(ROUND(AVERAGE($rango),0),\"\")"
                         );
                     } else {
                         $notaCrit = $service->notaCriterio($criterion, $student);
@@ -377,9 +376,9 @@ class EvaluationTemplateService
                 $col++; // pasa la columna de promedio
             }
             if ($conFormulas) {
-                // HU-81: total con 2 decimales. Fórmula total: =ROUND(SUM de los promedios,2)
+                // Fórmula total: =SUM de los promedios de los criterios
                 $refs = collect($criterios)->map(fn ($c) => $this->colLetter($promCols[$c->codigo]).$filaDatos)->toArray();
-                $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=ROUND(SUM('.implode(',', $refs).'),2)');
+                $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=SUM('.implode(',', $refs).')');
             } else {
                 $notaTrim = $service->notaTrimestre($plan, $student);
                 if ($notaTrim !== null) {

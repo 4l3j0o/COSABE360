@@ -166,9 +166,9 @@
                                         </td>
                                     @endforeach
                                 @endif
-                                <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ isset($fila[$criterion->codigo]) ? (int) round($fila[$criterion->codigo]) : '—' }}</td>
+                                <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ $fila[$criterion->codigo] ?? '—' }}</td>
                             @endforeach
-                            <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ isset($notaTrim) ? number_format($notaTrim, 2) : '—' }}</td>
+                            <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $notaTrim ?? '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

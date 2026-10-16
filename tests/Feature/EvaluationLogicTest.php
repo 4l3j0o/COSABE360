@@ -245,13 +245,13 @@ class EvaluationLogicTest extends TestCase
         ]);
     }
 
-    public function test_criterio_y_trimestre_con_dos_decimales(): void
+    public function test_criterio_y_trimestre_son_enteros(): void
     {
         ['cs' => $cs, 'userDoc' => $userDoc, 'estudiantes' => $est] = $this->setupCurso();
         $service = app(EvaluationService::class);
         $plan = $service->obtenerOCrearPlan($cs, 1);
 
-        $valores = ['SE' => [8, 9], 'SA' => [40], 'HA' => [35], 'AU' => [5]];
+        $valores = ['SE' => [7, 9], 'SA' => [40], 'HA' => [35], 'AU' => [5]];
         foreach ($plan->criteria as $criterion) {
             foreach ($valores[$criterion->codigo] as $i => $v) {
                 $act = $service->crearActividad($criterion, 'Act ' . $criterion->codigo . '-' . $i, null, $i + 1);
@@ -259,9 +259,9 @@ class EvaluationLogicTest extends TestCase
             }
         }
 
-        // SE: (8+9)/2 = 8.5 ; trimestre: 8.5+40+35+5 = 88.5
-        $this->assertSame(8.5, $service->notaCriterio($plan->criterio('SE'), $est[0]));
-        $this->assertSame(88.5, $service->notaTrimestre($plan, $est[0]));
+        // SE: (7+9)/2 = 8 ; trimestre: 8+40+35+5 = 88 (todo entero)
+        $this->assertSame(8.0, $service->notaCriterio($plan->criterio('SE'), $est[0]));
+        $this->assertSame(88.0, $service->notaTrimestre($plan, $est[0]));
     }
 
     public function test_guardar_notas_rechaza_decimales_en_linea(): void

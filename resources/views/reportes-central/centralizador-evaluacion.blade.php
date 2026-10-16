@@ -61,9 +61,9 @@
                                 <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $fila['codigo'] }}</td>
                                 <td class="px-4 py-3 font-medium text-foreground">{{ $fila['apellidos'] }} {{ $fila['nombres'] }}</td>
-                                <td class="px-4 py-3 text-center">{{ isset($fila['trimestres'][1]) ? number_format($fila['trimestres'][1], 2) : '—' }}</td>
-                                <td class="px-4 py-3 text-center">{{ isset($fila['trimestres'][2]) ? number_format($fila['trimestres'][2], 2) : '—' }}</td>
-                                <td class="px-4 py-3 text-center">{{ isset($fila['trimestres'][3]) ? number_format($fila['trimestres'][3], 2) : '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][1] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][2] ?? '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $fila['trimestres'][3] ?? '—' }}</td>
                                 <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila['anual'] ?? '—' }}</td>
                                 <td class="px-4 py-3 text-center">
                                     @if($fila['aprobado'] !== null)

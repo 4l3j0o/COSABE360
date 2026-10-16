@@ -81,7 +81,7 @@ class EvaluationService
      * Nota de un estudiante en un criterio (0..porcentaje del criterio).
      * Promedio de las actividades que tengan nota registrada; las actividades
      * aún sin calificar se ignoran, igual que AVERAGE en la planilla oficial.
-     * HU-81: con 2 decimales (las actividades son enteras, el promedio no).
+     * El promedio se redondea al entero (coincide con la plantilla del colegio).
      * Devuelve null si no hay ninguna nota registrada.
      */
     public function notaCriterio(EvaluationCriterion $criterion, Student $student): ?float
@@ -94,7 +94,7 @@ class EvaluationService
             return null;
         }
 
-        return (float) round((float) $notas->avg(), 2);
+        return (float) round((float) $notas->avg());
     }
 
     /**
@@ -122,7 +122,7 @@ class EvaluationService
             return null; // requiere todos los criterios
         }
 
-        return (float) round($total, 2); // HU-81: el final del trimestre sale con 2 decimales
+        return (float) $total; // suma de enteros (criterios) -> nota de trimestre 0-100
     }
 
     /**
