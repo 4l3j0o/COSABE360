@@ -24,9 +24,9 @@
   table.grid tr.zebra td { background: #f2f6f2; }
   .aprobado { color: #14532d; font-weight: 800; }
   .reprobado { color: #7f1d1d; font-weight: 800; }
-  .firmas { width: 100%; margin-top: 26px; }
-  .firmas td { text-align: center; font-size: 8px; color: #33412f; width: 33%; }
-  .linea { border-top: 1px solid #003200; margin: 0 24px; padding-top: 3px; }
+  .firmas { width: 100%; margin-top: 44px; }
+  .firmas td { text-align: center; font-size: 8px; color: #33412f; width: 25%; }
+  .linea { border-top: 1px solid #003200; margin: 0 14px; padding-top: 3px; }
   .foot { margin-top: 10px; font-size: 7px; color: #64748b; text-align: center; }
 </style>
 </head>
@@ -91,8 +91,9 @@
   <table class="firmas">
     <tr>
       <td><div class="linea">Docente de materia<br><strong>Firma y sello</strong></div></td>
+      <td><div class="linea">Tutor<br><strong>Enterado</strong></div></td>
+      <td><div class="linea">Secretaría<br><strong>Firma y sello</strong></div></td>
       <td><div class="linea">Dirección<br><strong>V° B°</strong></div></td>
-      <td><div class="linea">Padre / Tutor<br><strong>Enterado</strong></div></td>
     </tr>
   </table>
 
