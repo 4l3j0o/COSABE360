@@ -11,7 +11,6 @@ use App\Models\MonthlyPayment;
 use App\Models\Registration;
 use App\Models\Student;
 use App\Models\StudentDocument;
-use App\Models\StudentRudeRecord;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -28,19 +27,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Agrupa todos los reportes del sistema en un único módulo y añade los
  * reportes del "llamado a lista":
  *   - Lista de padres de familia (padres y apoderados)
- *   - Lista de RUDEs del paralelo (curso completo solo si tutor/encargado)
  *   - Centralizador de calificaciones por evaluación (asignaturas)
  *   - Centralizador de calificaciones por trimestre (SE/SA/HA/AU)
  *
  * Permisos:
  *   - Administrador / Director / Secretaría: acceso total.
- *   - Docente: solo sus cursos/materias; el curso completo (RUDEs,
- *     centralizadores) solo si es tutor/encargado del paralelo
+ *   - Docente: solo sus cursos/materias; el curso completo
+ *     (centralizadores) solo si es tutor/encargado del paralelo
  *     (sections.teacher_id coincide con su Teacher).
  */
 class ReporteCentralController extends Controller
 {
-    private const ESTADOS_RUDE = ['PENDIENTE', 'ENVIADO', 'APROBADO', 'RECHAZADO'];
 
     // ---------------------------------------------------------------- Index
 
@@ -249,88 +246,6 @@ class ReporteCentralController extends Controller
         }
 
         return $cursoDe;
-    }
-
-    // ------------------------------------------------- Lista de RUDEs
-
-    public function rudes(Request $request): View
-    {
-        $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildRudes($request, $user, $cursos);
-
-        return view('reportes-central.rudes', [
-            'cursos' => $cursos,
-            'filtros' => $request->only(['section_id']),
-            'resultado' => $resultado,
-        ]);
-    }
-
-    public function exportRudes(Request $request)
-    {
-        $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildRudes($request, $user, $cursos);
-
-        if ($resultado['requiere_curso']) {
-            return back()->with('error', 'Selecciona un paralelo para generar la lista de RUDEs.');
-        }
-
-        $formato = $request->query('format', 'pdf');
-
-        if ($formato === 'excel') {
-            return $this->exportRudesExcel($resultado);
-        }
-
-        return $this->exportPdf('reportes-central.pdf.rudes', $resultado, $this->nombreArchivo('lista-rudes', $resultado, 'pdf'));
-    }
-
-    private function buildRudes(Request $request, $user, Collection $cursos): array
-    {
-        $sectionId = $request->query('section_id');
-
-        if (! $sectionId) {
-            return [
-                'curso' => null,
-                'filas' => collect(),
-                'requiere_curso' => true,
-            ];
-        }
-
-        if (! $this->permiteCurso($user, $sectionId, $cursos)) {
-            abort(403, 'No tiene acceso a ese curso.');
-        }
-
-        // El curso completo (lista de RUDEs de todo el paralelo) solo si es
-        // tutor/encargado del curso o rol de supervisión.
-        $section = Section::with(['grade', 'gestion'])->find($sectionId);
-        if ($user->hasRole('Docente') && ! $this->esEncargadoCurso($user, $section)) {
-            abort(403, 'Solo el tutor/encargado del curso puede ver la lista de RUDEs completa.');
-        }
-
-        $estudiantes = $section->students()
-            ->with('rudeRecord')
-            ->where('students.estado', 'ACTIVO')
-            ->orderBy('students.apellidos')
-            ->orderBy('students.nombres')
-            ->get();
-
-        $filas = $estudiantes->map(fn ($student) => [
-            'codigo' => $student->codigo,
-            'apellidos' => $student->apellidos,
-            'nombres' => $student->nombres,
-            'ci' => trim(($student->numero_documento ?? '').' '.($student->complemento ?? '')),
-            'rude' => $student->rudeRecord?->codigo_rude ?? 'POR GENERAR',
-            'sie' => $student->rudeRecord?->codigo_sie_ue ?? StudentRudeRecord::SIE_UE,
-            'estado' => $student->rudeRecord?->estado ?? 'PENDIENTE',
-            'turno' => $student->rudeRecord?->turno ?? '',
-        ]);
-
-        return [
-            'curso' => $section->codigoCorto(),
-            'filas' => $filas,
-            'requiere_curso' => false,
-        ];
     }
 
     // ------------------- Centralizador por evaluación (trimestres + anual)
@@ -585,15 +500,6 @@ class ReporteCentralController extends Controller
         return $user->hasAnyRole(['Administrador', 'Director', 'Secretaría']);
     }
 
-    private function esEncargadoCurso($user, Section $section): bool
-    {
-        if (! $user->hasRole('Docente') || ! $user->teacher) {
-            return false;
-        }
-
-        return $section->teacher_id === $user->teacher->id;
-    }
-
     private function cursosPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
@@ -677,16 +583,6 @@ class ReporteCentralController extends Controller
                 'descripcion' => 'Muestra los padres y apoderados de cada estudiante con su parentesco, CI, teléfono y correo.',
                 'parametros' => 'curso / gestión',
                 'ruta' => 'reportes.central.padres',
-                'tipo' => 'form',
-            ];
-        }
-
-        if ($esSupervisor || $esDocente) {
-            $nuevos[] = [
-                'nombre' => 'Lista de RUDEs',
-                'descripcion' => 'Lista de RUDEs del paralelo seleccionado. Solo el tutor/encargado del curso ve el curso completo.',
-                'parametros' => 'paralelo (obligatorio)',
-                'ruta' => 'reportes.central.rudes',
                 'tipo' => 'form',
             ];
         }
@@ -971,37 +867,6 @@ class ReporteCentralController extends Controller
         $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-padres', $resultado, 'xlsx'));
-    }
-
-    private function exportRudesExcel(array $resultado): StreamedResponse
-    {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('RUDEs');
-
-        $this->escribirMembreteExcel($sheet, 'Lista de RUDEs del Paralelo', $resultado['curso'] ?? '', 6);
-
-        $cabecera = ['N.º', 'Código', 'Apellidos', 'Nombres', 'CI', 'Código RUDE', 'SIE UE', 'Estado', 'Turno'];
-        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
-
-        $fila = 7;
-        foreach ($resultado['filas'] as $i => $f) {
-            $sheet->setCellValue('A'.$fila, $i + 1);
-            $sheet->setCellValue('B'.$fila, $f['codigo']);
-            $sheet->setCellValue('C'.$fila, $f['apellidos']);
-            $sheet->setCellValue('D'.$fila, $f['nombres']);
-            $sheet->setCellValue('E'.$fila, $f['ci']);
-            $sheet->setCellValue('F'.$fila, $f['rude']);
-            $sheet->setCellValue('G'.$fila, $f['sie']);
-            $sheet->setCellValue('H'.$fila, $f['estado']);
-            $sheet->setCellValue('I'.$fila, $f['turno']);
-            $fila++;
-        }
-
-        $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
-
-        return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-rudes', $resultado, 'xlsx'));
     }
 
     private function exportEvaluacionExcel(array $resultado): StreamedResponse

@@ -477,8 +477,6 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
     Route::middleware(['role:Administrador,Director,Secretaría,Docente'])->group(function () {
         Route::get('/padres', [ReporteCentralController::class, 'padres'])->name('reportes.central.padres');
         Route::get('/padres/exportar', [ReporteCentralController::class, 'exportPadres'])->name('reportes.central.padres.export');
-        Route::get('/rudes', [ReporteCentralController::class, 'rudes'])->name('reportes.central.rudes');
-        Route::get('/rudes/exportar', [ReporteCentralController::class, 'exportRudes'])->name('reportes.central.rudes.export');
         Route::get('/centralizador-evaluacion', [ReporteCentralController::class, 'centralizadorEvaluacion'])->name('reportes.central.evaluacion');
         Route::get('/centralizador-evaluacion/exportar', [ReporteCentralController::class, 'exportCentralizadorEvaluacion'])->name('reportes.central.evaluacion.export');
         Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');

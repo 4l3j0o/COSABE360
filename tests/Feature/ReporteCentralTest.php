@@ -79,7 +79,7 @@ class ReporteCentralTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Central de Reportes');
         $response->assertSee('Lista de Padres de Familia');
-        $response->assertSee('Lista de RUDEs');
+        $response->assertDontSee('Lista de RUDEs');
         $response->assertSee('Centralizador de calificaciones por evaluación');
         $response->assertSee('Centralizador de calificaciones por trimestre');
     }
@@ -129,27 +129,6 @@ class ReporteCentralTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee($a['curso']->codigoCorto());
         $response->assertSee('TutorP81');
-    }
-
-    public function test_lista_rudes_solo_encargado(): void
-    {
-        $a = $this->crearCurso('R1');
-        $doc = $this->crearDocente('R1');
-        $otro = $this->crearDocente('R1B');
-        // Docente encargado del paralelo
-        $a['seccion']->update(['teacher_id' => $doc['teacher']->id]);
-        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $otro['teacher']->id]);
-
-        // Encargado: ve la lista
-        $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
-        $response->assertStatus(200);
-        $response->assertSee('ApellidoRCR1');
-
-        // No encargado: 403
-        $this->actingAs($otro['user']);
-        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
-        $response->assertStatus(403);
     }
 
     public function test_centralizador_evaluacion_muestra_nota(): void

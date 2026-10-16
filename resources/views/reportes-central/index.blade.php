@@ -39,16 +39,6 @@
                                     </select>
                                     <span class="text-[10px]">(opcional) Curso / paralelo</span>
                                 </div>
-                            @elseif($reporte['ruta'] === 'reportes.central.rudes')
-                                <div class="flex flex-col gap-1">
-                                    <select name="section_id" form="form-{{ $reporte['ruta'] }}" required class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                        <option value="">Seleccionar paralelo…</option>
-                                        @foreach($cursos as $section)
-                                            <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
-                                        @endforeach
-                                    </select>
-                                    <span class="text-[10px]">(obligatorio) Curso / paralelo</span>
-                                </div>
                             @elseif($reporte['ruta'] === 'reportes.central.evaluacion')
                                 <div class="flex items-center gap-2">
                                     @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'land-eval', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
