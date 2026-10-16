@@ -97,12 +97,7 @@
                                     @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'ex-' . $loop->index, 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => '', 'compacto' => true])
                                 @elseif($reporte['ruta'] === 'evaluation-reports.index')
                                     <div class="flex gap-2">
-                                        <select name="section_subject_id" form="form-{{ $reporte['ruta'] }}" title="Paralelo / Materia" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[170px]">
-                                            <option value="">Paralelo / Materia…</option>
-                                            @foreach($sectionSubjects as $cs)
-                                                <option value="{{ $cs->id }}">{{ $cs->section->codigoCorto() }} - {{ $cs->subject->nombre }}</option>
-                                            @endforeach
-                                        </select>
+                                        @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'ex-evalrep', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => '', 'compacto' => true])
                                         <select name="trimestre" form="form-{{ $reporte['ruta'] }}" title="Trimestre" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
                                             @foreach([1, 2, 3] as $t)
                                                 <option value="{{ $t }}">{{ $t }}°</option>

@@ -83,7 +83,7 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('Centralizador de calificaciones por evaluación');
         $response->assertSee('Centralizador de calificaciones por trimestre');
         $response->assertSee('form-reportes.asistencia.index', false);
-        $response->assertSee('section_subject_id', false);
+        $response->assertSee('ex-evalrep', false);
     }
 
     public function test_landing_incluye_diario_y_conducta(): void
