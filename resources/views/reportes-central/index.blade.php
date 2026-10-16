@@ -150,12 +150,56 @@
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
                             <td class="px-4 py-3 font-medium text-foreground">{{ $reporte['nombre'] }}</td>
                             <td class="px-4 py-3 text-sm text-muted-foreground">{{ $reporte['descripcion'] }}</td>
-                            <td class="px-4 py-3 text-xs text-muted-foreground">{{ $reporte['parametros'] }}</td>
+                            <td class="px-4 py-3 text-xs text-muted-foreground">
+                                <div class="flex gap-2">
+                                    @if(in_array($reporte['ruta'], ['reportes.central.administrativo.inscripciones', 'reportes.central.administrativo.matriculas', 'reportes.central.administrativo.pagos'], true))
+                                        <select name="academic_year_id" form="form-{{ $reporte['ruta'] }}" title="Gestión" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[110px]">
+                                            <option value="">Gestión…</option>
+                                            @foreach($gestiones as $gestion)
+                                                <option value="{{ $gestion->id }}">{{ $gestion->nombre }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                    @if($reporte['ruta'] === 'reportes.central.administrativo.inscripciones')
+                                        <select name="estado" form="form-{{ $reporte['ruta'] }}" title="Estado" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[130px]">
+                                            <option value="">Estado…</option>
+                                            @foreach(['PENDIENTE', 'COMPLETADA', 'ANULADA'] as $e)
+                                                <option value="{{ $e }}">{{ ucfirst(strtolower($e)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif($reporte['ruta'] === 'reportes.central.administrativo.matriculas')
+                                        <select name="estado" form="form-{{ $reporte['ruta'] }}" title="Estado" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[130px]">
+                                            <option value="">Estado…</option>
+                                            @foreach(['ACTIVA', 'INACTIVA', 'CANCELADA'] as $e)
+                                                <option value="{{ $e }}">{{ ucfirst(strtolower($e)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif($reporte['ruta'] === 'reportes.central.administrativo.pagos')
+                                        <select name="estado" form="form-{{ $reporte['ruta'] }}" title="Estado" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[130px]">
+                                            <option value="">Estado…</option>
+                                            @foreach(['PENDIENTE', 'PAGO_PARCIAL', 'PAGADO', 'PAGADA', 'ESPERA', 'VENCIDO'] as $e)
+                                                <option value="{{ $e }}">{{ ucfirst(strtolower($e)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif($reporte['ruta'] === 'reportes.central.administrativo.documentacion')
+                                        <select name="estado" form="form-{{ $reporte['ruta'] }}" title="Estado" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[130px]">
+                                            <option value="">Estado…</option>
+                                            @foreach(['PENDIENTE', 'ENTREGADO', 'VERIFICADO'] as $e)
+                                                <option value="{{ $e }}">{{ ucfirst(strtolower($e)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        {{ $reporte['parametros'] }}
+                                    @endif
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route($reporte['ruta']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Abrir
-                                </a>
+                                <form id="form-{{ $reporte['ruta'] }}" method="GET" action="{{ route($reporte['ruta']) }}" class="inline">
+                                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Abrir
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach
