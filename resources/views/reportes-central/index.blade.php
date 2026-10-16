@@ -30,23 +30,18 @@
                         <td class="px-4 py-3 text-sm text-muted-foreground">{{ $reporte['descripcion'] }}</td>
                         <td class="px-4 py-3 text-xs text-muted-foreground">
                             @if($reporte['ruta'] === 'reportes.central.padres')
-                                <div class="flex flex-col gap-1">
-                                    <select name="section_id" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                        <option value="">Todos los cursos</option>
-                                        @foreach($cursos as $section)
-                                            <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
-                                        @endforeach
-                                    </select>
-                                    <span class="text-[10px]">(opcional) Curso / paralelo</span>
-                                </div>
+                                <select name="section_id" form="form-{{ $reporte['ruta'] }}" title="Curso / paralelo (opcional)" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[150px]">
+                                    <option value="">Todos los cursos</option>
+                                    @foreach($cursos as $section)
+                                        <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
+                                    @endforeach
+                                </select>
                             @elseif($reporte['ruta'] === 'reportes.central.evaluacion')
-                                <div class="flex items-center gap-2">
-                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'land-eval', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
-                                </div>
+                                @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'land-eval', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => '', 'compacto' => true])
                             @elseif($reporte['ruta'] === 'reportes.central.trimestre')
-                                <div class="flex items-center gap-2">
-                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'land-trim', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
-                                    <select name="trimestre" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
+                                <div class="flex gap-2">
+                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'land-trim', 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => '', 'compacto' => true])
+                                    <select name="trimestre" form="form-{{ $reporte['ruta'] }}" title="Trimestre" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
                                         @foreach([1, 2, 3] as $t)
                                             <option value="{{ $t }}" {{ $t == 1 ? 'selected' : '' }}>{{ $t }}° Trim.</option>
                                         @endforeach

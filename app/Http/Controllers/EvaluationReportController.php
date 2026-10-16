@@ -32,17 +32,18 @@ class EvaluationReportController extends Controller
         $user = $request->user();
         $sectionSubjects = $this->sectionSubjectsPermitidos($user);
 
-        // Con una sola asignación se preselecciona directo; si no, el
-        // docente primero elige el curso/materia (HU-57).
-        if (! $request->query('section_subject_id') && $sectionSubjects->count() === 1) {
-            $request->merge(['section_subject_id' => $sectionSubjects->first()->id]);
+        // HU-81: acepta paralelo+materia por separado (además del combinado).
+        $ssid = $this->resolverSectionSubjectId($request, $sectionSubjects);
+        if ($ssid) {
+            $request->merge(['section_subject_id' => $ssid]);
         }
 
         $resultado = $this->build($request, $user, $sectionSubjects);
 
         return view('evaluation-reports.index', [
             'sectionSubjects' => $sectionSubjects,
-            'filtros' => $request->only(['section_subject_id', 'trimestre']),
+            'cursos' => $this->cursosDe($sectionSubjects),
+            'filtros' => $request->only(['section_subject_id', 'section_id', 'subject_id', 'trimestre']),
             'resultado' => $resultado,
         ]);
     }
@@ -52,8 +53,10 @@ class EvaluationReportController extends Controller
         $user = $request->user();
         $sectionSubjects = $this->sectionSubjectsPermitidos($user);
 
-        if (! $request->query('section_subject_id') && $sectionSubjects->count() === 1) {
-            $request->merge(['section_subject_id' => $sectionSubjects->first()->id]);
+        // HU-81: acepta paralelo+materia por separado (además del combinado).
+        $ssid = $this->resolverSectionSubjectId($request, $sectionSubjects);
+        if ($ssid) {
+            $request->merge(['section_subject_id' => $ssid]);
         }
 
         if (! $request->query('section_subject_id')) {
@@ -161,6 +164,39 @@ class EvaluationReportController extends Controller
         }
 
         return $notas;
+    }
+
+    /**
+     * HU-81: resuelve el section_subject desde el combinado o desde
+     * paralelo+materia por separado. Con una sola asignación, directo.
+     */
+    private function resolverSectionSubjectId(Request $request, Collection $sectionSubjects): ?int
+    {
+        if ($request->query('section_subject_id')) {
+            return (int) $request->query('section_subject_id');
+        }
+
+        if ($sectionSubjects->count() === 1) {
+            return (int) $sectionSubjects->first()->id;
+        }
+
+        $sec = (int) $request->query('section_id');
+        $mat = (int) $request->query('subject_id');
+        if ($sec && $mat) {
+            $cs = $sectionSubjects->first(fn ($c) => (int) $c->section_id === $sec && (int) $c->subject_id === $mat);
+
+            return $cs ? (int) $cs->id : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * HU-81: paralelos únicos de las asignaciones (para el filtro en cascada).
+     */
+    private function cursosDe(Collection $sectionSubjects): Collection
+    {
+        return $sectionSubjects->map(fn ($cs) => $cs->section)->unique('id')->values();
     }
 
     /**

@@ -73,7 +73,7 @@ class EvaluationReportTest extends TestCase
         $response = $this->get(route('evaluation-reports.index'));
         $response->assertStatus(200);
         $response->assertSee('Primero selecciona el curso y la materia.');
-        $response->assertSee('Seleccionar curso');
+        $response->assertSee('Seleccionar paralelo');
     }
 
     public function test_docente_genera_reporte_de_su_curso(): void
@@ -151,5 +151,21 @@ class EvaluationReportTest extends TestCase
         $this->actingAs($doc['user']);
         $response = $this->get(route('evaluation-reports.index', ['section_subject_id' => $csAjeno->id, 'trimestre' => 1]));
         $response->assertStatus(403);
+    }
+
+    public function test_filtros_separados_paralelo_materia_resuelven(): void
+    {
+        $a = $this->crearCurso('E10');
+        $doc = $this->crearDocente();
+        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $doc['teacher']->id]);
+
+        $this->actingAs($doc['user']);
+        $response = $this->get(route('evaluation-reports.index', [
+            'section_id' => $a['curso']->id,
+            'subject_id' => $a['subject']->id,
+            'trimestre' => 1,
+        ]));
+        $response->assertStatus(200);
+        $response->assertSee('ApellidoEvalE10');
     }
 }

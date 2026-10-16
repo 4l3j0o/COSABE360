@@ -17,17 +17,12 @@
     </div>
 @else
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
-        <select name="section_subject_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <option value="">Seleccionar curso…</option>
-            @foreach($sectionSubjects as $cs)
-                <option value="{{ $cs->id }}" {{ request('section_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
-                    {{ $cs->section->codigo ?? $cs->section->nombre }} - {{ $cs->subject->nombre }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+    @php
+        $csSel = $resultado['curso'] ?? null;
+        $cursoSel = request('section_id', $csSel?->section_id ?? '');
+        $materiaSel = request('subject_id', $csSel?->subject_id ?? '');
+    @endphp
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'evalrep', 'form' => null, 'cursoSel' => $cursoSel, 'materiaSel' => $materiaSel])
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
         <select name="trimestre" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
