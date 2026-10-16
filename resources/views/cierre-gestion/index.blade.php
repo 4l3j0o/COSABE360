@@ -21,7 +21,7 @@
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso</label>
         <select name="section_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
             @foreach($cursos as $c)
-                <option value="{{ $c->id }}" {{ request('section_id', $curso?->id) == $c->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
+                <option value="{{ $c->id }}" {{ request('section_id', $curso?->id) == $c->id ? 'selected' : '' }}>{{ $c->codigoCorto() }}</option>
             @endforeach
         </select>
     </div>
