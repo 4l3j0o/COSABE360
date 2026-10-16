@@ -99,39 +99,28 @@
                             <td class="px-4 py-3 text-sm text-muted-foreground">{{ $reporte['descripcion'] }}</td>
                             <td class="px-4 py-3 text-xs text-muted-foreground">
                                 @if(in_array($reporte['ruta'], ['reportes.asistencia.index', 'diario.index', 'conducta.index'], true))
-                                    <div class="flex flex-wrap gap-2">
-                                        @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'ex-' . $loop->index, 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
-                                    </div>
+                                    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'ex-' . $loop->index, 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => '', 'compacto' => true])
                                 @elseif($reporte['ruta'] === 'evaluation-reports.index')
-                                    <div class="flex flex-wrap gap-2">
-                                        <div>
-                                            <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo / Materia</label>
-                                            <select name="section_subject_id" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                                <option value="">Seleccionar…</option>
-                                                @foreach($sectionSubjects as $cs)
-                                                    <option value="{{ $cs->id }}">{{ $cs->section->codigoCorto() }} - {{ $cs->subject->nombre }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
-                                            <select name="trimestre" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                                @foreach([1, 2, 3] as $t)
-                                                    <option value="{{ $t }}">{{ $t }}°</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                @elseif($reporte['ruta'] === 'cierre-gestion.index')
-                                    <div>
-                                        <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo</label>
-                                        <select name="section_id" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-                                            <option value="">Seleccionar paralelo…</option>
-                                            @foreach($cursos as $section)
-                                                <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
+                                    <div class="flex gap-2">
+                                        <select name="section_subject_id" form="form-{{ $reporte['ruta'] }}" title="Paralelo / Materia" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[170px]">
+                                            <option value="">Paralelo / Materia…</option>
+                                            @foreach($sectionSubjects as $cs)
+                                                <option value="{{ $cs->id }}">{{ $cs->section->codigoCorto() }} - {{ $cs->subject->nombre }}</option>
+                                            @endforeach
+                                        </select>
+                                        <select name="trimestre" form="form-{{ $reporte['ruta'] }}" title="Trimestre" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
+                                            @foreach([1, 2, 3] as $t)
+                                                <option value="{{ $t }}">{{ $t }}°</option>
                                             @endforeach
                                         </select>
                                     </div>
+                                @elseif($reporte['ruta'] === 'cierre-gestion.index')
+                                    <select name="section_id" form="form-{{ $reporte['ruta'] }}" title="Paralelo" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[150px]">
+                                        <option value="">Paralelo…</option>
+                                        @foreach($cursos as $section)
+                                            <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
+                                        @endforeach
+                                    </select>
                                 @else
                                     {{ $reporte['parametros'] }}
                                 @endif
