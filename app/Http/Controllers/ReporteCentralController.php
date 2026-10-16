@@ -116,13 +116,17 @@ class ReporteCentralController extends Controller
 
         $estudiantes = $query->orderBy('students.apellidos')->orderBy('students.nombres')->get();
 
+        // HU-81: precarga los cursos activos en 3 consultas (antes: 2-4 por
+        // estudiante vía activeSection(), ~13.000 con todos los cursos).
+        $cursoDe = $this->cursosActivosDe($estudiantes->pluck('id'));
+
         $filas = collect();
         foreach ($estudiantes as $student) {
             if ($student->parentGuardians->isEmpty()) {
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
+                    'curso' => $cursoDe[$student->id] ?? '—',
                     'relacion' => '—',
                     'apellidos' => '',
                     'nombres' => 'Sin tutor registrado',
@@ -139,7 +143,7 @@ class ReporteCentralController extends Controller
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
+                    'curso' => $cursoDe[$student->id] ?? '—',
                     'relacion' => $pivot?->tipo_relacion ?? '—',
                     'apellidos' => $pg->apellidos ?? '',
                     'nombres' => $pg->nombres ?? '',
@@ -164,6 +168,37 @@ class ReporteCentralController extends Controller
             'filas' => $filas,
             'requiere_curso' => false,
         ];
+    }
+
+    /**
+     * HU-81: curso activo por estudiante en 3 consultas (misma lógica que
+     * Student::activeRegistration: matrícula ACTIVA + inscripción COMPLETADA
+     * de la gestión activa, tomando la más reciente).
+     *
+     * @return array<int, string> student_id => código corto del curso
+     */
+    private function cursosActivosDe(Collection $studentIds): array
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+        if (! $periodo || $studentIds->isEmpty()) {
+            return [];
+        }
+
+        $regs = Registration::with(['section.grade', 'section.gestion', 'enrollment'])
+            ->where('registrations.estado', 'ACTIVA')
+            ->whereHas('enrollment', fn ($q) => $q->where('academic_year_id', $periodo->id)
+                ->where('enrollments.estado', 'COMPLETADA')
+                ->whereIn('student_id', $studentIds))
+            ->orderByDesc('id')
+            ->get();
+
+        $cursoDe = [];
+        foreach ($regs as $r) {
+            $sid = $r->enrollment->student_id;
+            $cursoDe[$sid] ??= $r->section?->codigoCorto() ?? '—';
+        }
+
+        return $cursoDe;
     }
 
     // ------------------------------------------------- Lista de RUDEs

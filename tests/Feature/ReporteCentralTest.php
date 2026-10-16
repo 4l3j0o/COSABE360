@@ -110,6 +110,27 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('ApellidoRCP1');
     }
 
+    public function test_lista_padres_muestra_curso_precargado(): void
+    {
+        $a = $this->crearCurso('P81');
+        $padre = ParentGuardian::create(['nombres' => 'Padre', 'apellidos' => 'TutorP81', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'telefono' => '70000081', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($padre->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
+
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        // Con filtro de curso: muestra el código del paralelo (vía precarga HU-81).
+        $response = $this->get(route('reportes.central.padres', ['section_id' => $a['curso']->id]));
+        $response->assertStatus(200);
+        $response->assertSee($a['curso']->codigoCorto());
+
+        // Sin filtro: también resuelve el curso sin N+1.
+        $response = $this->get(route('reportes.central.padres'));
+        $response->assertStatus(200);
+        $response->assertSee($a['curso']->codigoCorto());
+        $response->assertSee('TutorP81');
+    }
+
     public function test_lista_rudes_solo_encargado(): void
     {
         $a = $this->crearCurso('R1');
