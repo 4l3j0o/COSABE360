@@ -99,7 +99,6 @@
                         <th class="px-4 py-3 text-center font-semibold text-foreground">HA</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">AU</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">NOTA</th>
-                        <th class="px-4 py-3 text-center font-semibold text-foreground">Valoración</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">Estado</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">% Asist. trim.</th>
                     </tr>
@@ -114,12 +113,6 @@
                             <td class="px-4 py-3 text-center">{{ $fila->criterios['HA'] ?? '—' }}</td>
                             <td class="px-4 py-3 text-center">{{ $fila->criterios['AU'] ?? '—' }}</td>
                             <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila->nota ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center">
-                                @if($fila->aprobado !== null)
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $fila->aprobado ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">{{ $fila->codigo }}</span>
-                                @else —
-                                @endif
-                            </td>
                             <td class="px-4 py-3 text-center">
                                 @if($fila->aprobado === null) —
                                 @elseif($fila->aprobado) <span class="text-success font-medium">Aprobado</span>

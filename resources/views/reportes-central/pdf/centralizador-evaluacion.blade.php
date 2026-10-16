@@ -56,7 +56,7 @@
     <tr>
       <th style="width:4%">#</th><th style="width:7%">Cód.</th><th class="left">Estudiante</th>
       <th style="width:9%">1er Trim.</th><th style="width:9%">2do Trim.</th><th style="width:9%">3er Trim.</th>
-      <th style="width:9%">Prom. Anual</th><th style="width:8%">Val.</th><th style="width:10%">Estado</th>
+      <th style="width:9%">Prom. Anual</th><th style="width:10%">Estado</th>
     </tr>
     @foreach($resultado['filas'] as $i => $fila)
       <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
@@ -67,7 +67,6 @@
         <td>{{ $fila['trimestres'][2] ?? '—' }}</td>
         <td>{{ $fila['trimestres'][3] ?? '—' }}</td>
         <td><strong>{{ $fila['anual'] ?? '—' }}</strong></td>
-        <td>{{ $fila['valoracion']['codigo'] ?? '—' }}</td>
         <td class="{{ $fila['aprobado'] ? 'aprobado' : 'reprobado' }}">{{ $fila['aprobado'] === null ? '—' : ($fila['aprobado'] ? 'Aprobado' : 'Reprobado') }}</td>
       </tr>
     @endforeach
@@ -81,6 +80,6 @@
     </tr>
   </table>
 
-  <div class="foot">Promedio anual = promedio de los 3 trimestres (requiere los 3). Escala (R.M. 473/2021): ED ≤50 · DA 51-68 · DO 69-84 · DP 85-100. Mínimo: 51. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
+  <div class="foot">Promedio anual = promedio de los 3 trimestres (requiere los 3). Mínimo: 51. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
 </body>
 </html>
