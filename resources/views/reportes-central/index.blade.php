@@ -97,12 +97,52 @@
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
                             <td class="px-4 py-3 font-medium text-foreground">{{ $reporte['nombre'] }}</td>
                             <td class="px-4 py-3 text-sm text-muted-foreground">{{ $reporte['descripcion'] }}</td>
-                            <td class="px-4 py-3 text-xs text-muted-foreground">{{ $reporte['parametros'] }}</td>
+                            <td class="px-4 py-3 text-xs text-muted-foreground">
+                                @if(in_array($reporte['ruta'], ['reportes.asistencia.index', 'diario.index', 'conducta.index'], true))
+                                    <div class="flex flex-wrap gap-2">
+                                        @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'ex-' . $loop->index, 'form' => 'form-' . $reporte['ruta'], 'cursoSel' => '', 'materiaSel' => ''])
+                                    </div>
+                                @elseif($reporte['ruta'] === 'evaluation-reports.index')
+                                    <div class="flex flex-wrap gap-2">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo / Materia</label>
+                                            <select name="section_subject_id" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
+                                                <option value="">Seleccionar…</option>
+                                                @foreach($sectionSubjects as $cs)
+                                                    <option value="{{ $cs->id }}">{{ $cs->section->codigoCorto() }} - {{ $cs->subject->nombre }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
+                                            <select name="trimestre" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
+                                                @foreach([1, 2, 3] as $t)
+                                                    <option value="{{ $t }}">{{ $t }}°</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                @elseif($reporte['ruta'] === 'cierre-gestion.index')
+                                    <div>
+                                        <label class="block text-xs font-semibold text-muted-foreground mb-1">Paralelo</label>
+                                        <select name="section_id" form="form-{{ $reporte['ruta'] }}" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
+                                            <option value="">Seleccionar paralelo…</option>
+                                            @foreach($cursos as $section)
+                                                <option value="{{ $section->id }}">{{ $section->codigoCorto() }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @else
+                                    {{ $reporte['parametros'] }}
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route($reporte['ruta']) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    Abrir
-                                </a>
+                                <form id="form-{{ $reporte['ruta'] }}" method="GET" action="{{ route($reporte['ruta']) }}" class="inline">
+                                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 cursor-pointer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Abrir
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach
