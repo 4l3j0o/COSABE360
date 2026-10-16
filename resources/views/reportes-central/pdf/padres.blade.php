@@ -9,8 +9,8 @@
   body { font-size: 9px; color: #1a2e1a; line-height: 1.4; }
   .membrete { width: 100%; border: 1.5px solid #003200; border-radius: 7px; background: #f6faf6; padding: 8px 10px; margin-bottom: 10px; }
   .membrete td { vertical-align: middle; }
-  .logo { width: 70px; text-align: center; }
-  .logo img { width: 60px; }
+  .logo { width: 95px; text-align: center; }
+  .logo img { width: 85px; }
   .brand { font-size: 15px; font-weight: 900; color: #003200; text-transform: uppercase; }
   .brand-sub { font-size: 9px; color: #33412f; margin-top: 2px; }
   .doc-title { font-size: 12px; font-weight: 800; color: #003200; text-transform: uppercase; margin-top: 4px; }

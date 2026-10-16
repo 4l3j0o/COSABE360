@@ -925,7 +925,7 @@ class ReporteCentralController extends Controller
         }
 
         $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-padres', $resultado, 'xlsx'));
     }
@@ -956,7 +956,7 @@ class ReporteCentralController extends Controller
         }
 
         $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-rudes', $resultado, 'xlsx'));
     }
@@ -989,7 +989,7 @@ class ReporteCentralController extends Controller
         }
 
         $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('centralizador-evaluaciones', $resultado, 'xlsx'));
     }
@@ -1023,6 +1023,10 @@ class ReporteCentralController extends Controller
         $sheet->getStyle('C1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003200');
         $sheet->getStyle('C2')->getFont()->setBold(true)->setSize(11)->getColor()->setARGB('FF003200');
         $sheet->getStyle('C3:C4')->getFont()->setSize(10)->getColor()->setARGB('FF33412F');
+        // Altura para el escudo (logo de 100px en A1:B4).
+        foreach ([1, 2, 3, 4] as $f) {
+            $sheet->getRowDimension($f)->setRowHeight(25);
+        }
     }
 
     private function escribirCabeceraExcel($sheet, array $cabecera, int $filaCabecera): void
@@ -1087,7 +1091,12 @@ class ReporteCentralController extends Controller
 
         $bloquePx = 0;
         for ($c = Coordinate::columnIndexFromString($colIni); $c <= Coordinate::columnIndexFromString($colFin); $c++) {
-            $bloquePx += (int) round($sheet->getColumnDimension($this->colLetter($c))->getWidth() * 7 + 5);
+            // Con autoSize el ancho aún no está calculado: usar el de defecto (8.43).
+            $ancho = (float) $sheet->getColumnDimension($this->colLetter($c))->getWidth();
+            if ($ancho <= 0) {
+                $ancho = 8.43;
+            }
+            $bloquePx += (int) round($ancho * 7 + 5);
         }
 
         $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
