@@ -868,7 +868,7 @@ class ReporteCentralController extends Controller
         ini_set('memory_limit', '512M');
         set_time_limit(180);
 
-        $logoPath = public_path('images/logo-colegio-thumb.png');
+        $logoPath = public_path('images/escudo colegio.png');
         $logo = is_file($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
             : null;
@@ -1076,7 +1076,7 @@ class ReporteCentralController extends Controller
      */
     private function insertarLogoCentrado($sheet, string $colIni, string $colFin, int $alturaPx, int $offsetY = 0): void
     {
-        $path = public_path('images/logo-colegio-thumb.png');
+        $path = public_path('images/escudo colegio.png');
         if (! is_file($path)) {
             return;
         }
