@@ -145,7 +145,14 @@ class ReporteCentralController extends Controller
                 continue;
             }
 
+            $reales = 0;
             foreach ($student->parentGuardians as $pg) {
+                // HU-81: omitir filas sin datos reales (p. ej. direcciones
+                // que quedaron como nombre con documento "S/N" y sin contacto).
+                if (! $this->tutorConDatosReales($pg)) {
+                    continue;
+                }
+                $reales++;
                 $pivot = $pg->pivot;
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
@@ -158,6 +165,21 @@ class ReporteCentralController extends Controller
                     'telefono' => $pg->telefono ?? '',
                     'email' => $pg->email ?? '',
                     'es_principal' => $pivot?->es_principal == 1,
+                ];
+            }
+            if ($reales === 0) {
+                // Tenía vínculos pero ninguno con datos reales.
+                $filas[] = [
+                    'estudiante' => $student->apellidos.' '.$student->nombres,
+                    'codigo' => $student->codigo,
+                    'curso' => $cursoDe[$student->id] ?? '—',
+                    'relacion' => '—',
+                    'apellidos' => '',
+                    'nombres' => 'Sin tutor registrado',
+                    'ci' => '',
+                    'telefono' => '',
+                    'email' => '',
+                    'es_principal' => false,
                 ];
             }
         }
@@ -175,6 +197,27 @@ class ReporteCentralController extends Controller
             'filas' => $filas,
             'requiere_curso' => false,
         ];
+    }
+
+    /**
+     * HU-81: ¿la fila del tutor trae datos reales? Sin CI válido (5+ dígitos)
+     * ni teléfono ni correo se considera basura (p. ej. una dirección que
+     * quedó como nombre con documento "S/N").
+     */
+    private function tutorConDatosReales($pg): bool
+    {
+        if ((bool) preg_match('/\d{5,}/', (string) ($pg->numero_documento ?? ''))) {
+            return true;
+        }
+        // Teléfono real: 6+ dígitos (descarta "S/N", "-", etc.).
+        if (preg_match_all('/\d/', (string) ($pg->telefono ?? '')) >= 6) {
+            return true;
+        }
+        if (filter_var($pg->email ?? '', FILTER_VALIDATE_EMAIL)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

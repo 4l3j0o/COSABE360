@@ -310,4 +310,23 @@ class ReporteCentralTest extends TestCase
         $response = $this->get(route('reportes.central.trimestre', ['section_subject_id' => $csAjeno->id, 'trimestre' => 1]));
         $response->assertStatus(403);
     }
+
+    public function test_lista_padres_omite_tutor_sin_datos_reales(): void
+    {
+        $a = $this->crearCurso('P82');
+        // Fila basura: dirección como nombre, documento "S/N", sin contacto.
+        $basura = ParentGuardian::create(['nombres' => 'Álamos', 'apellidos' => 'Los', 'tipo_documento' => 'CI', 'numero_documento' => 'B. Carlos Wagner', 'telefono' => 'S/N', 'email' => '', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($basura->id, ['tipo_relacion' => 'TUTOR', 'es_principal' => 1]);
+        // Tutor real: con CI válido.
+        $real = ParentGuardian::create(['nombres' => 'María', 'apellidos' => 'Real P82', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'telefono' => '70000882', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($real->id, ['tipo_relacion' => 'MADRE', 'es_principal' => 0]);
+
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('reportes.central.padres', ['section_id' => $a['curso']->id]));
+        $response->assertStatus(200);
+        $response->assertDontSee('Álamos');
+        $response->assertSee('Real P82');
+    }
 }
