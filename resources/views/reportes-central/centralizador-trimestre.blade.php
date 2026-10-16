@@ -117,10 +117,10 @@
                                                 {{ $fila['actividades'][$criterion->id][$loop->index] ?? '—' }}
                                             </td>
                                         @endforeach
-                                        <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ $fila['criterios'][$criterion->codigo] ?? '—' }}</td>
+                                        <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ isset($fila['criterios'][$criterion->codigo]) ? (int) round($fila['criterios'][$criterion->codigo]) : '—' }}</td>
                                     @endif
                                 @endforeach
-                                <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $fila['notaTrim'] ?? '—' }}</td>
+                                <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $fila['notaTrim'] !== null ? number_format($fila['notaTrim'], 2) : '—' }}</td>
                                 <td class="px-4 py-1 text-center">
                                     @if($fila['aprobado'] === null) —
                                     @elseif($fila['aprobado']) <span class="text-success font-medium">Aprobado</span>

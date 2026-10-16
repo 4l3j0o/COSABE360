@@ -69,7 +69,7 @@
         <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
           <td>{{ $i + 1 }}</td>
           <td class="left">{{ $f->student->apellidos }} {{ $f->student->nombres }}</td>
-          <td><strong>{{ $f->nota }}</strong></td>
+          <td><strong>{{ number_format($f->nota, 2) }}</strong></td>
           <td>{{ $f->codigo }}</td>
         </tr>
       @endforeach
@@ -87,11 +87,11 @@
       <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
         <td>{{ $i + 1 }}</td>
         <td class="left">{{ $fila->student->apellidos }} {{ $fila->student->nombres }}</td>
-        <td>{{ $fila->criterios['SE'] ?? '—' }}</td>
-        <td>{{ $fila->criterios['SA'] ?? '—' }}</td>
-        <td>{{ $fila->criterios['HA'] ?? '—' }}</td>
-        <td>{{ $fila->criterios['AU'] ?? '—' }}</td>
-        <td><strong>{{ $fila->nota ?? '—' }}</strong></td>
+        <td>{{ isset($fila->criterios['SE']) ? (int) round($fila->criterios['SE']) : '—' }}</td>
+        <td>{{ isset($fila->criterios['SA']) ? (int) round($fila->criterios['SA']) : '—' }}</td>
+        <td>{{ isset($fila->criterios['HA']) ? (int) round($fila->criterios['HA']) : '—' }}</td>
+        <td>{{ isset($fila->criterios['AU']) ? (int) round($fila->criterios['AU']) : '—' }}</td>
+        <td><strong>{{ $fila->nota !== null ? number_format($fila->nota, 2) : '—' }}</strong></td>
         <td>{{ $fila->codigo }}</td>
         <td class="{{ $fila->aprobado ? 'aprobado' : 'reprobado' }}">{{ $fila->aprobado === null ? '—' : ($fila->aprobado ? 'Aprobado' : 'Reprobado') }}</td>
         <td>{{ $fila->asistencia['porcentaje'] !== null ? $fila->asistencia['porcentaje'].'%' : '—' }}</td>

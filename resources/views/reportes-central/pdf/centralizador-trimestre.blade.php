@@ -79,10 +79,10 @@
             @foreach($criterion->activities as $activity)
               <td>{{ $fila['actividades'][$criterion->id][$loop->index] ?? '—' }}</td>
             @endforeach
-            <td><strong>{{ $fila['criterios'][$criterion->codigo] ?? '—' }}</strong></td>
+            <td><strong>{{ isset($fila['criterios'][$criterion->codigo]) ? (int) round($fila['criterios'][$criterion->codigo]) : '—' }}</strong></td>
           @endif
         @endforeach
-        <td><strong>{{ $fila['notaTrim'] ?? '—' }}</strong></td>
+        <td><strong>{{ $fila['notaTrim'] !== null ? number_format($fila['notaTrim'], 2) : '—' }}</strong></td>
         <td class="{{ $fila['aprobado'] ? 'aprobado' : 'reprobado' }}">{{ $fila['aprobado'] === null ? '—' : ($fila['aprobado'] ? 'Aprobado' : 'Reprobado') }}</td>
       </tr>
     @endforeach

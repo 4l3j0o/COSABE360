@@ -63,9 +63,9 @@
         <td>{{ $i + 1 }}</td>
         <td>{{ $fila['codigo'] }}</td>
         <td class="left">{{ $fila['apellidos'] }} {{ $fila['nombres'] }}</td>
-        <td>{{ $fila['trimestres'][1] ?? '—' }}</td>
-        <td>{{ $fila['trimestres'][2] ?? '—' }}</td>
-        <td>{{ $fila['trimestres'][3] ?? '—' }}</td>
+        <td>{{ isset($fila['trimestres'][1]) ? number_format($fila['trimestres'][1], 2) : '—' }}</td>
+        <td>{{ isset($fila['trimestres'][2]) ? number_format($fila['trimestres'][2], 2) : '—' }}</td>
+        <td>{{ isset($fila['trimestres'][3]) ? number_format($fila['trimestres'][3], 2) : '—' }}</td>
         <td><strong>{{ $fila['anual'] ?? '—' }}</strong></td>
         <td>{{ $fila['valoracion']['codigo'] ?? '—' }}</td>
         <td class="{{ $fila['aprobado'] ? 'aprobado' : 'reprobado' }}">{{ $fila['aprobado'] === null ? '—' : ($fila['aprobado'] ? 'Aprobado' : 'Reprobado') }}</td>

@@ -63,13 +63,14 @@ class EvaluationService
 
     /**
      * Registra o actualiza la nota de un estudiante en una actividad.
+     * HU-81: solo números redondos (enteros 0..porcentaje del criterio).
      */
     public function registrarNota(EvaluationActivity $activity, Student $student, float $nota, ?string $observaciones = null, ?int $userId = null): EvaluationActivityGrade
     {
         return EvaluationActivityGrade::updateOrCreate(
             ['evaluation_activity_id' => $activity->id, 'student_id' => $student->id],
             [
-                'nota' => round($nota, 2),
+                'nota' => (float) round($nota),
                 'observaciones' => $observaciones,
                 'registered_by_user_id' => $userId ?? auth()->id(),
             ]
@@ -80,7 +81,7 @@ class EvaluationService
      * Nota de un estudiante en un criterio (0..porcentaje del criterio).
      * Promedio de las actividades que tengan nota registrada; las actividades
      * aún sin calificar se ignoran, igual que AVERAGE en la planilla oficial.
-     * El promedio se redondea al entero (coincide con la plantilla del colegio).
+     * HU-81: con 2 decimales (las actividades son enteras, el promedio no).
      * Devuelve null si no hay ninguna nota registrada.
      */
     public function notaCriterio(EvaluationCriterion $criterion, Student $student): ?float
@@ -93,7 +94,7 @@ class EvaluationService
             return null;
         }
 
-        return (float) round((float) $notas->avg());
+        return (float) round((float) $notas->avg(), 2);
     }
 
     /**
@@ -121,7 +122,7 @@ class EvaluationService
             return null; // requiere todos los criterios
         }
 
-        return (float) $total; // suma de enteros (criterios) -> nota de trimestre 0-100
+        return (float) round($total, 2); // HU-81: el final del trimestre sale con 2 decimales
     }
 
     /**

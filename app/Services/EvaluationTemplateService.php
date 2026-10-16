@@ -359,12 +359,13 @@ class EvaluationTemplateService
                 }
                 if ($nAct > 0) {
                     if ($conFormulas) {
-                        // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),0),"")
+                        // HU-81: promedio con 2 decimales (las actividades son enteras).
+                        // Fórmula promedio del criterio: =IFERROR(ROUND(AVERAGE(rango),2),"")
                         // El rango cubre todas las actividades del criterio (los vacíos los ignora AVERAGE)
                         $rango = $this->colLetter($inicio).$filaDatos.':'.$this->colLetter($inicio + $nAct - 1).$filaDatos;
                         $sheetN->setCellValue(
                             $this->colLetter($promCols[$criterion->codigo]).$filaDatos,
-                            "=IFERROR(ROUND(AVERAGE($rango),0),\"\")"
+                            "=IFERROR(ROUND(AVERAGE($rango),2),\"\")"
                         );
                     } else {
                         $notaCrit = $service->notaCriterio($criterion, $student);
@@ -376,9 +377,9 @@ class EvaluationTemplateService
                 $col++; // pasa la columna de promedio
             }
             if ($conFormulas) {
-                // Fórmula total: =SUM de los promedios de los criterios
+                // HU-81: total con 2 decimales. Fórmula total: =ROUND(SUM de los promedios,2)
                 $refs = collect($criterios)->map(fn ($c) => $this->colLetter($promCols[$c->codigo]).$filaDatos)->toArray();
-                $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=SUM('.implode(',', $refs).')');
+                $sheetN->setCellValue($this->colLetter($colTotal).$filaDatos, '=ROUND(SUM('.implode(',', $refs).'),2)');
             } else {
                 $notaTrim = $service->notaTrimestre($plan, $student);
                 if ($notaTrim !== null) {
@@ -554,8 +555,9 @@ class EvaluationTemplateService
                     $valor = $sheetN->getCell($this->colLetter($col).$fila)->getValue();
                     if (is_numeric($valor)) {
                         $nota = (float) $valor;
-                        if ($nota < 0 || $nota > $criterion->porcentaje) {
-                            $errores[] = "Fila $fila: nota $nota fuera de rango (0-{$criterion->porcentaje}) en «{$activity->nombre}»";
+                        if ($nota < 0 || $nota > $criterion->porcentaje || floor($nota) != $nota) {
+                            // HU-81: solo números redondos (0..% del criterio).
+                            $errores[] = "Fila $fila: nota $nota inválida (solo enteros 0-{$criterion->porcentaje}) en «{$activity->nombre}»";
                         } else {
                             $service->registrarNota($activity, $student, $nota);
                             $notasRegistradas++;

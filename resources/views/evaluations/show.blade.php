@@ -158,7 +158,7 @@
                                 @else
                                     @foreach($criterion->activities as $activity)
                                         <td class="px-1 py-1 text-center {{ $cc['cell'] }}">
-                                            <input type="number" step="0.01" min="0" max="{{ $criterion->porcentaje }}"
+                                            <input type="number" step="1" min="0" max="{{ $criterion->porcentaje }}"
                                                 name="notas[{{ $activity->id }}][{{ $student->id }}]"
                                                 value="{{ $activity->notaDe($student) }}"
                                                 placeholder="—"
@@ -166,9 +166,9 @@
                                         </td>
                                     @endforeach
                                 @endif
-                                <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ $fila[$criterion->codigo] ?? '—' }}</td>
+                                <td class="px-2 py-1 text-center font-bold bg-primary-50 text-primary-700">{{ isset($fila[$criterion->codigo]) ? (int) round($fila[$criterion->codigo]) : '—' }}</td>
                             @endforeach
-                            <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ $notaTrim ?? '—' }}</td>
+                            <td class="px-2 py-1 text-center font-bold bg-primary-100 text-primary-800">{{ isset($notaTrim) ? number_format($notaTrim, 2) : '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

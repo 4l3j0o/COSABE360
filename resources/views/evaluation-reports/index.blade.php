@@ -79,7 +79,7 @@
                         <span class="text-lg font-bold text-success">#{{ $i + 1 }}</span>
                         <div>
                             <p class="text-sm font-medium text-foreground">{{ $f->student->apellidos }} {{ $f->student->nombres }}</p>
-                            <p class="text-xs text-muted-foreground">Nota: <strong class="text-success">{{ $f->nota }}</strong></p>
+                            <p class="text-xs text-muted-foreground">Nota: <strong class="text-success">{{ number_format($f->nota, 2) }}</strong></p>
                         </div>
                     </div>
                 @endforeach
@@ -109,11 +109,11 @@
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
                             <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
                             <td class="px-4 py-3 font-medium text-foreground">{{ $fila->student->apellidos }} {{ $fila->student->nombres }}</td>
-                            <td class="px-4 py-3 text-center">{{ $fila->criterios['SE'] ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center">{{ $fila->criterios['SA'] ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center">{{ $fila->criterios['HA'] ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center">{{ $fila->criterios['AU'] ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila->nota ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ isset($fila->criterios['SE']) ? (int) round($fila->criterios['SE']) : '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ isset($fila->criterios['SA']) ? (int) round($fila->criterios['SA']) : '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ isset($fila->criterios['HA']) ? (int) round($fila->criterios['HA']) : '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ isset($fila->criterios['AU']) ? (int) round($fila->criterios['AU']) : '—' }}</td>
+                            <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila->nota !== null ? number_format($fila->nota, 2) : '—' }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($fila->aprobado !== null)
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $fila->aprobado ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">{{ $fila->codigo }}</span>
