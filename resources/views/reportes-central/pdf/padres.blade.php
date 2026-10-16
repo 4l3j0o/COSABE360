@@ -22,9 +22,6 @@
   table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; overflow: hidden; word-wrap: break-word; }
   table.grid td.left { text-align: left; }
   table.grid tr.zebra td { background: #f2f6f2; }
-  .firmas { width: 100%; margin-top: 26px; }
-  .firmas td { text-align: center; font-size: 8px; color: #33412f; width: 33%; }
-  .linea { border-top: 1px solid #003200; margin: 0 24px; padding-top: 3px; }
   .foot { margin-top: 10px; font-size: 7px; color: #64748b; text-align: center; }
 </style>
 </head>
@@ -67,14 +64,6 @@
         <td>{{ $fila['es_principal'] ? 'Sí' : '' }}</td>
       </tr>
     @endforeach
-  </table>
-
-  <table class="firmas">
-    <tr>
-      <td><div class="linea">Secretaría<br><strong>Firma y sello</strong></div></td>
-      <td><div class="linea">Dirección<br><strong>V° B°</strong></div></td>
-      <td><div class="linea">Tutor<br><strong>Enterado</strong></div></td>
-    </tr>
   </table>
 
   <div class="foot">Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>

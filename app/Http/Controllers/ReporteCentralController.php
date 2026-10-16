@@ -1068,7 +1068,7 @@ class ReporteCentralController extends Controller
         $sheet->getStyle('C3:C4')->getFont()->setSize(10)->getColor()->setARGB('FF33412F');
         // Altura para el escudo (logo de 100px en A1:B4).
         foreach ([1, 2, 3, 4] as $f) {
-            $sheet->getRowDimension($f)->setRowHeight(25);
+            $sheet->getRowDimension($f)->setRowHeight(16);
         }
     }
 
