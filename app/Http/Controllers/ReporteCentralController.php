@@ -613,7 +613,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Reportes de Asistencia',
                 'descripcion' => 'Asistencia por día, semana, mes o trimestre con exportación PDF/Excel.',
-                'parametros' => '—',
+                'parametros' => 'rango / fecha / curso / materia',
                 'ruta' => 'reportes.asistencia.index',
                 'tipo' => 'link',
             ];
@@ -623,7 +623,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Reportes de Evaluación',
                 'descripcion' => 'Aprobados/reprobados, mejores calificaciones y asistencia por curso y trimestre.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia / trimestre',
                 'ruta' => 'evaluation-reports.index',
                 'tipo' => 'link',
             ];
@@ -635,7 +635,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Diario de Aula',
                 'descripcion' => 'Bitácora de avances por clase: el docente registra, directivos y familias consultan.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia',
                 'ruta' => 'diario.index',
                 'tipo' => 'link',
             ];
@@ -645,7 +645,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Conducta',
                 'descripcion' => 'Reportes de conducta (LEVE/GRAVE/MUY_GRAVE) por curso y por estudiante, con PDF/Excel.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia / falta / fechas',
                 'ruta' => 'conducta.index',
                 'tipo' => 'link',
             ];
@@ -655,7 +655,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Cierre de Gestión',
                 'descripcion' => 'Promedio anual, valoración oficial y promoción/retención por materia y curso.',
-                'parametros' => '—',
+                'parametros' => 'curso',
                 'ruta' => 'cierre-gestion.index',
                 'tipo' => 'link',
             ];
