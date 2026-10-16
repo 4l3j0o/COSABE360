@@ -246,6 +246,30 @@ class ReporteCentralTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_export_padres_pdf_completo_redirige_con_aviso(): void
+    {
+        // HU-81: dompdf no soporta miles de filas (agota memoria); con más
+        // de 500 registros el PDF redirige con aviso en vez de caerse.
+        for ($i = 0; $i < 501; $i++) {
+            Student::create([
+                'codigo' => 'EST-PDF-' . $i,
+                'nombres' => 'NombrePdf' . $i,
+                'apellidos' => 'ApellidoPdf' . $i,
+                'fecha_nacimiento' => '2015-01-01',
+                'sexo' => 'M',
+                'numero_documento' => '99000' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                'estado' => 'ACTIVO',
+            ]);
+        }
+
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('reportes.central.padres.export', ['format' => 'pdf']));
+        $response->assertRedirect(route('reportes.central.padres'));
+        $response->assertSessionHas('error');
+    }
+
     public function test_centralizador_acepta_curso_y_materia_en_cascada(): void
     {
         $a = $this->crearCurso('C1');

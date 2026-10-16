@@ -89,6 +89,13 @@ class ReporteCentralController extends Controller
             return $this->exportPadresExcel($resultado);
         }
 
+        // HU-81: dompdf no soporta miles de filas (400 → 174 MB/3 s,
+        // 1500 → 950 MB/29 s). Con filtro por curso sí funciona.
+        if ($resultado['filas']->count() > 500) {
+            return redirect()->route('reportes.central.padres', $request->only(['section_id', 'academic_year_id']))
+                ->with('error', 'El listado completo es muy grande para PDF (' . $resultado['filas']->count() . ' registros). Elija un curso o use el formato Excel.');
+        }
+
         return $this->exportPdf('reportes-central.pdf.padres', $resultado, $this->nombreArchivo('lista-padres', $resultado, 'pdf'));
     }
 
@@ -856,6 +863,11 @@ class ReporteCentralController extends Controller
 
     private function exportPdf(string $vista, array $resultado, string $filename): StreamedResponse
     {
+        // HU-81: los listados grandes (p. ej. padres de todos los cursos)
+        // agotan la memoria/tiempo por defecto de dompdf.
+        ini_set('memory_limit', '512M');
+        set_time_limit(180);
+
         $logoPath = public_path('images/logo-colegio-thumb.png');
         $logo = is_file($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
@@ -894,9 +906,9 @@ class ReporteCentralController extends Controller
         $this->escribirMembreteExcel($sheet, 'Lista de Padres de Familia — Padres y apoderados', $resultado['curso'] ?? 'Todos los cursos', 6);
 
         $cabecera = ['N.º', 'Código', 'Estudiante', 'Curso', 'Parentesco', 'Apellidos', 'Nombres', 'CI', 'Teléfono', 'Email', 'Principal'];
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
+        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
-        $fila = 3;
+        $fila = 7;
         foreach ($resultado['filas'] as $i => $f) {
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f['codigo']);
@@ -927,9 +939,9 @@ class ReporteCentralController extends Controller
         $this->escribirMembreteExcel($sheet, 'Lista de RUDEs del Paralelo', $resultado['curso'] ?? '', 6);
 
         $cabecera = ['N.º', 'Código', 'Apellidos', 'Nombres', 'CI', 'Código RUDE', 'SIE UE', 'Estado', 'Turno'];
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
+        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
-        $fila = 3;
+        $fila = 7;
         foreach ($resultado['filas'] as $i => $f) {
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f['codigo']);
@@ -960,9 +972,9 @@ class ReporteCentralController extends Controller
 
         $cabecera = ['N.º', 'Código', 'Estudiante', '1er Trim.', '2do Trim.', '3er Trim.', 'Promedio Anual', 'Valoración', 'Estado'];
 
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
+        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
-        $fila = 3;
+        $fila = 7;
         foreach ($resultado['filas'] as $i => $f) {
             $sheet->setCellValue('A' . $fila, $i + 1);
             $sheet->setCellValue('B' . $fila, $f['codigo']);
@@ -1029,16 +1041,19 @@ class ReporteCentralController extends Controller
     private function autoSizeExcel($sheet, array $cabecera, int $filaFinal): void
     {
         $ultLetra = $this->colLetter(count($cabecera));
-        $sheet->getStyle('A2:'.$ultLetra.($filaFinal - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
+        $sheet->getStyle('A6:'.$ultLetra.($filaFinal - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
         foreach (range(1, count($cabecera)) as $c) {
             $sheet->getColumnDimension($this->colLetter($c))->setAutoSize(true);
         }
-        $sheet->freezePane('A3');
+        $sheet->freezePane('A7');
         $sheet->getSheetView()->setZoomScale(90);
     }
 
     private function streamXlsx(Spreadsheet $spreadsheet, string $filename): StreamedResponse
     {
+        // HU-81: los listados grandes tardan en armarse celda por celda.
+        set_time_limit(180);
+
         $writer = new Xlsx($spreadsheet);
         ob_start();
         $writer->save('php://output');

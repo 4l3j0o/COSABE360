@@ -17,9 +17,9 @@
   .meta { font-size: 8.5px; color: #33412f; margin-top: 4px; }
   .meta b { color: #003200; }
   .section-title { background: #003200; color: #fff; font-size: 10px; font-weight: 800; padding: 5px 8px; border-radius: 5px; margin: 8px 0 5px 0; text-transform: uppercase; }
-  table.grid { width: 100%; border-collapse: collapse; }
-  table.grid th { background: #003200; color: #fff; font-size: 8px; padding: 5px 4px; text-align: center; }
-  table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; }
+  table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.grid th { background: #003200; color: #fff; font-size: 8px; padding: 5px 4px; text-align: center; overflow: hidden; }
+  table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; overflow: hidden; word-wrap: break-word; }
   table.grid td.left { text-align: left; }
   table.grid tr.zebra td { background: #f2f6f2; }
   .firmas { width: 100%; margin-top: 26px; }
@@ -54,7 +54,7 @@
       <th style="width:9%">Teléfono</th><th style="width:14%">Email</th><th style="width:6%">Princ.</th>
     </tr>
     @foreach($resultado['filas'] as $i => $fila)
-      <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
+      <tr>
         <td>{{ $i + 1 }}</td>
         <td>{{ $fila['codigo'] }}</td>
         <td class="left">{{ $fila['estudiante'] }}</td>
