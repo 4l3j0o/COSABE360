@@ -140,6 +140,29 @@ class LicenciaTest extends TestCase
             ->assertSee($licencia->evidencia_path, false);
     }
 
+    public function test_regente_ve_en_su_bandeja_el_comunicado_de_licencia_que_genera(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+
+        $this->actingAs($regente)->post(route('regente.licencias.store'), [
+            'section_id' => $datos['seccion']->id,
+            'student_id' => $datos['estudiante']->id,
+            'fecha_inicio' => '2026-04-05',
+            'fecha_fin' => '2026-04-06',
+            'motivo' => 'Cita médica',
+        ])->assertRedirect();
+
+        // Aunque el Regente es el autor (comunicado autogenerado), lo ve en su bandeja.
+        $this->actingAs($regente)
+            ->get(route('announcements.index'))
+            ->assertOk()
+            ->assertSee('Licencia de estudiante', false);
+
+        // No recibe el pantallazo de "Entendido" por un comunicado propio.
+        $this->assertCount(0, app(\App\Services\ComunicadoAlcanceService::class)->destacadosPara($regente));
+    }
+
     public function test_licencia_en_dia_sin_clase_es_rechazada(): void
     {
         $datos = $this->crearCurso();

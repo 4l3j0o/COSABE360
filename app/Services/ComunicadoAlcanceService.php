@@ -136,7 +136,9 @@ class ComunicadoAlcanceService
     public function visiblePara(User $user, Announcement $announcement): bool
     {
         // Quien lo envió no se lo "recibe" a sí mismo (aunque sea para "Todos").
-        if ((int) $announcement->author_id === (int) $user->id) {
+        // Excepción: el Regente, cuyos comunicados de licencia son autogenerados
+        // por el sistema, debe poder revisarlos en su bandeja.
+        if ((int) $announcement->author_id === (int) $user->id && ! $user->hasRole('Regente')) {
             return false;
         }
 
@@ -198,7 +200,9 @@ class ComunicadoAlcanceService
             ->all();
 
         return $this->bandejaPara($user)
-            ->filter(fn ($a) => $a->destacado && ! in_array($a->id, $leidos, true))
+            ->filter(fn ($a) => $a->destacado
+                && (int) $a->author_id !== (int) $user->id
+                && ! in_array($a->id, $leidos, true))
             ->values();
     }
 
