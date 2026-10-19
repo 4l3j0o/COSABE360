@@ -213,6 +213,7 @@ class EvaluationReportController extends Controller
 
         $attendance = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->where('section_id', $cs->section_id)
+            ->where('subject_id', $cs->subject_id)
             ->whereIn('student_id', $students->pluck('id'))
             ->get()
             ->groupBy('student_id');

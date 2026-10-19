@@ -739,6 +739,40 @@ CREATE TABLE attendances (
 
 ---
 
+# 21-bis. `licencias` (HU-82)
+
+```sql
+CREATE TABLE licencias (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT UNSIGNED NOT NULL,
+    section_id BIGINT UNSIGNED NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    motivo TEXT NULL,
+    evidencia_path VARCHAR(255) NULL,
+    announcement_id BIGINT UNSIGNED NULL,
+    estado ENUM('ACTIVA', 'ANULADA') NOT NULL DEFAULT 'ACTIVA',
+    created_by_user_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
+    FOREIGN KEY (announcement_id) REFERENCES announcements(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    INDEX idx_licencias_student_fechas (student_id, fecha_inicio, fecha_fin),
+    INDEX idx_licencias_section (section_id),
+    INDEX idx_licencias_estado (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+El Regente registra la licencia (con motivo y evidencia fotográfica); se aplica
+`LICENCIA` a **todas las materias** del curso en los días con clase y se genera el
+comunicado automático. El docente no puede modificar esos días (solo lectura).
+
+---
+
 # 22. `schedules`
 
 ```sql
@@ -1480,6 +1514,7 @@ monthly_payments
 assessments
 grade_scores
 attendances
+licencias
 schedules
 announcements
 announcement_recipients

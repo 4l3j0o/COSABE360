@@ -112,10 +112,16 @@
 
             <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/30">
                 <p class="text-xs text-muted-foreground">Marca PRESENTE a todos (se respetan las licencias ya registradas) y luego ajusta los casos.</p>
-                <button type="button" onclick="presentesATodos()" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/10 text-success border border-success/30 text-xs font-semibold hover:bg-success hover:text-white transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Presentes a todos
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="limpiarTodos()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/70 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Limpiar
+                    </button>
+                    <button type="button" onclick="presentesATodos()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/10 text-success border border-success/30 text-xs font-semibold hover:bg-success hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Presentes a todos
+                    </button>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -133,18 +139,24 @@
                         @foreach($estudiantes as $index => $est)
                             @php
                                 $existente = $asistenciasExistentes[$est->id] ?? null;
-                                $estadoActual = old("asistencias.{$est->id}.estado", $existente?->estado ?? 'AUSENTE');
+                                $bloqueado = in_array($est->id, $licenciados ?? [], true);
+                                $estadoActual = $bloqueado ? 'LICENCIA' : old("asistencias.{$est->id}.estado", $existente?->estado ?? 'AUSENTE');
                                 $justificacionActual = old("asistencias.{$est->id}.justificacion", $existente?->justificacion ?? '');
                             @endphp
-                            <tr class="hover:bg-muted/20">
+                            <tr class="{{ $bloqueado ? 'bg-blue-500/5' : 'hover:bg-muted/20' }}">
                                 <td class="px-4 py-3 text-muted-foreground">{{ $index + 1 }}</td>
-                                <td class="px-4 py-3 font-medium text-foreground">{{ $est->apellidos }} {{ $est->nombres }}</td>
+                                <td class="px-4 py-3 font-medium text-foreground">
+                                    {{ $est->apellidos }} {{ $est->nombres }}
+                                    @if($bloqueado)
+                                        <span class="ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600">Licencia</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-muted-foreground text-xs">{{ $est->codigo }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1.5">
                                         @foreach($estados as $letra => $estado)
-                                            <label title="{{ mb_strtolower($estado) }}" class="relative cursor-pointer">
-                                                <input type="radio" name="asistencias[{{ $est->id }}][estado]" value="{{ $estado }}" {{ $estadoActual === $estado ? 'checked' : '' }} class="peer sr-only">
+                                            <label title="{{ $bloqueado ? 'Licencia: no modificable' : mb_strtolower($estado) }}" class="relative {{ $bloqueado ? 'cursor-not-allowed opacity-90' : 'cursor-pointer' }}">
+                                                <input type="radio" name="asistencias[{{ $est->id }}][estado]" value="{{ $estado }}" {{ $estadoActual === $estado ? 'checked' : '' }} {{ $bloqueado ? 'disabled' : '' }} class="peer sr-only">
                                                 <span class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground text-xs font-semibold hover:bg-accent transition-colors {{ $chip[$estado] }}">{{ $letra }}</span>
                                             </label>
                                         @endforeach
@@ -154,7 +166,7 @@
                                     @enderror
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input type="text" name="asistencias[{{ $est->id }}][justificacion]" value="{{ $justificacionActual }}" placeholder="Opcional" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-full">
+                                    <input type="text" name="asistencias[{{ $est->id }}][justificacion]" value="{{ $justificacionActual }}" {{ $bloqueado ? 'disabled' : '' }} placeholder="Opcional" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-full">
                                 </td>
                             </tr>
                         @endforeach
@@ -179,6 +191,21 @@
                     return;
                 }
                 if (radio.value === 'PRESENTE') {
+                    radio.checked = true;
+                }
+            });
+        }
+
+        // HU-82: limpia la lista (vuelve al estado por defecto AUSENTE),
+        // respetando las licencias ya registradas.
+        function limpiarTodos() {
+            document.querySelectorAll('input[type="radio"][name$="[estado]"]').forEach(function (radio) {
+                var name = radio.getAttribute('name');
+                var lic = document.querySelector('input[type="radio"][name="' + name + '"][value="LICENCIA"]');
+                if (lic && lic.checked) {
+                    return;
+                }
+                if (radio.value === 'AUSENTE') {
                     radio.checked = true;
                 }
             });

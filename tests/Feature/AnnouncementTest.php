@@ -208,7 +208,7 @@ class AnnouncementTest extends TestCase
             'tipo_destinatario' => 'CURSO_ESPECIFICO',
         ]);
 
-        $response->assertSessionHasErrors('section_id');
+        $response->assertSessionHasErrors('section_ids');
     }
 
     public function test_curso_especifico_con_section_id_valido(): void

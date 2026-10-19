@@ -144,11 +144,25 @@ class ComunicadoAlcanceService
             return true;
         }
 
-        $recipient = $announcement->recipients->first();
-        if (! $recipient) {
+        $recipients = $announcement->recipients;
+        if ($recipients->isEmpty()) {
             return true;
         }
 
+        // HU-82: un comunicado puede tener varios destinatarios (varios paralelos);
+        // es visible si el usuario califica por CUALQUIERA de ellos.
+        foreach ($recipients as $recipient) {
+            if ($this->destinatarioIncluye($user, $recipient)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** ¿El destinatario (una fila) incluye al usuario? */
+    private function destinatarioIncluye(User $user, \App\Models\AnnouncementRecipient $recipient): bool
+    {
         return match ($recipient->tipo_destinatario) {
             'TODOS' => true,
             'DOCENTES' => $user->hasRole('Docente'),

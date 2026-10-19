@@ -15,6 +15,7 @@ class AnnouncementRecipientResource extends JsonResource
             'tipo_destinatario' => $this->tipo_destinatario,
             'section_id' => $this->section_id,
             'user_id' => $this->user_id,
+            'level_id' => $this->level_id,
             'section' => $this->whenLoaded('section', fn () => [
                 'id' => $this->section->id,
                 'nombre' => $this->section->nombre,

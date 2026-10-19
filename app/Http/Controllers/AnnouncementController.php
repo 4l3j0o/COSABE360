@@ -28,20 +28,28 @@ class AnnouncementController extends Controller
     public function store(StoreAnnouncementRequest $request, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
+        $user = $request->user();
+        $tipo = $validated['tipo_destinatario'];
+        $sectionIds = array_map('intval', $validated['section_ids'] ?? []);
 
-        // HU-65: el alcance (destinatario/curso/nivel) debe estar permitido para el rol
-        $error = $alcance->validarAlcance(
-            $request->user(),
-            $validated['tipo_destinatario'],
-            isset($validated['section_id']) ? (int) $validated['section_id'] : null,
-            isset($validated['level_id']) ? (int) $validated['level_id'] : null,
-        );
-        if ($error) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => $error], 403);
+        // HU-65 / HU-82: el alcance (destinatario/cursos/nivel) debe estar permitido para el rol.
+        if ($tipo === 'CURSO_ESPECIFICO') {
+            foreach ($sectionIds as $sectionId) {
+                $error = $alcance->validarAlcance($user, $tipo, $sectionId, null);
+                if ($error) {
+                    return $this->denegarAlcance($request, $error);
+                }
             }
-
-            return back()->withInput()->with('error', $error);
+        } else {
+            $error = $alcance->validarAlcance(
+                $user,
+                $tipo,
+                null,
+                isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+            );
+            if ($error) {
+                return $this->denegarAlcance($request, $error);
+            }
         }
 
         // Lógica específica HU30: fecha solo si PUBLICADO o si viene explícita
@@ -61,18 +69,37 @@ class AnnouncementController extends Controller
             'imagen_path' => $request->hasFile('imagen') ? $this->guardarImagenWebp($request->file('imagen')) : null,
         ]);
 
-        $announcement->recipients()->create([
-            'tipo_destinatario' => $validated['tipo_destinatario'],
-            'section_id' => $validated['section_id'] ?? null,
-            'level_id' => $validated['level_id'] ?? null,
-            'user_id' => $validated['user_id'] ?? null,
-        ]);
+        $this->crearDestinatarios($announcement, $tipo, $sectionIds, $validated);
 
         if ($request->expectsJson()) {
             return (new AnnouncementResource($announcement->load(['author', 'recipients'])))->response()->setStatusCode(201);
         }
 
         return $this->redirectModulo($request, 'Comunicado creado correctamente.');
+    }
+
+    /**
+     * HU-82: crea los destinatarios del comunicado. Para CURSO_ESPECIFICO admite
+     * uno o varios paralelos (una fila por paralelo).
+     */
+    private function crearDestinatarios(Announcement $announcement, string $tipo, array $sectionIds, array $validated): void
+    {
+        if ($tipo === 'CURSO_ESPECIFICO') {
+            foreach ($sectionIds as $sectionId) {
+                $announcement->recipients()->create([
+                    'tipo_destinatario' => 'CURSO_ESPECIFICO',
+                    'section_id' => $sectionId,
+                ]);
+            }
+
+            return;
+        }
+
+        $announcement->recipients()->create([
+            'tipo_destinatario' => $tipo,
+            'level_id' => $validated['level_id'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+        ]);
     }
 
     public function show(Announcement $announcement): AnnouncementResource
@@ -121,28 +148,31 @@ class AnnouncementController extends Controller
         }
 
         if (isset($validated['tipo_destinatario'])) {
-            $error = $alcance->validarAlcance(
-                $user,
-                $validated['tipo_destinatario'],
-                isset($validated['section_id']) ? (int) $validated['section_id'] : null,
-                isset($validated['level_id']) ? (int) $validated['level_id'] : null,
-            );
-            if ($error) {
-                return $this->denegarAlcance($request, $error);
+            $tipo = $validated['tipo_destinatario'];
+            $sectionIds = array_map('intval', $validated['section_ids'] ?? []);
+
+            if ($tipo === 'CURSO_ESPECIFICO') {
+                foreach ($sectionIds as $sectionId) {
+                    $error = $alcance->validarAlcance($user, $tipo, $sectionId, null);
+                    if ($error) {
+                        return $this->denegarAlcance($request, $error);
+                    }
+                }
+            } else {
+                $error = $alcance->validarAlcance(
+                    $user,
+                    $tipo,
+                    null,
+                    isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+                );
+                if ($error) {
+                    return $this->denegarAlcance($request, $error);
+                }
             }
 
-            $recipient = $announcement->recipients()->first();
-            $payload = [
-                'tipo_destinatario' => $validated['tipo_destinatario'],
-                'section_id' => $validated['section_id'] ?? null,
-                'level_id' => $validated['level_id'] ?? null,
-                'user_id' => $validated['user_id'] ?? null,
-            ];
-            if ($recipient) {
-                $recipient->update($payload);
-            } else {
-                $announcement->recipients()->create($payload);
-            }
+            // Se reemplazan los destinatarios (soporta uno o varios paralelos).
+            $announcement->recipients()->delete();
+            $this->crearDestinatarios($announcement, $tipo, $sectionIds, $validated);
         }
 
         if ($request->expectsJson()) {

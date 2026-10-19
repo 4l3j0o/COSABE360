@@ -155,14 +155,19 @@
                     </thead>
                     <tbody>
                         @foreach($enviados as $announcement)
-                            @php $recipient = $announcement->recipients->first(); @endphp
+                            @php
+                                $rec = $announcement->recipients;
+                                $recipient = $rec->first();
+                                $sectionIdsRec = $rec->whereNotNull('section_id')->pluck('section_id')->unique()->values()->all();
+                            @endphp
                             <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                                 <td class="px-4 py-3 font-medium text-foreground max-w-[200px] truncate">{{ $announcement->titulo }}</td>
                                 <td class="px-4 py-3 text-muted-foreground max-w-[300px] truncate">{{ \Illuminate\Support\Str::limit($announcement->contenido, 80) }}</td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                                         @if($recipient?->tipo_destinatario === 'CURSO_ESPECIFICO')
-                                            {{ $recipient->section?->codigo ?? '—' }} · Paralelo
+                                            {{ $rec->map(fn ($r) => $r->section?->codigo)->filter()->unique()->implode(', ') ?: '—' }}
+                                            · {{ $rec->whereNotNull('section_id')->count() > 1 ? 'Paralelos' : 'Paralelo' }}
                                         @elseif($recipient?->tipo_destinatario === 'NIVEL_DOCENTES')
                                             Docentes · {{ $recipient->level?->nombre ?? 'nivel' }}
                                         @else
@@ -180,7 +185,7 @@
                                     <div class="flex items-center justify-end gap-1">
                                         <button type="button"
                                             data-announcement='{!! json_encode(['id' => $announcement->id, 'titulo' => $announcement->titulo, 'contenido' => $announcement->contenido, 'estado' => $announcement->estado, 'destacado' => (bool) $announcement->destacado, 'imagen_url' => $announcement->imagen_path ? asset('storage/' . $announcement->imagen_path) : null, 'fecha' => $announcement->fecha_publicacion?->format('Y-m-d\TH:i')], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
-                                            data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'section_id' => $recipient?->section_id, 'level_id' => $recipient?->level_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
+                                            data-recipient='{!! json_encode(['tipo' => $recipient?->tipo_destinatario, 'section_ids' => $sectionIdsRec, 'level_id' => $recipient?->level_id], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) !!}'
                                             onclick="editarComunicado(this)" class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground cursor-pointer" title="Editar">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
@@ -263,14 +268,14 @@
                                 @error('tipo_destinatario') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div id="create-section-wrap" style="display:none;">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo <span class="text-error">*</span></label>
-                                <select name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">Seleccionar paralelo...</option>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelos <span class="text-error">*</span></label>
+                                <select name="section_ids[]" multiple size="6" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($sections as $section)
-                                        <option value="{{ $section->id }}" {{ old('section_id')==$section->id?'selected':'' }}>{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
+                                        <option value="{{ $section->id }}" {{ in_array($section->id, (array) old('section_ids', [])) ? 'selected' : '' }}>{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                @error('section_ids') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                                <p class="text-xs text-muted-foreground mt-1">Puede seleccionar varios (Ctrl/Cmd + clic).</p>
                             </div>
                             <div id="create-level-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel <span class="text-error">*</span></label>
@@ -350,13 +355,13 @@
                                 </select>
                             </div>
                             <div id="edit-section-wrap" style="display:none;">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelo</label>
-                                <select name="section_id" id="edit-section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    <option value="">Seleccionar paralelo...</option>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelos</label>
+                                <select name="section_ids[]" id="edit-section_ids" multiple size="6" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     @foreach($sections as $section)
                                         <option value="{{ $section->id }}">{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
                                     @endforeach
                                 </select>
+                                <p class="text-xs text-muted-foreground mt-1">Puede seleccionar varios (Ctrl/Cmd + clic).</p>
                             </div>
                             <div id="edit-level-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel</label>
@@ -465,7 +470,13 @@
             document.getElementById('edit-titulo').value = ann.titulo || '';
             document.getElementById('edit-contenido').value = ann.contenido || '';
             document.getElementById('edit-tipo').value = rec.tipo || 'TODOS';
-            document.getElementById('edit-section_id').value = rec.section_id || '';
+            var sel = document.getElementById('edit-section_ids');
+            if (sel) {
+                var idsSeleccionados = (rec.section_ids || []).map(String);
+                Array.from(sel.options).forEach(function (opcion) {
+                    opcion.selected = idsSeleccionados.indexOf(opcion.value) !== -1;
+                });
+            }
             document.getElementById('edit-level_id').value = rec.level_id || '';
             document.getElementById('edit-estado').value = ann.estado || 'BORRADOR';
             document.getElementById('edit-fecha').value = ann.fecha || '';
@@ -484,7 +495,7 @@
         }
         document.addEventListener('DOMContentLoaded', function() {
             toggleSectionSelect('create');
-            @if($errors->has('titulo') || $errors->has('contenido') || $errors->has('tipo_destinatario'))
+            @if($errors->has('titulo') || $errors->has('contenido') || $errors->has('tipo_destinatario') || $errors->has('section_ids'))
                 openModal('modal-create');
             @endif
         });

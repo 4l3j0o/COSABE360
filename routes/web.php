@@ -513,6 +513,7 @@ Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->
     Route::get('/{section}', [RegenteController::class, 'verCurso'])->name('regente.curso');
     Route::post('/{section}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
     Route::post('/{section}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
+    Route::post('/licencia/{licencia}/anular', [RegenteController::class, 'anularLicencia'])->name('regente.licencia.anular');
 });
 
 // HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada
