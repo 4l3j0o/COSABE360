@@ -37,6 +37,7 @@ use App\Http\Controllers\DailyCufdController;
 use App\Http\Controllers\DiscountTypeController;
 use App\Http\Controllers\EducationalServiceController;
 use App\Http\Controllers\ElectronicInvoiceController;
+use App\Http\Controllers\EstadoCuentaController;
 use App\Http\Controllers\InvoiceDetailController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\RcIvaWithholdingController;
@@ -498,6 +499,12 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
     Route::get('/cierre-gestion', [CierreGestionController::class, 'index'])->name('cierre-gestion.index');
     Route::get('/cierre-gestion/exportar', [CierreGestionController::class, 'export'])->name('cierre-gestion.export');
+});
+
+// Pensiones: estado de cuentas e historial de pagos - admin/secretaría/director
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('pensiones')->group(function () {
+    Route::get('/estado-cuentas', [EstadoCuentaController::class, 'estadoCuentas'])->name('pensiones.estado-cuentas');
+    Route::get('/historial-pagos', [EstadoCuentaController::class, 'historial'])->name('pensiones.historial-pagos');
 });
 
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
