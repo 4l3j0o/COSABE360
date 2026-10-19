@@ -79,6 +79,7 @@ Route::get('/dashboard', function () {
         'Secretaría' => 'dashboard.secretaria',
         'Docente' => 'dashboard.docente',
         'Estudiante' => 'dashboard.estudiante',
+        'Regente' => 'dashboard.regente',
         default => 'dashboard.administrador',
     };
 
