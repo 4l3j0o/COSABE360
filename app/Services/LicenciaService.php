@@ -22,6 +22,12 @@ use Illuminate\Http\UploadedFile;
  */
 class LicenciaService
 {
+    /** Meses en español (1=enero .. 12=diciembre) para el texto del comunicado. */
+    private const MESES = [
+        1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril', 5 => 'mayo', 6 => 'junio',
+        7 => 'julio', 8 => 'agosto', 9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+    ];
+
     /** Días ISO (1=lunes .. 6=sábado) en que el curso tiene clase. */
     public function diasConClase(Section $section): array
     {
@@ -86,7 +92,7 @@ class LicenciaService
     ): Licencia {
         $evidenciaPath = $evidencia?->store('licencias', 'public');
 
-        $announcement = $this->crearComunicado($student, $section, $dias, $motivo, $autor, $evidenciaPath);
+        $announcement = $this->crearComunicado($student, $section, $fechaInicio, $fechaFin, $motivo, $autor, $evidenciaPath);
 
         $licencia = Licencia::create([
             'student_id' => $student->id,
@@ -150,13 +156,38 @@ class LicenciaService
     }
 
     /**
-     * Crea un comunicado PUBLICADO dirigido a los docentes que dictan en el
-     * curso del estudiante, con la evidencia adjunta.
+     * Rango de fechas en español para el comunicado.
+     * "el 19 de octubre de 2026" | "del 19 al 23 de octubre de 2026" |
+     * "del 30 de septiembre al 2 de octubre de 2026".
+     */
+    private function formatoRango(Carbon $inicio, Carbon $fin): string
+    {
+        $mes = fn (Carbon $d) => self::MESES[(int) $d->month];
+
+        if ($inicio->isSameDay($fin)) {
+            return "el {$inicio->day} de {$mes($inicio)} de {$inicio->year}";
+        }
+
+        if ($inicio->year === $fin->year && $inicio->month === $fin->month) {
+            return "del {$inicio->day} al {$fin->day} de {$mes($inicio)} de {$inicio->year}";
+        }
+
+        if ($inicio->year === $fin->year) {
+            return "del {$inicio->day} de {$mes($inicio)} al {$fin->day} de {$mes($fin)} de {$inicio->year}";
+        }
+
+        return "del {$inicio->day} de {$mes($inicio)} de {$inicio->year} al {$fin->day} de {$mes($fin)} de {$fin->year}";
+    }
+
+    /**
+     * Crea un comunicado PUBLICADO y destacado (importante) dirigido a los
+     * docentes que dictan en el curso del estudiante, con la evidencia adjunta.
      */
     private function crearComunicado(
         Student $student,
         Section $section,
-        array $dias,
+        string $fechaInicio,
+        string $fechaFin,
         ?string $motivo,
         User $autor,
         ?string $evidenciaPath = null,
@@ -164,11 +195,13 @@ class LicenciaService
         $announcement = Announcement::create([
             'titulo' => 'Licencia de estudiante: '.$student->apellidos.' '.$student->nombres,
             'contenido' => "Se informa que el(la) estudiante **{$student->nombres} {$student->apellidos}** del paralelo "
-                .($section->codigo ?: $section->nombre).' se encuentra con LICENCIA los siguientes día(s): '.implode(', ', $dias)
+                .($section->codigo ?: $section->nombre).' se encuentra con LICENCIA '
+                .$this->formatoRango(Carbon::parse($fechaInicio), Carbon::parse($fechaFin))
                 .($motivo ? '. Motivo: '.$motivo : '.'),
             'author_id' => $autor->id,
             'fecha_publicacion' => now(),
             'estado' => 'PUBLICADO',
+            'destacado' => true,
             'imagen_path' => $evidenciaPath,
         ]);
 

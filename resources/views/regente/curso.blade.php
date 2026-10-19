@@ -91,17 +91,18 @@
     @endif
 </div>
 
-{{-- ============ CORREGIR ASISTENCIA DE UNA MATERIA ============ --}}
+{{-- ============ LLAMAR LISTA (GENERAL O POR MATERIA) ============ --}}
 @if($materias->isNotEmpty())
 <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm mb-6">
     <div class="px-5 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-            <h3 class="font-semibold text-foreground">Corregir lista por materia</h3>
-            <p class="text-xs text-muted-foreground mt-0.5">Elija la materia y ajuste los estados del día. Las licencias no se pueden modificar.</p>
+            <h3 class="font-semibold text-foreground">Llamar lista</h3>
+            <p class="text-xs text-muted-foreground mt-0.5">"General" registra el día completo (solo rellena materias sin registro, no pisa lo que ya llamó un docente) o elija una materia puntual. Las licencias no se modifican.</p>
         </div>
         <form method="GET" class="flex items-center gap-2">
             <input type="hidden" name="fecha" value="{{ $fecha->toDateString() }}">
             <select name="subject_id" onchange="this.form.submit()" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+                <option value="general" {{ $subjectCorregir === 'general' ? 'selected' : '' }}>General — todas las materias</option>
                 @foreach($materias as $materia)
                     <option value="{{ $materia->subject_id }}" {{ (int) $subjectCorregir === (int) $materia->subject_id ? 'selected' : '' }}>{{ $materia->subject?->nombre }}</option>
                 @endforeach
@@ -152,7 +153,7 @@
             </table>
         </div>
         <div class="px-5 py-4 border-t border-border flex justify-end">
-            <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">Guardar materia</button>
+            <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">{{ $subjectCorregir === 'general' ? 'Guardar lista general' : 'Guardar materia' }}</button>
         </div>
     </form>
 </div>

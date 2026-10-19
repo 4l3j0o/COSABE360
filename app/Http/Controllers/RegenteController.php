@@ -77,10 +77,19 @@ class RegenteController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        // Materia a corregir (selector)
-        $subjectCorregir = $request->integer('subject_id') ?: $materias->first()?->subject_id;
-        $corregirAsistencias = $subjectCorregir
-            ? $asistencias->where('subject_id', $subjectCorregir)->keyBy('student_id')
+        // Lista a mostrar: general (todas las materias) por defecto, o una materia.
+        $subjectIds = $materias->pluck('subject_id');
+        $subjectSel = $request->query('subject_id');
+        if ($subjectSel !== null && $subjectSel !== 'general' && $subjectIds->contains((int) $subjectSel)) {
+            $subjectCorregir = (int) $subjectSel;
+        } else {
+            $subjectCorregir = 'general';
+        }
+
+        // En modo general la grilla se precarga con la primera materia del día.
+        $subjectCargar = $subjectCorregir === 'general' ? $materias->first()?->subject_id : $subjectCorregir;
+        $corregirAsistencias = $subjectCargar
+            ? $asistencias->where('subject_id', $subjectCargar)->keyBy('student_id')
             : collect();
 
         return view('regente.curso', compact(
@@ -96,8 +105,9 @@ class RegenteController extends Controller
     }
 
     /**
-     * El Regente corrige la asistencia de UNA materia (por materia, nunca general).
-     * Los estudiantes con licencia activa quedan bloqueados en LICENCIA.
+     * El Regente llama la lista. En modo "general" rellena TODAS las materias
+     * del curso ese día (sin pisar las ya registradas por un docente); en modo
+     * materia corrige una sola. Los estudiantes con licencia quedan en LICENCIA.
      */
     public function guardarAsistencia(Request $request, Section $section): RedirectResponse
     {
@@ -105,18 +115,26 @@ class RegenteController extends Controller
 
         $validated = $request->validate([
             'fecha' => ['required', 'date'],
-            'subject_id' => ['required', 'integer'],
+            'subject_id' => ['required'],
             'asistencias' => ['required', 'array'],
             'asistencias.*.estado' => ['required', 'in:'.implode(',', Attendance::ESTADOS)],
             'asistencias.*.justificacion' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $subjectId = (int) $validated['subject_id'];
-        abort_unless(
-            SectionSubject::where('section_id', $section->id)->where('subject_id', $subjectId)->exists(),
-            422,
-            'La materia no pertenece a este curso.'
-        );
+        $subjectIds = SectionSubject::where('section_id', $section->id)
+            ->pluck('subject_id')
+            ->unique()
+            ->values();
+
+        $esGeneral = $validated['subject_id'] === 'general';
+
+        if ($esGeneral) {
+            $materias = $subjectIds;
+        } else {
+            $subjectId = (int) $validated['subject_id'];
+            abort_unless($subjectIds->contains($subjectId), 422, 'La materia no pertenece a este curso.');
+            $materias = collect([$subjectId]);
+        }
 
         $estudiantes = $section->students()->where('students.estado', 'ACTIVO')->pluck('id')->all();
         $fecha = Carbon::parse($validated['fecha'])->toDateString();
@@ -127,45 +145,53 @@ class RegenteController extends Controller
                 continue;
             }
 
-            // El docente no puede modificar un día con licencia; el Regente
-            // tampoco desde aquí (debe anular la licencia). Se mantiene LICENCIA.
-            if (in_array((int) $studentId, $licenciados, true)) {
-                Attendance::updateOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'section_id' => $section->id,
-                        'fecha' => $fecha,
-                        'subject_id' => $subjectId,
-                    ],
-                    [
-                        'estado' => 'LICENCIA',
-                        'registered_by_user_id' => auth()->id(),
-                    ]
-                );
+            $esLicenciado = in_array((int) $studentId, $licenciados, true);
 
-                continue;
-            }
-
-            Attendance::updateOrCreate(
-                [
+            foreach ($materias as $subjectId) {
+                $llave = [
                     'student_id' => $studentId,
                     'section_id' => $section->id,
                     'fecha' => $fecha,
                     'subject_id' => $subjectId,
-                ],
-                [
+                ];
+
+                // El docente no puede modificar un día con licencia: se mantiene LICENCIA.
+                if ($esLicenciado) {
+                    Attendance::updateOrCreate($llave, [
+                        'estado' => 'LICENCIA',
+                        'registered_by_user_id' => auth()->id(),
+                    ]);
+
+                    continue;
+                }
+
+                // La lista general solo RELLENA: no pisa lo que un docente ya
+                // llamó ese día. La corrección por materia sí sobreescribe.
+                if ($esGeneral) {
+                    Attendance::firstOrCreate($llave, [
+                        'estado' => $data['estado'],
+                        'justificacion' => $data['justificacion'] ?? null,
+                        'registered_by_user_id' => auth()->id(),
+                    ]);
+
+                    continue;
+                }
+
+                Attendance::updateOrCreate($llave, [
                     'estado' => $data['estado'],
                     'justificacion' => $data['justificacion'] ?? null,
                     'registered_by_user_id' => auth()->id(),
-                ]
-            );
+                ]);
+            }
         }
 
         return redirect()->route('regente.curso', [
             'section' => $section,
             'fecha' => $fecha,
-            'subject_id' => $subjectId,
-        ])->with('success', 'Asistencia actualizada para el '.$fecha.'.');
+            'subject_id' => $esGeneral ? 'general' : $validated['subject_id'],
+        ])->with('success', $esGeneral
+            ? 'Lista general registrada para el '.$fecha.'. Se rellenaron solo las materias sin registro.'
+            : 'Asistencia actualizada para el '.$fecha.'.');
     }
 
     private function autorizar(Request $request): void

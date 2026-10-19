@@ -69,6 +69,7 @@
                         data-rol="{{ ucfirst(mb_strtolower($announcement->author?->rol?->nombre ?? 'Dirección')) }}"
                         data-fecha="{{ $announcement->fecha_publicacion?->format('d/m/Y H:i') }}"
                         data-nuevo="{{ $announcement->es_nuevo ? '1' : '0' }}"
+                        data-imagen="{{ $announcement->imagen_path ? asset('storage/' . $announcement->imagen_path) : '' }}"
                         data-leido-url="{{ route('comunicados.bandeja.leido', $announcement) }}"
                         class="text-left group bg-card border {{ $announcement->es_nuevo ? 'border-primary/40' : 'border-border' }} rounded-xl p-5 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 flex items-start gap-4 cursor-pointer w-full min-w-0">
                     <div class="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl {{ $announcement->es_nuevo ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground' }}">
@@ -434,6 +435,8 @@
                         </div>
                     </div>
 
+                    <img id="com-imagen" src="" alt="" style="display:none;" class="w-full max-h-64 object-cover rounded-lg mb-4 border border-border">
+
                     <div id="com-contenido" class="whitespace-pre-wrap break-words text-[15px] text-foreground leading-relaxed"></div>
                 </div>
 
@@ -507,10 +510,19 @@
             var rol = el.getAttribute('data-rol');
             var fecha = el.getAttribute('data-fecha');
             var nuevo = el.getAttribute('data-nuevo') === '1';
+            var imagen = el.getAttribute('data-imagen') || '';
             var leidoUrl = el.getAttribute('data-leido-url');
 
             document.getElementById('com-titulo').textContent = titulo;
             document.getElementById('com-contenido').innerHTML = contenido;
+            var imgEl = document.getElementById('com-imagen');
+            if (imagen) {
+                imgEl.src = imagen;
+                imgEl.style.display = '';
+            } else {
+                imgEl.removeAttribute('src');
+                imgEl.style.display = 'none';
+            }
             document.getElementById('com-autor').textContent = autor;
             document.getElementById('com-meta').textContent = rol + ' · CSB 360 · ' + fecha;
 

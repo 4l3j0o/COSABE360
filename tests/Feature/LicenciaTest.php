@@ -127,6 +127,17 @@ class LicenciaTest extends TestCase
         $this->assertSame('PUBLICADO', $ann->estado);
         $this->assertSame($licencia->evidencia_path, $ann->imagen_path);
         $this->assertTrue($ann->recipients()->whereNotNull('user_id')->exists());
+
+        // HU-82: el comunicado de licencia es importante (destacado) y usa rango de fechas.
+        $this->assertTrue($ann->destacado);
+        $this->assertStringContainsString('del 5 al 6 de abril de 2026', $ann->contenido);
+
+        // El docente puede volver a ver la evidencia al reabrir el comunicado.
+        $this->actingAs($datos['userDocente'])
+            ->get(route('announcements.index'))
+            ->assertOk()
+            ->assertSee('data-imagen', false)
+            ->assertSee($licencia->evidencia_path, false);
     }
 
     public function test_licencia_en_dia_sin_clase_es_rechazada(): void
@@ -203,6 +214,47 @@ class LicenciaTest extends TestCase
         if ($licencia->announcement_id) {
             $this->assertSame('ARCHIVADO', Announcement::find($licencia->announcement_id)->estado);
         }
+    }
+
+    public function test_regente_llama_lista_general_y_solo_rellena_materias_sin_registro(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+        $hoy = now()->toDateString();
+
+        // El docente ya llamó la lista de su materia ese día.
+        Attendance::create([
+            'student_id' => $datos['estudiante']->id,
+            'section_id' => $datos['seccion']->id,
+            'subject_id' => $datos['subjectA']->id,
+            'fecha' => $hoy,
+            'estado' => 'AUSENTE',
+            'registered_by_user_id' => $datos['userDocente']->id,
+        ]);
+
+        $this->actingAs($regente)->post(route('regente.guardarAsistencia', $datos['seccion']), [
+            'fecha' => $hoy,
+            'subject_id' => 'general',
+            'asistencias' => [
+                $datos['estudiante']->id => ['estado' => 'PRESENTE'],
+            ],
+        ])->assertRedirect();
+
+        // La materia ya registrada por el docente NO se sobreescribe.
+        $this->assertDatabaseHas('attendances', [
+            'student_id' => $datos['estudiante']->id,
+            'subject_id' => $datos['subjectA']->id,
+            'fecha' => $hoy.' 00:00:00',
+            'estado' => 'AUSENTE',
+        ]);
+
+        // La materia sin registro se rellena con la lista general.
+        $this->assertDatabaseHas('attendances', [
+            'student_id' => $datos['estudiante']->id,
+            'subject_id' => $datos['subjectB']->id,
+            'fecha' => $hoy.' 00:00:00',
+            'estado' => 'PRESENTE',
+        ]);
     }
 
     public function test_regente_ve_consolidado_del_curso(): void
