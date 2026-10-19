@@ -34,7 +34,6 @@ use App\Http\Controllers\StudyPlanController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ContingencyQueueController;
 use App\Http\Controllers\DailyCufdController;
-use App\Http\Controllers\DataProtectionController;
 use App\Http\Controllers\DiscountTypeController;
 use App\Http\Controllers\EducationalServiceController;
 use App\Http\Controllers\ElectronicInvoiceController;
@@ -499,14 +498,6 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
 Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
     Route::get('/cierre-gestion', [CierreGestionController::class, 'index'])->name('cierre-gestion.index');
     Route::get('/cierre-gestion/exportar', [CierreGestionController::class, 'export'])->name('cierre-gestion.export');
-});
-
-// HU-55: protección de datos personales y derechos ARCO (solo Admin)
-Route::middleware(['auth', 'role:Administrador'])->prefix('datos')->group(function () {
-    Route::get('/', [DataProtectionController::class, 'index'])->name('data-protection.index');
-    Route::post('/consentimiento', [DataProtectionController::class, 'storeConsent'])->name('data-protection.consent');
-    Route::post('/solicitud', [DataProtectionController::class, 'storeRequest'])->name('data-protection.request');
-    Route::patch('/solicitud/{arcoRequest}', [DataProtectionController::class, 'resolve'])->name('data-protection.resolve');
 });
 
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
