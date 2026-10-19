@@ -109,6 +109,7 @@ class InscripcionLineaTest extends TestCase
         $rude = StudentRudeRecord::where('student_id', $a['est']->id)->first();
         $this->assertEquals(-21.5314, (float) $rude->dir_latitud);
         $this->assertNotNull($rude->foto_fachada);
+        $this->assertStringEndsWith('.webp', $rude->foto_fachada);
     }
 
     public function test_contrato_exige_nit_razon_y_acepto(): void

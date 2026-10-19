@@ -365,6 +365,7 @@ class StudentHu07Test extends TestCase
         $est->refresh();
         $oldPath = $est->fotografia;
         Storage::disk('public')->assertExists($oldPath);
+        $this->assertStringEndsWith('.webp', $oldPath);
 
         // Reemplazar foto
         $foto2 = UploadedFile::fake()->image('foto2.jpg');

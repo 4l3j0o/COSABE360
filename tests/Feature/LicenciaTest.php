@@ -116,6 +116,8 @@ class LicenciaTest extends TestCase
         $this->assertSame('ACTIVA', $licencia->estado);
         $this->assertNotNull($licencia->evidencia_path);
         Storage::disk('public')->assertExists($licencia->evidencia_path);
+        $this->assertStringEndsWith('.webp', $licencia->evidencia_path);
+        $this->assertSame('image/webp', mime_content_type(Storage::disk('public')->path($licencia->evidencia_path)));
 
         // Una fila LICENCIA por cada materia, únicamente el lunes 06/04.
         $this->assertSame(2, Attendance::where('estado', 'LICENCIA')->where('fecha', '2026-04-06')->count());

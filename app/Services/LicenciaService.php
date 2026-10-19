@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Models\SectionSubject;
 use App\Models\Student;
 use App\Models\User;
+use App\Support\ImagenWebp;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 
@@ -27,6 +28,8 @@ class LicenciaService
         1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril', 5 => 'mayo', 6 => 'junio',
         7 => 'julio', 8 => 'agosto', 9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
     ];
+
+    public function __construct(private ImagenWebp $imagenes) {}
 
     /** Días ISO (1=lunes .. 6=sábado) en que el curso tiene clase. */
     public function diasConClase(Section $section): array
@@ -90,7 +93,7 @@ class LicenciaService
         ?UploadedFile $evidencia,
         User $autor,
     ): Licencia {
-        $evidenciaPath = $evidencia?->store('licencias', 'public');
+        $evidenciaPath = $evidencia ? $this->imagenes->guardar($evidencia, 'licencias', 'lic_') : null;
 
         $announcement = $this->crearComunicado($student, $section, $fechaInicio, $fechaFin, $motivo, $autor, $evidenciaPath);
 

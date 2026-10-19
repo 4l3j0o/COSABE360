@@ -568,7 +568,10 @@ class InscripcionController extends Controller
             'archivo.max' => 'El archivo no debe superar los 5 MB.',
         ]);
 
-        $ruta = $request->file('archivo')->store('inscripciones/' . $student->id, 'public');
+        $archivoSubido = $request->file('archivo');
+        $ruta = str_starts_with((string) $archivoSubido->getMimeType(), 'image/')
+            ? app(\App\Support\ImagenWebp::class)->guardar($archivoSubido, 'inscripciones/' . $student->id, 'doc_')
+            : $archivoSubido->store('inscripciones/' . $student->id, 'public');
 
         $doc = StudentDocument::where('student_id', $student->id)
             ->where('tipo_documento', $validated['tipo_documento'])
@@ -636,7 +639,7 @@ class InscripcionController extends Controller
             if ($rude->foto_fachada) {
                 Storage::disk('public')->delete($rude->foto_fachada);
             }
-            $datos['foto_fachada'] = $request->file('foto_fachada')->store('inscripciones/' . $student->id, 'public');
+            $datos['foto_fachada'] = app(\App\Support\ImagenWebp::class)->guardar($request->file('foto_fachada'), 'inscripciones/' . $student->id, 'fachada_');
         }
 
         $rude->update($datos);

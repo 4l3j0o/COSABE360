@@ -267,7 +267,7 @@ class StudentController extends Controller
             unset($datos['email_estudiante']);
 
             if ($request->hasFile('fotografia')) {
-                $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+                $datos['fotografia'] = app(\App\Support\ImagenWebp::class)->guardar($request->file('fotografia'), 'estudiantes', 'est_');
             }
 
             $datos['quien_es_tutor'] = $datos['quien_es_tutor'] ?? 'TUTOR';
@@ -388,7 +388,7 @@ class StudentController extends Controller
                 if ($student->fotografia) {
                     Storage::disk('public')->delete($student->fotografia);
                 }
-                $datos['fotografia'] = $request->file('fotografia')->store('estudiantes', 'public');
+                $datos['fotografia'] = app(\App\Support\ImagenWebp::class)->guardar($request->file('fotografia'), 'estudiantes', 'est_');
             } else {
                 unset($datos['fotografia']);
             }

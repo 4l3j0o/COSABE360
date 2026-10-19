@@ -380,30 +380,7 @@ class AnnouncementController extends Controller
      */
     private function guardarImagenWebp($file): string
     {
-        $origen = imagecreatefromstring((string) file_get_contents($file->getRealPath()));
-        $ancho = imagesx($origen);
-        $alto = imagesy($origen);
-
-        $max = 1600;
-        if (max($ancho, $alto) > $max) {
-            $factor = $max / max($ancho, $alto);
-            $nueva = imagecreatetruecolor((int) round($ancho * $factor), (int) round($alto * $factor));
-            imagealphablending($nueva, false);
-            imagesavealpha($nueva, true);
-            imagecopyresampled($nueva, $origen, 0, 0, 0, 0, imagesx($nueva), imagesy($nueva), $ancho, $alto);
-            imagedestroy($origen);
-            $origen = $nueva;
-        }
-
-        $nombre = 'com_' . \Illuminate\Support\Str::uuid() . '.webp';
-        $tmp = tempnam(sys_get_temp_dir(), 'com');
-        imagewebp($origen, $tmp, 80);
-        imagedestroy($origen);
-
-        \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('comunicados', new \Illuminate\Http\File($tmp), $nombre);
-        @unlink($tmp);
-
-        return 'comunicados/' . $nombre;
+        return app(\App\Support\ImagenWebp::class)->guardar($file, 'comunicados', 'com_');
     }
 
     /** Respuesta uniforme cuando el alcance no está permitido (web o JSON). */
