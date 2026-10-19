@@ -34,10 +34,10 @@ use App\Http\Controllers\StudyPlanController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ContingencyQueueController;
 use App\Http\Controllers\DailyCufdController;
-use App\Http\Controllers\DataProtectionController;
 use App\Http\Controllers\DiscountTypeController;
 use App\Http\Controllers\EducationalServiceController;
 use App\Http\Controllers\ElectronicInvoiceController;
+use App\Http\Controllers\EstadoCuentaController;
 use App\Http\Controllers\InvoiceDetailController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\RcIvaWithholdingController;
@@ -477,8 +477,6 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
     Route::middleware(['role:Administrador,Director,Secretaría,Docente'])->group(function () {
         Route::get('/padres', [ReporteCentralController::class, 'padres'])->name('reportes.central.padres');
         Route::get('/padres/exportar', [ReporteCentralController::class, 'exportPadres'])->name('reportes.central.padres.export');
-        Route::get('/rudes', [ReporteCentralController::class, 'rudes'])->name('reportes.central.rudes');
-        Route::get('/rudes/exportar', [ReporteCentralController::class, 'exportRudes'])->name('reportes.central.rudes.export');
         Route::get('/centralizador-evaluacion', [ReporteCentralController::class, 'centralizadorEvaluacion'])->name('reportes.central.evaluacion');
         Route::get('/centralizador-evaluacion/exportar', [ReporteCentralController::class, 'exportCentralizadorEvaluacion'])->name('reportes.central.evaluacion.export');
         Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');
@@ -503,12 +501,10 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(fu
     Route::get('/cierre-gestion/exportar', [CierreGestionController::class, 'export'])->name('cierre-gestion.export');
 });
 
-// HU-55: protección de datos personales y derechos ARCO (solo Admin)
-Route::middleware(['auth', 'role:Administrador'])->prefix('datos')->group(function () {
-    Route::get('/', [DataProtectionController::class, 'index'])->name('data-protection.index');
-    Route::post('/consentimiento', [DataProtectionController::class, 'storeConsent'])->name('data-protection.consent');
-    Route::post('/solicitud', [DataProtectionController::class, 'storeRequest'])->name('data-protection.request');
-    Route::patch('/solicitud/{arcoRequest}', [DataProtectionController::class, 'resolve'])->name('data-protection.resolve');
+// Pensiones: estado de cuentas e historial de pagos - admin/secretaría/director
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('pensiones')->group(function () {
+    Route::get('/estado-cuentas', [EstadoCuentaController::class, 'estadoCuentas'])->name('pensiones.estado-cuentas');
+    Route::get('/historial-pagos', [EstadoCuentaController::class, 'historial'])->name('pensiones.historial-pagos');
 });
 
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias

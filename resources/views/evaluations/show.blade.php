@@ -158,7 +158,7 @@
                                 @else
                                     @foreach($criterion->activities as $activity)
                                         <td class="px-1 py-1 text-center {{ $cc['cell'] }}">
-                                            <input type="number" step="0.01" min="0" max="{{ $criterion->porcentaje }}"
+                                            <input type="number" step="1" min="0" max="{{ $criterion->porcentaje }}"
                                                 name="notas[{{ $activity->id }}][{{ $student->id }}]"
                                                 value="{{ $activity->notaDe($student) }}"
                                                 placeholder="—"

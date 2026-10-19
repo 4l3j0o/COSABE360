@@ -79,9 +79,11 @@ class ReporteCentralTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Central de Reportes');
         $response->assertSee('Lista de Padres de Familia');
-        $response->assertSee('Lista de RUDEs');
+        $response->assertDontSee('Lista de RUDEs');
         $response->assertSee('Centralizador de calificaciones por evaluación');
         $response->assertSee('Centralizador de calificaciones por trimestre');
+        $response->assertSee('form-reportes.asistencia.index', false);
+        $response->assertSee('ex-evalrep', false);
     }
 
     public function test_landing_incluye_diario_y_conducta(): void
@@ -110,25 +112,25 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('ApellidoRCP1');
     }
 
-    public function test_lista_rudes_solo_encargado(): void
+    public function test_lista_padres_muestra_curso_precargado(): void
     {
-        $a = $this->crearCurso('R1');
-        $doc = $this->crearDocente('R1');
-        $otro = $this->crearDocente('R1B');
-        // Docente encargado del paralelo
-        $a['seccion']->update(['teacher_id' => $doc['teacher']->id]);
-        SectionSubject::create(['section_id' => $a['curso']->id, 'subject_id' => $a['subject']->id, 'teacher_id' => $otro['teacher']->id]);
+        $a = $this->crearCurso('P81');
+        $padre = ParentGuardian::create(['nombres' => 'Padre', 'apellidos' => 'TutorP81', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'telefono' => '70000081', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($padre->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
 
-        // Encargado: ve la lista
-        $this->actingAs($doc['user']);
-        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        // Con filtro de curso: muestra el código del paralelo (vía precarga HU-81).
+        $response = $this->get(route('reportes.central.padres', ['section_id' => $a['curso']->id]));
         $response->assertStatus(200);
-        $response->assertSee('ApellidoRCR1');
+        $response->assertSee($a['curso']->codigoCorto());
 
-        // No encargado: 403
-        $this->actingAs($otro['user']);
-        $response = $this->get(route('reportes.central.rudes', ['section_id' => $a['curso']->id]));
-        $response->assertStatus(403);
+        // Sin filtro: también resuelve el curso sin N+1.
+        $response = $this->get(route('reportes.central.padres'));
+        $response->assertStatus(200);
+        $response->assertSee($a['curso']->codigoCorto());
+        $response->assertSee('TutorP81');
     }
 
     public function test_centralizador_evaluacion_muestra_nota(): void
@@ -225,6 +227,30 @@ class ReporteCentralTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_export_padres_pdf_completo_redirige_con_aviso(): void
+    {
+        // HU-81: dompdf no soporta miles de filas (agota memoria); con más
+        // de 500 registros el PDF redirige con aviso en vez de caerse.
+        for ($i = 0; $i < 501; $i++) {
+            Student::create([
+                'codigo' => 'EST-PDF-' . $i,
+                'nombres' => 'NombrePdf' . $i,
+                'apellidos' => 'ApellidoPdf' . $i,
+                'fecha_nacimiento' => '2015-01-01',
+                'sexo' => 'M',
+                'numero_documento' => '99000' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                'estado' => 'ACTIVO',
+            ]);
+        }
+
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('reportes.central.padres.export', ['format' => 'pdf']));
+        $response->assertRedirect(route('reportes.central.padres'));
+        $response->assertSessionHas('error');
+    }
+
     public function test_centralizador_acepta_curso_y_materia_en_cascada(): void
     {
         $a = $this->crearCurso('C1');
@@ -264,5 +290,24 @@ class ReporteCentralTest extends TestCase
 
         $response = $this->get(route('reportes.central.trimestre', ['section_subject_id' => $csAjeno->id, 'trimestre' => 1]));
         $response->assertStatus(403);
+    }
+
+    public function test_lista_padres_omite_tutor_sin_datos_reales(): void
+    {
+        $a = $this->crearCurso('P82');
+        // Fila basura: dirección como nombre, documento "S/N", sin contacto.
+        $basura = ParentGuardian::create(['nombres' => 'Álamos', 'apellidos' => 'Los', 'tipo_documento' => 'CI', 'numero_documento' => 'B. Carlos Wagner', 'telefono' => 'S/N', 'email' => '', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($basura->id, ['tipo_relacion' => 'TUTOR', 'es_principal' => 1]);
+        // Tutor real: con CI válido.
+        $real = ParentGuardian::create(['nombres' => 'María', 'apellidos' => 'Real P82', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'telefono' => '70000882', 'estado' => 'ACTIVO']);
+        $a['est']->parentGuardians()->attach($real->id, ['tipo_relacion' => 'MADRE', 'es_principal' => 0]);
+
+        $admin = $this->crearAdmin();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('reportes.central.padres', ['section_id' => $a['curso']->id]));
+        $response->assertStatus(200);
+        $response->assertDontSee('Álamos');
+        $response->assertSee('Real P82');
     }
 }

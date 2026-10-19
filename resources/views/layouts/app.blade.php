@@ -231,7 +231,7 @@
             });
         }
 
-        // Fix bloque verde: preservar scroll del sidebar (Facturación SFE queda abajo y se reseteaba al cambiar de página)
+        // Fix bloque verde: preservar scroll del sidebar (el grupo Pensiones queda abajo y se reseteaba al cambiar de página)
         (function(){
             var KEY='sanber-sidebar-scroll';
             var navs=document.querySelectorAll('.app-sidebar nav');

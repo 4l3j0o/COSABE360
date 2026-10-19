@@ -64,13 +64,12 @@
   @if($resultado['top']->isNotEmpty())
     <div class="section-title">Mejores calificaciones del trimestre</div>
     <table class="grid">
-      <tr><th style="width:6%">#</th><th class="left">Estudiante</th><th style="width:12%">Nota</th><th style="width:16%">Valoración</th></tr>
+      <tr><th style="width:6%">#</th><th class="left">Estudiante</th><th style="width:16%">Nota</th></tr>
       @foreach($resultado['top'] as $i => $f)
         <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
           <td>{{ $i + 1 }}</td>
           <td class="left">{{ $f->student->apellidos }} {{ $f->student->nombres }}</td>
           <td><strong>{{ $f->nota }}</strong></td>
-          <td>{{ $f->codigo }}</td>
         </tr>
       @endforeach
     </table>
@@ -81,7 +80,7 @@
     <tr>
       <th style="width:4%">#</th><th class="left">Estudiante</th>
       <th style="width:6%">SE<br>(10%)</th><th style="width:6%">SA<br>(45%)</th><th style="width:6%">HA<br>(40%)</th><th style="width:6%">AU<br>(5%)</th>
-      <th style="width:7%">Nota</th><th style="width:10%">Valoración</th><th style="width:10%">Estado</th><th style="width:8%">% Asist.</th>
+      <th style="width:7%">Nota</th><th style="width:10%">Estado</th><th style="width:8%">% Asist.</th>
     </tr>
     @foreach($resultado['filas'] as $i => $fila)
       <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
@@ -92,7 +91,6 @@
         <td>{{ $fila->criterios['HA'] ?? '—' }}</td>
         <td>{{ $fila->criterios['AU'] ?? '—' }}</td>
         <td><strong>{{ $fila->nota ?? '—' }}</strong></td>
-        <td>{{ $fila->codigo }}</td>
         <td class="{{ $fila->aprobado ? 'aprobado' : 'reprobado' }}">{{ $fila->aprobado === null ? '—' : ($fila->aprobado ? 'Aprobado' : 'Reprobado') }}</td>
         <td>{{ $fila->asistencia['porcentaje'] !== null ? $fila->asistencia['porcentaje'].'%' : '—' }}</td>
       </tr>
@@ -107,6 +105,6 @@
     </tr>
   </table>
 
-  <div class="foot">Escala oficial (R.M. 473/2021): ED ≤50 · DA 51-68 · DO 69-84 · DP 85-100. Mínimo de aprobación: 51. Asistencia del trimestre. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
+  <div class="foot">Mínimo de aprobación: 51. Asistencia del trimestre. Generado el {{ now()->format('d/m/Y H:i') }} por CSB 360.</div>
 </body>
 </html>

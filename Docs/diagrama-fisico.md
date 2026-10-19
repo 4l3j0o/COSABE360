@@ -1433,7 +1433,8 @@ CREATE TABLE student_curricular_adaptations (
 
 # 44. `data_consents`
 
-> HU-55: consentimiento informado de tratamiento de datos personales.
+> Consentimiento informado de tratamiento de datos personales (lo usa la
+> Inscripción en Línea al finalizar).
 > Migración `2026_09_07_170000_create_data_consents_arco_requests_tables.php`.
 
 ```sql
@@ -1449,30 +1450,6 @@ CREATE TABLE data_consents (
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     UNIQUE KEY uk_consent_titular_finalidad (titular_type, titular_id, finalidad)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
----
-
-# 45. `arco_requests`
-
-> HU-55: solicitudes ARCO (Acceso, Rectificación, Cancelación, Oposición).
-
-```sql
-CREATE TABLE arco_requests (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    titular_type VARCHAR(255) NOT NULL,
-    titular_id BIGINT UNSIGNED NOT NULL,
-    tipo ENUM('ACCESO','RECTIFICACION','CANCELACION','OPOSICION') NOT NULL,
-    detalle TEXT NULL,
-    estado ENUM('RECIBIDA','EN_PROCESO','RESUELTA','RECHAZADA') DEFAULT 'RECIBIDA',
-    fecha_solicitud DATE NULL,
-    fecha_resolucion DATE NULL,
-    resolucion TEXT NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    INDEX idx_titular (titular_type, titular_id),
-    INDEX idx_estado (estado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 

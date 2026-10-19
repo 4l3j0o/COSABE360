@@ -17,17 +17,12 @@
     </div>
 @else
 <form method="GET" class="bg-card border border-border rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-    <div>
-        <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso / Materia</label>
-        <select name="section_subject_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <option value="">Seleccionar curso…</option>
-            @foreach($sectionSubjects as $cs)
-                <option value="{{ $cs->id }}" {{ request('section_subject_id', $resultado['curso']?->id) == $cs->id ? 'selected' : '' }}>
-                    {{ $cs->section->codigo ?? $cs->section->nombre }} - {{ $cs->subject->nombre }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+    @php
+        $csSel = $resultado['curso'] ?? null;
+        $cursoSel = request('section_id', $csSel?->section_id ?? '');
+        $materiaSel = request('subject_id', $csSel?->subject_id ?? '');
+    @endphp
+    @include('reportes-central.partials._filtros-curso-materia', ['cursos' => $cursos, 'sectionSubjects' => $sectionSubjects, 'uid' => 'evalrep', 'form' => null, 'cursoSel' => $cursoSel, 'materiaSel' => $materiaSel])
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Trimestre</label>
         <select name="trimestre" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
@@ -99,7 +94,6 @@
                         <th class="px-4 py-3 text-center font-semibold text-foreground">HA</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">AU</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">NOTA</th>
-                        <th class="px-4 py-3 text-center font-semibold text-foreground">Valoración</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">Estado</th>
                         <th class="px-4 py-3 text-center font-semibold text-foreground">% Asist. trim.</th>
                     </tr>
@@ -114,12 +108,6 @@
                             <td class="px-4 py-3 text-center">{{ $fila->criterios['HA'] ?? '—' }}</td>
                             <td class="px-4 py-3 text-center">{{ $fila->criterios['AU'] ?? '—' }}</td>
                             <td class="px-4 py-3 text-center font-bold text-foreground">{{ $fila->nota ?? '—' }}</td>
-                            <td class="px-4 py-3 text-center">
-                                @if($fila->aprobado !== null)
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $fila->aprobado ? 'bg-success/10 text-success' : 'bg-error/10 text-error' }}">{{ $fila->codigo }}</span>
-                                @else —
-                                @endif
-                            </td>
                             <td class="px-4 py-3 text-center">
                                 @if($fila->aprobado === null) —
                                 @elseif($fila->aprobado) <span class="text-success font-medium">Aprobado</span>

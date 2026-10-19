@@ -11,7 +11,6 @@ use App\Models\MonthlyPayment;
 use App\Models\Registration;
 use App\Models\Student;
 use App\Models\StudentDocument;
-use App\Models\StudentRudeRecord;
 use App\Services\EvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -28,19 +27,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Agrupa todos los reportes del sistema en un único módulo y añade los
  * reportes del "llamado a lista":
  *   - Lista de padres de familia (padres y apoderados)
- *   - Lista de RUDEs del paralelo (curso completo solo si tutor/encargado)
  *   - Centralizador de calificaciones por evaluación (asignaturas)
  *   - Centralizador de calificaciones por trimestre (SE/SA/HA/AU)
  *
  * Permisos:
  *   - Administrador / Director / Secretaría: acceso total.
- *   - Docente: solo sus cursos/materias; el curso completo (RUDEs,
- *     centralizadores) solo si es tutor/encargado del paralelo
+ *   - Docente: solo sus cursos/materias; el curso completo
+ *     (centralizadores) solo si es tutor/encargado del paralelo
  *     (sections.teacher_id coincide con su Teacher).
  */
 class ReporteCentralController extends Controller
 {
-    private const ESTADOS_RUDE = ['PENDIENTE', 'ENVIADO', 'APROBADO', 'RECHAZADO'];
 
     // ---------------------------------------------------------------- Index
 
@@ -89,6 +86,13 @@ class ReporteCentralController extends Controller
             return $this->exportPadresExcel($resultado);
         }
 
+        // HU-81: dompdf no soporta miles de filas (400 → 174 MB/3 s,
+        // 1500 → 950 MB/29 s). Con filtro por curso sí funciona.
+        if ($resultado['filas']->count() > 500) {
+            return redirect()->route('reportes.central.padres', $request->only(['section_id', 'academic_year_id']))
+                ->with('error', 'El listado completo es muy grande para PDF (' . $resultado['filas']->count() . ' registros). Elija un curso o use el formato Excel.');
+        }
+
         return $this->exportPdf('reportes-central.pdf.padres', $resultado, $this->nombreArchivo('lista-padres', $resultado, 'pdf'));
     }
 
@@ -116,13 +120,17 @@ class ReporteCentralController extends Controller
 
         $estudiantes = $query->orderBy('students.apellidos')->orderBy('students.nombres')->get();
 
+        // HU-81: precarga los cursos activos en 3 consultas (antes: 2-4 por
+        // estudiante vía activeSection(), ~13.000 con todos los cursos).
+        $cursoDe = $this->cursosActivosDe($estudiantes->pluck('id'));
+
         $filas = collect();
         foreach ($estudiantes as $student) {
             if ($student->parentGuardians->isEmpty()) {
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
+                    'curso' => $cursoDe[$student->id] ?? '—',
                     'relacion' => '—',
                     'apellidos' => '',
                     'nombres' => 'Sin tutor registrado',
@@ -134,12 +142,19 @@ class ReporteCentralController extends Controller
                 continue;
             }
 
+            $reales = 0;
             foreach ($student->parentGuardians as $pg) {
+                // HU-81: omitir filas sin datos reales (p. ej. direcciones
+                // que quedaron como nombre con documento "S/N" y sin contacto).
+                if (! $this->tutorConDatosReales($pg)) {
+                    continue;
+                }
+                $reales++;
                 $pivot = $pg->pivot;
                 $filas[] = [
                     'estudiante' => $student->apellidos.' '.$student->nombres,
                     'codigo' => $student->codigo,
-                    'curso' => $student->activeSection()?->codigoCorto() ?? '—',
+                    'curso' => $cursoDe[$student->id] ?? '—',
                     'relacion' => $pivot?->tipo_relacion ?? '—',
                     'apellidos' => $pg->apellidos ?? '',
                     'nombres' => $pg->nombres ?? '',
@@ -147,6 +162,21 @@ class ReporteCentralController extends Controller
                     'telefono' => $pg->telefono ?? '',
                     'email' => $pg->email ?? '',
                     'es_principal' => $pivot?->es_principal == 1,
+                ];
+            }
+            if ($reales === 0) {
+                // Tenía vínculos pero ninguno con datos reales.
+                $filas[] = [
+                    'estudiante' => $student->apellidos.' '.$student->nombres,
+                    'codigo' => $student->codigo,
+                    'curso' => $cursoDe[$student->id] ?? '—',
+                    'relacion' => '—',
+                    'apellidos' => '',
+                    'nombres' => 'Sin tutor registrado',
+                    'ci' => '',
+                    'telefono' => '',
+                    'email' => '',
+                    'es_principal' => false,
                 ];
             }
         }
@@ -166,86 +196,56 @@ class ReporteCentralController extends Controller
         ];
     }
 
-    // ------------------------------------------------- Lista de RUDEs
-
-    public function rudes(Request $request): View
+    /**
+     * HU-81: ¿la fila del tutor trae datos reales? Sin CI válido (5+ dígitos)
+     * ni teléfono ni correo se considera basura (p. ej. una dirección que
+     * quedó como nombre con documento "S/N").
+     */
+    private function tutorConDatosReales($pg): bool
     {
-        $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildRudes($request, $user, $cursos);
+        if ((bool) preg_match('/\d{5,}/', (string) ($pg->numero_documento ?? ''))) {
+            return true;
+        }
+        // Teléfono real: 6+ dígitos (descarta "S/N", "-", etc.).
+        if (preg_match_all('/\d/', (string) ($pg->telefono ?? '')) >= 6) {
+            return true;
+        }
+        if (filter_var($pg->email ?? '', FILTER_VALIDATE_EMAIL)) {
+            return true;
+        }
 
-        return view('reportes-central.rudes', [
-            'cursos' => $cursos,
-            'filtros' => $request->only(['section_id']),
-            'resultado' => $resultado,
-        ]);
+        return false;
     }
 
-    public function exportRudes(Request $request)
+    /**
+     * HU-81: curso activo por estudiante en 3 consultas (misma lógica que
+     * Student::activeRegistration: matrícula ACTIVA + inscripción COMPLETADA
+     * de la gestión activa, tomando la más reciente).
+     *
+     * @return array<int, string> student_id => código corto del curso
+     */
+    private function cursosActivosDe(Collection $studentIds): array
     {
-        $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
-        $resultado = $this->buildRudes($request, $user, $cursos);
-
-        if ($resultado['requiere_curso']) {
-            return back()->with('error', 'Selecciona un paralelo para generar la lista de RUDEs.');
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+        if (! $periodo || $studentIds->isEmpty()) {
+            return [];
         }
 
-        $formato = $request->query('format', 'pdf');
-
-        if ($formato === 'excel') {
-            return $this->exportRudesExcel($resultado);
-        }
-
-        return $this->exportPdf('reportes-central.pdf.rudes', $resultado, $this->nombreArchivo('lista-rudes', $resultado, 'pdf'));
-    }
-
-    private function buildRudes(Request $request, $user, Collection $cursos): array
-    {
-        $sectionId = $request->query('section_id');
-
-        if (! $sectionId) {
-            return [
-                'curso' => null,
-                'filas' => collect(),
-                'requiere_curso' => true,
-            ];
-        }
-
-        if (! $this->permiteCurso($user, $sectionId, $cursos)) {
-            abort(403, 'No tiene acceso a ese curso.');
-        }
-
-        // El curso completo (lista de RUDEs de todo el paralelo) solo si es
-        // tutor/encargado del curso o rol de supervisión.
-        $section = Section::with(['grade', 'gestion'])->find($sectionId);
-        if ($user->hasRole('Docente') && ! $this->esEncargadoCurso($user, $section)) {
-            abort(403, 'Solo el tutor/encargado del curso puede ver la lista de RUDEs completa.');
-        }
-
-        $estudiantes = $section->students()
-            ->with('rudeRecord')
-            ->where('students.estado', 'ACTIVO')
-            ->orderBy('students.apellidos')
-            ->orderBy('students.nombres')
+        $regs = Registration::with(['section.grade', 'section.gestion', 'enrollment'])
+            ->where('registrations.estado', 'ACTIVA')
+            ->whereHas('enrollment', fn ($q) => $q->where('academic_year_id', $periodo->id)
+                ->where('enrollments.estado', 'COMPLETADA')
+                ->whereIn('student_id', $studentIds))
+            ->orderByDesc('id')
             ->get();
 
-        $filas = $estudiantes->map(fn ($student) => [
-            'codigo' => $student->codigo,
-            'apellidos' => $student->apellidos,
-            'nombres' => $student->nombres,
-            'ci' => trim(($student->numero_documento ?? '').' '.($student->complemento ?? '')),
-            'rude' => $student->rudeRecord?->codigo_rude ?? 'POR GENERAR',
-            'sie' => $student->rudeRecord?->codigo_sie_ue ?? StudentRudeRecord::SIE_UE,
-            'estado' => $student->rudeRecord?->estado ?? 'PENDIENTE',
-            'turno' => $student->rudeRecord?->turno ?? '',
-        ]);
+        $cursoDe = [];
+        foreach ($regs as $r) {
+            $sid = $r->enrollment->student_id;
+            $cursoDe[$sid] ??= $r->section?->codigoCorto() ?? '—';
+        }
 
-        return [
-            'curso' => $section->codigoCorto(),
-            'filas' => $filas,
-            'requiere_curso' => false,
-        ];
+        return $cursoDe;
     }
 
     // ------------------- Centralizador por evaluación (trimestres + anual)
@@ -500,15 +500,6 @@ class ReporteCentralController extends Controller
         return $user->hasAnyRole(['Administrador', 'Director', 'Secretaría']);
     }
 
-    private function esEncargadoCurso($user, Section $section): bool
-    {
-        if (! $user->hasRole('Docente') || ! $user->teacher) {
-            return false;
-        }
-
-        return $section->teacher_id === $user->teacher->id;
-    }
-
     private function cursosPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
@@ -598,16 +589,6 @@ class ReporteCentralController extends Controller
 
         if ($esSupervisor || $esDocente) {
             $nuevos[] = [
-                'nombre' => 'Lista de RUDEs',
-                'descripcion' => 'Lista de RUDEs del paralelo seleccionado. Solo el tutor/encargado del curso ve el curso completo.',
-                'parametros' => 'paralelo (obligatorio)',
-                'ruta' => 'reportes.central.rudes',
-                'tipo' => 'form',
-            ];
-        }
-
-        if ($esSupervisor || $esDocente) {
-            $nuevos[] = [
                 'nombre' => 'Centralizador de calificaciones por evaluación',
                 'descripcion' => 'Notas de los 3 trimestres y promedio anual por materia y estudiante.',
                 'parametros' => 'curso / materia',
@@ -632,7 +613,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Reportes de Asistencia',
                 'descripcion' => 'Asistencia por día, semana, mes o trimestre con exportación PDF/Excel.',
-                'parametros' => '—',
+                'parametros' => 'rango / fecha / curso / materia',
                 'ruta' => 'reportes.asistencia.index',
                 'tipo' => 'link',
             ];
@@ -642,7 +623,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Reportes de Evaluación',
                 'descripcion' => 'Aprobados/reprobados, mejores calificaciones y asistencia por curso y trimestre.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia / trimestre',
                 'ruta' => 'evaluation-reports.index',
                 'tipo' => 'link',
             ];
@@ -654,7 +635,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Diario de Aula',
                 'descripcion' => 'Bitácora de avances por clase: el docente registra, directivos y familias consultan.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia',
                 'ruta' => 'diario.index',
                 'tipo' => 'link',
             ];
@@ -664,7 +645,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Conducta',
                 'descripcion' => 'Reportes de conducta (LEVE/GRAVE/MUY_GRAVE) por curso y por estudiante, con PDF/Excel.',
-                'parametros' => '—',
+                'parametros' => 'curso / materia / falta / fechas',
                 'ruta' => 'conducta.index',
                 'tipo' => 'link',
             ];
@@ -674,7 +655,7 @@ class ReporteCentralController extends Controller
             $existentes[] = [
                 'nombre' => 'Cierre de Gestión',
                 'descripcion' => 'Promedio anual, valoración oficial y promoción/retención por materia y curso.',
-                'parametros' => '—',
+                'parametros' => 'curso',
                 'ruta' => 'cierre-gestion.index',
                 'tipo' => 'link',
             ];
@@ -821,7 +802,12 @@ class ReporteCentralController extends Controller
 
     private function exportPdf(string $vista, array $resultado, string $filename): StreamedResponse
     {
-        $logoPath = public_path('images/logo-colegio-thumb.png');
+        // HU-81: los listados grandes (p. ej. padres de todos los cursos)
+        // agotan la memoria/tiempo por defecto de dompdf.
+        ini_set('memory_limit', '512M');
+        set_time_limit(180);
+
+        $logoPath = public_path('images/escudo colegio.png');
         $logo = is_file($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
             : null;
@@ -859,9 +845,9 @@ class ReporteCentralController extends Controller
         $this->escribirMembreteExcel($sheet, 'Lista de Padres de Familia — Padres y apoderados', $resultado['curso'] ?? 'Todos los cursos', 6);
 
         $cabecera = ['N.º', 'Código', 'Estudiante', 'Curso', 'Parentesco', 'Apellidos', 'Nombres', 'CI', 'Teléfono', 'Email', 'Principal'];
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
+        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
-        $fila = 3;
+        $fila = 7;
         foreach ($resultado['filas'] as $i => $f) {
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f['codigo']);
@@ -878,40 +864,9 @@ class ReporteCentralController extends Controller
         }
 
         $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-padres', $resultado, 'xlsx'));
-    }
-
-    private function exportRudesExcel(array $resultado): StreamedResponse
-    {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('RUDEs');
-
-        $this->escribirMembreteExcel($sheet, 'Lista de RUDEs del Paralelo', $resultado['curso'] ?? '', 6);
-
-        $cabecera = ['N.º', 'Código', 'Apellidos', 'Nombres', 'CI', 'Código RUDE', 'SIE UE', 'Estado', 'Turno'];
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
-
-        $fila = 3;
-        foreach ($resultado['filas'] as $i => $f) {
-            $sheet->setCellValue('A'.$fila, $i + 1);
-            $sheet->setCellValue('B'.$fila, $f['codigo']);
-            $sheet->setCellValue('C'.$fila, $f['apellidos']);
-            $sheet->setCellValue('D'.$fila, $f['nombres']);
-            $sheet->setCellValue('E'.$fila, $f['ci']);
-            $sheet->setCellValue('F'.$fila, $f['rude']);
-            $sheet->setCellValue('G'.$fila, $f['sie']);
-            $sheet->setCellValue('H'.$fila, $f['estado']);
-            $sheet->setCellValue('I'.$fila, $f['turno']);
-            $fila++;
-        }
-
-        $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
-
-        return $this->streamXlsx($spreadsheet, $this->nombreArchivo('lista-rudes', $resultado, 'xlsx'));
     }
 
     private function exportEvaluacionExcel(array $resultado): StreamedResponse
@@ -925,9 +880,9 @@ class ReporteCentralController extends Controller
 
         $cabecera = ['N.º', 'Código', 'Estudiante', '1er Trim.', '2do Trim.', '3er Trim.', 'Promedio Anual', 'Valoración', 'Estado'];
 
-        $this->escribirCabeceraExcel($sheet, $cabecera, 2);
+        $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
-        $fila = 3;
+        $fila = 7;
         foreach ($resultado['filas'] as $i => $f) {
             $sheet->setCellValue('A' . $fila, $i + 1);
             $sheet->setCellValue('B' . $fila, $f['codigo']);
@@ -942,7 +897,7 @@ class ReporteCentralController extends Controller
         }
 
         $this->autoSizeExcel($sheet, $cabecera, $fila);
-        $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+        $this->insertarLogoCentrado($sheet, 'A', 'B', 100, 2);
 
         return $this->streamXlsx($spreadsheet, $this->nombreArchivo('centralizador-evaluaciones', $resultado, 'xlsx'));
     }
@@ -976,6 +931,10 @@ class ReporteCentralController extends Controller
         $sheet->getStyle('C1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003200');
         $sheet->getStyle('C2')->getFont()->setBold(true)->setSize(11)->getColor()->setARGB('FF003200');
         $sheet->getStyle('C3:C4')->getFont()->setSize(10)->getColor()->setARGB('FF33412F');
+        // Altura para el escudo (logo de 100px en A1:B4).
+        foreach ([1, 2, 3, 4] as $f) {
+            $sheet->getRowDimension($f)->setRowHeight(16);
+        }
     }
 
     private function escribirCabeceraExcel($sheet, array $cabecera, int $filaCabecera): void
@@ -994,16 +953,19 @@ class ReporteCentralController extends Controller
     private function autoSizeExcel($sheet, array $cabecera, int $filaFinal): void
     {
         $ultLetra = $this->colLetter(count($cabecera));
-        $sheet->getStyle('A2:'.$ultLetra.($filaFinal - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
+        $sheet->getStyle('A6:'.$ultLetra.($filaFinal - 1))->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFD1DFD1');
         foreach (range(1, count($cabecera)) as $c) {
             $sheet->getColumnDimension($this->colLetter($c))->setAutoSize(true);
         }
-        $sheet->freezePane('A3');
+        $sheet->freezePane('A7');
         $sheet->getSheetView()->setZoomScale(90);
     }
 
     private function streamXlsx(Spreadsheet $spreadsheet, string $filename): StreamedResponse
     {
+        // HU-81: los listados grandes tardan en armarse celda por celda.
+        set_time_limit(180);
+
         $writer = new Xlsx($spreadsheet);
         ob_start();
         $writer->save('php://output');
@@ -1026,7 +988,7 @@ class ReporteCentralController extends Controller
      */
     private function insertarLogoCentrado($sheet, string $colIni, string $colFin, int $alturaPx, int $offsetY = 0): void
     {
-        $path = public_path('images/logo-colegio-thumb.png');
+        $path = public_path('images/escudo colegio.png');
         if (! is_file($path)) {
             return;
         }
@@ -1037,7 +999,12 @@ class ReporteCentralController extends Controller
 
         $bloquePx = 0;
         for ($c = Coordinate::columnIndexFromString($colIni); $c <= Coordinate::columnIndexFromString($colFin); $c++) {
-            $bloquePx += (int) round($sheet->getColumnDimension($this->colLetter($c))->getWidth() * 7 + 5);
+            // Con autoSize el ancho aún no está calculado: usar el de defecto (8.43).
+            $ancho = (float) $sheet->getColumnDimension($this->colLetter($c))->getWidth();
+            if ($ancho <= 0) {
+                $ancho = 8.43;
+            }
+            $bloquePx += (int) round($ancho * 7 + 5);
         }
 
         $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing;

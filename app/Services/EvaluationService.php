@@ -63,13 +63,14 @@ class EvaluationService
 
     /**
      * Registra o actualiza la nota de un estudiante en una actividad.
+     * HU-81: solo números redondos (enteros 0..porcentaje del criterio).
      */
     public function registrarNota(EvaluationActivity $activity, Student $student, float $nota, ?string $observaciones = null, ?int $userId = null): EvaluationActivityGrade
     {
         return EvaluationActivityGrade::updateOrCreate(
             ['evaluation_activity_id' => $activity->id, 'student_id' => $student->id],
             [
-                'nota' => round($nota, 2),
+                'nota' => (float) round($nota),
                 'observaciones' => $observaciones,
                 'registered_by_user_id' => $userId ?? auth()->id(),
             ]

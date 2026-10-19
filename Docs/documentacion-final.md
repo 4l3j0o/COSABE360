@@ -683,7 +683,6 @@ El modelo conceptual representa las principales entidades del sistema y sus rela
 | evaluation_second_attempts | id | evaluation_plan_id, student_id | nota_original, nota_recuperación, estado |
 | student_curricular_adaptations | id | student_id | condición, tipo, grado, plan, evaluación diferenciada |
 | data_consents | id | titular (morph) | finalidad, consentimiento, fecha, revocación |
-| arco_requests | id | titular (morph) | tipo, estado, fecha_solicitud, resolución |
 | assessments | id | course_subject_id, subject_id, academic_year_id | nombre, tipo, peso |
 | grade_scores | id | assessment_id, student_id, registered_by_user_id | nota, promedio |
 | attendances | id | student_id, course_id, registered_by_user_id | fecha, estado |

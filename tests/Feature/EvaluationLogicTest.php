@@ -228,4 +228,86 @@ class EvaluationLogicTest extends TestCase
         // La nota invalida (50) no debe existir
         $this->assertDatabaseMissing('evaluation_activity_grades', ['nota' => 50]);
     }
+
+    public function test_registrar_nota_redondea_a_entero(): void
+    {
+        ['cs' => $cs, 'userDoc' => $userDoc, 'estudiantes' => $est] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+        $act = $service->crearActividad($plan->criterio('SA'), 'Saber 1', null, 1);
+
+        $service->registrarNota($act, $est[0], 8.6, null, $userDoc->id);
+
+        $this->assertDatabaseHas('evaluation_activity_grades', [
+            'evaluation_activity_id' => $act->id,
+            'student_id' => $est[0]->id,
+            'nota' => 9,
+        ]);
+    }
+
+    public function test_criterio_y_trimestre_son_enteros(): void
+    {
+        ['cs' => $cs, 'userDoc' => $userDoc, 'estudiantes' => $est] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+
+        $valores = ['SE' => [7, 9], 'SA' => [40], 'HA' => [35], 'AU' => [5]];
+        foreach ($plan->criteria as $criterion) {
+            foreach ($valores[$criterion->codigo] as $i => $v) {
+                $act = $service->crearActividad($criterion, 'Act ' . $criterion->codigo . '-' . $i, null, $i + 1);
+                $service->registrarNota($act, $est[0], $v, null, $userDoc->id);
+            }
+        }
+
+        // SE: (7+9)/2 = 8 ; trimestre: 8+40+35+5 = 88 (todo entero)
+        $this->assertSame(8.0, $service->notaCriterio($plan->criterio('SE'), $est[0]));
+        $this->assertSame(88.0, $service->notaTrimestre($plan, $est[0]));
+    }
+
+    public function test_guardar_notas_rechaza_decimales_en_linea(): void
+    {
+        ['cs' => $cs, 'userDoc' => $userDoc, 'estudiantes' => $est] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+        $act = $service->crearActividad($plan->criterio('SA'), 'Saber 1', null, 1);
+
+        $response = $this->actingAs($userDoc)->post(route('evaluations.grades', [$cs, $plan]), [
+            'notas' => [$act->id => [$est[0]->id => 8.5]],
+        ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseMissing('evaluation_activity_grades', [
+            'evaluation_activity_id' => $act->id,
+            'student_id' => $est[0]->id,
+        ]);
+    }
+
+    public function test_importar_rechaza_decimales(): void
+    {
+        ['cs' => $cs, 'userDoc' => $userDoc, 'estudiantes' => $est] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $template = app(EvaluationTemplateService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+
+        foreach ($plan->criteria as $criterion) {
+            $service->crearActividad($criterion, 'Act ' . $criterion->codigo, null, 1);
+        }
+        $plan->refresh()->load('criteria.activities');
+
+        $ruta = storage_path('app/import_dec_test.xlsx');
+        file_put_contents($ruta, $template->exportar($plan));
+
+        $spreadsheet = IOFactory::load($ruta);
+        $sheet = $spreadsheet->getSheetByName('Notas');
+        // Columna F = actividad SA: decimal inválido (solo enteros)
+        $sheet->setCellValue('F10', 8.5);
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($ruta);
+
+        $resultado = $template->importar($plan, $ruta);
+        @unlink($ruta);
+
+        $this->assertNotEmpty($resultado['errores']);
+        $this->assertSame(0, $resultado['notas']);
+    }
 }

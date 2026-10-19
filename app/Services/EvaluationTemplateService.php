@@ -554,8 +554,9 @@ class EvaluationTemplateService
                     $valor = $sheetN->getCell($this->colLetter($col).$fila)->getValue();
                     if (is_numeric($valor)) {
                         $nota = (float) $valor;
-                        if ($nota < 0 || $nota > $criterion->porcentaje) {
-                            $errores[] = "Fila $fila: nota $nota fuera de rango (0-{$criterion->porcentaje}) en «{$activity->nombre}»";
+                        if ($nota < 0 || $nota > $criterion->porcentaje || floor($nota) != $nota) {
+                            // HU-81: solo números redondos (0..% del criterio).
+                            $errores[] = "Fila $fila: nota $nota inválida (solo enteros 0-{$criterion->porcentaje}) en «{$activity->nombre}»";
                         } else {
                             $service->registrarNota($activity, $student, $nota);
                             $notasRegistradas++;

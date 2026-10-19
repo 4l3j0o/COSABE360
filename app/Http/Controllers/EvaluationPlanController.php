@@ -135,7 +135,8 @@ class EvaluationPlanController extends Controller
         $validated = $request->validate([
             'notas' => ['required', 'array'],
             'notas.*' => ['array'],
-            'notas.*.*' => ['nullable', 'numeric', 'min:0'],
+            // HU-81: solo números redondos (el rango 0..% se valida abajo).
+            'notas.*.*' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $service = app(EvaluationService::class);
@@ -166,8 +167,8 @@ class EvaluationPlanController extends Controller
                         continue;
                     }
                     $valor = (float) $nota;
-                    if ($valor < 0 || $valor > $max) {
-                        $errores[] = 'Nota '.$valor.' fuera de rango (0-'.$max.') en "'.$activity->nombre.'"';
+                    if ($valor < 0 || $valor > $max || floor($valor) != $valor) {
+                        $errores[] = 'Nota '.$nota.' inválida (solo enteros 0-'.$max.') en "'.$activity->nombre.'"';
 
                         continue;
                     }
