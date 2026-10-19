@@ -31,6 +31,7 @@
     <form method="GET" class="flex items-center gap-2">
         <input type="date" name="fecha" value="{{ $fecha->toDateString() }}" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
         <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">Ir</button>
+        <a href="{{ route('regente.licencias', ['section_id' => $section->id]) }}" class="px-4 py-2 rounded-lg border border-input text-foreground text-sm hover:bg-muted whitespace-nowrap">Gestionar licencias</a>
     </form>
 </div>
 
@@ -58,7 +59,7 @@
                     <tr>
                         <th class="text-left px-4 py-3 font-semibold text-foreground sticky left-0 bg-muted/50">Estudiante</th>
                         @foreach($materias as $materia)
-                            <th class="text-center px-2 py-3 font-medium text-muted-foreground whitespace-nowrap" title="{{ $materia->subject?->nombre }}">{{ \Illuminate\Support\Str::limit($materia->subject?->nombre, 8, '') }}</th>
+                            <th class="text-center px-2 py-3 font-medium text-muted-foreground whitespace-nowrap" title="{{ $materia->subject?->nombre }}">{{ $materia->subject?->sigla ?: $materia->subject?->nombre }}</th>
                         @endforeach
                     </tr>
                 </thead>
@@ -156,108 +157,5 @@
     </form>
 </div>
 @endif
-
-{{-- ============ REGISTRAR LICENCIA ============ --}}
-<div class="bg-card border border-border rounded-xl p-5 mb-6 shadow-sm">
-    <h3 class="font-semibold text-foreground mb-3">Registrar licencia a un estudiante</h3>
-    <form method="POST" action="{{ route('regente.licencia', ['section' => $section, 'student' => ':student_id']) }}" id="form-licencia" enctype="multipart/form-data">
-        @csrf
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-            <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Estudiante</label>
-                <select name="student_id" id="licencia-student" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                    @foreach($students as $student)
-                        <option value="{{ $student->id }}">{{ $student->apellidos }} {{ $student->nombres }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Desde</label>
-                <input type="date" name="fecha_inicio" value="{{ $fecha->toDateString() }}" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Hasta</label>
-                <input type="date" name="fecha_fin" value="{{ $fecha->toDateString() }}" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-            <button type="submit" class="px-5 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-medium hover:opacity-90 cursor-pointer">Registrar licencia</button>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-            <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Motivo</label>
-                <input type="text" name="motivo" maxlength="500" placeholder="Motivo de la licencia (se incluirá en el comunicado)" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-muted-foreground mb-1">Evidencia (foto de respaldo)</label>
-                <input type="file" name="evidencia" accept="image/*" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-        </div>
-        @error('evidencia') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-        <p class="text-xs text-muted-foreground mt-2">Solo se marcan los días con clase del rango. La licencia se aplica a todas las materias y el docente no podrá modificarla.</p>
-    </form>
-</div>
-
-{{-- ============ LICENCIAS REGISTRADAS ============ --}}
-<div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-    <div class="px-5 py-4 border-b border-border">
-        <h3 class="font-semibold text-foreground">Licencias registradas</h3>
-    </div>
-    @if($licencias->isEmpty())
-        <div class="p-6 text-sm text-muted-foreground">Aún no hay licencias registradas en este curso.</div>
-    @else
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/50 border-b border-border">
-                    <tr>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Estudiante</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Desde</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Hasta</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Motivo</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Evidencia</th>
-                        <th class="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
-                        <th class="text-right px-4 py-3 font-medium text-muted-foreground">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    @foreach($licencias as $lic)
-                        <tr class="hover:bg-muted/20">
-                            <td class="px-4 py-2 font-medium text-foreground">{{ $lic->student?->apellidos }} {{ $lic->student?->nombres }}</td>
-                            <td class="px-4 py-2 text-muted-foreground">{{ $lic->fecha_inicio?->format('d/m/Y') }}</td>
-                            <td class="px-4 py-2 text-muted-foreground">{{ $lic->fecha_fin?->format('d/m/Y') }}</td>
-                            <td class="px-4 py-2 text-muted-foreground">{{ $lic->motivo ?: '—' }}</td>
-                            <td class="px-4 py-2">
-                                @if($lic->evidencia_path)
-                                    <a href="{{ asset('storage/' . $lic->evidencia_path) }}" target="_blank" class="text-primary underline text-xs">Ver foto</a>
-                                @else
-                                    <span class="text-muted-foreground">—</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-2">
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $lic->estado === 'ACTIVA' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground' }}">{{ $lic->estado }}</span>
-                            </td>
-                            <td class="px-4 py-2 text-right">
-                                @if($lic->estado === 'ACTIVA')
-                                    <form method="POST" action="{{ route('regente.licencia.anular', $lic) }}" onsubmit="return confirm('¿Anular esta licencia? Se revertirán las asistencias y se archivará el comunicado.')" class="inline">
-                                        @csrf
-                                        <button type="submit" class="px-3 py-1.5 rounded-lg bg-error/10 text-error border border-error/30 text-xs font-medium hover:bg-error hover:text-white transition-colors">Anular</button>
-                                    </form>
-                                @else
-                                    <span class="text-xs text-muted-foreground">—</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-</div>
 @endsection
 
-@push('scripts')
-<script>
-document.getElementById('form-licencia').addEventListener('submit', function (e) {
-    var studentId = document.getElementById('licencia-student').value;
-    this.action = this.action.replace(':student_id', studentId);
-});
-</script>
-@endpush

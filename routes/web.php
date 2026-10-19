@@ -11,6 +11,7 @@ use App\Http\Controllers\DiarioAulaController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\InscripcionController;
+use App\Http\Controllers\LicenciaController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
@@ -511,10 +512,14 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
 Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->prefix('regente')->group(function () {
     Route::get('/', [RegenteController::class, 'cursos'])->name('regente.cursos');
+
+    // HU-82: módulo de licencias, independiente de "Listas de Asistencia"
+    Route::get('/licencias', [LicenciaController::class, 'index'])->name('regente.licencias');
+    Route::post('/licencias', [LicenciaController::class, 'store'])->name('regente.licencias.store');
+    Route::post('/licencias/{licencia}/anular', [LicenciaController::class, 'anular'])->name('regente.licencias.anular');
+
     Route::get('/{section}', [RegenteController::class, 'verCurso'])->name('regente.curso');
     Route::post('/{section}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
-    Route::post('/{section}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
-    Route::post('/licencia/{licencia}/anular', [RegenteController::class, 'anularLicencia'])->name('regente.licencia.anular');
 });
 
 // HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada

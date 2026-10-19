@@ -99,8 +99,10 @@ class LicenciaTest extends TestCase
         // Rango: domingo 05/04/2026 a lunes 06/04/2026. Sin horario => lun-sáb.
         // Solo el lunes debe marcarse.
         $response = $this->actingAs($regente)->post(
-            route('regente.licencia', ['section' => $datos['seccion'], 'student' => $datos['estudiante']]),
+            route('regente.licencias.store'),
             [
+                'section_id' => $datos['seccion']->id,
+                'student_id' => $datos['estudiante']->id,
                 'fecha_inicio' => '2026-04-05',
                 'fecha_fin' => '2026-04-06',
                 'motivo' => 'Cita médica',
@@ -134,8 +136,8 @@ class LicenciaTest extends TestCase
 
         // Solo domingo 05/04/2026 => sin días de clase.
         $response = $this->actingAs($regente)->post(
-            route('regente.licencia', ['section' => $datos['seccion'], 'student' => $datos['estudiante']]),
-            ['fecha_inicio' => '2026-04-05', 'fecha_fin' => '2026-04-05', 'motivo' => 'X']
+            route('regente.licencias.store'),
+            ['section_id' => $datos['seccion']->id, 'student_id' => $datos['estudiante']->id, 'fecha_inicio' => '2026-04-05', 'fecha_fin' => '2026-04-05', 'motivo' => 'X']
         );
 
         $response->assertSessionHas('error');
@@ -152,8 +154,8 @@ class LicenciaTest extends TestCase
         $hoy = now()->toDateString();
 
         $this->actingAs($regente)->post(
-            route('regente.licencia', ['section' => $datos['seccion'], 'student' => $datos['estudiante']]),
-            ['fecha_inicio' => $hoy, 'fecha_fin' => $hoy, 'motivo' => 'Salud']
+            route('regente.licencias.store'),
+            ['section_id' => $datos['seccion']->id, 'student_id' => $datos['estudiante']->id, 'fecha_inicio' => $hoy, 'fecha_fin' => $hoy, 'motivo' => 'Salud']
         );
 
         // El docente intenta marcar PRESENTE ese día en su materia.
@@ -187,14 +189,14 @@ class LicenciaTest extends TestCase
         $regente = $this->regente();
 
         $this->actingAs($regente)->post(
-            route('regente.licencia', ['section' => $datos['seccion'], 'student' => $datos['estudiante']]),
-            ['fecha_inicio' => '2026-04-06', 'fecha_fin' => '2026-04-06', 'motivo' => 'Salud']
+            route('regente.licencias.store'),
+            ['section_id' => $datos['seccion']->id, 'student_id' => $datos['estudiante']->id, 'fecha_inicio' => '2026-04-06', 'fecha_fin' => '2026-04-06', 'motivo' => 'Salud']
         );
 
         $licencia = Licencia::firstOrFail();
         $this->assertSame(2, Attendance::where('estado', 'LICENCIA')->count());
 
-        $this->actingAs($regente)->post(route('regente.licencia.anular', $licencia))->assertRedirect();
+        $this->actingAs($regente)->post(route('regente.licencias.anular', $licencia))->assertRedirect();
 
         $this->assertSame('ANULADA', $licencia->fresh()->estado);
         $this->assertSame(0, Attendance::where('estado', 'LICENCIA')->count());
@@ -213,6 +215,25 @@ class LicenciaTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Consolidado de asistencia');
         $response->assertSee('Alumno');
-        $response->assertSee('Registrar licencia');
+        $response->assertSee('Gestionar licencias');
+    }
+
+    public function test_modulo_de_licencias_muestra_formulario_y_oculta_licencias_del_curso(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+
+        // El módulo dedicado lista y permite registrar.
+        $this->actingAs($regente)
+            ->get(route('regente.licencias', ['section_id' => $datos['seccion']->id]))
+            ->assertStatus(200)
+            ->assertSee('Licencias de estudiantes')
+            ->assertSee('Registrar licencia')
+            ->assertSee('Alumno');
+
+        // La vista del curso ya no contiene el formulario de licencias.
+        $this->actingAs($regente)
+            ->get(route('regente.curso', $datos['seccion']))
+            ->assertDontSee('Registrar licencia a un estudiante');
     }
 }
