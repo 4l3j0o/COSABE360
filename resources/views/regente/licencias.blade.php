@@ -19,20 +19,36 @@
     <div class="mb-5 px-4 py-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm">{{ session('error') }}</div>
 @endif
 
-{{-- ============ FILTRO POR CURSO ============ --}}
+{{-- ============ FILTROS EN CASCADA: NIVEL -> GRADO -> PARALELO ============ --}}
 <div class="bg-card border border-border rounded-xl p-5 mb-6 shadow-sm">
-    <form method="GET" class="flex flex-col sm:flex-row sm:items-end gap-3">
+    <form method="GET" id="filtro-licencias" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <x-forms.select
+            name="level_id"
+            label="Nivel"
+            placeholder="Todos los niveles"
+            :value="$levelId"
+            :options="$levels->mapWithKeys(fn ($l) => [$l->id => $l->nombre])"
+            onchange="licenciasFiltrar('level')"
+        />
+        <x-forms.select
+            name="grade_id"
+            label="Grado"
+            placeholder="Todos los grados"
+            :value="$gradeId"
+            :options="$grades->mapWithKeys(fn ($g) => [$g->id => $g->nombre])"
+            onchange="licenciasFiltrar('grade')"
+        />
         <x-forms.select
             name="section_id"
-            label="Curso"
-            placeholder="Todos los cursos"
+            label="Paralelo"
+            placeholder="Todos los paralelos"
             :value="$section?->id"
-            :options="$sections->mapWithKeys(fn ($s) => [$s->id => $s->nombreCompleto()])"
-            class="w-full sm:w-96"
+            :options="$sections->mapWithKeys(fn ($s) => [$s->id => $gradeId ? $s->nombre : $s->nombreCompleto()])"
+            onchange="licenciasFiltrar()"
         />
         <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">Filtrar</button>
     </form>
-    <p class="text-xs text-muted-foreground mt-2">Seleccione un curso para registrar licencias y ver su historial. Sin selección se muestran todas.</p>
+    <p class="text-xs text-muted-foreground mt-2">Elija nivel y grado, y luego el paralelo para registrar licencias. Sin paralelo se muestra el historial del filtro.</p>
 </div>
 
 {{-- ============ REGISTRAR LICENCIA ============ --}}
@@ -130,4 +146,17 @@
         </div>
     @endif
 </div>
+
+<script>
+    function licenciasFiltrar(cambio) {
+        var form = document.getElementById('filtro-licencias');
+        if (cambio === 'level') {
+            form.querySelector('[name="grade_id"]').value = '';
+        }
+        if (cambio === 'level' || cambio === 'grade') {
+            form.querySelector('[name="section_id"]').value = '';
+        }
+        form.submit();
+    }
+</script>
 @endsection

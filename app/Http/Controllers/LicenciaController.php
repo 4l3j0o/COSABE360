@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Grade;
+use App\Models\Level;
 use App\Models\Licencia;
 use App\Models\Section;
 use App\Models\Student;
@@ -25,11 +27,33 @@ class LicenciaController extends Controller
     {
         $this->autorizar($request);
 
+        $levels = Level::orderBy('orden')->get();
+
+        $levelId = $request->integer('level_id') ?: null;
+        $gradeId = $request->integer('grade_id') ?: null;
+        $sectionId = $request->integer('section_id') ?: null;
+
+        // Grados del nivel elegido (cascada Nivel -> Grado).
+        $grades = Grade::query()
+            ->when($levelId, fn ($q) => $q->where('level_id', $levelId))
+            ->orderBy('orden')
+            ->get();
+
+        if ($gradeId && ! $grades->contains('id', $gradeId)) {
+            $gradeId = null;
+        }
+
+        // Paralelos del grado elegido (cascada Grado -> Paralelo).
         $sections = Section::with(['grade.level', 'gestion'])
+            ->when($levelId, fn ($q) => $q->whereHas('grade', fn ($g) => $g->where('level_id', $levelId)))
+            ->when($gradeId, fn ($q) => $q->where('grade_id', $gradeId))
             ->ordenadoPorNivel()
             ->get();
 
-        $sectionId = $request->integer('section_id') ?: null;
+        if ($sectionId && ! $sections->contains('id', $sectionId)) {
+            $sectionId = null;
+        }
+
         $section = $sectionId ? $sections->firstWhere('id', $sectionId) : null;
 
         $students = $section
@@ -42,11 +66,22 @@ class LicenciaController extends Controller
 
         $licencias = Licencia::with(['student', 'section.grade.level', 'section.gestion'])
             ->when($section, fn ($q) => $q->where('section_id', $section->id))
+            ->when(! $section && $levelId, fn ($q) => $q->whereHas('section.grade', fn ($g) => $g->where('level_id', $levelId)))
+            ->when(! $section && $gradeId, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('grade_id', $gradeId)))
             ->orderByDesc('fecha_inicio')
             ->orderByDesc('id')
             ->get();
 
-        return view('regente.licencias', compact('sections', 'section', 'students', 'licencias'));
+        return view('regente.licencias', compact(
+            'levels',
+            'grades',
+            'sections',
+            'levelId',
+            'gradeId',
+            'section',
+            'students',
+            'licencias',
+        ));
     }
 
     public function store(Request $request): RedirectResponse

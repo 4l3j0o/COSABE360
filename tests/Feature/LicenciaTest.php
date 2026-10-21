@@ -313,4 +313,41 @@ class LicenciaTest extends TestCase
             ->get(route('regente.curso', $datos['seccion']))
             ->assertDontSee('Registrar licencia a un estudiante');
     }
+
+    public function test_filtros_de_nivel_grado_y_paralelo(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+        $seccion = $datos['seccion'];
+
+        // Sin filtros aparece el paralelo con su etiqueta Nivel · Grado · Paralelo.
+        $this->actingAs($regente)
+            ->get(route('regente.licencias'))
+            ->assertOk()
+            ->assertSee($seccion->nombreCompleto(), false)
+            ->assertSee('Nivel')
+            ->assertSee('Grado')
+            ->assertSee('Paralelo');
+
+        // Con nivel + grado + paralelo se puede registrar en ese curso.
+        $this->actingAs($regente)
+            ->get(route('regente.licencias', [
+                'level_id' => $seccion->grade->level_id,
+                'grade_id' => $seccion->grade_id,
+                'section_id' => $seccion->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Registrar licencia en '.$seccion->nombreCompleto(), false);
+
+        // Un nivel distinto descarta el paralelo: no se puede registrar.
+        $otroNivel = Level::create(['nombre' => 'Nivel Test '.fake()->unique()->numerify('##'), 'orden' => 99, 'estado' => 'ACTIVO']);
+
+        $this->actingAs($regente)
+            ->get(route('regente.licencias', [
+                'level_id' => $otroNivel->id,
+                'section_id' => $seccion->id,
+            ]))
+            ->assertOk()
+            ->assertDontSee('Registrar licencia en ', false);
+    }
 }
