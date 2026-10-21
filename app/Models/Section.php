@@ -94,6 +94,35 @@ class Section extends Model
         return $codigo;
     }
 
+    /**
+     * "Nivel · Grado · Paralelo" para selectores (ej. "Secundaria · 5to · A - BQS").
+     * El nombre del grado ya incluye el nivel ("5to Secundaria"); se evita repetirlo.
+     */
+    public function nombreCompleto(): string
+    {
+        $nivel = (string) ($this->grade?->level?->nombre ?? '');
+        $corto = $this->nivelCorto($nivel);
+
+        $grado = (string) ($this->grade?->nombre ?? '');
+        if ($corto !== '' && str_contains($grado, $corto)) {
+            $grado = trim(str_replace($corto, '', $grado));
+        }
+
+        return implode(' · ', array_values(array_filter([$corto, $grado, trim((string) $this->nombre)])));
+    }
+
+    /** "Inicial en Familia Comunitaria" -> "Inicial". */
+    private function nivelCorto(string $nivel): string
+    {
+        foreach (['Inicial', 'Primaria', 'Secundaria'] as $corto) {
+            if (str_contains($nivel, $corto)) {
+                return $corto;
+            }
+        }
+
+        return $nivel;
+    }
+
     public function sectionSubjects(): HasMany
     {
         return $this->hasMany(SectionSubject::class, 'section_id');

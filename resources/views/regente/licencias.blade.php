@@ -27,7 +27,7 @@
             label="Curso"
             placeholder="Todos los cursos"
             :value="$section?->id"
-            :options="$sections->mapWithKeys(fn ($s) => [$s->id => trim(($s->grade?->nombre ?? '').' '.$s->nombre)])"
+            :options="$sections->mapWithKeys(fn ($s) => [$s->id => $s->nombreCompleto()])"
             class="w-full sm:w-96"
         />
         <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">Filtrar</button>
@@ -38,7 +38,7 @@
 {{-- ============ REGISTRAR LICENCIA ============ --}}
 @if($section)
 <div class="bg-card border border-border rounded-xl p-5 mb-6 shadow-sm">
-    <h3 class="font-semibold text-foreground mb-3">Registrar licencia en {{ trim(($section->grade?->nombre ?? '').' '.$section->nombre) }}</h3>
+    <h3 class="font-semibold text-foreground mb-3">Registrar licencia en {{ $section->nombreCompleto() }}</h3>
 
     @if($students->isEmpty())
         <p class="text-sm text-muted-foreground">El curso no tiene estudiantes matriculados activos.</p>
@@ -99,7 +99,7 @@
                     @foreach($licencias as $lic)
                         <tr class="hover:bg-muted/20">
                             <td class="px-4 py-2 font-medium text-foreground">{{ $lic->student?->apellidos }} {{ $lic->student?->nombres }}</td>
-                            <td class="px-4 py-2 text-muted-foreground">{{ trim(($lic->section?->grade?->nombre ?? '').' '.($lic->section?->nombre ?? '')) }}</td>
+                            <td class="px-4 py-2 text-muted-foreground">{{ $lic->section?->nombreCompleto() ?? '—' }}</td>
                             <td class="px-4 py-2 text-muted-foreground">{{ $lic->fecha_inicio?->format('d/m/Y') }}</td>
                             <td class="px-4 py-2 text-muted-foreground">{{ $lic->fecha_fin?->format('d/m/Y') }}</td>
                             <td class="px-4 py-2 text-muted-foreground">{{ $lic->motivo ?: '—' }}</td>

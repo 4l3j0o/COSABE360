@@ -25,7 +25,7 @@ class LicenciaController extends Controller
     {
         $this->autorizar($request);
 
-        $sections = Section::with(['grade', 'gestion'])
+        $sections = Section::with(['grade.level', 'gestion'])
             ->ordenadoPorNivel()
             ->get();
 
@@ -40,7 +40,7 @@ class LicenciaController extends Controller
                 ->get()
             : collect();
 
-        $licencias = Licencia::with(['student', 'section.grade', 'section.gestion'])
+        $licencias = Licencia::with(['student', 'section.grade.level', 'section.gestion'])
             ->when($section, fn ($q) => $q->where('section_id', $section->id))
             ->orderByDesc('fecha_inicio')
             ->orderByDesc('id')
