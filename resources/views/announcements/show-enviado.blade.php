@@ -76,7 +76,7 @@
             <div class="whitespace-pre-wrap break-words text-[15px] text-foreground leading-relaxed">{!! $texto !!}</div>
 
             @if($announcement->imagen_path)
-                <img src="{{ asset('storage/' . $announcement->imagen_path) }}" alt="" class="w-full rounded-lg mt-5 border border-border">
+                @include('announcements._adjunto-imagen', ['path' => $announcement->imagen_path])
             @endif
         </div>
 
