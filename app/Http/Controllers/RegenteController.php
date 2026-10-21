@@ -27,7 +27,7 @@ class RegenteController extends Controller
     {
         $this->autorizar($request);
 
-        $cursos = Section::with(['grade', 'gestion'])
+        $cursos = Section::with(['grade.level', 'gestion'])
             ->ordenadoPorNivel()
             ->get();
 

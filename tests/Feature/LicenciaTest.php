@@ -350,4 +350,18 @@ class LicenciaTest extends TestCase
             ->assertOk()
             ->assertDontSee('Registrar licencia en ', false);
     }
+
+    public function test_lista_de_cursos_tiene_pestanas_por_nivel(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+
+        $this->actingAs($regente)
+            ->get(route('regente.cursos'))
+            ->assertOk()
+            ->assertSee('Gestionar Asistencia')
+            ->assertSee('Todos')
+            ->assertSee('Primaria')
+            ->assertSee('data-curso-nivel="'.$datos['seccion']->grade->level_id.'"', false);
+    }
 }

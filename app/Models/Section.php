@@ -100,8 +100,7 @@ class Section extends Model
      */
     public function nombreCompleto(): string
     {
-        $nivel = (string) ($this->grade?->level?->nombre ?? '');
-        $corto = $this->nivelCorto($nivel);
+        $corto = (string) ($this->grade?->level?->nombreCorto() ?? '');
 
         $grado = (string) ($this->grade?->nombre ?? '');
         if ($corto !== '' && str_contains($grado, $corto)) {
@@ -109,18 +108,6 @@ class Section extends Model
         }
 
         return implode(' · ', array_values(array_filter([$corto, $grado, trim((string) $this->nombre)])));
-    }
-
-    /** "Inicial en Familia Comunitaria" -> "Inicial". */
-    private function nivelCorto(string $nivel): string
-    {
-        foreach (['Inicial', 'Primaria', 'Secundaria'] as $corto) {
-            if (str_contains($nivel, $corto)) {
-                return $corto;
-            }
-        }
-
-        return $nivel;
     }
 
     public function sectionSubjects(): HasMany
