@@ -15,12 +15,17 @@
         <p class="text-sm text-muted-foreground">No hay cursos registrados.</p>
     </div>
 @else
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm divide-y divide-border">
         @foreach($cursos as $curso)
-            <a href="{{ route('regente.curso', $curso) }}" class="bg-card border border-border rounded-xl p-5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
-                <p class="text-xs font-semibold uppercase tracking-wider text-primary">{{ $curso->grade->nombre ?? '' }} {{ $curso->nombre ?? '' }}</p>
-                <h3 class="text-base font-bold text-foreground mt-1">{{ $curso->nombre }}</h3>
-                <p class="text-xs text-muted-foreground mt-1">{{ $curso->gestion?->nombre ?? '' }}</p>
+            <a href="{{ route('regente.curso', $curso) }}"
+               class="flex items-center justify-between gap-4 px-5 py-3 hover:bg-muted/40 transition-colors group">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-foreground truncate">
+                        {{ $curso->grade->nombre ?? '' }} {{ $curso->nombre ?? '' }}
+                    </p>
+                    <p class="text-xs text-muted-foreground">Gestión {{ $curso->gestion?->nombre ?? '' }}</p>
+                </div>
+                <span class="shrink-0 text-xs font-medium text-primary group-hover:underline">Ver consolidado →</span>
             </a>
         @endforeach
     </div>
