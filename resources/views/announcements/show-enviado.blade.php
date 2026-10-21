@@ -38,7 +38,7 @@
     $texto = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $texto);
     $esLicencia = $announcement->esGeneradoPorLicencia();
 @endphp
-<div class="max-w-3xl mx-auto">
+<div class="w-full">
     <div class="mb-4">
         @include('layouts._volver', ['href' => route('announcements.index', ['tab' => 'enviados']), 'texto' => 'Volver a Mis Envíos'])
     </div>

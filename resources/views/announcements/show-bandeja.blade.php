@@ -13,7 +13,7 @@
     $texto = nl2br(e($announcement->contenido));
     $texto = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $texto);
 @endphp
-<div class="max-w-3xl mx-auto">
+<div class="w-full">
     <div class="mb-4">
         @include('layouts._volver', ['href' => route('announcements.index', ['tab' => 'recibidos']), 'texto' => 'Volver a Recibidos'])
     </div>
