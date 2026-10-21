@@ -222,13 +222,11 @@ class LicenciaService
             return $announcement;
         }
 
-        foreach ($docenteUserIds as $userId) {
-            $announcement->recipients()->create([
-                'tipo_destinatario' => 'CURSO_ESPECIFICO',
-                'section_id' => $section->id,
-                'user_id' => $userId,
-            ]);
-        }
+        // HU-82: solo los docentes del curso (los estudiantes no ven licencias).
+        $announcement->recipients()->create([
+            'tipo_destinatario' => 'DOCENTES_CURSO',
+            'section_id' => $section->id,
+        ]);
 
         return $announcement;
     }

@@ -47,7 +47,7 @@ class StoreAnnouncementRequest extends FormRequest
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO'])],
             'destacado' => ['sometimes', 'boolean'],
             'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
-            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES'])],
+            'tipo_destinatario' => ['required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES', 'DOCENTES_CURSO'])],
             'section_ids' => ['nullable', 'array'],
             'section_ids.*' => ['integer', 'exists:sections,id'],
             'level_id' => ['nullable', 'required_if:tipo_destinatario,NIVEL_DOCENTES', 'integer', 'exists:levels,id'],
@@ -59,7 +59,7 @@ class StoreAnnouncementRequest extends FormRequest
     {
         return [
             function ($validator) {
-                if ($this->input('tipo_destinatario') === 'CURSO_ESPECIFICO'
+                if (in_array($this->input('tipo_destinatario'), ['CURSO_ESPECIFICO', 'DOCENTES_CURSO'], true)
                     && count((array) $this->input('section_ids', [])) === 0) {
                     $validator->errors()->add('section_ids', 'Debe seleccionar al menos un paralelo.');
                 }

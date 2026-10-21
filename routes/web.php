@@ -554,12 +554,14 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
 });
 
 // HU-30 + HU-65: módulo único de comunicados - ver/consultar: todos los autenticados.
-// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (solo sus cursos).
+// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (sus cursos)
+// + Regente (docentes y docentes de un curso).
 Route::middleware(['auth'])->prefix('comunicados')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
 });
-Route::middleware(['auth', 'role:Administrador,Director,Docente'])->prefix('comunicados')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Docente,Regente'])->prefix('comunicados')->group(function () {
     Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::get('/enviado/{announcement}', [AnnouncementController::class, 'showEnviado'])->name('announcements.enviado');
     Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');

@@ -128,7 +128,12 @@ class LicenciaTest extends TestCase
         $ann = Announcement::find($licencia->announcement_id);
         $this->assertSame('PUBLICADO', $ann->estado);
         $this->assertSame($licencia->evidencia_path, $ann->imagen_path);
-        $this->assertTrue($ann->recipients()->whereNotNull('user_id')->exists());
+        $this->assertTrue(
+            $ann->recipients()
+                ->where('tipo_destinatario', 'DOCENTES_CURSO')
+                ->where('section_id', $datos['seccion']->id)
+                ->exists()
+        );
 
         // HU-82: el comunicado de licencia es importante (destacado) y usa rango de fechas.
         $this->assertTrue($ann->destacado);
@@ -136,9 +141,8 @@ class LicenciaTest extends TestCase
 
         // El docente puede volver a ver la evidencia al reabrir el comunicado.
         $this->actingAs($datos['userDocente'])
-            ->get(route('announcements.index'))
+            ->get(route('comunicados.bandeja.show', $ann))
             ->assertOk()
-            ->assertSee('data-imagen', false)
             ->assertSee($licencia->evidencia_path, false);
     }
 
@@ -155,14 +159,47 @@ class LicenciaTest extends TestCase
             'motivo' => 'Cita médica',
         ])->assertRedirect();
 
-        // Aunque el Regente es el autor (comunicado autogenerado), lo ve en su bandeja.
+        // Como emisor, el comunicado autogenerado aparece en "Mis Envíos".
         $this->actingAs($regente)
-            ->get(route('announcements.index'))
+            ->get(route('announcements.index', ['tab' => 'enviados']))
             ->assertOk()
             ->assertSee('Licencia de estudiante', false);
 
         // No recibe el pantallazo de "Entendido" por un comunicado propio.
         $this->assertCount(0, app(\App\Services\ComunicadoAlcanceService::class)->destacadosPara($regente));
+    }
+
+    public function test_comunicado_de_licencia_es_solo_lectura(): void
+    {
+        $datos = $this->crearCurso();
+        $regente = $this->regente();
+
+        $this->actingAs($regente)->post(route('regente.licencias.store'), [
+            'section_id' => $datos['seccion']->id,
+            'student_id' => $datos['estudiante']->id,
+            'fecha_inicio' => '2026-04-05',
+            'fecha_fin' => '2026-04-06',
+            'motivo' => 'Cita médica',
+        ])->assertRedirect();
+
+        $ann = Announcement::findOrFail(Licencia::firstOrFail()->announcement_id);
+
+        // El detalle del envío lo marca como generado por licencia.
+        $this->actingAs($regente)
+            ->get(route('announcements.enviado', $ann))
+            ->assertOk()
+            ->assertSee('Generado por licencia', false);
+
+        // No se puede eliminar ni editar desde comunicados.
+        $this->actingAs($regente)
+            ->delete(route('announcements.destroy', $ann))
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('announcements', ['id' => $ann->id]);
+
+        $this->actingAs($regente)
+            ->put(route('announcements.update', $ann), ['titulo' => 'Cambiado'])
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('announcements', ['id' => $ann->id, 'titulo' => $ann->titulo]);
     }
 
     public function test_licencia_en_dia_sin_clase_es_rechazada(): void
