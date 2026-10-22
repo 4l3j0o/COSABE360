@@ -688,8 +688,10 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estu
     Route::delete('/{diario}', [DiarioAulaController::class, 'destroy'])->name('diario.destroy');
 });
 
-// HU-65: Reportes de conducta — faltas Leve/Grave/Muy grave + reportes por curso y por estudiante
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Estudiante'])->prefix('conducta')->group(function () {
+// HU-82: Conducta — observaciones por estudiante. Secretaría no tiene acceso.
+// Docente: sus reportes + su materia + su paralelo (tutor); Regente/Admin: todo;
+// Director: solo su nivel; Estudiante: solo lo propio.
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Regente,Estudiante'])->prefix('conducta')->group(function () {
     Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
     Route::get('/ahora', [ConductaReporteController::class, 'ahora'])->name('conducta.ahora');
     Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');

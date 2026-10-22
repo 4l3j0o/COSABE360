@@ -11,7 +11,7 @@ return [
     */
     'roles' => [
         'Administrador' => ['*'],
-        'Director'      => ['dashboard', 'reportes', 'comunicados', 'acceso.denegado'],
+        'Director'      => ['dashboard', 'reportes', 'comunicados', 'conducta', 'acceso.denegado'],
         'Secretaría'    => ['dashboard', 'inscripciones', 'pagos', 'students', 'students.eliminados', 'students.restaurar', 'acceso.denegado'],
         'Docente'       => ['dashboard', 'calificaciones', 'asistencia', 'horario', 'diario', 'conducta', 'acceso.denegado'],
         'Estudiante'    => ['dashboard', 'calificaciones', 'horario', 'asistencia', 'diario', 'conducta', 'acceso.denegado'],
@@ -32,7 +32,7 @@ return [
         'calificaciones'    => ['Administrador', 'Docente'],
         'asistencia'        => ['Administrador', 'Docente', 'Estudiante'],
         'diario'            => ['Administrador', 'Director', 'Secretaría', 'Docente', 'Estudiante'],
-        'conducta'          => ['Administrador', 'Director', 'Secretaría', 'Regente', 'Docente', 'Estudiante'],
+        'conducta'          => ['Administrador', 'Director', 'Regente', 'Docente', 'Estudiante'],
         'comunicados'       => ['Administrador', 'Director'],
     ],
 ];

@@ -464,4 +464,18 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Interfaz tipo Gmail** - Recibidos y Mis Envios ahora son listas compactas: Recibidos muestra remitente + asunto + fecha (punto de no leido y badge Importante); Mis Envios muestra destinatario + asunto + estado. Al hacer clic se abre el detalle completo (contenido, imagen, remitente/destinatario y acciones). Se elimino el modal "Ver Comunicado" y la tabla de envios. Abrir un comunicado lo marca como leido. El detalle de un envio vive en `announcements.enviado` (solo autor/Admin/Director).
 - **Todas las fotos a .webp** - helper unico `App\Support\ImagenWebp::guardar()` (GD, reescala a 1600px, calidad 80): comunicados (`com_`), evidencia de licencia (`lic_`), fotografia de estudiante (`est_`), foto de fachada (`fachada_`) y documentos de inscripcion que sean imagen (`doc_`; los PDF se guardan tal cual). Antes la evidencia de licencia se guardaba en el formato original (`->store('licencias')`).
 - **Limite de subida** - `php.ini` (WinGet PHP 8.4): `upload_max_filesize` 2M -> 16M, `post_max_size` 8M -> 20M, `memory_limit` 128M -> 256M. Con 2M, cualquier foto >2 MB fallaba con "The evidencia failed to upload" (`validation.uploaded`); la validacion de `evidencia` admite ahora hasta 10 MB con mensajes propios.
-- **Pendiente** � `Conducta` y `Diario de Aula` quedan para una iteracion posterior.
+- **Pendiente** - `Diario de Aula` queda para una iteracion posterior.
+
+## HU-82: Refactor de Conducta (2026-10-22)
+- **Modulo separado de Diario de Aula** - Conducta vive en `/conducta` con una pagina informativa por rol; Diario de Aula conserva `/diario-aula` y no se mezclan en la Central. En Central de Reportes quedan dos entradas independientes.
+- **Sin tipos de falta** - se elimina `tipo_falta` (Leve/Grave/Muy grave) de la base, modelo, request, vistas, PDF y Excel. El reporte es una observacion narrativa con fecha, hora, materia opcional y descripcion.
+- **Vistas por rol**:
+  - `mios`: el docente ve solo los reportes que el registro.
+  - `materia`: el docente ve todos los reportes de las materias que dicta, de cualquier autor.
+  - `paralelo`: el docente tutor/encargado (`sections.teacher_id`) ve todos los reportes de su paralelo, de todas las materias y docentes, con filtro por estudiante y columna "Reportado por".
+  - `general`: Administrador y Regente ven todo; Director solo los paralelos de sus `nivelesACargo()`.
+  - `estudiante`: cada estudiante ve solo su historial.
+  - **Secretaria no tiene acceso** al modulo.
+- **Creacion** - Docente solo en sus `section_subjects`; tutor en cualquier estudiante de su paralelo; Regente/Admin en cualquier paralelo; Director solo en su nivel. El estudiante debe estar matriculado activo en el paralelo.
+- **PDF/Excel** - exportacion por paralelo (todos los reportes) y por estudiante, respetando el alcance del rol. Se retira la columna "Falta" y se mantiene "Reportado por".
+- **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.
