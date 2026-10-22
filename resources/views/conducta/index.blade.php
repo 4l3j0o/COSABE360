@@ -11,7 +11,17 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
             <div>
                 <h1 class="text-xl font-bold text-foreground">Conducta</h1>
-                <p class="text-sm text-muted-foreground mt-1">{{ $descripcion }}</p>
+                @if($contextoCurso && $sectionActual)
+                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                        <x-ui.badge color="neutral">{{ $sectionActual->nombreCompleto() }}</x-ui.badge>
+                        @if($materiaActual)
+                            <x-ui.badge color="neutral">{{ $materiaActual->nombre }}</x-ui.badge>
+                        @endif
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-2">Reportes de este curso. Podés filtrar por estudiante o por fechas.</p>
+                @else
+                    <p class="text-sm text-muted-foreground mt-1">{{ $descripcion }}</p>
+                @endif
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'pdf'])) }}"
@@ -29,7 +39,7 @@
         </div>
     </div>
 
-    @if(count($tabs) > 1)
+    @if(count($tabs) > 1 && ! $contextoCurso)
         <div class="border-b border-border mb-4 flex gap-1 overflow-x-auto">
             @foreach($tabs as $key => $label)
                 <a href="{{ route('conducta.index', ['vista' => $key]) }}"

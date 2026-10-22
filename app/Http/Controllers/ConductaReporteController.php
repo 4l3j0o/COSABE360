@@ -73,6 +73,8 @@ class ConductaReporteController extends Controller
         $filas = $q->paginate(30)->withQueryString();
 
         $tabs = $this->tabs($user);
+        $sectionActual = $sectionId ? $cursos->firstWhere('id', $sectionId) : null;
+        $materiaActual = $subjectId ? $materias->firstWhere('id', $subjectId) : null;
 
         return view('conducta.index', [
             'vista' => $vista,
@@ -83,6 +85,9 @@ class ConductaReporteController extends Controller
             'filtros' => $filtros,
             'filas' => $filas,
             'resumen' => $resumen,
+            'contextoCurso' => $sectionId !== null,
+            'sectionActual' => $sectionActual,
+            'materiaActual' => $materiaActual,
             'descripcion' => $this->descripcionVista($vista, $user),
             'mostrarAutor' => in_array($vista, ['materia', 'paralelo', 'general'], true),
             'puedeCrear' => ! $this->scope->esEstudiante($user),

@@ -252,8 +252,13 @@ class ConductaReporteTest extends TestCase
             ->assertOk()
             ->assertSee('Reporte propio del curso 4to.')
             ->assertDontSee('Reporte ajeno del curso 4to.')
-            ->assertSee('value="'.$d['s4']->id.'" selected', false)
-            ->assertSee('value="'.$d['mat']->id.'" selected', false)
+            ->assertDontSee('Mi materia')
+            ->assertDontSee('Mi paralelo')
+            ->assertSee('name="section_id" value="'.$d['s4']->id.'"', false)
+            ->assertSee('name="subject_id" value="'.$d['mat']->id.'"', false)
+            ->assertSee('Estudiante')
+            ->assertSee('Desde')
+            ->assertSee('Hasta')
             ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false);
 
         $this->get('/conducta/crear?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id)
