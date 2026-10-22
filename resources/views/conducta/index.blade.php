@@ -19,7 +19,7 @@
                 <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'excel'])) }}"
                    class="px-3 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Excel</a>
                 @if($puedeCrear)
-                    <a href="{{ route('conducta.create', ['vista' => $vista, 'section_id' => $filtros['section_id']]) }}"
+                    <a href="{{ route('conducta.create', ['vista' => $vista, 'section_id' => $filtros['section_id'], 'subject_id' => $filtros['subject_id']]) }}"
                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Nuevo reporte

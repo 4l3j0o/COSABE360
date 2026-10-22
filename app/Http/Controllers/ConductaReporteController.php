@@ -40,10 +40,11 @@ class ConductaReporteController extends Controller
         $user = $request->user();
         abort_unless($this->scope->tieneAcceso($user), 403, 'No tiene acceso al módulo de conducta.');
 
-        $vista = $this->scope->resolverVista($user, $request->query('vista'));
+        $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
+        $subjectId = $request->filled('subject_id') ? (int) $request->query('subject_id') : null;
+        $vista = $this->scope->resolverVista($user, $request->query('vista'), $sectionId, $subjectId);
         $cursos = $this->scope->cursosVisibles($user, $vista);
 
-        $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
         if ($sectionId && ! $cursos->pluck('id')->contains($sectionId)) {
             abort(403, 'No tiene acceso a ese curso.');
         }
@@ -53,7 +54,7 @@ class ConductaReporteController extends Controller
 
         $filtros = [
             'section_id' => $sectionId,
-            'subject_id' => $request->filled('subject_id') ? (int) $request->query('subject_id') : null,
+            'subject_id' => $subjectId,
             'student_id' => $request->filled('student_id') ? (int) $request->query('student_id') : null,
             'desde' => $request->query('desde'),
             'hasta' => $request->query('hasta'),
@@ -121,6 +122,12 @@ class ConductaReporteController extends Controller
         abort_if($sectionId && ! $section, 403, 'No tiene acceso a ese curso.');
 
         $materias = $section ? $this->scope->materiasCreables($user, $section) : collect();
+
+        $subjectId = $request->filled('subject_id') ? (int) $request->query('subject_id') : null;
+        if ($subjectId && ! $materias->contains('id', $subjectId)) {
+            abort(403, 'No tiene acceso a esa materia.');
+        }
+
         $estudiantes = $section ? $this->scope->estudiantesDelCurso($section) : collect();
 
         return view('conducta.create', [
@@ -128,7 +135,8 @@ class ConductaReporteController extends Controller
             'section' => $section,
             'materias' => $materias,
             'estudiantes' => $estudiantes,
-            'vista' => $this->scope->resolverVista($user, $request->query('vista')),
+            'subjectId' => $subjectId,
+            'vista' => $this->scope->resolverVista($user, $request->query('vista'), $section?->id, $subjectId),
             'hoy' => now()->toDateString(),
         ]);
     }
@@ -159,7 +167,7 @@ class ConductaReporteController extends Controller
             'registered_by_user_id' => $user->id,
         ]);
 
-        $vista = $this->scope->resolverVista($user, $request->input('vista'));
+        $vista = $this->scope->resolverVista($user, $request->input('vista'), $section->id, $subjectId);
 
         return redirect()->route('conducta.index', ['vista' => $vista, 'section_id' => $section->id])
             ->with('mensaje', 'Reporte de conducta registrado.');
@@ -222,17 +230,18 @@ class ConductaReporteController extends Controller
             $subtitulo = 'Curso: '.($student->activeSection()?->codigoCorto() ?? '—');
             $nombre = 'conducta-'.$student->codigo;
         } else {
-            $vista = $this->scope->resolverVista($user, $request->query('vista'));
+            $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
+            $subjectId = $request->filled('subject_id') ? (int) $request->query('subject_id') : null;
+            $vista = $this->scope->resolverVista($user, $request->query('vista'), $sectionId, $subjectId);
             $cursos = $this->scope->cursosVisibles($user, $vista);
 
-            $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
             if ($sectionId && ! $cursos->pluck('id')->contains($sectionId)) {
                 abort(403, 'No tiene acceso a ese curso.');
             }
 
             $filtros = [
                 'section_id' => $sectionId,
-                'subject_id' => $request->filled('subject_id') ? (int) $request->query('subject_id') : null,
+                'subject_id' => $subjectId,
                 'student_id' => null,
                 'desde' => $request->query('desde'),
                 'hasta' => $request->query('hasta'),

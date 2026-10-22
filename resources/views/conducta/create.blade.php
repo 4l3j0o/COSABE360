@@ -48,7 +48,7 @@
                         <select name="subject_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                             <option value="">General / fuera de clase</option>
                             @foreach($materias as $m)
-                                <option value="{{ $m->id }}" {{ old('subject_id') == $m->id ? 'selected' : '' }}>{{ $m->nombre }}</option>
+                                <option value="{{ $m->id }}" {{ old('subject_id', $subjectId) == $m->id ? 'selected' : '' }}>{{ $m->nombre }}</option>
                             @endforeach
                         </select>
                         @error('subject_id')<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror

@@ -233,6 +233,36 @@ class ConductaReporteTest extends TestCase
             ->assertSee('Registrado por');
     }
 
+    public function test_url_con_curso_y_materia_abre_mios_y_preselecciona_para_crear(): void
+    {
+        $d = $this->crearEscenario();
+
+        // Docente que también es tutor de otro paralelo: sin contexto su vista
+        // por defecto es "paralelo"; con curso/materia del URL debe abrir "mios".
+        $d['s5']->update(['teacher_id' => $d['doc1']['teacher']->id]);
+
+        $this->crearReporte($d['s4'], $d['est1'], $d['mat'], $d['doc1']['teacher'], $d['doc1']['user'], 'Reporte propio del curso 4to.');
+        $this->crearReporte($d['s4'], $d['est2'], $d['mat'], $d['doc2']['teacher'], $d['doc2']['user'], 'Reporte ajeno del curso 4to.');
+
+        $this->actingAs($d['doc1']['user']);
+
+        $url = '/conducta?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id;
+
+        $this->get($url)
+            ->assertOk()
+            ->assertSee('Reporte propio del curso 4to.')
+            ->assertDontSee('Reporte ajeno del curso 4to.')
+            ->assertSee('value="'.$d['s4']->id.'" selected', false)
+            ->assertSee('value="'.$d['mat']->id.'" selected', false)
+            ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false);
+
+        $this->get('/conducta/crear?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id)
+            ->assertOk()
+            ->assertSee('value="'.$d['s4']->id.'" selected', false)
+            ->assertSee('value="'.$d['mat']->id.'" selected', false)
+            ->assertSee('Nuevo reporte de conducta');
+    }
+
     public function test_tutor_ve_todo_su_paralelo_y_puede_filtrar_por_estudiante(): void
     {
         $d = $this->crearEscenario();

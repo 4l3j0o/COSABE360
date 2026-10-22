@@ -173,12 +173,31 @@ class ConductaScopeService
         return null;
     }
 
-    /** Si la vista pedida no está permitida, cae a la vista por defecto del rol. */
-    public function resolverVista(User $user, ?string $vista): string
+    /**
+     * Si la vista pedida no está permitida, cae a la vista por defecto del rol.
+     * Cuando el URL trae un curso/materia, un docente que dicta en ese curso
+     * debe abrir "mios" (aunque sea tutor de otro paralelo); si el curso es el
+     * que tiene a cargo como tutor, abre "paralelo".
+     */
+    public function resolverVista(User $user, ?string $vista, ?int $sectionId = null, ?int $subjectId = null): string
     {
         $permitidas = $this->vistasPermitidas($user);
         if ($vista && in_array($vista, $permitidas, true)) {
             return $vista;
+        }
+
+        if ($this->esDocente($user) && $sectionId) {
+            if ($this->seccionesDocente($user)->pluck('id')->contains($sectionId)) {
+                return 'mios';
+            }
+
+            if ($this->seccionesTutor($user)->pluck('id')->contains($sectionId)) {
+                return 'paralelo';
+            }
+        }
+
+        if ($this->esDocente($user) && $subjectId) {
+            return 'mios';
         }
 
         return $this->vistaPorDefecto($user) ?? 'estudiante';
