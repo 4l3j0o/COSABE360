@@ -6,6 +6,7 @@ use App\Http\Requests\StoreConductaReporteRequest;
 use App\Models\ConductaReporte;
 use App\Models\Schedule;
 use App\Models\Section;
+use App\Models\SectionSubject;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Services\ConductaScopeService;
@@ -49,6 +50,14 @@ class ConductaReporteController extends Controller
             abort(403, 'No tiene acceso a ese curso.');
         }
 
+        $materiasPorCurso = $this->materiasPorCurso($user, $cursos);
+
+        // Si el curso tiene una sola materia visible para este rol, se
+        // preselecciona automáticamente (ej. docente con una sola materia).
+        if (! $subjectId && $sectionId && count($materiasPorCurso[$sectionId] ?? []) === 1) {
+            $subjectId = (int) $materiasPorCurso[$sectionId][0];
+        }
+
         $materias = $this->scope->materiasVisibles($user, $vista, $sectionId);
         $estudiantes = $this->scope->estudiantesVisibles($user, $vista, $sectionId);
 
@@ -81,6 +90,7 @@ class ConductaReporteController extends Controller
             'tabs' => $tabs,
             'cursos' => $cursos,
             'materias' => $materias,
+            'materiasPorCurso' => $materiasPorCurso,
             'estudiantes' => $estudiantes,
             'filtros' => $filtros,
             'filas' => $filas,
@@ -309,6 +319,33 @@ class ConductaReporteController extends Controller
             'estudiantes' => (clone $q)->distinct()->count('student_id'),
             'ultima' => (clone $q)->max('fecha'),
         ];
+    }
+
+    /**
+     * Materias visibles por paralelo, para preseleccionar la materia cuando
+     * el docente elige un curso en la vista general.
+     *
+     * @return array<int, array<int, int>>
+     */
+    private function materiasPorCurso($user, $cursos): array
+    {
+        $sectionIds = $cursos->pluck('id');
+        if ($sectionIds->isEmpty()) {
+            return [];
+        }
+
+        $q = SectionSubject::whereIn('section_id', $sectionIds);
+
+        // Para docentes (incluido el tutor) la materia que se preselecciona es
+        // la suya; si dicta varias en el paralelo, se deja "Todas".
+        if ($this->scope->esDocente($user) && $user->teacher) {
+            $q->where('teacher_id', $user->teacher->id);
+        }
+
+        return $q->get(['section_id', 'subject_id'])
+            ->groupBy('section_id')
+            ->map(fn ($grupo) => $grupo->pluck('subject_id')->unique()->values()->all())
+            ->all();
     }
 
     private function resumenDeColeccion($reportes): array

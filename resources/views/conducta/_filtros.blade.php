@@ -35,7 +35,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                <select id="filtro-curso" name="section_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                     <option value="">Todos</option>
                     @foreach($cursos as $section)
                         <option value="{{ $section->id }}" {{ ($filtros['section_id'] ?? '') == $section->id ? 'selected' : '' }}>{{ $section->nombreCompleto() }}</option>
@@ -44,7 +44,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia</label>
-                <select name="subject_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+                <select id="filtro-materia" name="subject_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
                     <option value="">Todas</option>
                     @foreach($materias as $materia)
                         <option value="{{ $materia->id }}" {{ ($filtros['subject_id'] ?? '') == $materia->id ? 'selected' : '' }}>{{ $materia->nombre }}</option>
@@ -75,3 +75,20 @@
         </div>
     @endif
 </form>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var curso = document.getElementById('filtro-curso');
+    var materia = document.getElementById('filtro-materia');
+    if (!curso || !materia) return;
+
+    var materiasPorCurso = @json($materiasPorCurso);
+
+    curso.addEventListener('change', function () {
+        var ids = materiasPorCurso[curso.value] || [];
+        materia.value = ids.length === 1 ? String(ids[0]) : '';
+    });
+});
+</script>
+@endpush

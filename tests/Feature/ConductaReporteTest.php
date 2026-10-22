@@ -280,10 +280,23 @@ class ConductaReporteTest extends TestCase
             ->assertOk()
             ->assertSee('Mi paralelo')
             ->assertSee('Mis reportes')
-            ->assertSee('select name="section_id"', false)
-            ->assertSee('select name="subject_id"', false)
+            ->assertSee('id="filtro-curso"', false)
+            ->assertSee('id="filtro-materia"', false)
             ->assertSee('select name="student_id"', false)
             ->assertDontSee('input type="hidden" name="section_id"', false);
+    }
+
+    public function test_al_elegir_curso_preselecciona_la_materia_del_docente(): void
+    {
+        $d = $this->crearEscenario();
+        $this->actingAs($d['doc1']['user']);
+
+        $this->get('/conducta?vista=mios&section_id='.$d['s4']->id)
+            ->assertOk()
+            ->assertSee('id="filtro-curso"', false)
+            ->assertSee('id="filtro-materia"', false)
+            ->assertSee('value="'.$d['mat']->id.'" selected', false)
+            ->assertSee('"'.$d['s4']->id.'":['.$d['mat']->id.']', false);
     }
 
     public function test_tutor_ve_todo_su_paralelo_y_puede_filtrar_por_estudiante(): void
@@ -357,6 +370,10 @@ class ConductaReporteTest extends TestCase
             ->assertSee('Tutoría Cond')
             ->assertDontSee('Matemática Cond')
             ->assertDontSee('Lengua Cond');
+
+        $this->get('/conducta?vista=paralelo&section_id='.$d['s4']->id)
+            ->assertOk()
+            ->assertSee('value="'.$propia->id.'" selected', false);
     }
 
     public function test_regente_y_administrador_ven_todos_los_reportes(): void
