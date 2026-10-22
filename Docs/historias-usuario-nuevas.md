@@ -482,6 +482,8 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.
 
 ## HU-82: Diario de Aula - actividades y recursos (2026-10-22)
-- **Nuevas secciones de la bitacora** - se reemplaza "Ejercicios propuestos en el aula" por **Actividades de clases** (`actividades_clase`) y se agregan **Actividades para el hogar** (`actividades_hogar`) y **Recursos** (`recursos`). Se mantienen Avance curricular y Observaciones.
-- **Migracion** - `diario_aulas.ejercicios` se renombra a `actividades_clase` (conserva datos) y se agregan las dos columnas nuevas, todas opcionales.
-- **UI** - el formulario muestra las tres secciones con placeholders de ejemplo; el detalle y el listado las muestran cuando tienen contenido.
+- **Secciones de la bitacora** - se mantienen Avance curricular y Observaciones, y se agregan tres secciones opcionales con items repetibles: **Actividades de clases**, **Actividades para el hogar** y **Recursos**.
+- **Modelo** - nuevas tablas `diario_actividades` (periodo, unidad de aprendizaje, tema de estudio, referencia bibliografica, descripcion), `diario_tareas` (titulo de la obra, paginas de referencia, forma de presentacion, fecha, descripcion) y `diario_recursos` (nombre, imagen). Se eliminan las columnas de texto simple usadas como paso intermedio.
+- **UI** - formulario con bloques desplegables y botones "Nueva Actividad", "Nueva Tarea" y "Agregar Recurso" (JS vanilla). Los recursos aceptan imagen JPG/PNG/WEBP y se convierten a .webp; el detalle muestra tablas y miniaturas.
+- **Contexto** - al entrar desde un curso (`contexto=1`) se ocultan los filtros de curso/materia y solo se listan las bitacoras de ese curso. Desde la Central se mantienen los filtros y, al elegir curso, se preselecciona automaticamente la materia del docente si dicta una sola.
+- **Creacion desde curso** - curso y materia quedan preseleccionados; el formulario se abre directo en las secciones de la bitacora.

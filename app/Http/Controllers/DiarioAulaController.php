@@ -9,8 +9,11 @@ use App\Models\DiarioAula;
 use App\Models\Registration;
 use App\Models\Subject;
 use App\Models\Teacher;
+use App\Support\ImagenWebp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class DiarioAulaController extends Controller
@@ -31,10 +34,19 @@ class DiarioAulaController extends Controller
 
         $sectionId = $request->query('section_id');
         $subjectId = $request->query('subject_id');
+        $contexto = $request->boolean('contexto') && $sectionId !== null;
 
-        $section = $sectionId ? Section::with(['grade', 'gestion'])->find($sectionId) : null;
+        $section = $sectionId ? Section::with(['grade.level', 'gestion'])->find($sectionId) : null;
         if ($section && ! $this->permiteCurso($user, $section->id, $cursos)) {
             abort(403, 'No tiene acceso a ese curso.');
+        }
+
+        $materiasPorCurso = $this->materiasPorCurso($user, $cursos);
+
+        // Si el curso tiene una sola materia visible para el docente, se
+        // preselecciona automáticamente (igual que en Conducta).
+        if (! $subjectId && $sectionId && count($materiasPorCurso[$sectionId] ?? []) === 1) {
+            $subjectId = (int) $materiasPorCurso[$sectionId][0];
         }
 
         $materias = $this->materiasVisibles($user, $sectionId, $cursos);
@@ -46,7 +58,10 @@ class DiarioAulaController extends Controller
         $requiereCurso = $this->requiereCurso($user);
         $entradas = collect();
         if (! $requiereCurso || $sectionId) {
-            $entradas = DiarioAula::with(['section.grade', 'section', 'subject', 'teacher'])
+            $entradas = DiarioAula::with([
+                'section.grade.level', 'section', 'subject', 'teacher',
+                'actividades', 'tareas', 'recursos',
+            ])
                 ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId),
                     fn ($q) => $q->whereIn('section_id', $cursos->pluck('id')))
                 ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId))
@@ -56,13 +71,23 @@ class DiarioAulaController extends Controller
                 ->withQueryString();
         }
 
+        $sectionActual = $sectionId ? $cursos->firstWhere('id', (int) $sectionId) : null;
+        $materiaActual = $subjectId ? $materias->firstWhere('id', (int) $subjectId) : null;
+
         return view('diario-aula.index', [
             'cursos' => $cursos,
             'materias' => $materias,
             'section' => $section,
             'entradas' => $entradas,
             'requiereCurso' => $requiereCurso && ! $sectionId,
-            'filtros' => $request->only(['section_id', 'subject_id']),
+            'filtros' => [
+                'section_id' => $sectionId,
+                'subject_id' => $subjectId,
+            ],
+            'contexto' => $contexto,
+            'sectionActual' => $sectionActual,
+            'materiaActual' => $materiaActual,
+            'materiasPorCurso' => $materiasPorCurso,
         ]);
     }
 
@@ -82,6 +107,7 @@ class DiarioAulaController extends Controller
         return redirect()->route('diario.index', [
             'section_id' => $bloque->section_id,
             'subject_id' => $bloque->subject_id,
+            'contexto' => 1,
         ]);
     }
 
@@ -92,18 +118,34 @@ class DiarioAulaController extends Controller
     {
         $this->authorizeRegistro($request->user());
 
+        $contexto = $request->boolean('contexto');
         $sectionId = $request->query('section_id');
         $cursos = $this->cursosRegistro($request->user());
         $section = $sectionId
             ? $cursos->firstWhere('id', (int) $sectionId)
             : ($cursos->count() === 1 ? $cursos->first() : null);
 
+        abort_if($sectionId && ! $section, 403, 'No tiene acceso a ese curso.');
+
         $materias = $section ? $this->materiasRegistro($request->user(), $section) : collect();
+
+        $subjectId = $request->query('subject_id')
+            ?: ($materias->count() === 1 ? $materias->first()->id : null);
+
+        if ($subjectId && ! $materias->contains('id', (int) $subjectId)) {
+            abort(403, 'No tiene acceso a esa materia.');
+        }
+
+        // Si no hay materia definida, se muestra el selector normal aunque
+        // venga marcado como contexto de curso.
+        $contexto = $contexto && $subjectId !== null;
 
         return view('diario-aula.create', [
             'cursos' => $cursos,
             'section' => $section,
             'materias' => $materias,
+            'subjectId' => $subjectId,
+            'contexto' => $contexto,
             'hoy' => now()->toDateString(),
         ]);
     }
@@ -113,19 +155,34 @@ class DiarioAulaController extends Controller
         $user = $request->user();
         $this->authorizeRegistro($user);
 
-        $section = Section::findOrFail($request->validated()['section_id']);
-        $this->authorizeDocenteDelCurso($user, $section);
-
         $data = $request->validated();
+        $section = Section::findOrFail($data['section_id']);
+        $this->authorizeDocenteDelCurso($user, $section);
         $this->authorizeMateria($user, $section, (int) $data['subject_id']);
 
-        DiarioAula::create($data + [
-            'teacher_id' => $this->teacherIdPara($user, $section),
-            'registered_by_user_id' => $user->id,
-        ]);
+        $diario = DB::transaction(function () use ($request, $data, $section, $user) {
+            $diario = DiarioAula::create([
+                'section_id' => $section->id,
+                'subject_id' => $data['subject_id'],
+                'teacher_id' => $this->teacherIdPara($user, $section),
+                'fecha' => $data['fecha'],
+                'avance_curricular' => $data['avance_curricular'],
+                'observaciones' => $data['observaciones'] ?? null,
+                'registered_by_user_id' => $user->id,
+            ]);
 
-        return redirect()->route('diario.index', ['section_id' => $section->id])
-            ->with('mensaje', 'Bitácora registrada en el diario de aula.');
+            $this->guardarActividades($diario, $request->input('actividades', []));
+            $this->guardarTareas($diario, $request->input('tareas', []));
+            $this->guardarRecursos($diario, $request);
+
+            return $diario;
+        });
+
+        return redirect()->route('diario.index', [
+            'section_id' => $section->id,
+            'subject_id' => $diario->subject_id,
+            'contexto' => $request->boolean('contexto') ? 1 : null,
+        ])->with('mensaje', 'Bitácora registrada en el diario de aula.');
     }
 
     public function show(Request $request, DiarioAula $diario): View
@@ -134,7 +191,7 @@ class DiarioAulaController extends Controller
         if (! $this->permiteCurso($user, $diario->section_id, $this->cursosPermitidos($user))) {
             abort(403, 'No tiene acceso a esta bitácora.');
         }
-        $diario->load(['section.grade', 'section', 'subject', 'teacher']);
+        $diario->load(['section.grade.level', 'section', 'subject', 'teacher', 'actividades', 'tareas', 'recursos']);
 
         return view('diario-aula.show', ['entrada' => $diario]);
     }
@@ -149,10 +206,133 @@ class DiarioAulaController extends Controller
         abort_unless($puede, 403, 'Solo el autor o la dirección puede eliminar esta bitácora.');
 
         $sectionId = $diario->section_id;
+        $subjectId = $diario->subject_id;
+
+        foreach ($diario->recursos as $recurso) {
+            if ($recurso->imagen_path) {
+                Storage::disk('public')->delete($recurso->imagen_path);
+            }
+        }
+
         $diario->delete();
 
-        return redirect()->route('diario.index', ['section_id' => $sectionId])
+        return redirect()->route('diario.index', ['section_id' => $sectionId, 'subject_id' => $subjectId])
             ->with('mensaje', 'Bitácora eliminada.');
+    }
+
+    // ---------- detalle de la bitácora ----------
+
+    /** @return array<int, array<int, int>> */
+    private function materiasPorCurso($user, $cursos): array
+    {
+        $sectionIds = $cursos->pluck('id');
+
+        if ($sectionIds->isEmpty()) {
+            return [];
+        }
+
+        $q = SectionSubject::whereIn('section_id', $sectionIds);
+
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $q->where('teacher_id', $user->teacher->id);
+        }
+
+        return $q->get(['section_id', 'subject_id'])
+            ->groupBy('section_id')
+            ->map(fn ($grupo) => $grupo->pluck('subject_id')->unique()->values()->all())
+            ->all();
+    }
+
+    private function guardarActividades(DiarioAula $diario, array $filas): void
+    {
+        $orden = 0;
+
+        foreach ($filas as $fila) {
+            if (! is_array($fila) || $this->filaVacia($fila)) {
+                continue;
+            }
+
+            $diario->actividades()->create([
+                'periodo' => $this->limpiar($fila['periodo'] ?? null),
+                'unidad_aprendizaje' => $this->limpiar($fila['unidad_aprendizaje'] ?? null),
+                'tema_estudio' => $this->limpiar($fila['tema_estudio'] ?? null),
+                'referencia_bibliografica' => $this->limpiar($fila['referencia_bibliografica'] ?? null),
+                'descripcion' => $this->limpiar($fila['descripcion'] ?? null),
+                'orden' => $orden++,
+            ]);
+        }
+    }
+
+    private function guardarTareas(DiarioAula $diario, array $filas): void
+    {
+        $orden = 0;
+
+        foreach ($filas as $fila) {
+            if (! is_array($fila) || $this->filaVacia($fila)) {
+                continue;
+            }
+
+            $diario->tareas()->create([
+                'titulo_obra' => $this->limpiar($fila['titulo_obra'] ?? null),
+                'paginas_referencia' => $this->limpiar($fila['paginas_referencia'] ?? null),
+                'forma_presentacion' => $this->limpiar($fila['forma_presentacion'] ?? null),
+                'fecha' => $this->limpiar($fila['fecha'] ?? null),
+                'descripcion' => $this->limpiar($fila['descripcion'] ?? null),
+                'orden' => $orden++,
+            ]);
+        }
+    }
+
+    private function guardarRecursos(DiarioAula $diario, Request $request): void
+    {
+        $filas = $request->input('recursos', []);
+        $archivos = $request->file('recursos', []);
+        $orden = 0;
+
+        foreach ($filas as $i => $fila) {
+            if (! is_array($fila)) {
+                continue;
+            }
+
+            $nombre = $this->limpiar($fila['nombre'] ?? null);
+            $imagen = $archivos[$i]['imagen'] ?? null;
+
+            if ($nombre === null && ! $imagen) {
+                continue;
+            }
+
+            $path = $imagen
+                ? app(ImagenWebp::class)->guardar($imagen, 'diario/'.$diario->id, 'rec_')
+                : null;
+
+            $diario->recursos()->create([
+                'nombre' => $nombre,
+                'imagen_path' => $path,
+                'orden' => $orden++,
+            ]);
+        }
+    }
+
+    private function filaVacia(array $fila): bool
+    {
+        foreach ($fila as $valor) {
+            if (is_string($valor) ? trim($valor) !== '' : ! is_null($valor)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function limpiar($valor): ?string
+    {
+        if ($valor === null) {
+            return null;
+        }
+
+        $texto = trim((string) $valor);
+
+        return $texto === '' ? null : $texto;
     }
 
     // ---------- permisos y alcance ----------

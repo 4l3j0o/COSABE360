@@ -16,6 +16,8 @@ use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DiarioAulaTest extends TestCase
@@ -73,20 +75,45 @@ class DiarioAulaTest extends TestCase
             'subject_id' => $d['subject']->id,
             'fecha' => '2026-04-10',
             'avance_curricular' => 'Avanzamos suma de fracciones con distinto denominador.',
-            'actividades_clase' => 'Resolución guiada de ejercicios y trabajo en parejas.',
-            'actividades_hogar' => 'Resolver páginas 42-43, ejercicios 1 al 10.',
-            'recursos' => 'Texto de matemática, pizarra y fichas de trabajo.',
             'observaciones' => 'El curso necesita refuerzo en simplificación.',
+            'actividades' => [[
+                'periodo' => '1er periodo',
+                'unidad_aprendizaje' => 'Unidad 2 - Fracciones',
+                'tema_estudio' => 'Suma de fracciones',
+                'referencia_bibliografica' => 'Texto de matemática, pág. 42',
+                'descripcion' => 'Resolución guiada de ejercicios y trabajo en parejas.',
+            ]],
+            'tareas' => [[
+                'titulo_obra' => 'Texto de matemática',
+                'paginas_referencia' => '42-43',
+                'forma_presentacion' => 'Cuaderno',
+                'fecha' => '2026-04-12',
+                'descripcion' => 'Resolver los ejercicios 1 al 10.',
+            ]],
+            'recursos' => [[
+                'nombre' => 'Lámina de fracciones',
+            ]],
         ]);
 
-        $response->assertRedirect(route('diario.index', ['section_id' => $d['curso']->id]));
+        $response->assertRedirect(route('diario.index', ['section_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
         $this->assertDatabaseHas('diario_aulas', [
             'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
             'teacher_id' => $d['teacher']->id,
-            'actividades_clase' => 'Resolución guiada de ejercicios y trabajo en parejas.',
-            'actividades_hogar' => 'Resolver páginas 42-43, ejercicios 1 al 10.',
-            'recursos' => 'Texto de matemática, pizarra y fichas de trabajo.',
+        ]);
+
+        $diario = DiarioAula::firstOrFail();
+        $this->assertDatabaseHas('diario_actividades', [
+            'diario_aula_id' => $diario->id,
+            'tema_estudio' => 'Suma de fracciones',
+        ]);
+        $this->assertDatabaseHas('diario_tareas', [
+            'diario_aula_id' => $diario->id,
+            'titulo_obra' => 'Texto de matemática',
+        ]);
+        $this->assertDatabaseHas('diario_recursos', [
+            'diario_aula_id' => $diario->id,
+            'nombre' => 'Lámina de fracciones',
         ]);
     }
 
@@ -150,10 +177,25 @@ class DiarioAulaTest extends TestCase
             'teacher_id' => $d['teacher']->id,
             'fecha' => '2026-04-10',
             'avance_curricular' => 'Avanzamos multiplicación de fracciones.',
-            'actividades_clase' => 'Trabajo en grupos con fracciones.',
-            'actividades_hogar' => 'Resolver los ejercicios de la página 50.',
-            'recursos' => 'Pizarra, marcadores y fichas.',
             'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $entrada->actividades()->create([
+            'periodo' => '1er periodo',
+            'unidad_aprendizaje' => 'Unidad 3',
+            'tema_estudio' => 'Multiplicación',
+            'referencia_bibliografica' => 'Texto pág. 50',
+            'descripcion' => 'Trabajo en grupos con fracciones.',
+        ]);
+        $entrada->tareas()->create([
+            'titulo_obra' => 'Cuaderno de ejercicios',
+            'paginas_referencia' => '50-51',
+            'forma_presentacion' => 'Hoja',
+            'fecha' => '2026-04-12',
+            'descripcion' => 'Resolver los ejercicios de la página 50.',
+        ]);
+        $entrada->recursos()->create([
+            'nombre' => 'Pizarra y fichas',
         ]);
 
         $this->actingAs($d['userDocente']);
@@ -164,7 +206,83 @@ class DiarioAulaTest extends TestCase
             ->assertSee('Actividades para el hogar')
             ->assertSee('Resolver los ejercicios de la página 50.')
             ->assertSee('Recursos')
-            ->assertSee('Pizarra, marcadores y fichas.');
+            ->assertSee('Pizarra y fichas');
+    }
+
+    public function test_vista_desde_curso_oculta_filtros_y_muestra_bitacoras(): void
+    {
+        $d = $this->crearCurso();
+        $entrada = DiarioAula::create([
+            'section_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'teacher_id' => $d['teacher']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Bitácora visible desde el curso.',
+            'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $this->actingAs($d['userDocente']);
+        $this->get('/diario-aula?section_id='.$d['curso']->id.'&subject_id='.$d['subject']->id.'&contexto=1')
+            ->assertOk()
+            ->assertSee('Bitácoras registradas en este curso.')
+            ->assertSee('Bitácora visible desde el curso.')
+            ->assertDontSee('Ver bitácora')
+            ->assertDontSee('Todas las materias');
+    }
+
+    public function test_vista_general_muestra_filtros_y_preselecciona_materia(): void
+    {
+        $d = $this->crearCurso();
+
+        $this->actingAs($d['userDocente']);
+        $this->get('/diario-aula?section_id='.$d['curso']->id)
+            ->assertOk()
+            ->assertSee('Ver bitácora')
+            ->assertSee('id="diario-filtro-curso"', false)
+            ->assertSee('id="diario-filtro-materia"', false)
+            ->assertSee('value="'.$d['subject']->id.'" selected', false);
+    }
+
+    public function test_recurso_guarda_imagen_webp(): void
+    {
+        Storage::fake('public');
+        $d = $this->crearCurso();
+
+        $this->actingAs($d['userDocente']);
+        $this->post('/diario-aula', [
+            'section_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Bitácora con recurso fotográfico.',
+            'recursos' => [[
+                'nombre' => 'Lámina de fracciones',
+                'imagen' => UploadedFile::fake()->image('lamina.jpg', 120, 120),
+            ]],
+        ])->assertRedirect();
+
+        $recurso = \App\Models\DiarioRecurso::firstOrFail();
+        $this->assertNotNull($recurso->imagen_path);
+        $this->assertStringEndsWith('.webp', $recurso->imagen_path);
+        Storage::disk('public')->assertExists($recurso->imagen_path);
+    }
+
+    public function test_docente_abre_formulario_con_las_tres_secciones(): void
+    {
+        $d = $this->crearCurso();
+        $this->actingAs($d['userDocente']);
+
+        $this->get('/diario-aula/crear?section_id='.$d['curso']->id)
+            ->assertOk()
+            ->assertSee('Actividades de clases')
+            ->assertSee('Nueva Actividad')
+            ->assertSee('Actividades para el hogar')
+            ->assertSee('Nueva Tarea')
+            ->assertSee('Recursos')
+            ->assertSee('Agregar Recurso');
+
+        $this->get('/diario-aula/crear?section_id='.$d['curso']->id.'&subject_id='.$d['subject']->id.'&contexto=1')
+            ->assertOk()
+            ->assertSee('name="subject_id" value="'.$d['subject']->id.'"', false);
     }
 
     public function test_docente_elimina_su_propia_bitacora(): void

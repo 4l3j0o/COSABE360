@@ -7,34 +7,99 @@
 
 @section('contenido')
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('diario.index', ['section_id' => $entrada->section_id]), 'texto' => 'Volver al diario'])
+        @include('layouts._volver', ['href' => route('diario.index', ['section_id' => $entrada->section_id, 'subject_id' => $entrada->subject_id]), 'texto' => 'Volver al diario'])
         <h1 class="text-xl font-bold text-foreground mt-2">{{ $entrada->subject->nombre }} · {{ $entrada->fecha->format('d/m/Y') }}</h1>
         <p class="text-sm text-muted-foreground">{{ $entrada->section->codigo ?? $entrada->section->nombre }} · Docente: {{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</p>
     </div>
 
-    <div class="space-y-4 max-w-3xl">
+    <div class="space-y-4 max-w-5xl">
         <div class="bg-card border border-border rounded-xl p-4">
             <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Avance curricular</h2>
             <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->avance_curricular }}</p>
         </div>
-        @if($entrada->actividades_clase)
-            <div class="bg-card border border-border rounded-xl p-4">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Actividades de clases</h2>
-                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->actividades_clase }}</p>
+
+        @if($entrada->actividades->isNotEmpty())
+            <div class="bg-card border border-border rounded-xl overflow-hidden">
+                <div class="px-4 pt-4">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600">Actividades de clases</h2>
+                </div>
+                <div class="overflow-x-auto mt-3">
+                    <table class="w-full text-sm min-w-[820px]">
+                        <thead class="bg-muted/50 border-y border-border">
+                            <tr>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Periodo</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Unidad</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Tema</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Referencia</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            @foreach($entrada->actividades as $actividad)
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ $actividad->periodo ?: '—' }}</td>
+                                    <td class="px-4 py-3">{{ $actividad->unidad_aprendizaje ?: '—' }}</td>
+                                    <td class="px-4 py-3">{{ $actividad->tema_estudio ?: '—' }}</td>
+                                    <td class="px-4 py-3">{{ $actividad->referencia_bibliografica ?: '—' }}</td>
+                                    <td class="px-4 py-3 whitespace-pre-line">{{ $actividad->descripcion ?: '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
-        @if($entrada->actividades_hogar)
-            <div class="bg-card border border-border rounded-xl p-4">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Actividades para el hogar</h2>
-                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->actividades_hogar }}</p>
+
+        @if($entrada->tareas->isNotEmpty())
+            <div class="bg-card border border-border rounded-xl overflow-hidden">
+                <div class="px-4 pt-4">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600">Actividades para el hogar</h2>
+                </div>
+                <div class="overflow-x-auto mt-3">
+                    <table class="w-full text-sm min-w-[820px]">
+                        <thead class="bg-muted/50 border-y border-border">
+                            <tr>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Título de la obra</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Páginas</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Forma de presentación</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Fecha</th>
+                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            @foreach($entrada->tareas as $tarea)
+                                <tr>
+                                    <td class="px-4 py-3">{{ $tarea->titulo_obra ?: '—' }}</td>
+                                    <td class="px-4 py-3">{{ $tarea->paginas_referencia ?: '—' }}</td>
+                                    <td class="px-4 py-3">{{ $tarea->forma_presentacion ?: '—' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ $tarea->fecha?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="px-4 py-3 whitespace-pre-line">{{ $tarea->descripcion ?: '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
-        @if($entrada->recursos)
+
+        @if($entrada->recursos->isNotEmpty())
             <div class="bg-card border border-border rounded-xl p-4">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Recursos</h2>
-                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->recursos }}</p>
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-3">Recursos</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    @foreach($entrada->recursos as $recurso)
+                        <div class="border border-border rounded-lg p-3">
+                            <p class="text-sm font-medium text-foreground">{{ $recurso->nombre ?: 'Recurso' }}</p>
+                            @if($recurso->imagen_path)
+                                <a href="{{ asset('storage/'.$recurso->imagen_path) }}" target="_blank" class="block mt-2">
+                                    <img src="{{ asset('storage/'.$recurso->imagen_path) }}" alt="{{ $recurso->nombre }}" class="w-full max-h-40 object-cover rounded-md border border-border">
+                                </a>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
+
         @if($entrada->observaciones)
             <div class="bg-card border border-border rounded-xl p-4">
                 <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Observaciones</h2>
