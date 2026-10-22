@@ -200,7 +200,8 @@ class DiarioAulaController extends Controller
     {
         $user = $request->user();
 
-        $puede = $user->hasAnyRole(['Administrador', 'Director'])
+        $puede = $user->hasRole('Administrador')
+            || ($user->hasRole('Director') && $this->permiteCurso($user, $diario->section_id, $this->cursosPermitidos($user)))
             || ($user->hasRole('Docente') && $user->teacher && $diario->teacher_id === $user->teacher->id);
 
         abort_unless($puede, 403, 'Solo el autor o la dirección puede eliminar esta bitácora.');
@@ -368,16 +369,26 @@ class DiarioAulaController extends Controller
     private function authorizeRegistro($user): void
     {
         abort_unless(
-            $user->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']),
-            403, 'Solo docentes y personal administrativo registran el diario.'
+            $user->hasAnyRole(['Docente', 'Administrador', 'Director']),
+            403, 'Solo docentes y directivos registran el diario.'
         );
     }
 
     private function authorizeDocenteDelCurso($user, Section $section): void
     {
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+        if ($user->hasRole('Administrador')) {
             return;
         }
+
+        if ($user->hasRole('Director')) {
+            abort_unless(
+                $this->permiteCurso($user, $section->id, $this->cursosPermitidos($user)),
+                403, 'No tiene acceso a ese curso.'
+            );
+
+            return;
+        }
+
         if ($user->hasRole('Docente') && $user->teacher) {
             $asignado = SectionSubject::where('teacher_id', $user->teacher->id)
                 ->where('section_id', $section->id)->exists()
@@ -392,7 +403,7 @@ class DiarioAulaController extends Controller
 
     private function authorizeMateria($user, Section $section, int $subjectId): void
     {
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+        if ($user->hasAnyRole(['Administrador', 'Director'])) {
             return;
         }
         $ok = SectionSubject::where('section_id', $section->id)
@@ -415,13 +426,25 @@ class DiarioAulaController extends Controller
 
     private function cursosPermitidos($user)
     {
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return Section::with(['grade', 'gestion'])->ordenadoPorNivel()->get();
+        if ($user->hasRole('Administrador')) {
+            return Section::with(['grade.level', 'gestion'])->ordenadoPorNivel()->get();
+        }
+
+        if ($user->hasRole('Director')) {
+            $niveles = $user->nivelesACargo()->pluck('levels.id');
+
+            return Section::with(['grade.level', 'gestion'])
+                ->when($niveles->isNotEmpty(), fn ($q) => $q->whereHas(
+                    'grade',
+                    fn ($g) => $g->whereIn('level_id', $niveles)
+                ))
+                ->ordenadoPorNivel()
+                ->get();
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
             return $user->teacher->sectionSubjects()
-                ->with(['section.grade', 'section', 'section.gestion'])
+                ->with(['section.grade.level', 'section', 'section.gestion'])
                 ->get()->map(fn ($cs) => $cs->section)->unique('id')->pipe(fn ($c) => Section::ordenarPorNivel($c));
         }
 
@@ -436,9 +459,12 @@ class DiarioAulaController extends Controller
 
     private function cursosRegistro($user)
     {
-        // Para registrar: el docente solo sus cursos; admin ve todos los activos
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+        if ($user->hasRole('Administrador')) {
             return Section::with(['grade'])->where('estado', 'ACTIVO')->ordenadoPorNivel()->get();
+        }
+
+        if ($user->hasRole('Director')) {
+            return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();
         }
 
         return $this->cursosPermitidos($user)->where('estado', 'ACTIVO')->values();
@@ -477,8 +503,12 @@ class DiarioAulaController extends Controller
 
     private function permiteCurso($user, int $sectionId, $cursos): bool
     {
-        if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
+        if ($user->hasRole('Administrador')) {
             return true;
+        }
+
+        if ($user->hasRole('Director')) {
+            return $cursos->contains('id', $sectionId);
         }
 
         return $cursos->contains('id', $sectionId);

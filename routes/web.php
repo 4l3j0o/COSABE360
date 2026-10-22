@@ -678,8 +678,9 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     Route::delete('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'destroy'])->name('rc-iva-withholdings.destroy');
 });
 
-// HU-65: Diario de aula — bitácora de avances por clase (docente registra; estudiante/padre/director consultan)
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante'])->prefix('diario-aula')->group(function () {
+// HU-65/HU-82: Diario de aula — bitácora de avances por clase. Secretaría no tiene acceso.
+// Docente: sus cursos; Director: solo su nivel; Admin: todo; Estudiante: su curso.
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Estudiante'])->prefix('diario-aula')->group(function () {
     Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
     Route::get('/ahora', [DiarioAulaController::class, 'ahora'])->name('diario.ahora');
     Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');

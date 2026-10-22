@@ -287,6 +287,93 @@ class DiarioAulaTest extends TestCase
             ->assertSee('name="subject_id" value="'.$d['subject']->id.'"', false);
     }
 
+    public function test_director_solo_ve_y_gestiona_las_bitacoras_de_su_nivel(): void
+    {
+        $d = $this->crearCurso();
+        $primaria = Level::where('nombre', 'Primaria')->firstOrFail();
+
+        $diarioPrimaria = DiarioAula::create([
+            'section_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'teacher_id' => $d['teacher']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Bitácora de primaria.',
+            'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $secundaria = Level::firstOrCreate(['nombre' => 'Secundaria'], ['orden' => 3, 'estado' => 'ACTIVO']);
+        $gradoSec = Grade::create(['level_id' => $secundaria->id, 'nombre' => 'Primero Sec Diario', 'orden' => 1, 'estado' => 'ACTIVO']);
+        $seccionSec = Section::create(['grade_id' => $gradoSec->id, 'nombre' => 'A', 'capacidad' => 40, 'estado' => 'ACTIVO']);
+        $subjectSec = Subject::create(['nombre' => 'Tecnología Sec Diario', 'level_id' => $secundaria->id, 'estado' => 'ACTIVO']);
+        $diarioSec = DiarioAula::create([
+            'section_id' => $seccionSec->id,
+            'subject_id' => $subjectSec->id,
+            'teacher_id' => $d['teacher']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Bitácora de secundaria.',
+            'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $director = User::create([
+            'nombre' => 'Directora', 'apellido' => 'Diario',
+            'email' => 'dir_diario_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
+            'password' => bcrypt('password'),
+            'role_id' => Role::where('nombre', 'Director')->value('id'),
+            'estado' => 'ACTIVO',
+        ]);
+        $director->nivelesACargo()->attach($primaria->id);
+
+        $this->actingAs($director);
+
+        $this->get('/diario-aula')
+            ->assertOk()
+            ->assertSee('Bitácora de primaria.')
+            ->assertDontSee('Bitácora de secundaria.');
+
+        $this->get('/diario-aula?section_id='.$seccionSec->id)->assertForbidden();
+        $this->get('/diario-aula/crear?section_id='.$seccionSec->id)->assertForbidden();
+
+        $this->post('/diario-aula', [
+            'section_id' => $seccionSec->id,
+            'subject_id' => $subjectSec->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Intento de bitácora en otro nivel.',
+        ])->assertForbidden();
+
+        $this->delete('/diario-aula/'.$diarioSec->id)->assertForbidden();
+        $this->delete('/diario-aula/'.$diarioPrimaria->id)->assertRedirect();
+    }
+
+    public function test_secretaria_no_tiene_acceso_al_diario(): void
+    {
+        $d = $this->crearCurso();
+        $diario = DiarioAula::create([
+            'section_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'teacher_id' => $d['teacher']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Bitácora para probar acceso denegado.',
+            'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $secretaria = User::create([
+            'nombre' => 'Secretaria', 'apellido' => 'Diario',
+            'email' => 'sec_diario_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
+            'password' => bcrypt('password'),
+            'role_id' => Role::where('nombre', 'Secretaría')->value('id'),
+            'estado' => 'ACTIVO',
+        ]);
+
+        $this->actingAs($secretaria);
+
+        $this->get('/diario-aula')->assertRedirect(route('acceso.denegado'));
+        $this->get('/diario-aula/crear')->assertRedirect(route('acceso.denegado'));
+        $this->post('/diario-aula', [])->assertRedirect(route('acceso.denegado'));
+        $this->get('/diario-aula/'.$diario->id)->assertRedirect(route('acceso.denegado'));
+
+        $this->get('/reportes')->assertOk()->assertDontSee('Bitácora de avances por clase');
+    }
+
     public function test_docente_elimina_su_propia_bitacora(): void
     {
         $d = $this->crearCurso();

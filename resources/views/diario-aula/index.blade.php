@@ -22,7 +22,7 @@
                 <p class="text-sm text-muted-foreground mt-1">Bitácora de lo avanzado en cada clase: avance curricular, actividades, tareas para el hogar, recursos y observaciones.</p>
             @endif
         </div>
-        @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))
+        @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director']))
             <a href="{{ route('diario.create', ['section_id' => $sectionActual?->id ?? request('section_id'), 'subject_id' => $materiaActual?->id ?? request('subject_id'), 'contexto' => $contexto ? 1 : null]) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ Nueva bitácora</a>
         @endif
     </div>
