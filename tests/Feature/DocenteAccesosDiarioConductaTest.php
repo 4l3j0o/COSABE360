@@ -149,7 +149,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
 
         $this->actingAs($d['userDocente']);
         $this->get(route('conducta.ahora'))
-            ->assertRedirect(route('conducta.index', ['vista' => 'mios', 'section_id' => $d['curso']->id, 'subject_id' => $d['subject']->id]));
+            ->assertRedirect(route('conducta.index', ['vista' => 'mios', 'section_id' => $d['curso']->id, 'subject_id' => $d['subject']->id, 'contexto' => 1]));
     }
 
     public function test_conducta_ahora_fuera_de_horario_avisa_y_va_a_mis_cursos(): void

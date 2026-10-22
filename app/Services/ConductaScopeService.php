@@ -420,10 +420,6 @@ class ConductaScopeService
             return false;
         }
 
-        if ($this->seccionesTutor($user)->pluck('id')->contains($section->id)) {
-            return true;
-        }
-
         $q = SectionSubject::where('teacher_id', $user->teacher->id)
             ->where('section_id', $section->id);
 
@@ -450,8 +446,6 @@ class ConductaScopeService
 
         if ($this->esDocente($user)) {
             return $this->seccionesDocente($user)
-                ->merge($this->seccionesTutor($user))
-                ->unique('id')
                 ->where('estado', 'ACTIVO')
                 ->pipe(fn (Collection $secciones) => Section::ordenarPorNivel($secciones));
         }
@@ -462,8 +456,7 @@ class ConductaScopeService
     /** Materias que puede elegir al crear un reporte en un paralelo. */
     public function materiasCreables(User $user, Section $section): Collection
     {
-        if ($this->esDocente($user) && $user->teacher
-            && ! $this->seccionesTutor($user)->pluck('id')->contains($section->id)) {
+        if ($this->esDocente($user) && $user->teacher) {
             $ids = SectionSubject::where('teacher_id', $user->teacher->id)
                 ->where('section_id', $section->id)
                 ->pluck('subject_id')

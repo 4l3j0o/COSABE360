@@ -475,7 +475,7 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   - `general`: Administrador y Regente ven todo; Director solo los paralelos de sus `nivelesACargo()`.
   - `estudiante`: cada estudiante ve solo su historial.
   - **Secretaria no tiene acceso** al modulo.
-- **Creacion** - Docente solo en sus `section_subjects`; tutor en cualquier estudiante de su paralelo; Regente/Admin en cualquier paralelo; Director solo en su nivel. El estudiante debe estar matriculado activo en el paralelo.
+- **Creacion** - Docente (incluido el tutor) solo en las materias que dicta (`section_subjects`); el tutor puede ver todo su paralelo, pero no crear en materias ajenas. Regente/Admin en cualquier paralelo; Director solo en su nivel. El estudiante debe estar matriculado activo en el paralelo.
 - **PDF/Excel** - exportacion por paralelo (todos los reportes) y por estudiante, respetando el alcance del rol. Se retira la columna "Falta" y se mantiene "Reportado por".
-- **Contexto de curso** - al abrir Conducta desde un curso (`section_id`), se ocultan las pestanas y los filtros de curso/materia; solo quedan estudiante y fechas. "Limpiar" conserva el curso/materia y solo limpia el estudiante y las fechas.
+- **Contexto de curso** - al abrir Conducta desde un curso (`contexto=1` + `section_id`), se ocultan las pestanas y los filtros de curso/materia; solo quedan estudiante y fechas. "Limpiar" conserva el curso/materia y solo limpia el estudiante y las fechas. En la vista general (Central) se mantienen las pestanas y los filtros de curso/materia/estudiante; se aplican al presionar Filtrar.
 - **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.

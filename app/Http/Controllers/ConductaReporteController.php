@@ -41,6 +41,7 @@ class ConductaReporteController extends Controller
 
         $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
         $subjectId = $request->filled('subject_id') ? (int) $request->query('subject_id') : null;
+        $contexto = $request->boolean('contexto') && $sectionId !== null;
         $vista = $this->scope->resolverVista($user, $request->query('vista'), $sectionId, $subjectId);
         $cursos = $this->scope->cursosVisibles($user, $vista);
 
@@ -84,7 +85,7 @@ class ConductaReporteController extends Controller
             'filtros' => $filtros,
             'filas' => $filas,
             'resumen' => $resumen,
-            'contextoCurso' => $sectionId !== null,
+            'contextoCurso' => $contexto,
             'sectionActual' => $sectionActual,
             'materiaActual' => $materiaActual,
             'descripcion' => $this->descripcionVista($vista, $user),
@@ -107,6 +108,7 @@ class ConductaReporteController extends Controller
             'vista' => 'mios',
             'section_id' => $bloque->section_id,
             'subject_id' => $bloque->subject_id,
+            'contexto' => 1,
         ]);
     }
 
@@ -140,6 +142,7 @@ class ConductaReporteController extends Controller
             'materias' => $materias,
             'estudiantes' => $estudiantes,
             'subjectId' => $subjectId,
+            'contexto' => $request->boolean('contexto'),
             'vista' => $this->scope->resolverVista($user, $request->query('vista'), $section?->id, $subjectId),
             'hoy' => now()->toDateString(),
         ]);
@@ -173,8 +176,12 @@ class ConductaReporteController extends Controller
 
         $vista = $this->scope->resolverVista($user, $request->input('vista'), $section->id, $subjectId);
 
-        return redirect()->route('conducta.index', ['vista' => $vista, 'section_id' => $section->id])
-            ->with('mensaje', 'Reporte de conducta registrado.');
+        return redirect()->route('conducta.index', [
+            'vista' => $vista,
+            'section_id' => $section->id,
+            'subject_id' => $subjectId,
+            'contexto' => $request->boolean('contexto') ? 1 : null,
+        ])->with('mensaje', 'Reporte de conducta registrado.');
     }
 
     public function show(Request $request, ConductaReporte $conducta): View

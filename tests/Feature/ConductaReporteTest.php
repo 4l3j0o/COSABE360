@@ -174,7 +174,7 @@ class ConductaReporteTest extends TestCase
             'descripcion' => 'Se levantó de su silla y empezó a molestar a sus compañeros en horario de clases.',
         ]);
 
-        $response->assertRedirect(route('conducta.index', ['vista' => 'mios', 'section_id' => $d['s4']->id]));
+        $response->assertRedirect(route('conducta.index', ['vista' => 'mios', 'section_id' => $d['s4']->id, 'subject_id' => $d['mat']->id]));
         $this->assertDatabaseHas('conducta_reportes', [
             'student_id' => $d['est1']->id,
             'section_id' => $d['s4']->id,
@@ -248,7 +248,7 @@ class ConductaReporteTest extends TestCase
 
         $this->actingAs($d['doc1']['user']);
 
-        $url = '/conducta?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id;
+        $url = '/conducta?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id.'&contexto=1';
 
         $this->get($url)
             ->assertOk()
@@ -261,14 +261,29 @@ class ConductaReporteTest extends TestCase
             ->assertSee('Estudiante')
             ->assertSee('Desde')
             ->assertSee('Hasta')
-            ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false)
-            ->assertSee('conducta?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false);
+            ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id.'&amp;contexto=1', false)
+            ->assertSee('conducta?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id.'&amp;contexto=1', false);
 
         $this->get('/conducta/crear?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id)
             ->assertOk()
             ->assertSee('value="'.$d['s4']->id.'" selected', false)
             ->assertSee('value="'.$d['mat']->id.'" selected', false)
             ->assertSee('Nuevo reporte de conducta');
+    }
+
+    public function test_vista_general_mantiene_pestanas_y_filtros_al_elegir_curso(): void
+    {
+        $d = $this->crearEscenario();
+        $this->actingAs($d['tutor']['user']);
+
+        $this->get('/conducta?vista=paralelo&section_id='.$d['s4']->id)
+            ->assertOk()
+            ->assertSee('Mi paralelo')
+            ->assertSee('Mis reportes')
+            ->assertSee('select name="section_id"', false)
+            ->assertSee('select name="subject_id"', false)
+            ->assertSee('select name="student_id"', false)
+            ->assertDontSee('input type="hidden" name="section_id"', false);
     }
 
     public function test_tutor_ve_todo_su_paralelo_y_puede_filtrar_por_estudiante(): void
@@ -295,23 +310,53 @@ class ConductaReporteTest extends TestCase
             ->assertDontSee('Reporte de lengua en 4to.');
     }
 
-    public function test_tutor_puede_crear_para_cualquier_estudiante_de_su_paralelo(): void
+    public function test_tutor_solo_crea_en_sus_propias_materias(): void
     {
         $d = $this->crearEscenario();
         $this->actingAs($d['tutor']['user']);
 
+        // El tutor no dicta en 4to A: no puede crear reportes allí.
         $this->post('/conducta', [
             'section_id' => $d['s4']->id,
             'subject_id' => $d['mat']->id,
             'student_id' => $d['est2']->id,
             'fecha' => '2026-04-10',
-            'descripcion' => 'Observación registrada por el tutor del paralelo.',
+            'descripcion' => 'El tutor intenta reportar en una materia que no dicta.',
+        ])->assertForbidden();
+
+        // Se le asigna una materia propia en ese paralelo.
+        $propia = Subject::firstOrCreate(
+            ['nombre' => 'Tutoría Cond'],
+            ['level_id' => $d['primaria']->id, 'estado' => 'ACTIVO']
+        );
+        SectionSubject::create([
+            'section_id' => $d['s4']->id,
+            'subject_id' => $propia->id,
+            'teacher_id' => $d['tutor']['teacher']->id,
+        ]);
+
+        $this->post('/conducta', [
+            'section_id' => $d['s4']->id,
+            'subject_id' => $propia->id,
+            'student_id' => $d['est2']->id,
+            'fecha' => '2026-04-10',
+            'descripcion' => 'Observación registrada por el tutor en su propia materia.',
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('conducta_reportes', [
-            'student_id' => $d['est2']->id,
-            'registered_by_user_id' => $d['tutor']['user']->id,
-        ]);
+        // Sigue sin poder crear en una materia de otro docente.
+        $this->post('/conducta', [
+            'section_id' => $d['s4']->id,
+            'subject_id' => $d['mat']->id,
+            'student_id' => $d['est1']->id,
+            'fecha' => '2026-04-10',
+            'descripcion' => 'El tutor intenta reportar en matemática, que dicta otro docente.',
+        ])->assertForbidden();
+
+        $this->get('/conducta/crear?section_id='.$d['s4']->id)
+            ->assertOk()
+            ->assertSee('Tutoría Cond')
+            ->assertDontSee('Matemática Cond')
+            ->assertDontSee('Lengua Cond');
     }
 
     public function test_regente_y_administrador_ven_todos_los_reportes(): void

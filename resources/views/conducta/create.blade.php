@@ -7,13 +7,14 @@
 
 @section('contenido')
     <div class="mb-6">
-        @include('layouts._volver', ['href' => route('conducta.index', ['vista' => $vista]), 'texto' => 'Volver a Conducta'])
+        @include('layouts._volver', ['href' => route('conducta.index', ['vista' => $vista, 'section_id' => $section?->id, 'subject_id' => $subjectId, 'contexto' => $contexto ? 1 : null]), 'texto' => 'Volver a Conducta'])
         <h1 class="text-xl font-bold text-foreground mt-2">Nuevo reporte de conducta</h1>
         <p class="text-sm text-muted-foreground">Registra la observación con fecha, hora, materia y descripción de lo ocurrido.</p>
     </div>
 
     <form method="GET" action="{{ route('conducta.create') }}" class="bg-card border border-border rounded-xl p-4 mb-4">
         <input type="hidden" name="vista" value="{{ $vista }}">
+        <input type="hidden" name="contexto" value="{{ $contexto ? 1 : '' }}">
         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
         <select name="section_id" onchange="this.form.submit()" class="w-full sm:max-w-sm px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
             <option value="">Seleccionar curso…</option>
@@ -33,6 +34,7 @@
                 @csrf
                 <input type="hidden" name="section_id" value="{{ $section->id }}">
                 <input type="hidden" name="vista" value="{{ $vista }}">
+                <input type="hidden" name="contexto" value="{{ $contexto ? 1 : '' }}">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Estudiante *</label>
@@ -75,7 +77,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Guardar reporte</button>
-                    <a href="{{ route('conducta.index', ['vista' => $vista, 'section_id' => $section->id]) }}" class="px-5 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Cancelar</a>
+                    <a href="{{ route('conducta.index', ['vista' => $vista, 'section_id' => $section->id, 'subject_id' => $subjectId, 'contexto' => $contexto ? 1 : null]) }}" class="px-5 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Cancelar</a>
                 </div>
             </form>
         @endif
