@@ -27,7 +27,7 @@
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit" class="flex-1 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Filtrar</button>
-                <a href="{{ route('conducta.index', ['vista' => $vista]) }}" class="px-3 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Limpiar</a>
+                <a href="{{ route('conducta.index', ['vista' => $vista, 'section_id' => $filtros['section_id'], 'subject_id' => $filtros['subject_id']]) }}" class="px-3 py-2.5 rounded-lg border border-input text-sm hover:bg-muted transition-colors">Limpiar</a>
             </div>
         </div>
     @else

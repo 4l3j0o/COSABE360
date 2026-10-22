@@ -471,11 +471,11 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Sin tipos de falta** - se elimina `tipo_falta` (Leve/Grave/Muy grave) de la base, modelo, request, vistas, PDF y Excel. El reporte es una observacion narrativa con fecha, hora, materia opcional y descripcion.
 - **Vistas por rol**:
   - `mios`: el docente ve solo los reportes que el registro.
-  - `materia`: el docente ve todos los reportes de las materias que dicta, de cualquier autor.
   - `paralelo`: el docente tutor/encargado (`sections.teacher_id`) ve todos los reportes de su paralelo, de todas las materias y docentes, con filtro por estudiante y columna "Reportado por".
   - `general`: Administrador y Regente ven todo; Director solo los paralelos de sus `nivelesACargo()`.
   - `estudiante`: cada estudiante ve solo su historial.
   - **Secretaria no tiene acceso** al modulo.
 - **Creacion** - Docente solo en sus `section_subjects`; tutor en cualquier estudiante de su paralelo; Regente/Admin en cualquier paralelo; Director solo en su nivel. El estudiante debe estar matriculado activo en el paralelo.
 - **PDF/Excel** - exportacion por paralelo (todos los reportes) y por estudiante, respetando el alcance del rol. Se retira la columna "Falta" y se mantiene "Reportado por".
+- **Contexto de curso** - al abrir Conducta desde un curso (`section_id`), se ocultan las pestanas y los filtros de curso/materia; solo quedan estudiante y fechas. "Limpiar" conserva el curso/materia y solo limpia el estudiante y las fechas.
 - **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.

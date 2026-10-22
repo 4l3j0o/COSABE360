@@ -17,7 +17,6 @@ use Illuminate\Support\Collection;
  *
  * Vistas:
  *  - mios:       reportes creados por el propio docente.
- *  - materia:    todos los reportes de las materias que dicta (cualquier autor).
  *  - paralelo:   todos los reportes del paralelo que tiene a cargo como tutor.
  *  - general:    Administrador/Regente (todo) o Director (solo su nivel).
  *  - estudiante: historial de un estudiante (Estudiante: solo el propio).
@@ -26,7 +25,7 @@ use Illuminate\Support\Collection;
  */
 class ConductaScopeService
 {
-    public const VISTAS = ['mios', 'materia', 'paralelo', 'general', 'estudiante'];
+    public const VISTAS = ['mios', 'paralelo', 'general', 'estudiante'];
 
     public function tieneAcceso(User $user): bool
     {
@@ -95,21 +94,6 @@ class ConductaScopeService
             ->pipe(fn (Collection $secciones) => Section::ordenarPorNivel($secciones));
     }
 
-    /** Pares sección+materia que dicta el docente. */
-    public function paresDocente(User $user): Collection
-    {
-        if (! $this->esDocente($user) || ! $user->teacher) {
-            return collect();
-        }
-
-        return SectionSubject::where('teacher_id', $user->teacher->id)
-            ->get(['section_id', 'subject_id'])
-            ->map(fn ($cs) => [
-                'section_id' => (int) $cs->section_id,
-                'subject_id' => (int) $cs->subject_id,
-            ]);
-    }
-
     /** Niveles a cargo del Director (vacío = sin restricción, convención del sistema). */
     public function nivelesDirector(User $user): Collection
     {
@@ -145,7 +129,7 @@ class ConductaScopeService
         }
 
         if ($this->esDocente($user)) {
-            $vistas = ['mios', 'materia'];
+            $vistas = ['mios'];
             if ($this->esTutor($user)) {
                 $vistas[] = 'paralelo';
             }
@@ -211,7 +195,7 @@ class ConductaScopeService
         }
 
         if ($this->esDocente($user)) {
-            return 'materia';
+            return 'mios';
         }
 
         if ($this->esEstudiante($user)) {
@@ -224,7 +208,7 @@ class ConductaScopeService
     public function cursosVisibles(User $user, string $vista): Collection
     {
         return match ($vista) {
-            'mios', 'materia' => $this->seccionesDocente($user),
+            'mios' => $this->seccionesDocente($user),
             'paralelo' => $this->seccionesTutor($user),
             'general' => $this->esDirector($user) && $this->nivelesDirector($user)->isNotEmpty()
                 ? $this->seccionesDirector($user)
@@ -253,7 +237,7 @@ class ConductaScopeService
 
         $q = SectionSubject::with('subject')->whereIn('section_id', $sectionIds);
 
-        if ($vista === 'mios' || $vista === 'materia') {
+        if ($vista === 'mios') {
             $q->where('teacher_id', $user->teacher?->id);
         }
 
@@ -321,7 +305,6 @@ class ConductaScopeService
 
         match ($vista) {
             'mios' => $q->where('registered_by_user_id', $user->id),
-            'materia' => $this->aplicarParesDocente($q, $user),
             'paralelo' => $this->aplicarSecciones($q, $this->seccionesTutor($user)->pluck('id')),
             'general' => $this->aplicarAlcanceGeneral($q, $user),
             'estudiante' => $this->aplicarAlcanceEstudiante($q, $user),
@@ -346,26 +329,6 @@ class ConductaScopeService
         );
 
         return $q->orderByDesc('fecha')->orderByDesc('id');
-    }
-
-    private function aplicarParesDocente(Builder $q, User $user): void
-    {
-        $pares = $this->paresDocente($user);
-
-        if ($pares->isEmpty()) {
-            $q->whereRaw('1 = 0');
-
-            return;
-        }
-
-        $q->where(function (Builder $sub) use ($pares) {
-            foreach ($pares as $par) {
-                $sub->orWhere(function (Builder $w) use ($par) {
-                    $w->where('section_id', $par['section_id'])
-                        ->where('subject_id', $par['subject_id']);
-                });
-            }
-        });
     }
 
     private function aplicarSecciones(Builder $q, Collection $sectionIds): void
@@ -405,7 +368,7 @@ class ConductaScopeService
         }
 
         if ($this->esDocente($user)) {
-            $this->aplicarParesDocente($q, $user);
+            $q->where('registered_by_user_id', $user->id);
 
             return;
         }
@@ -433,14 +396,7 @@ class ConductaScopeService
                 return true;
             }
 
-            if ($this->seccionesTutor($user)->pluck('id')->contains($reporte->section_id)) {
-                return true;
-            }
-
-            return SectionSubject::where('teacher_id', $user->teacher->id)
-                ->where('section_id', $reporte->section_id)
-                ->where('subject_id', $reporte->subject_id)
-                ->exists();
+            return $this->seccionesTutor($user)->pluck('id')->contains($reporte->section_id);
         }
 
         if ($this->esEstudiante($user) && $user->student) {

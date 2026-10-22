@@ -24,8 +24,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * HU-82: Conducta — observaciones de conducta por estudiante.
  *
  * Vistas:
- *  - Docente: "Mis reportes" (solo los que creó), "Mi materia" (todos los de
- *    las materias que dicta) y "Mi paralelo" (si es tutor/encargado).
+ *  - Docente: "Mis reportes" (solo los que creó) y "Mi paralelo" (si es tutor/encargado).
  *  - Regente / Administrador: "Conducta general" (todos).
  *  - Director: "Conducta general" limitada a su nivel.
  *  - Estudiante: solo su historial.
@@ -89,7 +88,7 @@ class ConductaReporteController extends Controller
             'sectionActual' => $sectionActual,
             'materiaActual' => $materiaActual,
             'descripcion' => $this->descripcionVista($vista, $user),
-            'mostrarAutor' => in_array($vista, ['materia', 'paralelo', 'general'], true),
+            'mostrarAutor' => in_array($vista, ['paralelo', 'general'], true),
             'puedeCrear' => ! $this->scope->esEstudiante($user),
         ]);
     }
@@ -270,7 +269,6 @@ class ConductaReporteController extends Controller
     {
         $labels = [
             'mios' => 'Mis reportes',
-            'materia' => 'Mi materia',
             'paralelo' => 'Mi paralelo',
             'general' => 'Conducta general',
         ];
@@ -289,7 +287,6 @@ class ConductaReporteController extends Controller
     {
         return match ($vista) {
             'mios' => 'Reportes que usted registró en sus cursos.',
-            'materia' => 'Todos los reportes de las materias que dicta, sin importar quién los registró.',
             'paralelo' => 'Todos los reportes del paralelo que tiene a cargo, de todas las materias.',
             'general' => $this->scope->esDirector($user) && $this->scope->nivelesDirector($user)->isNotEmpty()
                 ? 'Reportes de conducta del nivel a su cargo: '.$user->nivelesACargo()->pluck('nombre')->implode(', ').'.'

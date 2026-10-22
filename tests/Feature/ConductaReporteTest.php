@@ -203,7 +203,7 @@ class ConductaReporteTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_docente_ve_solo_sus_reportes_en_mios_y_todos_los_de_su_materia(): void
+    public function test_docente_solo_ve_sus_propios_reportes(): void
     {
         $d = $this->crearEscenario();
 
@@ -219,18 +219,20 @@ class ConductaReporteTest extends TestCase
             ->assertDontSee('Reporte ajeno de matemática.')
             ->assertDontSee('Reporte ajeno de lengua.');
 
+        // "Mi materia" ya no existe: la vista cae a "mios" y no expone reportes ajenos.
         $this->get('/conducta?vista=materia')
             ->assertOk()
             ->assertSee('Reporte propio de matemática.')
-            ->assertSee('Reporte ajeno de matemática.')
-            ->assertDontSee('Reporte ajeno de lengua.')
-            ->assertSee('Docente Dos');
+            ->assertDontSee('Reporte ajeno de matemática.');
 
         $reporte = ConductaReporte::where('descripcion', 'Reporte propio de matemática.')->firstOrFail();
         $this->get('/conducta/'.$reporte->id)
             ->assertOk()
             ->assertSee('Reporte propio de matemática.')
             ->assertSee('Registrado por');
+
+        $ajeno = ConductaReporte::where('descripcion', 'Reporte ajeno de matemática.')->firstOrFail();
+        $this->get('/conducta/'.$ajeno->id)->assertForbidden();
     }
 
     public function test_url_con_curso_y_materia_abre_mios_y_preselecciona_para_crear(): void
@@ -259,7 +261,8 @@ class ConductaReporteTest extends TestCase
             ->assertSee('Estudiante')
             ->assertSee('Desde')
             ->assertSee('Hasta')
-            ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false);
+            ->assertSee('conducta/crear?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false)
+            ->assertSee('conducta?vista=mios&amp;section_id='.$d['s4']->id.'&amp;subject_id='.$d['mat']->id, false);
 
         $this->get('/conducta/crear?section_id='.$d['s4']->id.'&subject_id='.$d['mat']->id)
             ->assertOk()
