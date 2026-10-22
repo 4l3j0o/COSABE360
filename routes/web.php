@@ -11,6 +11,7 @@ use App\Http\Controllers\DiarioAulaController;
 use App\Http\Controllers\HistorialAcademicoController;
 use App\Http\Controllers\InclusionController;
 use App\Http\Controllers\InscripcionController;
+use App\Http\Controllers\LicenciaController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
@@ -79,6 +80,7 @@ Route::get('/dashboard', function () {
         'Secretaría' => 'dashboard.secretaria',
         'Docente' => 'dashboard.docente',
         'Estudiante' => 'dashboard.estudiante',
+        'Regente' => 'dashboard.regente',
         default => 'dashboard.administrador',
     };
 
@@ -510,9 +512,14 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
 Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->prefix('regente')->group(function () {
     Route::get('/', [RegenteController::class, 'cursos'])->name('regente.cursos');
+
+    // HU-82: módulo de licencias, independiente de "Listas de Asistencia"
+    Route::get('/licencias', [LicenciaController::class, 'index'])->name('regente.licencias');
+    Route::post('/licencias', [LicenciaController::class, 'store'])->name('regente.licencias.store');
+    Route::post('/licencias/{licencia}/anular', [LicenciaController::class, 'anular'])->name('regente.licencias.anular');
+
     Route::get('/{section}', [RegenteController::class, 'verCurso'])->name('regente.curso');
     Route::post('/{section}/asistencia', [RegenteController::class, 'guardarAsistencia'])->name('regente.guardarAsistencia');
-    Route::post('/{section}/licencia/{student}', [RegenteController::class, 'registrarLicencia'])->name('regente.licencia');
 });
 
 // HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada
@@ -547,12 +554,14 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
 });
 
 // HU-30 + HU-65: módulo único de comunicados - ver/consultar: todos los autenticados.
-// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (solo sus cursos).
+// Crear/editar/publicar: Administrador y Director (todo alcance) + Docente (sus cursos)
+// + Regente (docentes y docentes de un curso).
 Route::middleware(['auth'])->prefix('comunicados')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
 });
-Route::middleware(['auth', 'role:Administrador,Director,Docente'])->prefix('comunicados')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Docente,Regente'])->prefix('comunicados')->group(function () {
     Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::get('/enviado/{announcement}', [AnnouncementController::class, 'showEnviado'])->name('announcements.enviado');
     Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     Route::put('/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
@@ -669,8 +678,9 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
     Route::delete('rc-iva/{rcIvaWithholding}', [RcIvaWithholdingController::class, 'destroy'])->name('rc-iva-withholdings.destroy');
 });
 
-// HU-65: Diario de aula — bitácora de avances por clase (docente registra; estudiante/padre/director consultan)
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante'])->prefix('diario-aula')->group(function () {
+// HU-65/HU-82: Diario de aula — bitácora de avances por clase. Secretaría no tiene acceso.
+// Docente: sus cursos; Director: solo su nivel; Admin: todo; Estudiante: su curso.
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Estudiante'])->prefix('diario-aula')->group(function () {
     Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
     Route::get('/ahora', [DiarioAulaController::class, 'ahora'])->name('diario.ahora');
     Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');
@@ -679,8 +689,10 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estu
     Route::delete('/{diario}', [DiarioAulaController::class, 'destroy'])->name('diario.destroy');
 });
 
-// HU-65: Reportes de conducta — faltas Leve/Grave/Muy grave + reportes por curso y por estudiante
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Regente,Estudiante'])->prefix('conducta')->group(function () {
+// HU-82: Conducta — observaciones por estudiante. Secretaría no tiene acceso.
+// Docente: sus reportes + su materia + su paralelo (tutor); Regente/Admin: todo;
+// Director: solo su nivel; Estudiante: solo lo propio.
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Regente,Estudiante'])->prefix('conducta')->group(function () {
     Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
     Route::get('/ahora', [ConductaReporteController::class, 'ahora'])->name('conducta.ahora');
     Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');

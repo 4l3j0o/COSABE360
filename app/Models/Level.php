@@ -19,6 +19,18 @@ class Level extends Model
         return $this->hasMany(Grade::class, 'level_id');
     }
 
+    /** Nombre corto para pestañas/filtros: "Inicial en Familia Comunitaria" -> "Inicial". */
+    public function nombreCorto(): string
+    {
+        foreach (['Inicial', 'Primaria', 'Secundaria'] as $corto) {
+            if (str_contains((string) $this->nombre, $corto)) {
+                return $corto;
+            }
+        }
+
+        return (string) $this->nombre;
+    }
+
     public function subjects(): HasMany
     {
         return $this->hasMany(Subject::class, 'level_id');

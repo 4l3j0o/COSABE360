@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -9,21 +10,11 @@ class ConductaReporte extends Model
 {
     protected $table = 'conducta_reportes';
 
-    /** Tipos de falta válidos (HU-65). */
-    public const TIPOS = ['LEVE', 'GRAVE', 'MUY_GRAVE'];
-
-    public const TIPOS_LABEL = [
-        'LEVE' => 'Leve',
-        'GRAVE' => 'Grave',
-        'MUY_GRAVE' => 'Muy grave',
-    ];
-
     protected $fillable = [
         'student_id',
         'section_id',
         'subject_id',
         'teacher_id',
-        'tipo_falta',
         'fecha',
         'hora',
         'descripcion',
@@ -59,8 +50,27 @@ class ConductaReporte extends Model
         return $this->belongsTo(User::class, 'registered_by_user_id');
     }
 
-    public function tipoLabel(): string
+    /** HU-82: reportes creados por un usuario concreto (vista "Mis reportes"). */
+    public function scopeDelUsuario(Builder $query, int $userId): void
     {
-        return self::TIPOS_LABEL[$this->tipo_falta] ?? $this->tipo_falta;
+        $query->where('registered_by_user_id', $userId);
+    }
+
+    /** HU-82: reportes de un paralelo. */
+    public function scopeDeSeccion(Builder $query, int $sectionId): void
+    {
+        $query->where('section_id', $sectionId);
+    }
+
+    /** HU-82: reportes de un estudiante. */
+    public function scopeDeEstudiante(Builder $query, int $studentId): void
+    {
+        $query->where('student_id', $studentId);
+    }
+
+    public function scopeEntreFechas(Builder $query, ?string $desde, ?string $hasta): void
+    {
+        $query->when($desde, fn (Builder $q, $fecha) => $q->where('fecha', '>=', $fecha))
+            ->when($hasta, fn (Builder $q, $fecha) => $q->where('fecha', '<=', $fecha));
     }
 }

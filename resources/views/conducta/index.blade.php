@@ -1,126 +1,60 @@
 @extends('layouts.app')
-@section('titulo', 'Reportes de Conducta')
+@section('titulo', 'Conducta')
 
 @section('sidebar')
     @include('dashboard.partials._sidebar-by-rol')
 @endsection
 
 @section('contenido')
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-            @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
-            <h1 class="text-xl font-bold text-foreground mt-2">Reportes de Conducta</h1>
-            <p class="text-sm text-muted-foreground">Faltas Leves, Graves y Muy graves reportadas por curso, con fecha, hora, materia y descripción.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('conducta.estudiante') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Por estudiante</a>
-            @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))
-                <a href="{{ route('conducta.create', request()->only(['section_id'])) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ Nuevo reporte</a>
-            @endif
+    <div class="mb-6">
+        @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
+            <div>
+                <h1 class="text-xl font-bold text-foreground">Conducta</h1>
+                @if($contextoCurso && $sectionActual)
+                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                        <x-ui.badge color="neutral">{{ $sectionActual->nombreCompleto() }}</x-ui.badge>
+                        @if($materiaActual)
+                            <x-ui.badge color="neutral">{{ $materiaActual->nombre }}</x-ui.badge>
+                        @endif
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-2">Reportes de este curso. Podés filtrar por estudiante o por fechas.</p>
+                @else
+                    <p class="text-sm text-muted-foreground mt-1">{{ $descripcion }}</p>
+                @endif
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'pdf'])) }}"
+                   class="px-3 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">PDF</a>
+                <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'excel'])) }}"
+                   class="px-3 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">Excel</a>
+                @if($puedeCrear)
+                    <a href="{{ route('conducta.create', ['vista' => $vista, 'section_id' => $filtros['section_id'], 'subject_id' => $filtros['subject_id'], 'contexto' => $contextoCurso ? 1 : null]) }}"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Nuevo reporte
+                    </a>
+                @endif
+            </div>
         </div>
     </div>
 
-    <div class="bg-card border border-border rounded-xl p-4 mb-6">
-        <form method="GET" action="{{ route('conducta.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Curso</label>
-                <select name="section_id" onchange="this.form.submit()" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-                    @if($cursos->count() !== 1)
-                        <option value="">Seleccionar curso…</option>
-                    @endif
-                    @foreach($cursos as $section)
-                        <option value="{{ $section->id }}" {{ ($filtros['section_id'] ?? '') == $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Materia</label>
-                <select name="subject_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-                    <option value="">Todas</option>
-                    @foreach($materias as $materia)
-                        <option value="{{ $materia->id }}" {{ ($filtros['subject_id'] ?? '') == $materia->id ? 'selected' : '' }}>{{ $materia->nombre }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tipo de falta</label>
-                <select name="tipo_falta" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-                    <option value="">Todas</option>
-                    <option value="LEVE" {{ ($filtros['tipo_falta'] ?? '') === 'LEVE' ? 'selected' : '' }}>Leve</option>
-                    <option value="GRAVE" {{ ($filtros['tipo_falta'] ?? '') === 'GRAVE' ? 'selected' : '' }}>Grave</option>
-                    <option value="MUY_GRAVE" {{ ($filtros['tipo_falta'] ?? '') === 'MUY_GRAVE' ? 'selected' : '' }}>Muy grave</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Desde</label>
-                <input type="date" name="desde" value="{{ $filtros['desde'] ?? '' }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Hasta</label>
-                <input type="date" name="hasta" value="{{ $filtros['hasta'] ?? '' }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Generar</button>
-            </div>
-        </form>
-    </div>
+    @if(count($tabs) > 1 && ! $contextoCurso)
+        <div class="border-b border-border mb-4 flex gap-1 overflow-x-auto">
+            @foreach($tabs as $key => $label)
+                <a href="{{ route('conducta.index', ['vista' => $key]) }}"
+                   class="px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors {{ $vista === $key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </div>
+    @endif
 
-    @if($resultado['requiere_curso'])
-        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
-            <p class="text-foreground text-sm font-medium">Selecciona un curso para ver sus reportes de conducta.</p>
-        </div>
-    @elseif($resultado['filas']->isEmpty())
-        <div class="bg-card border border-border rounded-xl p-12 text-center shadow-sm">
-            <p class="text-muted-foreground text-sm">Sin reportes de conducta para este filtro.</p>
-        </div>
-    @else
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div class="flex flex-wrap gap-2 text-xs">
-                @if($resultado['curso'])
-                    <span class="inline-flex px-2.5 py-1 rounded-full bg-muted font-medium">{{ $resultado['curso'] }}</span>
-                @endif
-                @if($resultado['materia'])
-                    <span class="inline-flex px-2.5 py-1 rounded-full bg-muted font-medium">{{ $resultado['materia'] }}</span>
-                @endif
-                @foreach(['LEVE' => 'bg-amber-100 text-amber-800', 'GRAVE' => 'bg-orange-100 text-orange-800', 'MUY_GRAVE' => 'bg-red-100 text-red-800'] as $tipo => $clase)
-                    <span class="inline-flex px-2.5 py-1 rounded-full font-semibold {{ $clase }}">{{ ['LEVE' => 'Leve', 'GRAVE' => 'Grave', 'MUY_GRAVE' => 'Muy grave'][$tipo] }}: {{ $resultado['conteo'][$tipo] ?? 0 }}</span>
-                @endforeach
-            </div>
-            <div class="flex gap-2">
-                <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" class="px-3 py-2 rounded-lg border border-input text-xs font-medium hover:bg-muted transition-colors">PDF</a>
-                <a href="{{ route('conducta.export', array_merge(request()->query(), ['format' => 'excel'])) }}" class="px-3 py-2 rounded-lg border border-input text-xs font-medium hover:bg-muted transition-colors">Excel</a>
-            </div>
-        </div>
+    @include('conducta._resumen')
+    @include('conducta._filtros')
+    @include('conducta._tabla')
 
-        <div class="bg-card border border-border rounded-xl shadow-sm overflow-x-auto">
-            <table class="w-full text-sm min-w-[820px]">
-                <thead>
-                    <tr class="border-b border-border text-left text-xs uppercase tracking-wider text-neutral-500">
-                        <th class="px-4 py-3">Fecha / Hora</th>
-                        <th class="px-4 py-3">Estudiante</th>
-                        <th class="px-4 py-3">Materia</th>
-                        <th class="px-4 py-3">Falta</th>
-                        <th class="px-4 py-3">Descripción</th>
-                        <th class="px-4 py-3">Reportado por</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($resultado['filas'] as $r)
-                        <tr class="border-b border-border/60 hover:bg-muted/30">
-                            <td class="px-4 py-2.5 whitespace-nowrap">{{ $r->fecha->format('d/m/Y') }}<br><span class="text-xs text-muted-foreground">{{ $r->hora ? substr($r->hora, 0, 5) : '—' }}</span></td>
-                            <td class="px-4 py-2.5 font-medium whitespace-nowrap">
-                                <a href="{{ route('conducta.estudiante', ['student_id' => $r->student_id]) }}" class="hover:text-primary hover:underline">{{ $r->student->apellidos }} {{ $r->student->nombres }}</a>
-                            </td>
-                            <td class="px-4 py-2.5">{{ $r->subject->nombre ?? 'General' }}</td>
-                            <td class="px-4 py-2.5 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold {{ $r->tipo_falta === 'LEVE' ? 'bg-amber-100 text-amber-800' : ($r->tipo_falta === 'GRAVE' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800') }}">{{ $r->tipoLabel() }}</span>
-                            </td>
-                            <td class="px-4 py-2.5 max-w-[320px]"><a href="{{ route('conducta.show', $r) }}" class="line-clamp-2 hover:text-primary hover:underline">{{ $r->descripcion }}</a></td>
-                            <td class="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{{ $r->teacher->nombres ?? '' }} {{ $r->teacher->apellidos ?? '' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+    @if($filas->isEmpty() && ($filtros['section_id'] || $filtros['subject_id'] || $filtros['student_id'] || $filtros['desde'] || $filtros['hasta']))
+        <p class="text-xs text-muted-foreground mt-3">Pruebe quitando filtros para ver más resultados.</p>
     @endif
 @endsection

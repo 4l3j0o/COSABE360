@@ -36,7 +36,7 @@ URL: https://360.csb.edu.bo
 - Reportes exportables
 
 **6. Diario de Aula**
-- Bitácora por clase (avance, ejercicios, observaciones)
+- Bitácora por clase (avance, actividades de clase, actividades para el hogar, recursos y observaciones)
 - Acceso directo desde cada curso
 - Visible para estudiantes, padres y dirección
 

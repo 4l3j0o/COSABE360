@@ -333,4 +333,142 @@ class ComunicadoAlcanceTest extends TestCase
         $response->assertSee('Recibidos', false);
         $response->assertDontSee('Mis Envíos', false);
     }
+
+    public function test_regente_crea_para_docentes_y_para_docentes_de_un_curso(): void
+    {
+        $curso = $this->curso($this->nivel('Primaria Regente 1'));
+        $regente = $this->usuario('Regente');
+
+        $this->actingAs($regente)->post(route('announcements.store'), [
+            'titulo' => 'Aviso a docentes',
+            'contenido' => 'Contenido',
+            'tipo_destinatario' => 'DOCENTES',
+            'estado' => 'PUBLICADO',
+        ])->assertRedirect(route('announcements.index'));
+
+        $this->assertDatabaseHas('announcement_recipients', [
+            'announcement_id' => Announcement::where('titulo', 'Aviso a docentes')->value('id'),
+            'tipo_destinatario' => 'DOCENTES',
+        ]);
+
+        $this->actingAs($regente)->post(route('announcements.store'), [
+            'titulo' => 'Aviso al curso',
+            'contenido' => 'Contenido',
+            'tipo_destinatario' => 'DOCENTES_CURSO',
+            'section_id' => $curso->id,
+            'estado' => 'PUBLICADO',
+        ])->assertRedirect(route('announcements.index'));
+
+        $this->assertDatabaseHas('announcement_recipients', [
+            'announcement_id' => Announcement::where('titulo', 'Aviso al curso')->value('id'),
+            'tipo_destinatario' => 'DOCENTES_CURSO',
+            'section_id' => $curso->id,
+        ]);
+    }
+
+    public function test_regente_no_crea_para_todos_estudiantes_curso_ni_nivel(): void
+    {
+        $curso = $this->curso($this->nivel('Primaria Regente 2'));
+        $regente = $this->usuario('Regente');
+
+        $casos = [
+            ['tipo' => 'TODOS'],
+            ['tipo' => 'ESTUDIANTES'],
+            ['tipo' => 'CURSO_ESPECIFICO', 'section_id' => $curso->id],
+            ['tipo' => 'NIVEL_DOCENTES', 'level_id' => $curso->grade->level_id],
+        ];
+
+        foreach ($casos as $i => $caso) {
+            $titulo = 'Aviso no permitido ' . $i;
+            $this->actingAs($regente)->post(route('announcements.store'), [
+                'titulo' => $titulo,
+                'contenido' => 'Contenido',
+                'tipo_destinatario' => $caso['tipo'],
+                'section_id' => $caso['section_id'] ?? null,
+                'level_id' => $caso['level_id'] ?? null,
+            ])->assertSessionHas('error');
+
+            $this->assertDatabaseMissing('announcements', ['titulo' => $titulo]);
+        }
+    }
+
+    public function test_docentes_curso_solo_lo_ve_el_docente_del_curso(): void
+    {
+        $curso = $this->curso($this->nivel('Primaria Regente 3'));
+        $otro = $this->curso($this->nivel('Primaria Regente 3b'));
+        $regente = $this->usuario('Regente');
+
+        $this->actingAs($regente)->post(route('announcements.store'), [
+            'titulo' => 'Solo docentes del curso',
+            'contenido' => 'Contenido',
+            'tipo_destinatario' => 'DOCENTES_CURSO',
+            'section_id' => $curso->id,
+            'estado' => 'PUBLICADO',
+        ])->assertRedirect();
+
+        $ann = Announcement::where('titulo', 'Solo docentes del curso')->firstOrFail();
+        $alcance = app(\App\Services\ComunicadoAlcanceService::class);
+
+        $this->assertTrue($alcance->visiblePara($this->docenteDe($curso), $ann));
+        $this->assertFalse($alcance->visiblePara($this->estudianteEn($curso), $ann));
+        $this->assertFalse($alcance->visiblePara($this->docenteDe($otro), $ann));
+    }
+
+    public function test_regente_solo_gestiona_sus_propios_comunicados(): void
+    {
+        $admin = $this->usuario('Administrador');
+        $regente = $this->usuario('Regente');
+
+        $ann = Announcement::create([
+            'titulo' => 'Ajeno al regente',
+            'contenido' => 'Contenido',
+            'author_id' => $admin->id,
+            'fecha_publicacion' => now(),
+            'estado' => 'PUBLICADO',
+        ]);
+        $ann->recipients()->create(['tipo_destinatario' => 'DOCENTES']);
+
+        $this->actingAs($regente)
+            ->put(route('announcements.update', $ann), ['titulo' => 'Hackeado'])
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('announcements', ['id' => $ann->id, 'titulo' => 'Ajeno al regente']);
+
+        $this->actingAs($regente)
+            ->delete(route('announcements.destroy', $ann))
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('announcements', ['id' => $ann->id]);
+    }
+
+    public function test_detalle_de_envio_solo_autor_admin_o_director(): void
+    {
+        $regente = $this->usuario('Regente');
+        $ann = Announcement::create([
+            'titulo' => 'Envio del regente',
+            'contenido' => 'Contenido',
+            'author_id' => $regente->id,
+            'fecha_publicacion' => now(),
+            'estado' => 'PUBLICADO',
+        ]);
+        $ann->recipients()->create(['tipo_destinatario' => 'DOCENTES']);
+
+        $this->actingAs($regente)->get(route('announcements.enviado', $ann))->assertOk();
+        $this->actingAs($this->usuario('Administrador'))->get(route('announcements.enviado', $ann))->assertOk();
+        $this->actingAs($this->usuario('Docente'))->get(route('announcements.enviado', $ann))->assertNotFound();
+    }
+
+    public function test_recibidos_lista_enlaza_al_detalle(): void
+    {
+        $ann = $this->comunicado('TODOS');
+        $docente = $this->docenteDe($this->curso($this->nivel('Primaria Regente 4')));
+
+        $this->actingAs($docente)
+            ->get(route('announcements.index'))
+            ->assertOk()
+            ->assertSee(route('comunicados.bandeja.show', $ann), false);
+
+        $this->actingAs($docente)
+            ->get(route('comunicados.bandeja.show', $ann))
+            ->assertOk()
+            ->assertSee($ann->titulo);
+    }
 }

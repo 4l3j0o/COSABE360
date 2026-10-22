@@ -130,8 +130,10 @@ class AttendanceReportController extends Controller
             $students = $students->where('id', $user->student->id)->values();
         }
 
-        // Asistencias dentro del rango, opcional por materia
+        // Asistencias dentro del rango, opcional por materia.
+        // HU-82: solo filas por materia (las "generales" ya no existen ni se cuentan).
         $attendanceQuery = Attendance::whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->whereNotNull('subject_id')
             ->whereIn('estado', self::ESTADOS)
             ->when($sectionId, fn ($q) => $q->where('section_id', $sectionId))
             ->when($subjectId, fn ($q) => $q->where('subject_id', $subjectId));

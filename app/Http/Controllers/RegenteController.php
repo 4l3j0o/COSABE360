@@ -2,35 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\Licencia;
 use App\Models\Section;
 use App\Models\SectionSubject;
-use App\Models\Student;
+use App\Services\LicenciaService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * HU-50: Rol Regente.
- * Gestiona listas de asistencia de todos los cursos (puede modificar a su criterio),
- * registra permisos/licencias y, al registrar una licencia, genera automáticamente un
- * comunicado dirigido únicamente a los docentes que dictan en el curso del estudiante.
+ * HU-50 / HU-82: Rol Regente.
+ *
+ * Con HU-82 la asistencia solo se guarda por materia (la lista general del
+ * Regente desaparece): su vista es un CONSOLIDADO de las listas por materia.
+ * Las licencias se gestionan en su propio módulo (ver LicenciaController).
  */
 class RegenteController extends Controller
 {
-    public function __construct()
-    {
-        // Solo Regente (y roles superiores) acceden a este módulo.
-        $this->middleware('auth');
-    }
+    public function __construct(private LicenciaService $licencias) {}
 
     public function cursos(Request $request): View
     {
         $this->autorizar($request);
 
-        $cursos = Section::with(['grade', 'gestion'])
+        $cursos = Section::with(['grade.level', 'gestion'])
             ->ordenadoPorNivel()
             ->get();
 
@@ -51,19 +48,66 @@ class RegenteController extends Controller
 
         $fecha = $request->query('fecha') ? Carbon::parse($request->query('fecha')) : now();
 
+        // Materias del curso (una sola vez por subject_id)
+        $materias = SectionSubject::where('section_id', $section->id)
+            ->with('subject')
+            ->get()
+            ->unique('subject_id')
+            ->values();
+
+        $studentIds = $students->pluck('id');
+
+        // Asistencias del día por materia (subject_id NOT NULL)
         $asistencias = Attendance::where('section_id', $section->id)
             ->whereDate('fecha', $fecha->toDateString())
-            ->whereIn('student_id', $students->pluck('id'))
+            ->whereNotNull('subject_id')
+            ->whereIn('student_id', $studentIds)
+            ->get();
+
+        $estadoPorEstudiante = $asistencias
+            ->groupBy('student_id')
+            ->map(fn ($regs) => $regs->keyBy('subject_id'));
+
+        // Licencias activas que cubren la fecha
+        $licenciasHoy = Licencia::where('section_id', $section->id)
+            ->where('estado', 'ACTIVA')
+            ->whereDate('fecha_inicio', '<=', $fecha->toDateString())
+            ->whereDate('fecha_fin', '>=', $fecha->toDateString())
+            ->whereIn('student_id', $studentIds)
             ->get()
             ->keyBy('student_id');
 
-        $materias = SectionSubject::where('section_id', $section->id)->with('subject')->get();
+        // Lista a mostrar: general (todas las materias) por defecto, o una materia.
+        $subjectIds = $materias->pluck('subject_id');
+        $subjectSel = $request->query('subject_id');
+        if ($subjectSel !== null && $subjectSel !== 'general' && $subjectIds->contains((int) $subjectSel)) {
+            $subjectCorregir = (int) $subjectSel;
+        } else {
+            $subjectCorregir = 'general';
+        }
 
-        return view('regente.curso', compact('section', 'students', 'fecha', 'asistencias', 'materias'));
+        // En modo general la grilla se precarga con la primera materia del día.
+        $subjectCargar = $subjectCorregir === 'general' ? $materias->first()?->subject_id : $subjectCorregir;
+        $corregirAsistencias = $subjectCargar
+            ? $asistencias->where('subject_id', $subjectCargar)->keyBy('student_id')
+            : collect();
+
+        return view('regente.curso', compact(
+            'section',
+            'students',
+            'fecha',
+            'materias',
+            'estadoPorEstudiante',
+            'licenciasHoy',
+            'subjectCorregir',
+            'corregirAsistencias',
+        ));
     }
 
     /**
-     * El Regente modifica la lista de asistencia a su antojo (todos los estados, cualquier fecha).
+     * El Regente llama la lista. En modo "general" rellena TODAS las materias
+     * del curso ese día (sin pisar las ya registradas por un docente); en modo
+     * materia corrige una sola. Los estudiantes con licencia quedan en LICENCIA.
      */
     public function guardarAsistencia(Request $request, Section $section): RedirectResponse
     {
@@ -71,161 +115,83 @@ class RegenteController extends Controller
 
         $validated = $request->validate([
             'fecha' => ['required', 'date'],
+            'subject_id' => ['required'],
             'asistencias' => ['required', 'array'],
             'asistencias.*.estado' => ['required', 'in:'.implode(',', Attendance::ESTADOS)],
             'asistencias.*.justificacion' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $estudiantesCurso = $section->students()->where('students.estado', 'ACTIVO')->pluck('id')->toArray();
-        $fecha = Carbon::parse($validated['fecha'])->toDateString();
-
-        $seDetectoLicencia = false;
-
-        foreach ($validated['asistencias'] as $studentId => $data) {
-            if (! in_array((int) $studentId, $estudiantesCurso, true)) {
-                continue;
-            }
-
-            $existente = Attendance::where('student_id', $studentId)
-                ->where('section_id', $section->id)
-                ->whereDate('fecha', $fecha)
-                ->whereNull('subject_id')
-                ->first();
-
-            if ($existente) {
-                $existente->update([
-                    'estado' => $data['estado'],
-                    'justificacion' => $data['justificacion'] ?? null,
-                    'registered_by_user_id' => auth()->id(),
-                ]);
-            } else {
-                Attendance::create([
-                    'student_id' => $studentId,
-                    'section_id' => $section->id,
-                    'subject_id' => null,
-                    'fecha' => $fecha,
-                    'estado' => $data['estado'],
-                    'justificacion' => $data['justificacion'] ?? null,
-                    'registered_by_user_id' => auth()->id(),
-                ]);
-            }
-
-            if ($data['estado'] === 'LICENCIA') {
-                $seDetectoLicencia = true;
-            }
-        }
-
-        if ($seDetectoLicencia) {
-            // Se notificará a los docentes del curso sobre las licencias registradas.
-            $this->notificarLicencias($section, $validated['asistencias'], $fecha, $request->user());
-        }
-
-        return redirect()->route('regente.curso', ['section' => $section, 'fecha' => $fecha])
-            ->with('success', 'Asistencia actualizada por el Regente para el '.$fecha.'.');
-    }
-
-    /**
-     * Registra una licencia puntual para un estudiante en uno o más días y notifica a los docentes.
-     */
-    public function registrarLicencia(Request $request, Section $section, Student $student): RedirectResponse
-    {
-        $this->autorizar($request);
-
-        $validated = $request->validate([
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
-            'motivo' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $inicio = Carbon::parse($validated['fecha_inicio']);
-        $fin = Carbon::parse($validated['fecha_fin']);
-
-        $dias = [];
-        for ($d = $inicio->copy(); $d->lte($fin); $d->addDay()) {
-            $dias[] = $d->toDateString();
-            Attendance::updateOrCreate(
-                [
-                    'student_id' => $student->id,
-                    'section_id' => $section->id,
-                    'fecha' => $d->toDateString(),
-                    'subject_id' => null,
-                ],
-                [
-                    'estado' => 'LICENCIA',
-                    'justificacion' => $validated['motivo'] ?? null,
-                    'registered_by_user_id' => auth()->id(),
-                ]
-            );
-        }
-
-        // Comunicado automático a los docentes del curso del estudiante
-        $this->crearComunicadoLicencia($student, $section, $dias, $validated['motivo'] ?? null, $request->user());
-
-        return redirect()->route('regente.curso', ['section' => $section])
-            ->with('success', 'Licencia registrada para '.count($dias).' día(s) y notificado a los docentes del curso.');
-    }
-
-    /**
-     * Crea un comunicado PUBLICADO dirigido a los docentes que dictan en el curso del estudiante.
-     */
-    private function crearComunicadoLicencia(Student $student, Section $section, array $dias, ?string $motivo, $autor): void
-    {
-        $announcement = Announcement::create([
-            'titulo' => 'Licencia de estudiante: '.$student->apellidos.' '.$student->nombres,
-            'contenido' => "Se informa que el(la) estudiante **{$student->nombres} {$student->apellidos}** de {$section->nombre} "
-                .'se encuentra con LICENCIA los siguientes día(s): '.implode(', ', $dias)
-                .($motivo ? '. Motivo: '.$motivo : '.'),
-            'author_id' => $autor->id,
-            'fecha_publicacion' => now(),
-            'estado' => 'PUBLICADO',
-        ]);
-
-        // Docentes que dictan en este curso
-        $docenteUserIds = SectionSubject::where('section_id', $section->id)
-            ->with('teacher.user')
-            ->get()
-            ->pluck('teacher.user_id')
-            ->filter()
+        $subjectIds = SectionSubject::where('section_id', $section->id)
+            ->pluck('subject_id')
             ->unique()
             ->values();
 
-        if ($docenteUserIds->isEmpty()) {
-            // Si no hay docentes vinculados, se dirige al tipo DOCENTES (general).
-            $announcement->recipients()->create(['tipo_destinatario' => 'DOCENTES']);
+        $esGeneral = $validated['subject_id'] === 'general';
 
-            return;
+        if ($esGeneral) {
+            $materias = $subjectIds;
+        } else {
+            $subjectId = (int) $validated['subject_id'];
+            abort_unless($subjectIds->contains($subjectId), 422, 'La materia no pertenece a este curso.');
+            $materias = collect([$subjectId]);
         }
 
-        foreach ($docenteUserIds as $userId) {
-            $announcement->recipients()->create([
-                'tipo_destinatario' => 'CURSO_ESPECIFICO',
-                'section_id' => $section->id,
-                'user_id' => $userId,
-            ]);
-        }
-    }
+        $estudiantes = $section->students()->where('students.estado', 'ACTIVO')->pluck('id')->all();
+        $fecha = Carbon::parse($validated['fecha'])->toDateString();
+        $licenciados = $this->licencias->estudiantesLicenciados($section, $fecha);
 
-    /**
-     * Al detectar LICENCIA en el guardado masivo, notifica a los docentes del curso.
-     */
-    private function notificarLicencias(Section $section, array $asistencias, string $fecha, $autor): void
-    {
-        $licenciados = [];
-        foreach ($asistencias as $studentId => $data) {
-            if ($data['estado'] === 'LICENCIA') {
-                $licenciados[] = (int) $studentId;
+        foreach ($validated['asistencias'] as $studentId => $data) {
+            if (! in_array((int) $studentId, array_map('intval', $estudiantes), true)) {
+                continue;
+            }
+
+            $esLicenciado = in_array((int) $studentId, $licenciados, true);
+
+            foreach ($materias as $subjectId) {
+                $llave = [
+                    'student_id' => $studentId,
+                    'section_id' => $section->id,
+                    'fecha' => $fecha,
+                    'subject_id' => $subjectId,
+                ];
+
+                // El docente no puede modificar un día con licencia: se mantiene LICENCIA.
+                if ($esLicenciado) {
+                    Attendance::updateOrCreate($llave, [
+                        'estado' => 'LICENCIA',
+                        'registered_by_user_id' => auth()->id(),
+                    ]);
+
+                    continue;
+                }
+
+                // La lista general solo RELLENA: no pisa lo que un docente ya
+                // llamó ese día. La corrección por materia sí sobreescribe.
+                if ($esGeneral) {
+                    Attendance::firstOrCreate($llave, [
+                        'estado' => $data['estado'],
+                        'justificacion' => $data['justificacion'] ?? null,
+                        'registered_by_user_id' => auth()->id(),
+                    ]);
+
+                    continue;
+                }
+
+                Attendance::updateOrCreate($llave, [
+                    'estado' => $data['estado'],
+                    'justificacion' => $data['justificacion'] ?? null,
+                    'registered_by_user_id' => auth()->id(),
+                ]);
             }
         }
 
-        if (empty($licenciados)) {
-            return;
-        }
-
-        $students = Student::whereIn('id', $licenciados)->get();
-
-        foreach ($students as $student) {
-            $this->crearComunicadoLicencia($student, $section, [$fecha], null, $autor);
-        }
+        return redirect()->route('regente.curso', [
+            'section' => $section,
+            'fecha' => $fecha,
+            'subject_id' => $esGeneral ? 'general' : $validated['subject_id'],
+        ])->with('success', $esGeneral
+            ? 'Lista general registrada para el '.$fecha.'. Se rellenaron solo las materias sin registro.'
+            : 'Asistencia actualizada para el '.$fecha.'.');
     }
 
     private function autorizar(Request $request): void

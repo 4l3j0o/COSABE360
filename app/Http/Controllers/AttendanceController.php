@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Models\Licencia;
 use App\Models\Section;
 use App\Models\SectionSubject;
 use App\Models\Student;
@@ -137,7 +138,10 @@ class AttendanceController extends Controller
 
         $editar = $request->boolean('editar');
 
-        return view('attendances.create', compact('section', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId'));
+        // HU-82: estudiantes con licencia activa que cubre la fecha (no modificables)
+        $licenciados = $this->estudiantesLicenciados($section, $fecha);
+
+        return view('attendances.create', compact('section', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId', 'licenciados'));
     }
 
     /**
@@ -168,8 +172,29 @@ class AttendanceController extends Controller
         $materias = $this->materiasDeCurso($section);
         $subjectId = $this->resolverMateriaOLaPrimera($request, $materias);
 
+        // HU-82: un estudiante con licencia activa no puede ser modificado por el docente.
+        $licenciados = $this->estudiantesLicenciados($section, $fechaNormalizada);
+
         foreach ($validated['asistencias'] as $studentId => $data) {
             if (!in_array((int) $studentId, $estudiantes, true)) {
+                continue;
+            }
+
+            if (in_array((int) $studentId, $licenciados, true)) {
+                // Se preserva la licencia; se ignora cualquier estado enviado.
+                Attendance::updateOrCreate(
+                    [
+                        'student_id' => $studentId,
+                        'section_id' => $section->id,
+                        'fecha' => $fechaNormalizada,
+                        'subject_id' => $subjectId,
+                    ],
+                    [
+                        'estado' => 'LICENCIA',
+                        'registered_by_user_id' => auth()->id(),
+                    ]
+                );
+
                 continue;
             }
 
@@ -330,6 +355,20 @@ class AttendanceController extends Controller
         }
 
         return $subjectId ?? $materias->first()?->id;
+    }
+
+    /**
+     * HU-82: ids de estudiantes del curso con licencia activa que cubre la fecha.
+     */
+    private function estudiantesLicenciados(Section $section, string $fecha): array
+    {
+        return Licencia::where('section_id', $section->id)
+            ->where('estado', 'ACTIVA')
+            ->whereDate('fecha_inicio', '<=', $fecha)
+            ->whereDate('fecha_fin', '>=', $fecha)
+            ->pluck('student_id')
+            ->map(fn ($v) => (int) $v)
+            ->all();
     }
 
     private function authorizeDocenteDelCurso(Section $section): void

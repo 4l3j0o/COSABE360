@@ -438,13 +438,53 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
   servicio de plantillas con valores calculados en vez de fÃ³rmulas.
 
 ## HU-65: Diario de aula + Reportes de conducta (2026-10-05)
-- **Diario de aula** — el docente anota por clase: avance curricular, ejercicios propuestos y observaciones (diario_aulas); visible para estudiantes de su curso, padres, directores y admin. Rutas /diario-aula.
-- **Reportes de conducta** — faltas LEVE/GRAVE/MUY_GRAVE con fecha, hora, materia (o General) y descripción (conducta_reportes); el estudiante solo ve las propias. Rutas /conducta.
-- **Reportes**: general por curso (filtros curso/materia/tipo/rango + conteos) y específico por estudiante (historial + conteo por tipo); ambos exportan a PDF (dompdf) y Excel (PhpSpreadsheet).
-- **Permisos** — registra: Docente asignado al curso (o tutor del paralelo) + Admin/Director/Secretaría; consulta: + Estudiante, Padre/Tutor, Regente (solo conducta). Sin Policies: ownership en controlador, como asistencias.
+- **Diario de aula** ï¿½ el docente anota por clase: avance curricular, ejercicios propuestos y observaciones (diario_aulas); visible para estudiantes de su curso, padres, directores y admin. Rutas /diario-aula.
+- **Reportes de conducta** ï¿½ faltas LEVE/GRAVE/MUY_GRAVE con fecha, hora, materia (o General) y descripciï¿½n (conducta_reportes); el estudiante solo ve las propias. Rutas /conducta.
+- **Reportes**: general por curso (filtros curso/materia/tipo/rango + conteos) y especï¿½fico por estudiante (historial + conteo por tipo); ambos exportan a PDF (dompdf) y Excel (PhpSpreadsheet).
+- **Permisos** ï¿½ registra: Docente asignado al curso (o tutor del paralelo) + Admin/Director/Secretarï¿½a; consulta: + Estudiante, Padre/Tutor, Regente (solo conducta). Sin Policies: ownership en controlador, como asistencias.
 
 ## HU-65b/65c: accesos por curso + acciones rapidas + demo (2026-10-05)
-- **Tarjetas Mis Cursos** — cada tarjeta curso+materia trae botones Diario y Conducta prefiltrados a ese curso/materia.
-- **Acciones rapidas del panel docente** — Diario de Aula y Conducta abren la clase actual segun horario (hora Bolivia); fuera de horario muestran aviso y llevan a Mis Cursos (rutas diario.ahora, conducta.ahora).
-- **Sin selectores en dashboard** — el selector curso/materia en cascada se retiro; direccion/admin/secretaria/regente mantienen acceso global en sidebar; estudiante/padre entran desde sus paneles.
-- **DocenteDemoSeeder** — horario semanal sin choques para los 10 cursos del docente (+ bloque que cubre la hora actual), 30 bitacoras, 14 reportes de conducta, asistencias de 5 dias y 2 comunicados a docentes. Corre con php artisan db:seed --class=DocenteDemoSeeder.
+- **Tarjetas Mis Cursos** ï¿½ cada tarjeta curso+materia trae botones Diario y Conducta prefiltrados a ese curso/materia.
+- **Acciones rapidas del panel docente** ï¿½ Diario de Aula y Conducta abren la clase actual segun horario (hora Bolivia); fuera de horario muestran aviso y llevan a Mis Cursos (rutas diario.ahora, conducta.ahora).
+- **Sin selectores en dashboard** ï¿½ el selector curso/materia en cascada se retiro; direccion/admin/secretaria/regente mantienen acceso global en sidebar; estudiante/padre entran desde sus paneles.
+- **DocenteDemoSeeder** ï¿½ horario semanal sin choques para los 10 cursos del docente (+ bloque que cubre la hora actual), 30 bitacoras, 14 reportes de conducta, asistencias de 5 dias y 2 comunicados a docentes. Corre con php artisan db:seed --class=DocenteDemoSeeder.
+
+## HU-82: Comunicados multi-paralelo + licencias con expediente (2026-10-19)
+- **Comunicados a varios paralelos** ï¿½ un mismo comunicado puede dirigirse a N paralelos; el request usa `section_ids[]` (se admite `section_id` unico por compatibilidad). Se crea una fila en `announcement_recipients` por paralelo y `ComunicadoAlcanceService::visiblePara()` evalua TODOS los destinatarios (antes solo el primero, bug de visibilidad).
+- **Licencias con expediente (HU-82)** ï¿½ nueva tabla `licencias` (student, section, fecha_inicio/fin, motivo, evidencia_path, announcement_id, estado, created_by_user_id). El Regente la registra directo; se aplica `LICENCIA` a TODAS las materias del curso en los dias con clase (segun horario; lun-sab si no hay horario) y se genera un comunicado PUBLICADO a los docentes del curso con la evidencia adjunta.
+- **Bloqueo al docente** ï¿½ un dia con licencia activa es solo lectura en la lista del docente (radios deshabilitados); el servidor ignora cualquier estado enviado y conserva `LICENCIA`. El Regente anula la licencia (revierte filas y archiva el comunicado).
+- **Listas de asistencia (Opcion B - consolidar)** ï¿½ las listas por materia son la unica fuente de verdad; se eliminan las filas generales (`subject_id IS NULL`) via migracion. La vista del Regente es un consolidado de solo lectura (estudiantes x materias) mas un corrector por materia. `AttendanceReportController` y `EvaluationReportController` ignoran/filtran por materia (se corrige el doble conteo de porcentajes).
+- **Boton "Limpiar"** ï¿½ en la lista del docente, vuelve todo a AUSENTE manteniendo intactas las licencias (como "Presentes a todos").
+- **Modulo de licencias separado** ï¿½ el registro y la anulacion de licencias viven en su propio modulo (`regente.licencias`; `LicenciaController` + `LicenciaService`), con enlace en el sidebar del Regente, independiente de "Listas de Asistencia". La vista del curso (`regente.curso`) solo conserva el consolidado y el corrector por materia.
+- **Encabezados del consolidado** ï¿½ las columnas usan `subjects.sigla` (MAT, CL, LEO...) en lugar de truncar el nombre a 8 caracteres (que cortaba tildes y repetia columnas).
+- **Comunicado de licencia** ï¿½ se genera **destacado/importante** (`destacado = true`): badge "Importante" + pantallazo al ingresar hasta marcar Entendido. Las fechas se escriben como rango en espaÃ±ol ("del 19 al 23 de octubre de 2026"). La imagen de evidencia se ve en el detalle del comunicado (`announcements.show-bandeja`).
+- **Lista general del Regente ("Llamar lista")** ï¿½ en `regente.curso` el selector incluye `General â€” todas las materias` (por defecto) ademas de cada materia. Guardar en general **solo rellena** las materias sin registro de ese dia (`firstOrCreate`); NO pisa lo que un docente ya llamo. La correccion por materia si sobreescribe. Los docentes siguen editando sus listas despues; los licenciados quedan bloqueados en `LICENCIA`.
+- **Envio del Regente** - el Regente puede crear comunicados solo a **Docentes** (todos) y **Docentes de un curso** (`DOCENTES_CURSO`, nuevo alcance; visible unicamente para los docentes del paralelo, no para estudiantes). `cursosCreables()` le ofrece todos los paralelos activos. Rutas de creacion/edicion ampliadas con el rol `Regente` y ownership generalizado: Admin/Director gestionan todo, Docente/Regente solo lo propio.
+- **Comunicado de licencia = solo docentes** - pasa de `CURSO_ESPECIFICO` a `DOCENTES_CURSO`. El Regente lo ve en **Mis Envios** (no en Recibidos, porque es el emisor) y es de **solo lectura**: no se puede editar/publicar/archivar/eliminar desde Comunicados; se gestiona anulando la licencia. El detalle muestra el badge "Generado por licencia".
+- **Interfaz tipo Gmail** - Recibidos y Mis Envios ahora son listas compactas: Recibidos muestra remitente + asunto + fecha (punto de no leido y badge Importante); Mis Envios muestra destinatario + asunto + estado. Al hacer clic se abre el detalle completo (contenido, imagen, remitente/destinatario y acciones). Se elimino el modal "Ver Comunicado" y la tabla de envios. Abrir un comunicado lo marca como leido. El detalle de un envio vive en `announcements.enviado` (solo autor/Admin/Director).
+- **Todas las fotos a .webp** - helper unico `App\Support\ImagenWebp::guardar()` (GD, reescala a 1600px, calidad 80): comunicados (`com_`), evidencia de licencia (`lic_`), fotografia de estudiante (`est_`), foto de fachada (`fachada_`) y documentos de inscripcion que sean imagen (`doc_`; los PDF se guardan tal cual). Antes la evidencia de licencia se guardaba en el formato original (`->store('licencias')`).
+- **Limite de subida** - `php.ini` (WinGet PHP 8.4): `upload_max_filesize` 2M -> 16M, `post_max_size` 8M -> 20M, `memory_limit` 128M -> 256M. Con 2M, cualquier foto >2 MB fallaba con "The evidencia failed to upload" (`validation.uploaded`); la validacion de `evidencia` admite ahora hasta 10 MB con mensajes propios.
+- **Pendiente** - `Diario de Aula` queda para una iteracion posterior.
+
+## HU-82: Refactor de Conducta (2026-10-22)
+- **Modulo separado de Diario de Aula** - Conducta vive en `/conducta` con una pagina informativa por rol; Diario de Aula conserva `/diario-aula` y no se mezclan en la Central. En Central de Reportes quedan dos entradas independientes.
+- **Sin tipos de falta** - se elimina `tipo_falta` (Leve/Grave/Muy grave) de la base, modelo, request, vistas, PDF y Excel. El reporte es una observacion narrativa con fecha, hora, materia opcional y descripcion.
+- **Vistas por rol**:
+  - `mios`: el docente ve solo los reportes que el registro.
+  - `paralelo`: el docente tutor/encargado (`sections.teacher_id`) ve todos los reportes de su paralelo, de todas las materias y docentes, con filtro por estudiante y columna "Reportado por".
+  - `general`: Administrador y Regente ven todo; Director solo los paralelos de sus `nivelesACargo()`.
+  - `estudiante`: cada estudiante ve solo su historial.
+  - **Secretaria no tiene acceso** al modulo.
+- **Creacion** - Docente (incluido el tutor) solo en las materias que dicta (`section_subjects`); el tutor puede ver todo su paralelo, pero no crear en materias ajenas. Regente/Admin en cualquier paralelo; Director solo en su nivel. El estudiante debe estar matriculado activo en el paralelo.
+- **PDF/Excel** - exportacion por paralelo (todos los reportes) y por estudiante, respetando el alcance del rol. Se retira la columna "Falta" y se mantiene "Reportado por".
+- **Contexto de curso** - al abrir Conducta desde un curso (`contexto=1` + `section_id`), se ocultan las pestanas y los filtros de curso/materia; solo quedan estudiante y fechas. "Limpiar" conserva el curso/materia y solo limpia el estudiante y las fechas. En la vista general (Central) se mantienen las pestanas y los filtros de curso/materia/estudiante; se aplican al presionar Filtrar.
+- **Auto-seleccion de materia** - en la vista general, al elegir un paralelo se preselecciona automaticamente la materia del docente si dicta una sola en ese paralelo; si dicta varias, queda "Todas".
+- **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.
+
+## HU-82: Diario de Aula - actividades y recursos (2026-10-22)
+- **Secciones de la bitacora** - se mantienen Avance curricular y Observaciones, y se agregan tres secciones opcionales con items repetibles: **Actividades de clases**, **Actividades para el hogar** y **Recursos**.
+- **Modelo** - nuevas tablas `diario_actividades` (tema de estudio, referencia bibliografica, descripcion), `diario_tareas` (paginas de referencia, forma de presentacion, fecha, descripcion) y `diario_recursos` (nombre, imagen o enlace). Se eliminan las columnas de texto simple usadas como paso intermedio.
+- **UI** - formulario con bloques desplegables y botones "Nueva Actividad", "Nueva Tarea" y "Agregar Recurso" (JS vanilla); no se crea ningun item vacio por defecto. Los recursos aceptan imagen JPG/PNG/WEBP (convertida a .webp) o un enlace de referencia. El detalle muestra tablas, miniaturas y enlaces.
+- **Contexto** - al entrar desde un curso (`contexto=1`) se ocultan los filtros de curso/materia y solo se listan las bitacoras de ese curso. Desde la Central se mantienen los filtros y, al elegir curso, se preselecciona automaticamente la materia del docente si dicta una sola.
+- **Creacion desde curso** - curso y materia quedan preseleccionados; el formulario se abre directo en las secciones de la bitacora.
+- **Permisos** - Administrador ve todo; Director solo los paralelos de sus `nivelesACargo()`; Docente solo sus cursos; Estudiante solo su curso; Secretaria y Regente no tienen acceso al modulo.

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use App\Models\Section;
+use App\Models\User;
 use App\Services\ComunicadoAlcanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,20 +29,28 @@ class AnnouncementController extends Controller
     public function store(StoreAnnouncementRequest $request, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
+        $user = $request->user();
+        $tipo = $validated['tipo_destinatario'];
+        $sectionIds = array_map('intval', $validated['section_ids'] ?? []);
 
-        // HU-65: el alcance (destinatario/curso/nivel) debe estar permitido para el rol
-        $error = $alcance->validarAlcance(
-            $request->user(),
-            $validated['tipo_destinatario'],
-            isset($validated['section_id']) ? (int) $validated['section_id'] : null,
-            isset($validated['level_id']) ? (int) $validated['level_id'] : null,
-        );
-        if ($error) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => $error], 403);
+        // HU-65 / HU-82: el alcance (destinatario/cursos/nivel) debe estar permitido para el rol.
+        if ($this->esTipoPorCurso($tipo)) {
+            foreach ($sectionIds as $sectionId) {
+                $error = $alcance->validarAlcance($user, $tipo, $sectionId, null);
+                if ($error) {
+                    return $this->denegarAlcance($request, $error);
+                }
             }
-
-            return back()->withInput()->with('error', $error);
+        } else {
+            $error = $alcance->validarAlcance(
+                $user,
+                $tipo,
+                null,
+                isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+            );
+            if ($error) {
+                return $this->denegarAlcance($request, $error);
+            }
         }
 
         // Lógica específica HU30: fecha solo si PUBLICADO o si viene explícita
@@ -61,18 +70,38 @@ class AnnouncementController extends Controller
             'imagen_path' => $request->hasFile('imagen') ? $this->guardarImagenWebp($request->file('imagen')) : null,
         ]);
 
-        $announcement->recipients()->create([
-            'tipo_destinatario' => $validated['tipo_destinatario'],
-            'section_id' => $validated['section_id'] ?? null,
-            'level_id' => $validated['level_id'] ?? null,
-            'user_id' => $validated['user_id'] ?? null,
-        ]);
+        $this->crearDestinatarios($announcement, $tipo, $sectionIds, $validated);
 
         if ($request->expectsJson()) {
             return (new AnnouncementResource($announcement->load(['author', 'recipients'])))->response()->setStatusCode(201);
         }
 
         return $this->redirectModulo($request, 'Comunicado creado correctamente.');
+    }
+
+    /**
+     * HU-82: crea los destinatarios del comunicado. Para los tipos por curso
+     * (CURSO_ESPECIFICO / DOCENTES_CURSO) admite uno o varios paralelos
+     * (una fila por paralelo).
+     */
+    private function crearDestinatarios(Announcement $announcement, string $tipo, array $sectionIds, array $validated): void
+    {
+        if ($this->esTipoPorCurso($tipo)) {
+            foreach ($sectionIds as $sectionId) {
+                $announcement->recipients()->create([
+                    'tipo_destinatario' => $tipo,
+                    'section_id' => $sectionId,
+                ]);
+            }
+
+            return;
+        }
+
+        $announcement->recipients()->create([
+            'tipo_destinatario' => $tipo,
+            'level_id' => $validated['level_id'] ?? null,
+            'user_id' => $validated['user_id'] ?? null,
+        ]);
     }
 
     public function show(Announcement $announcement): AnnouncementResource
@@ -85,9 +114,8 @@ class AnnouncementController extends Controller
         $validated = $request->validated();
         $user = $request->user();
 
-        // Docente: solo sus propios comunicados
-        if ($user->hasRole('Docente') && $announcement->author_id !== $user->id) {
-            return $this->denegarAlcance($request, 'Solo puedes editar tus propios comunicados.');
+        if ($error = $this->verificarGestion($user, $announcement)) {
+            return $this->denegarAlcance($request, $error);
         }
 
         $data = [];
@@ -121,28 +149,31 @@ class AnnouncementController extends Controller
         }
 
         if (isset($validated['tipo_destinatario'])) {
-            $error = $alcance->validarAlcance(
-                $user,
-                $validated['tipo_destinatario'],
-                isset($validated['section_id']) ? (int) $validated['section_id'] : null,
-                isset($validated['level_id']) ? (int) $validated['level_id'] : null,
-            );
-            if ($error) {
-                return $this->denegarAlcance($request, $error);
+            $tipo = $validated['tipo_destinatario'];
+            $sectionIds = array_map('intval', $validated['section_ids'] ?? []);
+
+            if ($this->esTipoPorCurso($tipo)) {
+                foreach ($sectionIds as $sectionId) {
+                    $error = $alcance->validarAlcance($user, $tipo, $sectionId, null);
+                    if ($error) {
+                        return $this->denegarAlcance($request, $error);
+                    }
+                }
+            } else {
+                $error = $alcance->validarAlcance(
+                    $user,
+                    $tipo,
+                    null,
+                    isset($validated['level_id']) ? (int) $validated['level_id'] : null,
+                );
+                if ($error) {
+                    return $this->denegarAlcance($request, $error);
+                }
             }
 
-            $recipient = $announcement->recipients()->first();
-            $payload = [
-                'tipo_destinatario' => $validated['tipo_destinatario'],
-                'section_id' => $validated['section_id'] ?? null,
-                'level_id' => $validated['level_id'] ?? null,
-                'user_id' => $validated['user_id'] ?? null,
-            ];
-            if ($recipient) {
-                $recipient->update($payload);
-            } else {
-                $announcement->recipients()->create($payload);
-            }
+            // Se reemplazan los destinatarios (soporta uno o varios paralelos).
+            $announcement->recipients()->delete();
+            $this->crearDestinatarios($announcement, $tipo, $sectionIds, $validated);
         }
 
         if ($request->expectsJson()) {
@@ -154,8 +185,8 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement): JsonResponse|RedirectResponse
     {
-        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
-            return $this->denegarAlcance(request(), 'Solo puedes eliminar tus propios comunicados.');
+        if ($error = $this->verificarGestion(request()->user(), $announcement)) {
+            return $this->denegarAlcance(request(), $error);
         }
 
         if ($announcement->imagen_path) {
@@ -172,8 +203,8 @@ class AnnouncementController extends Controller
 
     public function publicar(Announcement $announcement): JsonResponse|RedirectResponse
     {
-        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
-            return $this->denegarAlcance(request(), 'Solo puedes publicar tus propios comunicados.');
+        if ($error = $this->verificarGestion(request()->user(), $announcement)) {
+            return $this->denegarAlcance(request(), $error);
         }
 
         if ($announcement->estado === 'PUBLICADO') {
@@ -197,8 +228,8 @@ class AnnouncementController extends Controller
 
     public function archivar(Announcement $announcement): JsonResponse|RedirectResponse
     {
-        if (request()->user()->hasRole('Docente') && $announcement->author_id !== request()->user()->id) {
-            return $this->denegarAlcance(request(), 'Solo puedes archivar tus propios comunicados.');
+        if ($error = $this->verificarGestion(request()->user(), $announcement)) {
+            return $this->denegarAlcance(request(), $error);
         }
 
         $announcement->update(['estado' => 'ARCHIVADO']);
@@ -253,7 +284,7 @@ class AnnouncementController extends Controller
             $tab = 'recibidos';
         }
 
-        $with = ['author', 'recipients.section', 'recipients.section.grade', 'recipients.level'];
+        $with = ['author', 'recipients.section', 'recipients.section.grade', 'recipients.level', 'licencia'];
 
         // ---- Recibidos: publicados visibles para el usuario ----
         $recQuery = Announcement::with($with)
@@ -270,7 +301,7 @@ class AnnouncementController extends Controller
         }
 
         $page = max(1, (int) $request->query('page', 1));
-        $perPage = 9;
+        $perPage = 20;
         $announcements = new \Illuminate\Pagination\LengthAwarePaginator(
             $todos->forPage($page, $perPage)->values(),
             $todos->count(),
@@ -293,8 +324,8 @@ class AnnouncementController extends Controller
                 ->orderByDesc('fecha_publicacion')
                 ->orderByDesc('created_at');
 
-            // Docente: gestiona solo sus propios comunicados
-            if ($user->hasRole('Docente')) {
+            // Docente/Regente: gestionan solo sus propios comunicados.
+            if (! $user->esAdmin() && ! $user->hasRole('Director')) {
                 $envQuery->where('author_id', $user->id);
             }
 
@@ -302,7 +333,7 @@ class AnnouncementController extends Controller
                 return AnnouncementResource::collection($envQuery->get());
             }
 
-            $enviados = $envQuery->paginate(10, ['*'], 'env_page')->withQueryString();
+            $enviados = $envQuery->paginate(20, ['*'], 'env_page')->withQueryString();
         }
 
         $sections = $puedeCrear ? $alcance->cursosCreables($user) : collect();
@@ -324,7 +355,36 @@ class AnnouncementController extends Controller
 
         $alcance->marcarNovedad(request()->user(), [$announcement]);
 
+        // HU-82: como en Gmail, abrir el comunicado lo marca como leído.
+        $announcement->reads()->updateOrCreate(
+            ['user_id' => request()->user()->id],
+            ['leido' => true, 'fecha_lectura' => now()]
+        );
+
+        $announcement->load(['author.rol', 'recipients.section', 'recipients.level']);
+
         return view('announcements.show-bandeja', compact('announcement'));
+    }
+
+    /**
+     * HU-82: detalle de un comunicado enviado (estilo Gmail). Solo el autor,
+     * Administrador o Director pueden abrirlo.
+     */
+    public function showEnviado(Request $request, Announcement $announcement, ComunicadoAlcanceService $alcance): View
+    {
+        $user = $request->user();
+
+        if (! $user->esAdmin() && ! $user->hasRole('Director') && (int) $announcement->author_id !== (int) $user->id) {
+            abort(404);
+        }
+
+        $announcement->load(['author.rol', 'recipients.section', 'recipients.section.grade', 'recipients.level', 'licencia']);
+
+        $sections = $alcance->cursosCreables($user);
+        $niveles = $alcance->nivelesCreables($user);
+        $tipos = $alcance->tiposPermitidos($user);
+
+        return view('announcements.show-enviado', compact('announcement', 'sections', 'niveles', 'tipos'));
     }
 
     public function marcarLeido(Request $request, Announcement $announcement, ComunicadoAlcanceService $alcance): JsonResponse|RedirectResponse
@@ -344,36 +404,37 @@ class AnnouncementController extends Controller
         return back()->with('success', 'Marcado como leído');
     }
 
+    /** Tipos cuyo alcance se define por uno o varios paralelos. */
+    private function esTipoPorCurso(string $tipo): bool
+    {
+        return in_array($tipo, ['CURSO_ESPECIFICO', 'DOCENTES_CURSO'], true);
+    }
+
+    /**
+     * HU-82: valida si el usuario puede editar/publicar/archivar/eliminar.
+     * Admin/Director pueden todo; Docente/Regente solo lo propio. Los
+     * comunicados generados por una licencia son de solo lectura.
+     */
+    private function verificarGestion(User $user, Announcement $announcement): ?string
+    {
+        if ($announcement->esGeneradoPorLicencia()) {
+            return 'Este comunicado se genera automáticamente desde una licencia. Gestiónalo desde el módulo de Licencias.';
+        }
+
+        if (! $user->esAdmin() && ! $user->hasRole('Director') && (int) $announcement->author_id !== (int) $user->id) {
+            return 'Solo puedes gestionar tus propios comunicados.';
+        }
+
+        return null;
+    }
+
     /**
      * Guarda la imagen del comunicado convertida a .webp (máx 1600px, calidad 80).
      * Retorna la ruta relativa en el disco public.
      */
     private function guardarImagenWebp($file): string
     {
-        $origen = imagecreatefromstring((string) file_get_contents($file->getRealPath()));
-        $ancho = imagesx($origen);
-        $alto = imagesy($origen);
-
-        $max = 1600;
-        if (max($ancho, $alto) > $max) {
-            $factor = $max / max($ancho, $alto);
-            $nueva = imagecreatetruecolor((int) round($ancho * $factor), (int) round($alto * $factor));
-            imagealphablending($nueva, false);
-            imagesavealpha($nueva, true);
-            imagecopyresampled($nueva, $origen, 0, 0, 0, 0, imagesx($nueva), imagesy($nueva), $ancho, $alto);
-            imagedestroy($origen);
-            $origen = $nueva;
-        }
-
-        $nombre = 'com_' . \Illuminate\Support\Str::uuid() . '.webp';
-        $tmp = tempnam(sys_get_temp_dir(), 'com');
-        imagewebp($origen, $tmp, 80);
-        imagedestroy($origen);
-
-        \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('comunicados', new \Illuminate\Http\File($tmp), $nombre);
-        @unlink($tmp);
-
-        return 'comunicados/' . $nombre;
+        return app(\App\Support\ImagenWebp::class)->guardar($file, 'comunicados', 'com_');
     }
 
     /** Respuesta uniforme cuando el alcance no está permitido (web o JSON). */

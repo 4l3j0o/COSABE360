@@ -17,6 +17,7 @@ use Illuminate\Support\Collection;
  * - Director sin niveles a cargo: todo alcance (compatibilidad).
  * - Director con niveles: solo NIVEL_DOCENTES (sus niveles) y CURSO_ESPECIFICO (cursos de sus niveles).
  * - Docente: solo CURSO_ESPECIFICO de los cursos donde dicta o de los que es tutor.
+ * - Regente: DOCENTES (todos) y DOCENTES_CURSO (docentes de un curso activo cualquiera).
  *
  * Lectura (bandeja, solo PUBLICADO):
  * - Administrador y Director: ven todo.
@@ -43,6 +44,11 @@ class ComunicadoAlcanceService
 
         if ($user->hasRole('Docente')) {
             return $this->etiquetas(['CURSO_ESPECIFICO']);
+        }
+
+        // HU-82: el Regente puede enviar a docentes y a los docentes de un curso.
+        if ($user->hasRole('Regente')) {
+            return $this->etiquetas(['DOCENTES', 'DOCENTES_CURSO']);
         }
 
         return [];
@@ -73,6 +79,11 @@ class ComunicadoAlcanceService
             }
 
             return $query->whereIn('sections.id', $ids)->get();
+        }
+
+        // HU-82: el Regente supervisa la asistencia de todo el colegio.
+        if ($user->hasRole('Regente')) {
+            return $query->get();
         }
 
         return collect();
@@ -107,13 +118,17 @@ class ComunicadoAlcanceService
             return 'No tienes permiso para enviar a ese destinatario.';
         }
 
-        if ($tipo === 'CURSO_ESPECIFICO') {
+        if (in_array($tipo, ['CURSO_ESPECIFICO', 'DOCENTES_CURSO'], true)) {
             if (! $sectionId) {
                 return 'Debe seleccionar un curso.';
             }
             if (! $user->esAdmin() && ! $this->cursosCreables($user)->contains('id', $sectionId)) {
                 if ($user->hasRole('Director')) {
                     return 'El curso no pertenece a tu nivel a cargo.';
+                }
+
+                if ($user->hasRole('Regente')) {
+                    return 'Solo puedes enviar a cursos activos.';
                 }
 
                 return 'Solo puedes enviar a cursos donde dictas clases o eres tutor.';
@@ -136,6 +151,7 @@ class ComunicadoAlcanceService
     public function visiblePara(User $user, Announcement $announcement): bool
     {
         // Quien lo envió no se lo "recibe" a sí mismo (aunque sea para "Todos").
+        // El Regente revisa sus envíos (incluidos los de licencia) en "Mis Envíos".
         if ((int) $announcement->author_id === (int) $user->id) {
             return false;
         }
@@ -144,16 +160,34 @@ class ComunicadoAlcanceService
             return true;
         }
 
-        $recipient = $announcement->recipients->first();
-        if (! $recipient) {
+        $recipients = $announcement->recipients;
+        if ($recipients->isEmpty()) {
             return true;
         }
 
+        // HU-82: un comunicado puede tener varios destinatarios (varios paralelos);
+        // es visible si el usuario califica por CUALQUIERA de ellos.
+        foreach ($recipients as $recipient) {
+            if ($this->destinatarioIncluye($user, $recipient)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** ¿El destinatario (una fila) incluye al usuario? */
+    private function destinatarioIncluye(User $user, \App\Models\AnnouncementRecipient $recipient): bool
+    {
         return match ($recipient->tipo_destinatario) {
             'TODOS' => true,
             'DOCENTES' => $user->hasRole('Docente'),
             'ESTUDIANTES' => $user->hasRole('Estudiante'),
             'CURSO_ESPECIFICO' => $recipient->section_id !== null && $this->esMiembroDelCurso($user, $recipient->section_id),
+            // HU-82: solo los docentes del curso (no los estudiantes).
+            'DOCENTES_CURSO' => $recipient->section_id !== null
+                && $user->hasRole('Docente')
+                && $this->cursosIdsDocente($user)->contains($recipient->section_id),
             self::TIPO_NIVEL => $recipient->level_id !== null && $this->esDocenteDelNivel($user, $recipient->level_id),
             default => false,
         };
@@ -184,7 +218,9 @@ class ComunicadoAlcanceService
             ->all();
 
         return $this->bandejaPara($user)
-            ->filter(fn ($a) => $a->destacado && ! in_array($a->id, $leidos, true))
+            ->filter(fn ($a) => $a->destacado
+                && (int) $a->author_id !== (int) $user->id
+                && ! in_array($a->id, $leidos, true))
             ->values();
     }
 
@@ -300,6 +336,7 @@ class ComunicadoAlcanceService
             'ESTUDIANTES' => 'Estudiantes',
             'CURSO_ESPECIFICO' => 'Curso específico',
             'NIVEL_DOCENTES' => 'Docentes de un nivel',
+            'DOCENTES_CURSO' => 'Docentes de un curso',
         ];
 
         $out = [];
