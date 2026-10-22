@@ -15,7 +15,9 @@ class DiarioAula extends Model
         'teacher_id',
         'fecha',
         'avance_curricular',
-        'ejercicios',
+        'actividades_clase',
+        'actividades_hogar',
+        'recursos',
         'observaciones',
         'registered_by_user_id',
     ];

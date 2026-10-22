@@ -16,8 +16,9 @@ use Illuminate\View\View;
 class DiarioAulaController extends Controller
 {
     /**
-     * HU-65: bitácora de aula — el docente anota avance curricular,
-     * ejercicios y observaciones; estudiantes, padres y directores la consultan.
+     * HU-65/HU-82: bitácora de aula — el docente anota avance curricular,
+     * actividades de clase, tareas para el hogar, recursos y observaciones;
+     * estudiantes, padres y directores la consultan.
      */
     public function index(Request $request): View
     {

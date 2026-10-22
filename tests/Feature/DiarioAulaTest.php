@@ -73,7 +73,9 @@ class DiarioAulaTest extends TestCase
             'subject_id' => $d['subject']->id,
             'fecha' => '2026-04-10',
             'avance_curricular' => 'Avanzamos suma de fracciones con distinto denominador.',
-            'ejercicios' => 'Resolver páginas 42-43, ejercicios 1 al 10.',
+            'actividades_clase' => 'Resolución guiada de ejercicios y trabajo en parejas.',
+            'actividades_hogar' => 'Resolver páginas 42-43, ejercicios 1 al 10.',
+            'recursos' => 'Texto de matemática, pizarra y fichas de trabajo.',
             'observaciones' => 'El curso necesita refuerzo en simplificación.',
         ]);
 
@@ -82,6 +84,9 @@ class DiarioAulaTest extends TestCase
             'section_id' => $d['curso']->id,
             'subject_id' => $d['subject']->id,
             'teacher_id' => $d['teacher']->id,
+            'actividades_clase' => 'Resolución guiada de ejercicios y trabajo en parejas.',
+            'actividades_hogar' => 'Resolver páginas 42-43, ejercicios 1 al 10.',
+            'recursos' => 'Texto de matemática, pizarra y fichas de trabajo.',
         ]);
     }
 
@@ -134,6 +139,32 @@ class DiarioAulaTest extends TestCase
             'fecha' => '2026-04-10',
             'avance_curricular' => 'Corto',
         ])->assertSessionHasErrors('avance_curricular');
+    }
+
+    public function test_bitacora_muestra_actividades_hogar_y_recursos(): void
+    {
+        $d = $this->crearCurso();
+        $entrada = DiarioAula::create([
+            'section_id' => $d['curso']->id,
+            'subject_id' => $d['subject']->id,
+            'teacher_id' => $d['teacher']->id,
+            'fecha' => '2026-04-10',
+            'avance_curricular' => 'Avanzamos multiplicación de fracciones.',
+            'actividades_clase' => 'Trabajo en grupos con fracciones.',
+            'actividades_hogar' => 'Resolver los ejercicios de la página 50.',
+            'recursos' => 'Pizarra, marcadores y fichas.',
+            'registered_by_user_id' => $d['userDocente']->id,
+        ]);
+
+        $this->actingAs($d['userDocente']);
+        $this->get('/diario-aula/'.$entrada->id)
+            ->assertOk()
+            ->assertSee('Actividades de clases')
+            ->assertSee('Trabajo en grupos con fracciones.')
+            ->assertSee('Actividades para el hogar')
+            ->assertSee('Resolver los ejercicios de la página 50.')
+            ->assertSee('Recursos')
+            ->assertSee('Pizarra, marcadores y fichas.');
     }
 
     public function test_docente_elimina_su_propia_bitacora(): void

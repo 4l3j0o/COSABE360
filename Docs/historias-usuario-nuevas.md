@@ -480,3 +480,8 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Contexto de curso** - al abrir Conducta desde un curso (`contexto=1` + `section_id`), se ocultan las pestanas y los filtros de curso/materia; solo quedan estudiante y fechas. "Limpiar" conserva el curso/materia y solo limpia el estudiante y las fechas. En la vista general (Central) se mantienen las pestanas y los filtros de curso/materia/estudiante; se aplican al presionar Filtrar.
 - **Auto-seleccion de materia** - en la vista general, al elegir un paralelo se preselecciona automaticamente la materia del docente si dicta una sola en ese paralelo; si dicta varias, queda "Todas".
 - **UI** - sin tablero de tarjetas: cabecera, resumen en `dl`, pestanas por vista, filtros y tabla, siguiendo `Docs/guia-estilos.md`.
+
+## HU-82: Diario de Aula - actividades y recursos (2026-10-22)
+- **Nuevas secciones de la bitacora** - se reemplaza "Ejercicios propuestos en el aula" por **Actividades de clases** (`actividades_clase`) y se agregan **Actividades para el hogar** (`actividades_hogar`) y **Recursos** (`recursos`). Se mantienen Avance curricular y Observaciones.
+- **Migracion** - `diario_aulas.ejercicios` se renombra a `actividades_clase` (conserva datos) y se agregan las dos columnas nuevas, todas opcionales.
+- **UI** - el formulario muestra las tres secciones con placeholders de ejemplo; el detalle y el listado las muestran cuando tienen contenido.

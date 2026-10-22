@@ -10,7 +10,7 @@
         <div>
             @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
             <h1 class="text-xl font-bold text-foreground mt-2">Diario de Aula</h1>
-            <p class="text-sm text-muted-foreground">Bitácora de lo avanzado en cada clase: avance curricular, ejercicios y observaciones.</p>
+            <p class="text-sm text-muted-foreground">Bitácora de lo avanzado en cada clase: avance curricular, actividades de clase, tareas para el hogar, recursos y observaciones.</p>
         </div>
         @if(auth()->user()->hasAnyRole(['Docente', 'Administrador', 'Director', 'Secretaría']))
             <a href="{{ route('diario.create', request()->only(['section_id'])) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">+ Nueva bitácora</a>
@@ -63,8 +63,11 @@
                         <span class="text-xs text-muted-foreground ml-auto">{{ $entrada->teacher ? $entrada->teacher->nombres . ' ' . $entrada->teacher->apellidos : 'Administración' }}</span>
                     </div>
                     <p class="text-sm text-foreground line-clamp-2">{{ $entrada->avance_curricular }}</p>
-                    @if($entrada->ejercicios)
-                        <p class="text-xs text-muted-foreground mt-1 line-clamp-1">Ejercicios: {{ $entrada->ejercicios }}</p>
+                    @if($entrada->actividades_clase)
+                        <p class="text-xs text-muted-foreground mt-1 line-clamp-1">Actividades: {{ $entrada->actividades_clase }}</p>
+                    @endif
+                    @if($entrada->actividades_hogar)
+                        <p class="text-xs text-muted-foreground mt-1 line-clamp-1">Para el hogar: {{ $entrada->actividades_hogar }}</p>
                     @endif
                 </a>
             @endforeach

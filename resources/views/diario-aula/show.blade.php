@@ -17,10 +17,22 @@
             <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Avance curricular</h2>
             <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->avance_curricular }}</p>
         </div>
-        @if($entrada->ejercicios)
+        @if($entrada->actividades_clase)
             <div class="bg-card border border-border rounded-xl p-4">
-                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Ejercicios propuestos en el aula</h2>
-                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->ejercicios }}</p>
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Actividades de clases</h2>
+                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->actividades_clase }}</p>
+            </div>
+        @endif
+        @if($entrada->actividades_hogar)
+            <div class="bg-card border border-border rounded-xl p-4">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Actividades para el hogar</h2>
+                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->actividades_hogar }}</p>
+            </div>
+        @endif
+        @if($entrada->recursos)
+            <div class="bg-card border border-border rounded-xl p-4">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Recursos</h2>
+                <p class="text-sm text-foreground whitespace-pre-line">{{ $entrada->recursos }}</p>
             </div>
         @endif
         @if($entrada->observaciones)

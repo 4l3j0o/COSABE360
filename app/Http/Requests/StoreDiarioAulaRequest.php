@@ -18,7 +18,9 @@ class StoreDiarioAulaRequest extends FormRequest
             'subject_id' => ['required', 'exists:subjects,id'],
             'fecha' => ['required', 'date', 'before_or_equal:today'],
             'avance_curricular' => ['required', 'string', 'min:10', 'max:4000'],
-            'ejercicios' => ['nullable', 'string', 'max:4000'],
+            'actividades_clase' => ['nullable', 'string', 'max:4000'],
+            'actividades_hogar' => ['nullable', 'string', 'max:4000'],
+            'recursos' => ['nullable', 'string', 'max:2000'],
             'observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }

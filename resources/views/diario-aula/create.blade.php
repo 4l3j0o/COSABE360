@@ -50,9 +50,22 @@
                 <textarea name="avance_curricular" rows="4" required minlength="10" placeholder="Ej: Avanzamos operaciones con fracciones: suma y resta con distinto denominador…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('avance_curricular') }}</textarea>
                 <p class="text-[11px] text-muted-foreground mt-1">Mínimo 10 caracteres: describa qué se avanzó en la clase.</p>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Actividades de clases</label>
+                    <textarea name="actividades_clase" rows="3" placeholder="Ej: Resolución guiada de ejercicios, trabajo en grupos, exposición…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('actividades_clase') }}</textarea>
+                    @error('actividades_clase')<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Actividades para el hogar</label>
+                    <textarea name="actividades_hogar" rows="3" placeholder="Ej: Resolver las páginas 42-43, investigar sobre…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('actividades_hogar') }}</textarea>
+                    @error('actividades_hogar')<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
+                </div>
+            </div>
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Ejercicios propuestos en el aula</label>
-                <textarea name="ejercicios" rows="3" placeholder="Ej: Resolver del texto las páginas 42-43, ejercicios 1 al 10…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('ejercicios') }}</textarea>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Recursos</label>
+                <textarea name="recursos" rows="2" placeholder="Ej: Texto de matemática, pizarra, fichas de trabajo, proyector…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">{{ old('recursos') }}</textarea>
+                @error('recursos')<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Observaciones</label>
