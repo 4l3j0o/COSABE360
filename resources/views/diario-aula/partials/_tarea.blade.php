@@ -5,12 +5,7 @@
         <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tarea para el hogar</span>
         <button type="button" onclick="diarioQuitar(this)" class="text-xs text-error hover:underline">Quitar</button>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Título de la obra</label>
-            <input type="text" name="tareas[{{ $index }}][titulo_obra]" value="{{ old("tareas.$index.titulo_obra", $item['titulo_obra'] ?? '') }}" placeholder="Ej: Texto de matemática" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-            @error("tareas.$index.titulo_obra")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Páginas de referencia</label>
             <input type="text" name="tareas[{{ $index }}][paginas_referencia]" value="{{ old("tareas.$index.paginas_referencia", $item['paginas_referencia'] ?? '') }}" placeholder="Ej: 42-43" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">

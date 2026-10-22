@@ -95,8 +95,6 @@
                             @foreach($actividadesOld as $i => $item)
                                 @include('diario-aula.partials._actividad', ['index' => $i, 'item' => is_array($item) ? $item : []])
                             @endforeach
-                        @else
-                            @include('diario-aula.partials._actividad', ['index' => 0, 'item' => []])
                         @endif
                     </div>
                     <template id="tpl-actividades">
@@ -121,8 +119,6 @@
                             @foreach($tareasOld as $i => $item)
                                 @include('diario-aula.partials._tarea', ['index' => $i, 'item' => is_array($item) ? $item : []])
                             @endforeach
-                        @else
-                            @include('diario-aula.partials._tarea', ['index' => 0, 'item' => []])
                         @endif
                     </div>
                     <template id="tpl-tareas">
@@ -147,8 +143,6 @@
                             @foreach($recursosOld as $i => $item)
                                 @include('diario-aula.partials._recurso', ['index' => $i, 'item' => is_array($item) ? $item : []])
                             @endforeach
-                        @else
-                            @include('diario-aula.partials._recurso', ['index' => 0, 'item' => []])
                         @endif
                     </div>
                     <template id="tpl-recursos">

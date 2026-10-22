@@ -11,7 +11,6 @@ class DiarioTarea extends Model
 
     protected $fillable = [
         'diario_aula_id',
-        'titulo_obra',
         'paginas_referencia',
         'forma_presentacion',
         'fecha',

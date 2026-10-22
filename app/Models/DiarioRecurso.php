@@ -13,6 +13,7 @@ class DiarioRecurso extends Model
         'diario_aula_id',
         'nombre',
         'imagen_path',
+        'link',
         'orden',
     ];
 

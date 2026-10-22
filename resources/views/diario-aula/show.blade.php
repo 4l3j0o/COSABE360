@@ -27,8 +27,6 @@
                     <table class="w-full text-sm min-w-[820px]">
                         <thead class="bg-muted/50 border-y border-border">
                             <tr>
-                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Periodo</th>
-                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Unidad</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Tema</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Referencia</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Descripción</th>
@@ -37,8 +35,6 @@
                         <tbody class="divide-y divide-border">
                             @foreach($entrada->actividades as $actividad)
                                 <tr>
-                                    <td class="px-4 py-3 whitespace-nowrap">{{ $actividad->periodo ?: '—' }}</td>
-                                    <td class="px-4 py-3">{{ $actividad->unidad_aprendizaje ?: '—' }}</td>
                                     <td class="px-4 py-3">{{ $actividad->tema_estudio ?: '—' }}</td>
                                     <td class="px-4 py-3">{{ $actividad->referencia_bibliografica ?: '—' }}</td>
                                     <td class="px-4 py-3 whitespace-pre-line">{{ $actividad->descripcion ?: '—' }}</td>
@@ -59,7 +55,6 @@
                     <table class="w-full text-sm min-w-[820px]">
                         <thead class="bg-muted/50 border-y border-border">
                             <tr>
-                                <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Título de la obra</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Páginas</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Forma de presentación</th>
                                 <th class="text-left px-4 py-2.5 font-medium text-muted-foreground">Fecha</th>
@@ -69,7 +64,6 @@
                         <tbody class="divide-y divide-border">
                             @foreach($entrada->tareas as $tarea)
                                 <tr>
-                                    <td class="px-4 py-3">{{ $tarea->titulo_obra ?: '—' }}</td>
                                     <td class="px-4 py-3">{{ $tarea->paginas_referencia ?: '—' }}</td>
                                     <td class="px-4 py-3">{{ $tarea->forma_presentacion ?: '—' }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">{{ $tarea->fecha?->format('d/m/Y') ?? '—' }}</td>
@@ -92,6 +86,12 @@
                             @if($recurso->imagen_path)
                                 <a href="{{ asset('storage/'.$recurso->imagen_path) }}" target="_blank" class="block mt-2">
                                     <img src="{{ asset('storage/'.$recurso->imagen_path) }}" alt="{{ $recurso->nombre }}" class="w-full max-h-40 object-cover rounded-md border border-border">
+                                </a>
+                            @endif
+                            @if($recurso->link)
+                                <a href="{{ $recurso->link }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-6h4m0 0v4m0-4L10 14"/></svg>
+                                    Ver enlace de referencia
                                 </a>
                             @endif
                         </div>

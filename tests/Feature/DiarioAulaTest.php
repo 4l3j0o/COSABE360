@@ -77,14 +77,11 @@ class DiarioAulaTest extends TestCase
             'avance_curricular' => 'Avanzamos suma de fracciones con distinto denominador.',
             'observaciones' => 'El curso necesita refuerzo en simplificación.',
             'actividades' => [[
-                'periodo' => '1er periodo',
-                'unidad_aprendizaje' => 'Unidad 2 - Fracciones',
                 'tema_estudio' => 'Suma de fracciones',
                 'referencia_bibliografica' => 'Texto de matemática, pág. 42',
                 'descripcion' => 'Resolución guiada de ejercicios y trabajo en parejas.',
             ]],
             'tareas' => [[
-                'titulo_obra' => 'Texto de matemática',
                 'paginas_referencia' => '42-43',
                 'forma_presentacion' => 'Cuaderno',
                 'fecha' => '2026-04-12',
@@ -92,6 +89,7 @@ class DiarioAulaTest extends TestCase
             ]],
             'recursos' => [[
                 'nombre' => 'Lámina de fracciones',
+                'link' => 'https://ejemplo.com/fracciones',
             ]],
         ]);
 
@@ -109,11 +107,12 @@ class DiarioAulaTest extends TestCase
         ]);
         $this->assertDatabaseHas('diario_tareas', [
             'diario_aula_id' => $diario->id,
-            'titulo_obra' => 'Texto de matemática',
+            'paginas_referencia' => '42-43',
         ]);
         $this->assertDatabaseHas('diario_recursos', [
             'diario_aula_id' => $diario->id,
             'nombre' => 'Lámina de fracciones',
+            'link' => 'https://ejemplo.com/fracciones',
         ]);
     }
 
@@ -181,14 +180,11 @@ class DiarioAulaTest extends TestCase
         ]);
 
         $entrada->actividades()->create([
-            'periodo' => '1er periodo',
-            'unidad_aprendizaje' => 'Unidad 3',
             'tema_estudio' => 'Multiplicación',
             'referencia_bibliografica' => 'Texto pág. 50',
             'descripcion' => 'Trabajo en grupos con fracciones.',
         ]);
         $entrada->tareas()->create([
-            'titulo_obra' => 'Cuaderno de ejercicios',
             'paginas_referencia' => '50-51',
             'forma_presentacion' => 'Hoja',
             'fecha' => '2026-04-12',
@@ -196,6 +192,7 @@ class DiarioAulaTest extends TestCase
         ]);
         $entrada->recursos()->create([
             'nombre' => 'Pizarra y fichas',
+            'link' => 'https://ejemplo.com/recursos',
         ]);
 
         $this->actingAs($d['userDocente']);
@@ -206,7 +203,8 @@ class DiarioAulaTest extends TestCase
             ->assertSee('Actividades para el hogar')
             ->assertSee('Resolver los ejercicios de la página 50.')
             ->assertSee('Recursos')
-            ->assertSee('Pizarra y fichas');
+            ->assertSee('Pizarra y fichas')
+            ->assertSee('https://ejemplo.com/recursos');
     }
 
     public function test_vista_desde_curso_oculta_filtros_y_muestra_bitacoras(): void
@@ -278,7 +276,11 @@ class DiarioAulaTest extends TestCase
             ->assertSee('Actividades para el hogar')
             ->assertSee('Nueva Tarea')
             ->assertSee('Recursos')
-            ->assertSee('Agregar Recurso');
+            ->assertSee('Agregar Recurso')
+            ->assertSee('Enlace de referencia')
+            ->assertDontSee('Periodo')
+            ->assertDontSee('Unidad de aprendizaje')
+            ->assertDontSee('Título de la obra');
 
         $this->get('/diario-aula/crear?section_id='.$d['curso']->id.'&subject_id='.$d['subject']->id.'&contexto=1')
             ->assertOk()

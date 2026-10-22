@@ -253,8 +253,6 @@ class DiarioAulaController extends Controller
             }
 
             $diario->actividades()->create([
-                'periodo' => $this->limpiar($fila['periodo'] ?? null),
-                'unidad_aprendizaje' => $this->limpiar($fila['unidad_aprendizaje'] ?? null),
                 'tema_estudio' => $this->limpiar($fila['tema_estudio'] ?? null),
                 'referencia_bibliografica' => $this->limpiar($fila['referencia_bibliografica'] ?? null),
                 'descripcion' => $this->limpiar($fila['descripcion'] ?? null),
@@ -273,7 +271,6 @@ class DiarioAulaController extends Controller
             }
 
             $diario->tareas()->create([
-                'titulo_obra' => $this->limpiar($fila['titulo_obra'] ?? null),
                 'paginas_referencia' => $this->limpiar($fila['paginas_referencia'] ?? null),
                 'forma_presentacion' => $this->limpiar($fila['forma_presentacion'] ?? null),
                 'fecha' => $this->limpiar($fila['fecha'] ?? null),
@@ -295,9 +292,10 @@ class DiarioAulaController extends Controller
             }
 
             $nombre = $this->limpiar($fila['nombre'] ?? null);
+            $link = $this->limpiar($fila['link'] ?? null);
             $imagen = $archivos[$i]['imagen'] ?? null;
 
-            if ($nombre === null && ! $imagen) {
+            if ($nombre === null && $link === null && ! $imagen) {
                 continue;
             }
 
@@ -308,6 +306,7 @@ class DiarioAulaController extends Controller
             $diario->recursos()->create([
                 'nombre' => $nombre,
                 'imagen_path' => $path,
+                'link' => $link,
                 'orden' => $orden++,
             ]);
         }

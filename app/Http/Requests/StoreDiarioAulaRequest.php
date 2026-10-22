@@ -21,14 +21,11 @@ class StoreDiarioAulaRequest extends FormRequest
             'observaciones' => ['nullable', 'string', 'max:2000'],
 
             'actividades' => ['nullable', 'array', 'max:30'],
-            'actividades.*.periodo' => ['nullable', 'string', 'max:100'],
-            'actividades.*.unidad_aprendizaje' => ['nullable', 'string', 'max:150'],
             'actividades.*.tema_estudio' => ['nullable', 'string', 'max:150'],
             'actividades.*.referencia_bibliografica' => ['nullable', 'string', 'max:255'],
             'actividades.*.descripcion' => ['nullable', 'string', 'max:2000'],
 
             'tareas' => ['nullable', 'array', 'max:30'],
-            'tareas.*.titulo_obra' => ['nullable', 'string', 'max:150'],
             'tareas.*.paginas_referencia' => ['nullable', 'string', 'max:100'],
             'tareas.*.forma_presentacion' => ['nullable', 'string', 'max:150'],
             'tareas.*.fecha' => ['nullable', 'date'],
@@ -37,6 +34,7 @@ class StoreDiarioAulaRequest extends FormRequest
             'recursos' => ['nullable', 'array', 'max:30'],
             'recursos.*.nombre' => ['nullable', 'string', 'max:150'],
             'recursos.*.imagen' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'recursos.*.link' => ['nullable', 'url', 'max:500'],
         ];
     }
 
@@ -51,6 +49,7 @@ class StoreDiarioAulaRequest extends FormRequest
             'tareas.*.descripcion.max' => 'La descripción de la tarea no puede superar los 2000 caracteres.',
             'recursos.*.imagen.image' => 'El recurso debe ser una imagen válida.',
             'recursos.*.imagen.max' => 'La imagen del recurso no puede superar los 10 MB.',
+            'recursos.*.link.url' => 'El enlace de referencia debe ser una URL válida.',
         ];
     }
 }

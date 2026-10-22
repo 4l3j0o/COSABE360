@@ -12,10 +12,15 @@
             @error("recursos.$index.nombre")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Imagen</label>
-            <input type="file" name="recursos[{{ $index }}][imagen]" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <p class="text-[11px] text-muted-foreground mt-1">JPG, PNG o WEBP. Máximo 10 MB.</p>
-            @error("recursos.$index.imagen")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
+            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Enlace de referencia</label>
+            <input type="url" name="recursos[{{ $index }}][link]" value="{{ old("recursos.$index.link", $item['link'] ?? '') }}" placeholder="https://…" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
+            @error("recursos.$index.link")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
         </div>
+    </div>
+    <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Imagen (opcional)</label>
+        <input type="file" name="recursos[{{ $index }}][imagen]" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
+        <p class="text-[11px] text-muted-foreground mt-1">JPG, PNG o WEBP. Máximo 10 MB. También podés usar solo el enlace.</p>
+        @error("recursos.$index.imagen")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
     </div>
 </div>

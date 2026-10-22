@@ -7,16 +7,6 @@
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Periodo</label>
-            <input type="text" name="actividades[{{ $index }}][periodo]" value="{{ old("actividades.$index.periodo", $item['periodo'] ?? '') }}" placeholder="Ej: 1er periodo" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-            @error("actividades.$index.periodo")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
-        </div>
-        <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Unidad de aprendizaje</label>
-            <input type="text" name="actividades[{{ $index }}][unidad_aprendizaje]" value="{{ old("actividades.$index.unidad_aprendizaje", $item['unidad_aprendizaje'] ?? '') }}" placeholder="Ej: Unidad 2 - Fracciones" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
-            @error("actividades.$index.unidad_aprendizaje")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror
-        </div>
-        <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Tema de estudio</label>
             <input type="text" name="actividades[{{ $index }}][tema_estudio]" value="{{ old("actividades.$index.tema_estudio", $item['tema_estudio'] ?? '') }}" placeholder="Ej: Suma de fracciones" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm">
             @error("actividades.$index.tema_estudio")<p class="text-xs text-error mt-1">{{ $message }}</p>@enderror

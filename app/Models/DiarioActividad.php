@@ -11,8 +11,6 @@ class DiarioActividad extends Model
 
     protected $fillable = [
         'diario_aula_id',
-        'periodo',
-        'unidad_aprendizaje',
         'tema_estudio',
         'referencia_bibliografica',
         'descripcion',

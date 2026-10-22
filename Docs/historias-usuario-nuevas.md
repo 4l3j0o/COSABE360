@@ -483,7 +483,7 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 ## HU-82: Diario de Aula - actividades y recursos (2026-10-22)
 - **Secciones de la bitacora** - se mantienen Avance curricular y Observaciones, y se agregan tres secciones opcionales con items repetibles: **Actividades de clases**, **Actividades para el hogar** y **Recursos**.
-- **Modelo** - nuevas tablas `diario_actividades` (periodo, unidad de aprendizaje, tema de estudio, referencia bibliografica, descripcion), `diario_tareas` (titulo de la obra, paginas de referencia, forma de presentacion, fecha, descripcion) y `diario_recursos` (nombre, imagen). Se eliminan las columnas de texto simple usadas como paso intermedio.
-- **UI** - formulario con bloques desplegables y botones "Nueva Actividad", "Nueva Tarea" y "Agregar Recurso" (JS vanilla). Los recursos aceptan imagen JPG/PNG/WEBP y se convierten a .webp; el detalle muestra tablas y miniaturas.
+- **Modelo** - nuevas tablas `diario_actividades` (tema de estudio, referencia bibliografica, descripcion), `diario_tareas` (paginas de referencia, forma de presentacion, fecha, descripcion) y `diario_recursos` (nombre, imagen o enlace). Se eliminan las columnas de texto simple usadas como paso intermedio.
+- **UI** - formulario con bloques desplegables y botones "Nueva Actividad", "Nueva Tarea" y "Agregar Recurso" (JS vanilla); no se crea ningun item vacio por defecto. Los recursos aceptan imagen JPG/PNG/WEBP (convertida a .webp) o un enlace de referencia. El detalle muestra tablas, miniaturas y enlaces.
 - **Contexto** - al entrar desde un curso (`contexto=1`) se ocultan los filtros de curso/materia y solo se listan las bitacoras de ese curso. Desde la Central se mantienen los filtros y, al elegir curso, se preselecciona automaticamente la materia del docente si dicta una sola.
 - **Creacion desde curso** - curso y materia quedan preseleccionados; el formulario se abre directo en las secciones de la bitacora.
