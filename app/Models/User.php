@@ -173,6 +173,34 @@ class User extends Authenticatable
     }
 
     /**
+     * HU-85: comprueba uno o varios permisos con respaldo del catálogo.
+     * Se usa mientras los permisos no estén sembrados en todos los entornos.
+     */
+    public function puede(string|array $permisos): bool
+    {
+        $permisos = is_array($permisos) ? $permisos : [$permisos];
+        $rol = $this->rol?->nombre;
+        $asignados = $rol ? (config("permisos360.roles.{$rol}", []) ?: []) : [];
+
+        foreach ($permisos as $permiso) {
+            if ($this->can($permiso)) {
+                return true;
+            }
+
+            $modulo = array_search($permiso, config('permisos360.modulos', []), true);
+            if ($modulo && $this->canAccess($modulo)) {
+                return true;
+            }
+
+            if (in_array('*', $asignados, true) || in_array($permiso, $asignados, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * HU05/HU-85: primero consulta los permisos de Spatie y, durante la
      * transición, mantiene el respaldo de config/permisos.php.
      */

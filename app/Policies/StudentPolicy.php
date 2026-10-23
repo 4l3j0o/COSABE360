@@ -10,7 +10,7 @@ class StudentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Director', 'Secretaría']);
+        return $user->puede('estudiantes.ver');
     }
 
     public function view(User $user, Student $student): bool
@@ -20,31 +20,33 @@ class StudentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('estudiantes.crear');
     }
 
     public function update(User $user, Student $student): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('estudiantes.editar');
     }
 
     public function delete(User $user, Student $student): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('estudiantes.eliminar');
     }
 
     public function restore(User $user, Student $student): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('estudiantes.restaurar');
     }
 
     public function viewPayments(User $user, Student $student): bool
     {
-        return AccessScope::puedeGestionarPagos($user, $student);
+        return $user->puede(['pagos.ver', 'pagos.registrar'])
+            && AccessScope::puedeGestionarPagos($user, $student);
     }
 
     public function managePayments(User $user, Student $student): bool
     {
-        return AccessScope::puedeGestionarPagos($user, $student);
+        return $user->puede(['pagos.registrar', 'pagos.aprobar'])
+            && AccessScope::puedeGestionarPagos($user, $student);
     }
 }
