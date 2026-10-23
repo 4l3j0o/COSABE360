@@ -364,7 +364,7 @@ class StudentHu07Test extends TestCase
         ]);
         $est->refresh();
         $oldPath = $est->fotografia;
-        Storage::disk('public')->assertExists($oldPath);
+        Storage::disk('local')->assertExists($oldPath);
         $this->assertStringEndsWith('.webp', $oldPath);
 
         // Reemplazar foto
@@ -383,9 +383,9 @@ class StudentHu07Test extends TestCase
         ]);
 
         $response->assertRedirect(route('students.show', $est));
-        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('local')->assertMissing($oldPath);
         $est->refresh();
-        Storage::disk('public')->assertExists($est->fotografia);
+        Storage::disk('local')->assertExists($est->fotografia);
     }
 
     public function test_elimina_logico_con_estado_eliminado_y_restaura(): void

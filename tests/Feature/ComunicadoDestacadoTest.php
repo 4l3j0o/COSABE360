@@ -63,8 +63,8 @@ class ComunicadoDestacadoTest extends TestCase
         $a = Announcement::where('titulo', 'Con imagen')->firstOrFail();
         $this->assertTrue($a->destacado);
         $this->assertStringEndsWith('.webp', $a->imagen_path);
-        Storage::disk('public')->assertExists($a->imagen_path);
-        $this->assertSame('image/webp', mime_content_type(Storage::disk('public')->path($a->imagen_path)));
+        Storage::disk('local')->assertExists($a->imagen_path);
+        $this->assertSame('image/webp', mime_content_type(Storage::disk('local')->path($a->imagen_path)));
     }
 
     public function test_imagen_mayor_a_2mb_se_rechaza(): void

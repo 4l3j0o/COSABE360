@@ -84,8 +84,8 @@
                         <div class="border border-border rounded-lg p-3">
                             <p class="text-sm font-medium text-foreground">{{ $recurso->nombre ?: 'Recurso' }}</p>
                             @if($recurso->imagen_path)
-                                <a href="{{ asset('storage/'.$recurso->imagen_path) }}" target="_blank" class="block mt-2">
-                                    <img src="{{ asset('storage/'.$recurso->imagen_path) }}" alt="{{ $recurso->nombre }}" class="w-full max-h-40 object-cover rounded-md border border-border">
+                                <a href="{{ \App\Support\ArchivoPrivado::url($recurso->imagen_path) }}" target="_blank" class="block mt-2">
+                                    <img src="{{ \App\Support\ArchivoPrivado::url($recurso->imagen_path) }}" alt="{{ $recurso->nombre }}" class="w-full max-h-40 object-cover rounded-md border border-border">
                                 </a>
                             @endif
                             @if($recurso->link)

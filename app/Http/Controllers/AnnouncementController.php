@@ -9,6 +9,7 @@ use App\Models\Announcement;
 use App\Models\Section;
 use App\Models\User;
 use App\Services\ComunicadoAlcanceService;
+use App\Support\ArchivoPrivado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -139,7 +140,7 @@ class AnnouncementController extends Controller
         }
         if ($request->hasFile('imagen')) {
             if ($announcement->imagen_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($announcement->imagen_path);
+                ArchivoPrivado::eliminar($announcement->imagen_path);
             }
             $data['imagen_path'] = $this->guardarImagenWebp($request->file('imagen'));
         }
@@ -190,7 +191,7 @@ class AnnouncementController extends Controller
         }
 
         if ($announcement->imagen_path) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($announcement->imagen_path);
+            ArchivoPrivado::eliminar($announcement->imagen_path);
         }
         $announcement->delete();
 

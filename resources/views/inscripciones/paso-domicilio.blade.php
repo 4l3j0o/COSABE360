@@ -30,7 +30,7 @@
             <label class="block text-xs font-semibold text-muted-foreground mb-1">Fotografía de la fachada (JPG/PNG, máx 5MB)</label>
             <input type="file" name="foto_fachada" accept=".jpg,.jpeg,.png" {{ $rude?->foto_fachada ? '' : 'required' }} class="text-sm text-muted-foreground file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
             @if($rude?->foto_fachada)
-                <p class="text-xs text-muted-foreground mt-1">Actual: <a href="{{ asset('storage/' . $rude->foto_fachada) }}" target="_blank" class="underline">ver foto</a> (subir otra la reemplaza).</p>
+                <p class="text-xs text-muted-foreground mt-1">Actual: <a href="{{ \App\Support\ArchivoPrivado::url($rude->foto_fachada) }}" target="_blank" class="underline">ver foto</a> (subir otra la reemplaza).</p>
             @endif
         </div>
     </div>

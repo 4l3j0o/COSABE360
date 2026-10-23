@@ -13,15 +13,16 @@ use RuntimeException;
  *
  * Toda foto subida (comunicados, licencias, estudiantes, inscripciones) se
  * convierte a .webp y se reescala a un lado máximo para reducir peso. Se guarda
- * siempre en el disco "public" y se devuelve la ruta relativa (lo que se
- * persiste en la columna correspondiente).
+ * en el disco privado ("local") y se devuelve la ruta relativa (lo que se
+ * persiste en la columna correspondiente). La entrega se hace por la ruta
+ * autenticada `archivos.show`.
  */
 class ImagenWebp
 {
     /**
      * Convierte y guarda una imagen subida como .webp.
      *
-     * @param  string  $directorio  carpeta dentro del disco "public" (ej. "licencias")
+     * @param  string  $directorio  carpeta dentro del disco privado (ej. "licencias")
      * @param  string  $prefijo  prefijo del nombre de archivo (ej. "lic_")
      * @return string ruta relativa (ej. "licencias/lic_<uuid>.webp")
      */
@@ -51,7 +52,7 @@ class ImagenWebp
         imagedestroy($imagen);
 
         $nombre = $prefijo.Str::uuid().'.webp';
-        Storage::disk('public')->putFileAs($directorio, new File($tmp), $nombre);
+        Storage::disk('local')->putFileAs($directorio, new File($tmp), $nombre);
         @unlink($tmp);
 
         return trim($directorio, '/').'/'.$nombre;

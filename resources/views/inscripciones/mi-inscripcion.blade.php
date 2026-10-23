@@ -69,7 +69,7 @@
                         </td>
                         <td class="px-4 py-3 text-muted-foreground text-xs">
                             @if($d['doc']?->archivo && ! str_starts_with($d['doc']->archivo, 'documentos/'))
-                                <a href="{{ asset('storage/' . $d['doc']->archivo) }}" target="_blank" class="underline">ver archivo</a>
+                                <a href="{{ \App\Support\ArchivoPrivado::url($d['doc']->archivo) }}" target="_blank" class="underline">ver archivo</a>
                             @else —
                             @endif
                         </td>

@@ -535,7 +535,7 @@
             var img = document.getElementById('v-fotografia');
             var ph = document.getElementById('v-fotografia-placeholder');
             if (s.fotografia) {
-                img.src = '{{ URL::to("/") }}/storage/' + s.fotografia;
+                img.src = '{{ route('archivos.show') }}?path=' + encodeURIComponent(s.fotografia);
                 img.style.display = 'block';
                 ph.style.display = 'none';
             } else {

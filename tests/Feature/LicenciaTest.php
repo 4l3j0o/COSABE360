@@ -115,9 +115,9 @@ class LicenciaTest extends TestCase
         $licencia = Licencia::firstOrFail();
         $this->assertSame('ACTIVA', $licencia->estado);
         $this->assertNotNull($licencia->evidencia_path);
-        Storage::disk('public')->assertExists($licencia->evidencia_path);
+        Storage::disk('local')->assertExists($licencia->evidencia_path);
         $this->assertStringEndsWith('.webp', $licencia->evidencia_path);
-        $this->assertSame('image/webp', mime_content_type(Storage::disk('public')->path($licencia->evidencia_path)));
+        $this->assertSame('image/webp', mime_content_type(Storage::disk('local')->path($licencia->evidencia_path)));
 
         // Una fila LICENCIA por cada materia, únicamente el lunes 06/04.
         $this->assertSame(2, Attendance::where('estado', 'LICENCIA')->where('fecha', '2026-04-06')->count());
@@ -143,7 +143,7 @@ class LicenciaTest extends TestCase
         $this->actingAs($datos['userDocente'])
             ->get(route('comunicados.bandeja.show', $ann))
             ->assertOk()
-            ->assertSee($licencia->evidencia_path, false);
+            ->assertSee(\App\Support\ArchivoPrivado::url($licencia->evidencia_path), false);
     }
 
     public function test_regente_ve_en_su_bandeja_el_comunicado_de_licencia_que_genera(): void

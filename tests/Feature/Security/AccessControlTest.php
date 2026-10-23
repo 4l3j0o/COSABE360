@@ -18,6 +18,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AccessControlTest extends TestCase
@@ -235,6 +236,68 @@ class AccessControlTest extends TestCase
             ->assertOk()
             ->assertSee($d['facturaP']->cuf)
             ->assertDontSee($d['facturaS']->cuf);
+    }
+
+    public function test_pago_se_registra_una_sola_vez_y_no_duplica_mensualidad(): void
+    {
+        $d = $this->escenario();
+
+        $this->actingAs($d['director'])
+            ->post(route('monthly-payments.store-estudiante', $d['estP']), [
+                'mes' => 2,
+                'fecha' => '2026-04-10',
+                'metodo_pago' => 'EFECTIVO',
+                'generar_factura' => 0,
+            ])
+            ->assertRedirect(route('monthly-payments.estudiante', $d['estP']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('PAGADA', $d['pagoP']->fresh()->estado);
+
+        $this->actingAs($d['director'])
+            ->post(route('monthly-payments.store-estudiante', $d['estP']), [
+                'mes' => 2,
+                'fecha' => '2026-04-10',
+                'metodo_pago' => 'EFECTIVO',
+                'generar_factura' => 0,
+            ])
+            ->assertSessionHasErrors('mes');
+    }
+
+    public function test_respuestas_incluyen_cabeceras_de_seguridad(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->assertHeaderMissing('X-Powered-By');
+    }
+
+    public function test_archivos_privados_solo_se_entregan_a_usuarios_autorizados(): void
+    {
+        $d = $this->escenario();
+        Storage::fake('local');
+
+        $path = 'estudiantes/est_privada.webp';
+        Storage::disk('local')->put($path, 'contenido-de-prueba');
+        $d['estP']->update(['fotografia' => $path]);
+
+        $this->actingAs($d['docP']['user'])
+            ->get(route('archivos.show', ['path' => $path]))
+            ->assertOk();
+
+        $this->actingAs($d['docS']['user'])
+            ->get(route('archivos.show', ['path' => $path]))
+            ->assertForbidden();
+
+        $this->actingAs($d['userEst'])
+            ->get(route('archivos.show', ['path' => $path]))
+            ->assertOk();
+
+        $this->actingAs($d['userEst'])
+            ->get(route('archivos.show', ['path' => 'no/existe.webp']))
+            ->assertNotFound();
     }
 
     public function test_admin_ve_todo_y_secretaria_puede_gestionar_pagos(): void

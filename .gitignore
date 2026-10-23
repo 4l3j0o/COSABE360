@@ -26,5 +26,11 @@ Thumbs.db
 # HU-61: credenciales Google fuera del repo
 Docs/priv_google.json
 
+# HU-84: datos personales (PII) fuera del repositorio.
+# Los archivos deben existir solo en el servidor/equipo que los importa.
+/database/data/*.sql
+/database/data/*.xlsx
+/database/data/*.json
+
 # Archivos temporales de Office
 ~$*
