@@ -74,7 +74,7 @@ class PermissionSpatieTest extends TestCase
         $docente = $this->usuario('Docente');
 
         $this->actingAs($admin)->get('/__test-permission')->assertOk();
-        $this->actingAs($docente)->get('/__test-permission')->assertForbidden();
+        $this->actingAs($docente)->get('/__test-permission')->assertRedirect(route('acceso.denegado'));
     }
 
     public function test_permission_seeder_es_idempotente(): void

@@ -503,5 +503,7 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Modelos** - `App\Models\Role` extiende el rol de Spatie y sincroniza `nombre`/`name`; `User` usa `HasRoles`, mantiene `hasRole`/`hasAnyRole` compatibles (incluye strings con comas) y sincroniza `role_id` con el pivote.
 - **Catálogo** - `config/permisos360.php` define 76 permisos relevantes de 360 (estudiantes, pagos, asistencia, evaluaciones, conducta, diario, reportes, comunicados, RUDE, etc.) y su asignación a Administrador, Director, Secretaría, Docente, Estudiante y Regente.
 - **Seeder** - `PermissionSeeder` crea permisos, los asigna a los roles y sincroniza usuarios. Se ejecuta dentro de `DatabaseSeeder` y puede repetirse sin duplicar.
-- **Uso** - `canAccess()` consulta primero el permiso granular y conserva la matriz antigua como respaldo. Se agregaron los middleware `permission:` y `role_or_permission:`.
+- **Uso** - `canAccess()` consulta primero el permiso granular y conserva la matriz antigua como respaldo.
+- **Rutas** - los grupos principales agregaron `permission:` junto al `role:` existente: estudiantes, docentes, pagos, facturas, asistencia, evaluaciones, reportes, RUDE, expediente, boletín, diario y conducta.
+- **Middleware** - `permission:` usa `EnsureUserHasPermission`, que consulta Spatie y, si el entorno aún no tiene permisos sembrados, recurre al catálogo `config/permisos360.php`. `role_or_permission:` sigue disponible para casos mixtos.
 - **Pruebas** - `PermissionSpatieTest` valida sincronización de roles/permisos, creación de roles por `nombre`, idempotencia del seeder y middleware de permisos.
