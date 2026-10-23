@@ -10,7 +10,7 @@ class MonthlyPaymentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Secretaría', 'Director']);
+        return $user->puede('pagos.ver');
     }
 
     public function view(User $user, MonthlyPayment $payment): bool

@@ -10,7 +10,7 @@ class SectionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Director', 'Secretaría', 'Docente', 'Estudiante', 'Regente']);
+        return $user->puede('paralelos.ver');
     }
 
     public function view(User $user, Section $section): bool
@@ -20,16 +20,16 @@ class SectionPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('paralelos.gestionar');
     }
 
     public function update(User $user, Section $section): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('paralelos.gestionar');
     }
 
     public function delete(User $user, Section $section): bool
     {
-        return $user->hasRole('Administrador');
+        return $user->puede('paralelos.gestionar');
     }
 }

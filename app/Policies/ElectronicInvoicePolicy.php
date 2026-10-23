@@ -10,7 +10,7 @@ class ElectronicInvoicePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Secretaría', 'Director']);
+        return $user->puede('facturas.ver');
     }
 
     public function view(User $user, ElectronicInvoice $invoice): bool
@@ -20,18 +20,18 @@ class ElectronicInvoicePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Secretaría', 'Director']);
+        return $user->puede('facturas.gestionar');
     }
 
     public function update(User $user, ElectronicInvoice $invoice): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Secretaría'])
-            || ($user->hasRole('Director') && AccessScope::puedeVerFactura($user, $invoice));
+        return $user->puede('facturas.gestionar')
+            && AccessScope::puedeVerFactura($user, $invoice);
     }
 
     public function delete(User $user, ElectronicInvoice $invoice): bool
     {
-        return $user->hasAnyRole(['Administrador', 'Secretaría'])
-            || ($user->hasRole('Director') && AccessScope::puedeVerFactura($user, $invoice));
+        return $user->puede('facturas.gestionar')
+            && AccessScope::puedeVerFactura($user, $invoice);
     }
 }
