@@ -17,6 +17,7 @@ use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
 use App\Http\Controllers\ReporteCentralController;
 use App\Http\Controllers\ReporteExportController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CierreGestionController;
 use App\Http\Controllers\SectionController;
@@ -164,6 +165,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('users.update');
     Route::patch('/usuarios/{user}/alternar', [UserController::class, 'toggle'])->name('users.toggle');
     Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // HU-85: matriz visual de roles y permisos.
+    Route::middleware('permission:roles.gestionar')->group(function () {
+        Route::get('/roles-permisos', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::get('/roles-permisos/{role}/editar', [RolePermissionController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles-permisos/{role}', [RolePermissionController::class, 'update'])->name('roles.update');
+    });
 });
 
 // Docentes: consulta (Administrador y Director) y gestión (solo Administrador)
