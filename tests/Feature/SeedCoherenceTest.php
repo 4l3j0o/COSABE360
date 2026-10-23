@@ -19,6 +19,11 @@ class SeedCoherenceTest extends TestCase
 
     public function test_database_seed_es_coherente(): void
     {
+        // HU-84: los datos reales (PII) ya no se versionan.
+        if (! is_file(database_path('data/estudiantes_2026.sql')) || ! is_file(database_path('data/docentes_2026.json'))) {
+            $this->markTestSkipped('Datos reales no disponibles: PII fuera del repositorio.');
+        }
+
         $this->seed(DatabaseSeeder::class);
 
         // 1) Gestión activa 2026
