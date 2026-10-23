@@ -9,11 +9,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles {
+        HasRoles::hasRole as protected spatieHasRole;
+        HasRoles::hasAnyRole as protected spatieHasAnyRole;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -57,6 +62,24 @@ class User extends Authenticatable
             'ultimo_acceso' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // HU-85: mantiene el pivote de Spatie sincronizado con role_id
+        // durante la transición. Se retirará cuando role_id desaparezca.
+        static::saved(function (User $user) {
+            if (! Schema::hasTable(config('permission.table_names.model_has_roles'))) {
+                return;
+            }
+
+            if (! $user->wasRecentlyCreated && ! $user->wasChanged('role_id')) {
+                return;
+            }
+
+            $rol = $user->role_id ? Role::find($user->role_id) : null;
+            $user->syncRoles($rol ? [$rol->name] : []);
+        });
     }
 
     public function rol(): BelongsTo
@@ -106,7 +129,7 @@ class User extends Authenticatable
 
     public function esAdmin(): bool
     {
-        return $this->rol?->nombre === 'Administrador';
+        return $this->hasRole('Administrador');
     }
 
     public function estaActivo(): bool
@@ -122,34 +145,56 @@ class User extends Authenticatable
     /**
      * HU05: Verifica si el usuario tiene un rol específico
      */
-    public function hasRole(string $role): bool
+    public function hasRole($role): bool
     {
-        return $this->rol && $this->rol->nombre === $role;
+        if ($this->spatieHasRole($role)) {
+            return true;
+        }
+
+        // Spatie llama hasRole(Collection<Role>) internamente para resolver
+        // permisos heredados; en ese caso no aplicamos el fallback de role_id.
+        if (is_object($role) || is_array($role)) {
+            return false;
+        }
+
+        return $this->rol?->nombre === $role;
     }
 
     /**
      * HU05: Verifica si el usuario tiene alguno de los roles dados
-     * Acepta string separado por comas o array
+     * Acepta string separado por comas o array (compatibilidad).
      */
     public function hasAnyRole(string|array $roles): bool
     {
         $roles = is_string($roles) ? array_map('trim', explode(',', $roles)) : $roles;
-        return $this->rol && in_array($this->rol->nombre, $roles, true);
+
+        return $this->spatieHasAnyRole($roles)
+            || ($this->rol && in_array($this->rol->nombre, $roles, true));
     }
 
     /**
-     * HU05: Verifica permiso a un módulo según config/permisos.php
+     * HU05/HU-85: primero consulta los permisos de Spatie y, durante la
+     * transición, mantiene el respaldo de config/permisos.php.
      */
     public function canAccess(string $modulo): bool
     {
+        $permiso = config("permisos360.modulos.{$modulo}");
+
+        if ($permiso && $this->can($permiso)) {
+            return true;
+        }
+
+        if ($this->can($modulo)) {
+            return true;
+        }
+
         $permisos = config('permisos.roles', []);
         $rol = $this->rol?->nombre;
 
-        if (!$rol) {
+        if (! $rol) {
             return false;
         }
 
-        // Administrador tiene acceso total
         if (isset($permisos[$rol]) && in_array('*', $permisos[$rol], true)) {
             return true;
         }

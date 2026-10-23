@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // Base del sistema
             RoleSeeder::class,
+            PermissionSeeder::class,
             AdminUserSeeder::class,
             UsuariosRealesSeeder::class,
             TaxConfigurationSeeder::class,
