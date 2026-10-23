@@ -64,6 +64,12 @@ class ElectronicInvoice extends Model
         return $this->hasMany(InvoiceDetail::class, 'electronic_invoice_id');
     }
 
+    /** HU-83: pagos asociados a esta factura (para alcance por nivel/estudiante). */
+    public function monthlyPayments(): HasMany
+    {
+        return $this->hasMany(MonthlyPayment::class, 'electronic_invoice_id');
+    }
+
     // Alias para compatibilidad diagrama
     public function invoiceDetails(): HasMany
     {

@@ -14,6 +14,7 @@ use App\Models\StudentDocument;
 use App\Models\ParentGuardian;
 use App\Models\User;
 use App\Models\Role;
+use App\Support\AccessScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -48,7 +49,12 @@ class StudentController extends Controller
 
     public function index(Request $request)
     {
-        $query = Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user'])->where('estado', '!=', 'ELIMINADO');
+        $this->authorize('viewAny', Student::class);
+
+        $query = AccessScope::aplicarEstudiantes(
+            Student::with(['user', 'rudeRecord', 'parentGuardians', 'operations.user'])->where('estado', '!=', 'ELIMINADO'),
+            $request->user()
+        );
 
         if ($request->filled('buscar')) {
             $buscar = addcslashes($request->buscar, '%_');
@@ -179,13 +185,27 @@ class StudentController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Student::class);
+
         return view('students.create');
     }
 
     public function buscarPersona(Request $request)
     {
+        $this->authorize('viewAny', Student::class);
+
         $q = trim($request->input('q', ''));
         $query = ParentGuardian::where('estado', 'ACTIVO');
+
+        // Un Director solo busca tutores de estudiantes de su nivel.
+        if ($request->user()->hasRole('Director') && AccessScope::nivelesDirector($request->user())->isNotEmpty()) {
+            $sectionIds = AccessScope::seccionesDirector($request->user());
+            $query->whereHas('students.registrations', function ($r) use ($sectionIds) {
+                $r->where('registrations.estado', 'ACTIVA')
+                    ->whereIn('registrations.section_id', $sectionIds);
+            });
+        }
+
         if (strlen($q) >= 2) {
             $qEscaped = addcslashes($q, '%_');
             $query->where(function ($query) use ($qEscaped) {
@@ -203,6 +223,8 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Student::class);
+
         $datos = $request->validate([
             'nombres'            => 'required|string|max:150',
             'apellidos'          => 'required|string|max:150',
@@ -289,6 +311,8 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
+        $this->authorize('view', $student);
+
         $relations = ['user', 'parentGuardians'];
         if (\Illuminate\Support\Facades\Schema::hasTable('student_rude_records') && \Illuminate\Support\Facades\Schema::hasColumn('student_rude_records', 'student_id')) {
             $relations[] = 'rudeRecord';
@@ -347,6 +371,8 @@ class StudentController extends Controller
 
     public function update(UpdateStudentRequest $request, Student $student)
     {
+        $this->authorize('update', $student);
+
         $datos = collect($request->validated())->except(['familiares'])->all();
 
         $this->validarFamiliares($request);
@@ -450,12 +476,16 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        $this->authorize('delete', $student);
+
         $student->update(['estado' => 'ELIMINADO']);
         return $this->deVuelta('students.index', ['buscar', 'estado', 'page'], 'Estudiante eliminado correctamente.');
     }
 
     public function eliminados()
     {
+        $this->authorize('viewAny', Student::class);
+
         $students = Student::where('estado', 'ELIMINADO')
             ->orderBy('apellidos')
             ->paginate(10);
@@ -466,12 +496,15 @@ class StudentController extends Controller
     public function restaurar($id)
     {
         $student = Student::where('estado', 'ELIMINADO')->findOrFail($id);
+        $this->authorize('restore', $student);
         $student->update(['estado' => 'ACTIVO']);
         return redirect()->route('students.eliminados')->with('mensaje', 'Estudiante restaurado correctamente.');
     }
 
     public function matriculacionForm(Student $estudiante)
     {
+        $this->authorize('update', $estudiante);
+
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
 
         $inscripcion = $estudiante->enrollments()
@@ -499,6 +532,8 @@ class StudentController extends Controller
 
     public function matricular(Request $request, Student $estudiante)
     {
+        $this->authorize('update', $estudiante);
+
         $validated = $request->validate([
             'section_id'          => 'required|exists:sections,id',
             'fecha'              => 'required|date',

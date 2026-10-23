@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Models\MonthlyPayment;
 use App\Models\ParentGuardian;
 use App\Models\Student;
+use App\Support\AccessScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -19,7 +20,9 @@ class MonthlyPaymentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MonthlyPayment::with(['registration.enrollment.estudiante'])->latest();
+        $this->authorize('viewAny', MonthlyPayment::class);
+
+        $query = AccessScope::aplicarPagos(MonthlyPayment::with(['registration.enrollment.estudiante']), $request->user())->latest();
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
@@ -44,7 +47,7 @@ class MonthlyPaymentController extends Controller
      */
     public function estudiante(Student $estudiante)
     {
-        $this->autorizarAccesoEstudiante($estudiante);
+        $this->authorize('viewPayments', $estudiante);
 
         $inscripcion = $estudiante->enrollments()
             ->with('gestion')
@@ -86,7 +89,7 @@ class MonthlyPaymentController extends Controller
             'mesesPendientes',
             'mesesPagados',
             'pagador'
-        ));
+        ) + ['esTutor' => false]);
     }
 
     /**
@@ -97,7 +100,7 @@ class MonthlyPaymentController extends Controller
      */
     public function storeEstudiante(Request $request, Student $estudiante)
     {
-        $this->autorizarAccesoEstudiante($estudiante);
+        $this->authorize('managePayments', $estudiante);
 
         $validated = $request->validate([
             'mes'           => ['required', 'integer', 'between:2,11'],
@@ -179,7 +182,8 @@ class MonthlyPaymentController extends Controller
      */
     public function reenviar(Request $request, Student $estudiante, MonthlyPayment $pago)
     {
-        $this->autorizarAccesoEstudiante($estudiante);
+        $this->authorize('managePayments', $estudiante);
+
         if ($pago->registration->enrollment->student_id !== $estudiante->id) abort(404);
         if (! $pago->electronic_invoice_id || ! $pago->electronicInvoice) {
             return back()->with('error', 'Este pago no tiene factura generada.');
@@ -200,10 +204,8 @@ class MonthlyPaymentController extends Controller
      */
     public function aprobar(Request $request, Student $estudiante, MonthlyPayment $pago)
     {
-        $user = auth()->user();
-        if (! $user || ! $user->hasAnyRole(['Administrador', 'Secretaría', 'Director'])) {
-            abort(403, 'Solo el personal de la institución puede aprobar pagos.');
-        }
+        $this->authorize('managePayments', $estudiante);
+
         if ($pago->registration->enrollment->student_id !== $estudiante->id) abort(404);
         if ($pago->estado !== 'ESPERA') {
             return back()->with('error', 'Este pago no está en estado de espera.');
@@ -237,21 +239,6 @@ class MonthlyPaymentController extends Controller
         }
 
         return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg);
-    }
-
-    /**
-     * Verifica que un tutor/padre solo acceda a sus hijos.
-     * Admin/Secretaría/Director pasan directo.
-     */
-    private function autorizarAccesoEstudiante(Student $estudiante): void
-    {
-        $user = auth()->user();
-        if (! $user) abort(403, 'No autenticado');
-        $rol = $user->rol?->nombre;
-        if (in_array($rol, ['Administrador', 'Secretaría', 'Director'], true)) {
-            return;
-        }
-        abort(403, 'Rol no autorizado para gestionar pagos.');
     }
 
     private function enviarFacturaPorCorreo(Student $estudiante, \App\Models\ElectronicInvoice $invoice, int $mesNum): void

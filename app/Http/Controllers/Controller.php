@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 abstract class Controller
 {
+    use AuthorizesRequests;
     /**
      * Vuelve al listado conservando filtros/página/pestaña que vengan en el
      * formulario bajo `_f` (+ `page` plano, que exige el paginador).

@@ -2,6 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\ElectronicInvoice;
+use App\Models\MonthlyPayment;
+use App\Models\Section;
+use App\Models\Student;
+use App\Policies\ElectronicInvoicePolicy;
+use App\Policies\MonthlyPaymentPolicy;
+use App\Policies\SectionPolicy;
+use App\Policies\StudentPolicy;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -34,6 +42,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-module', function ($user, string $modulo) {
             return $user->canAccess($modulo);
         });
+
+        // HU-83 Sprint 1A: Policies de acceso a registros
+        Gate::policy(Student::class, StudentPolicy::class);
+        Gate::policy(Section::class, SectionPolicy::class);
+        Gate::policy(ElectronicInvoice::class, ElectronicInvoicePolicy::class);
+        Gate::policy(MonthlyPayment::class, MonthlyPaymentPolicy::class);
 
         // Campana del topbar: comunicados publicados visibles sin leer.
         View::composer('layouts.app', function ($view) {

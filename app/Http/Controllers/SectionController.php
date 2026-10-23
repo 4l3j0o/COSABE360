@@ -20,6 +20,8 @@ class SectionController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Section::class);
+
         if ($request->expectsJson()) {
             return $this->apiIndex($request);
         }
@@ -66,6 +68,8 @@ class SectionController extends Controller
 
     public function store(StoreSectionRequest $request)
     {
+        $this->authorize('create', Section::class);
+
         $validated = $request->validated();
         $section = Section::create($validated + ['estado' => 'ACTIVO']);
 
@@ -78,6 +82,8 @@ class SectionController extends Controller
 
     public function show(Section $section)
     {
+        $this->authorize('view', $section);
+
         if (request()->expectsJson()) {
             return new SectionResource($section->load(['grade', 'responsable']));
         }
@@ -87,6 +93,8 @@ class SectionController extends Controller
 
     public function update(UpdateSectionRequest $request, Section $section)
     {
+        $this->authorize('update', $section);
+
         $section->update($request->validated());
 
         if ($request->expectsJson()) {
@@ -98,6 +106,8 @@ class SectionController extends Controller
 
     public function toggle(Section $section)
     {
+        $this->authorize('update', $section);
+
         $nuevo = $section->estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
         $section->update(['estado' => $nuevo]);
 
@@ -108,6 +118,8 @@ class SectionController extends Controller
 
     public function destroy(Section $section)
     {
+        $this->authorize('delete', $section);
+
         $tieneMatriculados = Schema::hasTable('registrations')
             && DB::table('registrations')
                 ->where('section_id', $section->id)
