@@ -105,9 +105,10 @@ return [
         'Director' => [
             'dashboard.ver',
             'estudiantes.ver', 'estudiantes.ver.nivel',
-            'paralelos.ver', 'materias.ver', 'docentes.ver', 'horarios.ver',
-            'inscripciones.ver', 'matriculas.ver', 'expediente.ver', 'rude.ver',
-            'pagos.ver', 'facturas.ver',
+            'paralelos.ver', 'materias.ver', 'docentes.ver', 'horarios.ver', 'horarios.gestionar',
+            'inscripciones.ver', 'inscripciones.gestionar', 'matriculas.ver', 'matriculas.gestionar',
+            'expediente.ver', 'expediente.gestionar', 'rude.ver',
+            'pagos.ver', 'facturas.ver', 'facturas.gestionar',
             'asistencia.ver', 'licencias.ver',
             'evaluaciones.ver', 'boletines.ver', 'historial.ver',
             'conducta.ver', 'conducta.registrar', 'conducta.exportar',
@@ -127,6 +128,7 @@ return [
             'rude.ver', 'rude.editar', 'rude.imprimir',
             'pagos.ver', 'pagos.registrar', 'pagos.aprobar', 'pagos.exportar',
             'facturas.ver', 'facturas.gestionar',
+            'horarios.ver', 'asistencia.ver', 'licencias.ver', 'boletines.ver',
             'reportes.ver', 'reportes.exportar', 'reportes.administrativos.ver',
             'comunicados.ver',
         ],
@@ -134,7 +136,7 @@ return [
         'Docente' => [
             'dashboard.ver',
             'estudiantes.ver.curso',
-            'horarios.ver',
+            'horarios.ver', 'horarios.gestionar',
             'asistencia.ver', 'asistencia.registrar', 'asistencia.corregir',
             'licencias.ver',
             'evaluaciones.ver', 'evaluaciones.registrar', 'evaluaciones.exportar',
@@ -143,7 +145,7 @@ return [
             'diario.ver', 'diario.crear', 'diario.editar', 'diario.eliminar',
             'reportes.ver', 'reportes.academicos.ver',
             'reportes.asistencia.ver', 'reportes.evaluacion.ver',
-            'comunicados.ver',
+            'comunicados.ver', 'comunicados.crear',
         ],
 
         'Estudiante' => [

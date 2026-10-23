@@ -167,11 +167,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 });
 
 // Docentes: consulta (Administrador y Director) y gestión (solo Administrador)
-Route::middleware(['auth', 'role:Administrador,Director'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director', 'permission:docentes.ver'])->group(function () {
     Route::get('/docentes', [TeacherController::class, 'index'])->name('teachers.index');
     Route::get('/docentes/{teacher}', [TeacherController::class, 'show'])->name('teachers.show');
 });
-Route::middleware(['auth', 'role:Administrador'])->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:docentes.gestionar'])->group(function () {
     Route::get('/docentes/crear', [TeacherController::class, 'create'])->name('teachers.create');
     Route::post('/docentes', [TeacherController::class, 'store'])->name('teachers.store');
     Route::get('/docentes/{teacher}/editar', [TeacherController::class, 'edit'])->name('teachers.edit');
@@ -185,13 +185,13 @@ Route::middleware('auth')->get('/cursos/{any?}', fn () => redirect()->route('sec
     ->where('any', '.*')->name('courses.redirect');
 
 // Estudiantes: consulta (Administrador, Director y Secretaría) y gestión (solo Administrador)
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:estudiantes.ver'])->group(function () {
     Route::get('students', [StudentController::class, 'index'])->name('students.index');
     Route::get('students/{student}', [StudentController::class, 'show'])->name('students.show');
     Route::get('students-eliminados', [StudentController::class, 'eliminados'])->name('students.eliminados');
     Route::get('buscar-persona', [StudentController::class, 'buscarPersona'])->name('students.buscarPersona');
 });
-Route::middleware(['auth', 'role:Administrador'])->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:estudiantes.crear'])->group(function () {
     Route::get('students/crear', [StudentController::class, 'create'])->name('students.create');
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
@@ -200,13 +200,13 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
 });
 
 // CONFIGURACIÓN TRIBUTARIA solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('configuracion')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:configuracion.gestionar'])->prefix('configuracion')->group(function () {
     Route::get('tributaria', [TaxConfigurationController::class, 'index'])->name('tax-configuration.index');
     Route::put('tributaria', [TaxConfigurationController::class, 'update'])->name('tax-configuration.update');
 });
 
 // HU-11: Administrar niveles educativos solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:niveles.gestionar'])->prefix('niveles')->group(function () {
     Route::get('/', [LevelController::class, 'index'])->name('levels.index');
     Route::post('/', [LevelController::class, 'store'])->name('levels.store');
     Route::get('/{level}', [LevelController::class, 'show'])->name('levels.show');
@@ -215,7 +215,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('niveles')->group(func
 });
 
 // HU-12: Administrar grados solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:grados.gestionar'])->prefix('grados')->group(function () {
     Route::get('/', [GradeController::class, 'index'])->name('grados.index');
     Route::post('/', [GradeController::class, 'store'])->name('grados.store');
     Route::put('/{grade}', [GradeController::class, 'update'])->name('grados.update');
@@ -223,7 +223,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('grados')->group(funct
 });
 
 // HU-61: módulo viejo de evaluaciones retirado; redirecciones al sistema vigente.
-Route::middleware(['auth', 'role:Docente'])->prefix('evaluaciones')->group(function () {
+Route::middleware(['auth', 'role:Docente', 'permission:evaluaciones.ver'])->prefix('evaluaciones')->group(function () {
     Route::get('/', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.index');
     Route::get('/crear', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.create');
     Route::post('/', fn () => redirect()->route('docente.cursos'))->name('evaluaciones.store');
@@ -266,7 +266,7 @@ Route::middleware(['auth'])->prefix('calificaciones')->group(function () {
 });
 
 // Mis Cursos del docente - evaluaciones por curso/paralelo (section_subject)
-Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(function () {
+Route::middleware(['auth', 'role:Docente', 'permission:evaluaciones.ver'])->prefix('mis-cursos')->group(function () {
     Route::get('/', [TeacherSectionController::class, 'index'])->name('docente.cursos');
     Route::get('/{sectionSubject}', [TeacherSectionController::class, 'show'])->name('docente.cursos.show');
     // Evaluaciones por trimestre y criterios (HU-47)
@@ -294,7 +294,7 @@ Route::middleware(['auth', 'role:Docente'])->prefix('mis-cursos')->group(functio
 });
 
 // HU-13 + HU-69: Administrar paralelos (unidad-clase: grado + gestión + aula) solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('paralelos')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:paralelos.gestionar'])->prefix('paralelos')->group(function () {
     Route::get('/', [SectionController::class, 'index'])->name('sections.index');
     Route::post('/', [SectionController::class, 'store'])->name('sections.store');
     Route::put('/{section}', [SectionController::class, 'update'])->name('sections.update');
@@ -305,11 +305,11 @@ Route::middleware('auth')->get('/paralelos/{section}', [SectionController::class
 Route::middleware('auth')->get('/paralelos/{section}/calificaciones', fn (App\Models\Section $section) => redirect()->route('sections.show', $section))->name('sections.calificaciones');
 
 // Materias: consulta (Administrador y Director) y gestión (solo Administrador)
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('materias')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director', 'permission:materias.ver'])->prefix('materias')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('subjects.index');
     Route::get('/{subject}', [SubjectController::class, 'show'])->name('subjects.show');
 });
-Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:materias.gestionar'])->prefix('materias')->group(function () {
     Route::post('/', [SubjectController::class, 'store'])->name('subjects.store');
     Route::put('/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
     Route::delete('/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
@@ -317,7 +317,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('materias')->group(fun
 
 // Planes de Estudio: los 8 planes oficiales + asignación por curso.
 // Solo Administrador (igual que la anterior Asignaciones).
-Route::middleware(['auth', 'role:Administrador'])->prefix('planes-estudio')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:planes.gestionar'])->prefix('planes-estudio')->group(function () {
     Route::get('/', [StudyPlanController::class, 'index'])->name('study_plans.index');
     Route::get('/asignacion-por-curso', [StudyPlanController::class, 'asignacionPorCurso'])->name('study_plans.asignacion');
     Route::get('/asignacion-por-curso/{section}', [StudyPlanController::class, 'verParalelo'])->name('study_plans.paralelo');
@@ -329,7 +329,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('planes-estudio')->gro
 });
 
 // HU-08: Registrar padres/tutores solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:docentes.gestionar'])->prefix('tutores')->group(function () {
     Route::get('/', [ParentGuardianController::class, 'index'])->name('tutores.index');
     Route::get('/{parentGuardian}', [ParentGuardianController::class, 'show'])->name('tutores.show');
     Route::post('/', [ParentGuardianController::class, 'store'])->name('tutores.store');
@@ -338,7 +338,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('tutores')->group(func
 });
 
 // HU-15: Configurar períodos académicos solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:configuracion.gestionar'])->prefix('periodos')->group(function () {
     Route::get('/', [AcademicYearController::class, 'index'])->name('periodos.index');
     Route::post('/', [AcademicYearController::class, 'store'])->name('periodos.store');
     Route::put('/{academicYear}', [AcademicYearController::class, 'update'])->name('periodos.update');
@@ -347,7 +347,7 @@ Route::middleware(['auth', 'role:Administrador'])->prefix('periodos')->group(fun
 });
 
 // HU-59: Flujo de inscripción - directores de nivel inscriben en su nivel
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('inscripciones')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:inscripciones.gestionar'])->prefix('inscripciones')->group(function () {
     Route::get('/crear', [InscripcionController::class, 'create'])->name('inscripciones.create');
     Route::post('/nueva', [InscripcionController::class, 'store'])->name('inscripciones.store');
     Route::get('/buscar-por-ci', [InscripcionController::class, 'buscarPorCi'])->name('inscripciones.buscar-ci');
@@ -357,7 +357,7 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
 });
 
 // HU-59: Inscripción en Línea - el estudiante sube sus documentos desde su cuenta
-Route::middleware(['auth', 'role:Estudiante'])->group(function () {
+Route::middleware(['auth', 'role:Estudiante', 'permission:estudiantes.ver.propio'])->group(function () {
     Route::get('/mi-inscripcion', [InscripcionController::class, 'miInscripcion'])->name('inscripciones.mi-inscripcion');
     Route::post('/mi-inscripcion/{student}/documento', [InscripcionController::class, 'subirDocumento'])->name('inscripciones.subir-documento');
     // Paso 1: actualizar su propio RUDE
@@ -378,20 +378,20 @@ Route::middleware(['auth', 'role:Estudiante'])->group(function () {
 });
 
 // HU-17: Registrar inscripciones (desde el modal de la lista de estudiantes)
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:matriculas.gestionar'])->group(function () {
     Route::post('/inscripciones', [EnrollmentController::class, 'store'])->name('enrollments.store');
 });
 
 // HU-70: horario de visita para padres. Se gestiona dentro de los horarios
 // (docente: Mi Horario; admin/dirección: horario del docente).
-Route::middleware(['auth', 'role:Docente,Administrador,Director'])->prefix('horarios')->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director', 'permission:horarios.gestionar'])->prefix('horarios')->group(function () {
     Route::post('/visitas', [ScheduleController::class, 'storeVisita'])->name('visitas.store');
     Route::put('/visitas/{schedule}', [ScheduleController::class, 'updateVisita'])->name('visitas.update');
     Route::delete('/visitas/{schedule}', [ScheduleController::class, 'destroyVisita'])->name('visitas.destroy');
 });
 
 // HU-28: Administrar horarios - Administrador y Director (ver y modificar)
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('horarios')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director', 'permission:horarios.gestionar'])->prefix('horarios')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
     Route::get('/crear', [ScheduleController::class, 'create'])->name('schedules.create');
     Route::post('/', [ScheduleController::class, 'store'])->name('schedules.store');
@@ -404,7 +404,7 @@ Route::middleware(['auth', 'role:Administrador,Director'])->prefix('horarios')->
 });
 
 // HU-70: horarios de visita para padres - consulta de estudiantes y personal
-Route::middleware(['auth', 'role:Estudiante,Docente,Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Estudiante,Docente,Administrador,Director,Secretaría', 'permission:horarios.ver'])->group(function () {
     Route::get('/horarios-visita', [ScheduleController::class, 'visitasIndex'])->name('visitas.index');
 });
 
@@ -413,7 +413,7 @@ Route::middleware('auth')->get('/mi-horario', [ScheduleController::class, 'miHor
     ->name('schedules.mi-horario');
 
 // HU-20: Documentación administrativa solo Administrador
-Route::middleware(['auth', 'role:Administrador'])->prefix('documentos-estudiantes')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:expediente.gestionar'])->prefix('documentos-estudiantes')->group(function () {
     Route::get('/pendientes', [StudentDocumentController::class, 'pending'])->name('student_documents.pending');
     Route::patch('/{studentDocument}/estado', [StudentDocumentController::class, 'updateStatus'])->name('student_documents.updateStatus');
 });
@@ -429,7 +429,7 @@ Route::middleware('auth')->get('sistema/estado', function () {
 })->name('sistema.estado');
 
 // HU-18: Registrar matrículas (solo admin/secretaria/director)
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:matriculas.gestionar'])->prefix('estudiantes')->group(function () {
     Route::get('/{estudiante}/matricular', [StudentController::class, 'matriculacionForm'])
         ->name('estudiantes.matriculacion');
     Route::post('/{estudiante}/matricular', [StudentController::class, 'matricular'])
@@ -437,7 +437,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 });
 
 // HU-19: Pagos de mensualidades por estudiante - admin/secretaría/director
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('estudiantes')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:pagos.ver'])->prefix('estudiantes')->group(function () {
     Route::get('/{estudiante}/pagos', [MonthlyPaymentController::class, 'estudiante'])
         ->name('monthly-payments.estudiante');
     Route::post('/{estudiante}/pagos', [MonthlyPaymentController::class, 'storeEstudiante'])
@@ -460,7 +460,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // HU-26: Registrar asistencia - solo Docente del curso (5 estados)
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría', 'permission:asistencia.ver'])->group(function () {
     Route::get('/asistencias', [AttendanceController::class, 'index'])->name('asistencias.index');
     Route::get('/asistencias/ahora', [AttendanceController::class, 'ahora'])->name('asistencias.ahora');
     Route::get('/asistencias/crear', [AttendanceController::class, 'create'])->name('asistencias.create');
@@ -470,7 +470,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría'])->
 // HU-27: retirado — el historial viejo por bimestre se reemplazó por Reportes de Asistencia
 
 // HU-44: Reportes de asistencia (día, semana, mes, trimestre) PDF/Excel
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante'])->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estudiante', 'permission:asistencia.ver'])->group(function () {
     Route::get('/reportes-asistencia', [AttendanceReportController::class, 'index'])->name('reportes.asistencia.index');
     Route::get('/reportes-asistencia/exportar', [AttendanceReportController::class, 'export'])->name('reportes.asistencia.export');
 
@@ -483,7 +483,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Secretaría,Estu
 Route::middleware(['auth'])->prefix('reportes')->group(function () {
     Route::get('/', [ReporteCentralController::class, 'index'])->name('reportes.central.index');
 
-    Route::middleware(['role:Administrador,Director,Secretaría,Docente'])->group(function () {
+    Route::middleware(['role:Administrador,Director,Secretaría,Docente', 'permission:reportes.ver'])->group(function () {
         Route::get('/padres', [ReporteCentralController::class, 'padres'])->name('reportes.central.padres');
         Route::get('/padres/exportar', [ReporteCentralController::class, 'exportPadres'])->name('reportes.central.padres.export');
         Route::get('/centralizador-evaluacion', [ReporteCentralController::class, 'centralizadorEvaluacion'])->name('reportes.central.evaluacion');
@@ -494,30 +494,30 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
 
     // HU-66b: vista previa de administrativos (primero Abrir, luego exportar).
     // Mismos roles que sus exports: inscripciones/documentación incluyen Director.
-    Route::middleware(['role:Administrador,Director,Secretaría'])->group(function () {
+    Route::middleware(['role:Administrador,Director,Secretaría', 'permission:reportes.administrativos.ver'])->group(function () {
         Route::get('/administrativo/inscripciones', [ReporteCentralController::class, 'verInscripciones'])->name('reportes.central.administrativo.inscripciones');
         Route::get('/administrativo/documentacion', [ReporteCentralController::class, 'verDocumentacion'])->name('reportes.central.administrativo.documentacion');
     });
-    Route::middleware(['role:Administrador,Secretaría'])->group(function () {
+    Route::middleware(['role:Administrador,Secretaría', 'permission:reportes.administrativos.ver'])->group(function () {
         Route::get('/administrativo/matriculas', [ReporteCentralController::class, 'verMatriculas'])->name('reportes.central.administrativo.matriculas');
         Route::get('/administrativo/pagos', [ReporteCentralController::class, 'verPagos'])->name('reportes.central.administrativo.pagos');
     });
 });
 
 // HU-52: cierre de gestión - escala de valoración y promoción/retención (Secretaría/Director/Admin)
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:reportes.administrativos.ver'])->group(function () {
     Route::get('/cierre-gestion', [CierreGestionController::class, 'index'])->name('cierre-gestion.index');
     Route::get('/cierre-gestion/exportar', [CierreGestionController::class, 'export'])->name('cierre-gestion.export');
 });
 
 // Pensiones: estado de cuentas e historial de pagos - admin/secretaría/director
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('pensiones')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:pagos.ver'])->prefix('pensiones')->group(function () {
     Route::get('/estado-cuentas', [EstadoCuentaController::class, 'estadoCuentas'])->name('pensiones.estado-cuentas');
     Route::get('/historial-pagos', [EstadoCuentaController::class, 'historial'])->name('pensiones.historial-pagos');
 });
 
 // HU-50: Regente - gestión de listas de asistencia, permisos y licencias
-Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->prefix('regente')->group(function () {
+Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría', 'permission:licencias.ver'])->prefix('regente')->group(function () {
     Route::get('/', [RegenteController::class, 'cursos'])->name('regente.cursos');
 
     // HU-82: módulo de licencias, independiente de "Listas de Asistencia"
@@ -530,27 +530,27 @@ Route::middleware(['auth', 'role:Regente,Administrador,Director,Secretaría'])->
 });
 
 // HU-54: educación inclusiva - adaptaciones curriculares y evaluación diferenciada
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:expediente.gestionar'])->group(function () {
     Route::get('/inclusion/{student}', [InclusionController::class, 'show'])->name('inclusion.show');
     Route::post('/inclusion/{student}', [InclusionController::class, 'store'])->name('inclusion.store');
     Route::delete('/inclusion/{student}/{adaptation}', [InclusionController::class, 'destroy'])->name('inclusion.destroy');
 });
 
 // HU-56: requisitos de inscripción y expediente documental (R.M. 001/2022 Art. 12)
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:expediente.ver'])->group(function () {
     Route::get('/expediente/{student}', [ExpedienteController::class, 'show'])->name('expediente.show');
     Route::post('/expediente/{student}/documento', [ExpedienteController::class, 'store'])->name('expediente.store');
     Route::post('/expediente/{student}/{documentoId}/estado', [ExpedienteController::class, 'status'])->name('expediente.status');
 });
 
 // HU-53: libreta electrónica / boletín oficial SIE (+ Estudiante ve el propio HU-61)
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Estudiante'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría,Estudiante', 'permission:boletines.ver|boletines.ver.propio'])->group(function () {
     Route::get('/boletin/{student}', [BoletinController::class, 'show'])->name('boletin.show');
     Route::get('/boletin/{student}/pdf', [BoletinController::class, 'pdf'])->name('boletin.pdf');
 });
 
 // HU-TRIB-04: Formulario RUDE RM 0031/2025 completo (Secciones I-V) + export MinEdu
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:rude.ver'])->group(function () {
     Route::get('/rude', [RudeController::class, 'index'])->name('rude.index');
     Route::get('/rude/export/list', [RudeController::class, 'exportList'])->name('rude.exportList');
     Route::get('/rude/{student}', [RudeController::class, 'show'])->name('rude.show');
@@ -566,7 +566,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(fu
 Route::middleware(['auth'])->prefix('comunicados')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('announcements.index');
 });
-Route::middleware(['auth', 'role:Administrador,Director,Docente,Regente'])->prefix('comunicados')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Docente,Regente', 'permission:comunicados.crear'])->prefix('comunicados')->group(function () {
     Route::post('/', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::get('/enviado/{announcement}', [AnnouncementController::class, 'showEnviado'])->name('announcements.enviado');
     Route::get('/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
@@ -584,12 +584,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // HU-32: Reportes académicos - Director/Administrador (según documentación)
-Route::middleware(['auth', 'role:Administrador,Director'])->prefix('reportes/academicos')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director', 'permission:reportes.academicos.ver'])->prefix('reportes/academicos')->group(function () {
     Route::get('/', [ReporteAcademicoController::class, 'index'])->name('reportes.academicos.index');
 });
 
 // HU-33: Reportes administrativos - Director/Administrador/Secretaría
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/administrativos')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:reportes.administrativos.ver'])->prefix('reportes/administrativos')->group(function () {
     Route::get('/', [ReporteAdministrativoController::class, 'index'])->name('reportes.administrativos.index');
 });
 
@@ -598,30 +598,30 @@ Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('
 // centralizador). Administrativos: Administrador y Secretaría; solo
 // inscripciones/documentación incluyen Director (ver grupos abajo).
 // HU-58b: Administrativos no financieros (inscripciones/documentación).
-Route::middleware(['auth', 'role:Administrador,Director,Secretaría'])->prefix('reportes/export')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Director,Secretaría', 'permission:reportes.exportar'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/inscripciones', [ReporteExportController::class, 'administrativoInscripciones'])->name('reportes.export.administrativo.inscripciones');
     Route::get('/administrativo/documentacion', [ReporteExportController::class, 'administrativoDocumentacion'])->name('reportes.export.administrativo.documentacion');
 });
 // HU-58b: Administrativos financieros (matrículas/pagos): sin Director.
-Route::middleware(['auth', 'role:Administrador,Secretaría'])->prefix('reportes/export')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría', 'permission:reportes.exportar'])->prefix('reportes/export')->group(function () {
     Route::get('/administrativo/matriculas', [ReporteExportController::class, 'administrativoMatriculas'])->name('reportes.export.administrativo.matriculas');
     Route::get('/administrativo/pagos', [ReporteExportController::class, 'administrativoPagos'])->name('reportes.export.administrativo.pagos');
 });
 
 // HU-35: Historial de auditoría - solo Administrador, no editable/eliminable
-Route::middleware(['auth', 'role:Administrador'])->prefix('auditoria')->group(function () {
+Route::middleware(['auth', 'role:Administrador', 'permission:auditoria.ver'])->prefix('auditoria')->group(function () {
     Route::get('/', [OperationHistoryController::class, 'index'])->name('auditoria.index');
     Route::get('/{operationHistory}', [OperationHistoryController::class, 'show'])->name('auditoria.show');
 });
 
 // PDF de facturas accesible a Administrador/Secretaría/Director - ownership en controller
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:facturas.ver'])->group(function () {
     Route::get('facturacion/facturas/{electronicInvoice}/pdf', [ElectronicInvoiceController::class, 'pdf'])->name('electronic-invoices.pdf');
     Route::get('facturacion/facturas/{electronicInvoice}/download', [ElectronicInvoiceController::class, 'downloadPdf'])->name('electronic-invoices.download');
 });
 
 // HU-TRIB-01/02/03: Facturación Electrónica SFE - solo Administrador/Secretaría (gestión)
-Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('facturacion')->group(function () {
+Route::middleware(['auth', 'role:Administrador,Secretaría,Director', 'permission:facturas.gestionar'])->prefix('facturacion')->group(function () {
     // Catálogo servicios educativos (RF29)
     Route::get('servicios', [EducationalServiceController::class, 'index'])->name('educational-services.index');
     Route::post('servicios', [EducationalServiceController::class, 'store'])->name('educational-services.store');
@@ -687,7 +687,7 @@ Route::middleware(['auth', 'role:Administrador,Secretaría,Director'])->prefix('
 
 // HU-65/HU-82: Diario de aula — bitácora de avances por clase. Secretaría no tiene acceso.
 // Docente: sus cursos; Director: solo su nivel; Admin: todo; Estudiante: su curso.
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Estudiante'])->prefix('diario-aula')->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Estudiante', 'permission:diario.ver|diario.ver.propio'])->prefix('diario-aula')->group(function () {
     Route::get('/', [DiarioAulaController::class, 'index'])->name('diario.index');
     Route::get('/ahora', [DiarioAulaController::class, 'ahora'])->name('diario.ahora');
     Route::get('/crear', [DiarioAulaController::class, 'create'])->name('diario.create');
@@ -699,7 +699,7 @@ Route::middleware(['auth', 'role:Docente,Administrador,Director,Estudiante'])->p
 // HU-82: Conducta — observaciones por estudiante. Secretaría no tiene acceso.
 // Docente: sus reportes + su materia + su paralelo (tutor); Regente/Admin: todo;
 // Director: solo su nivel; Estudiante: solo lo propio.
-Route::middleware(['auth', 'role:Docente,Administrador,Director,Regente,Estudiante'])->prefix('conducta')->group(function () {
+Route::middleware(['auth', 'role:Docente,Administrador,Director,Regente,Estudiante', 'permission:conducta.ver'])->prefix('conducta')->group(function () {
     Route::get('/', [ConductaReporteController::class, 'index'])->name('conducta.index');
     Route::get('/ahora', [ConductaReporteController::class, 'ahora'])->name('conducta.ahora');
     Route::get('/crear', [ConductaReporteController::class, 'create'])->name('conducta.create');
