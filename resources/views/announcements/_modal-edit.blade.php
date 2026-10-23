@@ -73,7 +73,7 @@
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Imagen <span class="normal-case font-normal text-muted-foreground">(reemplaza la actual, hasta 2MB)</span></label>
                             <div id="edit-imagen-actual" class="mb-2">
                                 @if($edit?->imagen_path)
-                                    <img src="{{ asset('storage/' . $edit->imagen_path) }}" alt="" style="max-height:6rem;border-radius:0.5rem;border:1px solid var(--border);">
+                                    <img src="{{ \App\Support\ArchivoPrivado::url($edit->imagen_path) }}" alt="" style="max-height:6rem;border-radius:0.5rem;border:1px solid var(--border);">
                                 @endif
                             </div>
                             <input type="file" name="imagen" accept="image/*" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">

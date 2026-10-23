@@ -488,3 +488,11 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Contexto** - al entrar desde un curso (`contexto=1`) se ocultan los filtros de curso/materia y solo se listan las bitacoras de ese curso. Desde la Central se mantienen los filtros y, al elegir curso, se preselecciona automaticamente la materia del docente si dicta una sola.
 - **Creacion desde curso** - curso y materia quedan preseleccionados; el formulario se abre directo en las secciones de la bitacora.
 - **Permisos** - Administrador ve todo; Director solo los paralelos de sus `nivelesACargo()`; Docente solo sus cursos; Estudiante solo su curso; Secretaria y Regente no tienen acceso al modulo.
+
+## HU-84: Seguridad Sprint 1B (2026-10-23)
+- **Archivos privados** - fotos, documentos, evidencias, imágenes de comunicados y del diario se guardan en `storage/app/private` (disco `local`). Se sirven por `GET /archivos?path=...` (`archivos.show`) con validación de acceso al registro (estudiante, comunicado, diario o licencia).
+- **Migración de legados** - `php artisan archivos:privatizar` mueve lo que quedó en `storage/app/public`; `--dry-run` solo lista.
+- **XSS** - los toasts escapan todo mensaje de sesión; se quitaron enlaces HTML inyectados en mensajes de pagos y se corrigieron atributos Blade con `@php echo`.
+- **Sesiones y cabeceras** - sesión cifrada por defecto, cookie `secure` automática en producción, `throttle:10,1` en login y middleware global con `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP mínima y HSTS en HTTPS.
+- **Pagos** - registro y aprobación usan transacción con `lockForUpdate` sobre matrícula/cuota; el correo se envía después del commit. Se evita duplicar una mensualidad ya pagada o en espera.
+- **PII** - se retiraron del repositorio `database/data/estudiantes_2026.sql`, `database/data/docentes_20261.xlsx` y los datos docentes embebidos; `Docentes2026Seeder` lee `database/data/docentes_2026.json` (ignorado por Git). Ver `database/data/README.md`.

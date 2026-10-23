@@ -121,7 +121,7 @@
                             <td class="px-4 py-2 text-muted-foreground">{{ $lic->motivo ?: '—' }}</td>
                             <td class="px-4 py-2">
                                 @if($lic->evidencia_path)
-                                    <a href="{{ asset('storage/' . $lic->evidencia_path) }}" target="_blank" class="text-primary underline text-xs">Ver foto</a>
+                                    <a href="{{ \App\Support\ArchivoPrivado::url($lic->evidencia_path) }}" target="_blank" class="text-primary underline text-xs">Ver foto</a>
                                 @else
                                     <span class="text-muted-foreground">—</span>
                                 @endif

@@ -13,7 +13,7 @@ use App\Support\ImagenWebp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Support\ArchivoPrivado;
 use Illuminate\View\View;
 
 class DiarioAulaController extends Controller
@@ -211,7 +211,7 @@ class DiarioAulaController extends Controller
 
         foreach ($diario->recursos as $recurso) {
             if ($recurso->imagen_path) {
-                Storage::disk('public')->delete($recurso->imagen_path);
+                ArchivoPrivado::eliminar($recurso->imagen_path);
             }
         }
 

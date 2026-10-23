@@ -241,7 +241,7 @@
             <div class="bg-card border border-border rounded-xl p-6">
                 <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Fotografía</h3>
                 @if($student->fotografia)
-                    <img src="{{ Storage::url($student->fotografia) }}" alt="{{ $student->nombres }}" class="w-full rounded-lg object-cover aspect-[3/4]">
+                    <img src="{{ \App\Support\ArchivoPrivado::url($student->fotografia) }}" alt="{{ $student->nombres }}" class="w-full rounded-lg object-cover aspect-[3/4]">
                 @else
                     <div class="w-full aspect-[3/4] bg-muted rounded-lg flex items-center justify-center">
                         <svg class="w-16 h-16 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -652,7 +652,7 @@
                                     <input type="text" id="mat-curso-picker-input" placeholder="Buscar curso (grado, paralelo o nombre)..." autocomplete="off" value="{{ $cursoSeleccionadoBuscador?->nombre ?? '' }}" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                                     <div id="mat-curso-picker-lista" style="display:none; position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:60; max-height:240px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:0.5rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.15);">
                                         @foreach($cursos as $curso)
-                                            <div data-curso-id="{{ $curso->id }}" data-curso-label="{{ $curso->nombre }}" data-curso-busqueda="@php echo mb_strtolower(trim(($curso->grade?->nombre ?? '') . ' ' . ($curso->section?->nombre ?? '') . ' ' . ' paralelo ' . $curso->nombre)); @endphp" onmousedown="matSeleccionarCurso(this); return false;" style="padding:0.625rem 0.75rem; cursor:pointer; font-size:0.875rem; color:var(--foreground); border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
+                                            <div data-curso-id="{{ $curso->id }}" data-curso-label="{{ $curso->nombre }}" data-curso-busqueda="{{ mb_strtolower(trim(($curso->grade?->nombre ?? '') . ' ' . ($curso->section?->nombre ?? '') . ' ' . ' paralelo ' . $curso->nombre)) }}" onmousedown="matSeleccionarCurso(this); return false;" style="padding:0.625rem 0.75rem; cursor:pointer; font-size:0.875rem; color:var(--foreground); border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
                                                 {{ $curso->nombre }}
                                             </div>
                                         @endforeach

@@ -18,7 +18,7 @@
                     @foreach($comunicadosDestacados as $dest)
                         <div class="dest-slide" data-index="{{ $loop->index }}" style="display:none; padding:1.5rem;">
                             @if($dest->imagen_path)
-                                <img src="{{ asset('storage/' . $dest->imagen_path) }}" alt="" class="w-full max-h-64 object-cover rounded-lg mb-4 border border-border">
+                                <img src="{{ \App\Support\ArchivoPrivado::url($dest->imagen_path) }}" alt="" class="w-full max-h-64 object-cover rounded-lg mb-4 border border-border">
                             @endif
                             <h3 class="text-lg font-bold text-foreground leading-snug break-words">{{ $dest->titulo }}</h3>
                             <p class="text-xs text-muted-foreground mt-1 mb-3">

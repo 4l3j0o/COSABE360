@@ -16,10 +16,10 @@ use App\Models\StudentDocument;
 use App\Models\StudentRudeRecord;
 use App\Models\TaxConfiguration;
 use App\Models\User;
+use App\Support\ArchivoPrivado;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -571,14 +571,14 @@ class InscripcionController extends Controller
         $archivoSubido = $request->file('archivo');
         $ruta = str_starts_with((string) $archivoSubido->getMimeType(), 'image/')
             ? app(\App\Support\ImagenWebp::class)->guardar($archivoSubido, 'inscripciones/' . $student->id, 'doc_')
-            : $archivoSubido->store('inscripciones/' . $student->id, 'public');
+            : $archivoSubido->store('inscripciones/' . $student->id, 'local');
 
         $doc = StudentDocument::where('student_id', $student->id)
             ->where('tipo_documento', $validated['tipo_documento'])
             ->first();
 
         if ($doc && $doc->archivo && ! str_starts_with($doc->archivo, 'documentos/')) {
-            Storage::disk('public')->delete($doc->archivo);
+            ArchivoPrivado::eliminar($doc->archivo);
         }
 
         StudentDocument::updateOrCreate(
@@ -637,7 +637,7 @@ class InscripcionController extends Controller
 
         if ($request->hasFile('foto_fachada')) {
             if ($rude->foto_fachada) {
-                Storage::disk('public')->delete($rude->foto_fachada);
+                ArchivoPrivado::eliminar($rude->foto_fachada);
             }
             $datos['foto_fachada'] = app(\App\Support\ImagenWebp::class)->guardar($request->file('foto_fachada'), 'inscripciones/' . $student->id, 'fachada_');
         }

@@ -29,6 +29,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\MonthlyPaymentController;
 use App\Http\Controllers\ParentGuardianController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\SecureFileController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentDocumentController;
 use App\Http\Controllers\StudyPlanController;
@@ -61,7 +62,9 @@ Route::view('/acceso-denegado', 'errors.403')->name('acceso.denegado');
 // Autenticación (solo usuarios NO logueados)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:10,1')
+        ->name('login.attempt');
     // HU-36: OAuth 2.0 con Google Workspace (dominio cosabe.edu.bo)
     Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('login.google');
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
@@ -69,6 +72,10 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+// HU-84 Sprint 1B: archivos privados (fotos, documentos, evidencias, adjuntos).
+Route::middleware('auth')->get('/archivos', [SecureFileController::class, 'show'])
+    ->name('archivos.show');
 
 // DASHBOARD - dividido por roles
 Route::get('/dashboard', function () {

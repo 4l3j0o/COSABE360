@@ -1,5 +1,5 @@
 @php
-    $urlAdjunto = asset('storage/' . $path);
+    $urlAdjunto = \App\Support\ArchivoPrivado::url($path);
 @endphp
 
 {{-- Adjunto: miniatura pequeña; clic para ampliar --}}

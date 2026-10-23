@@ -261,7 +261,7 @@ class DiarioAulaTest extends TestCase
         $recurso = \App\Models\DiarioRecurso::firstOrFail();
         $this->assertNotNull($recurso->imagen_path);
         $this->assertStringEndsWith('.webp', $recurso->imagen_path);
-        Storage::disk('public')->assertExists($recurso->imagen_path);
+        Storage::disk('local')->assertExists($recurso->imagen_path);
     }
 
     public function test_docente_abre_formulario_con_las_tres_secciones(): void

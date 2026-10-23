@@ -15,9 +15,9 @@ use App\Models\ParentGuardian;
 use App\Models\User;
 use App\Models\Role;
 use App\Support\AccessScope;
+use App\Support\ArchivoPrivado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -412,7 +412,7 @@ class StudentController extends Controller
 
             if ($request->hasFile('fotografia')) {
                 if ($student->fotografia) {
-                    Storage::disk('public')->delete($student->fotografia);
+                    ArchivoPrivado::eliminar($student->fotografia);
                 }
                 $datos['fotografia'] = app(\App\Support\ImagenWebp::class)->guardar($request->file('fotografia'), 'estudiantes', 'est_');
             } else {

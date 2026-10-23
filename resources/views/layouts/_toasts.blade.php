@@ -31,10 +31,11 @@
         @endif
         @php
             $texto = $t['texto'];
+            // Todo mensaje de sesión se escapa; los enlaces ya no se inyectan como HTML.
             $html = is_array($texto)
                 ? '<ul class="list-disc list-inside space-y-0.5">' . implode('', array_map(fn ($m) => '<li>' . e($m) . '</li>', $texto)) . '</ul>'
-                : $texto;
-            $plano = trim(strip_tags(is_array($texto) ? implode(' ', $texto) : $texto));
+                : nl2br(e((string) $texto));
+            $plano = trim(strip_tags(is_array($texto) ? implode(' ', $texto) : (string) $texto));
         @endphp
         @if(mb_strlen($plano) > 180)
         <div class="flex-1 min-w-0">

@@ -9,9 +9,11 @@ use App\Models\ParentGuardian;
 use App\Models\Student;
 use App\Support\AccessScope;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class MonthlyPaymentController extends Controller
 {
@@ -111,66 +113,84 @@ class MonthlyPaymentController extends Controller
             'razon_social_receptor' => ['nullable', 'string', 'max:200'],
         ]);
 
-        $inscripcion = $estudiante->enrollments()
-            ->where('estado', 'COMPLETADA')
-            ->whereHas('registration', function ($q) {
-                $q->where('estado', 'ACTIVA');
-            })
-            ->latest('fecha')
-            ->first();
+        $resultado = DB::transaction(function () use ($estudiante, $validated) {
+            $inscripcion = $estudiante->enrollments()
+                ->where('estado', 'COMPLETADA')
+                ->whereHas('registration', function ($q) {
+                    $q->where('estado', 'ACTIVA');
+                })
+                ->latest('fecha')
+                ->lockForUpdate()
+                ->first();
 
-        if (! $inscripcion) {
-            return back()->withErrors([
-                'mes' => 'El estudiante no tiene una matrícula activa para registrar el pago.',
-            ])->withInput();
-        }
-
-        $cuota = $inscripcion->registration->monthlyPayments()
-            ->where('mes', $validated['mes'])
-            ->first();
-
-        if (! $cuota) {
-            return back()->withErrors([
-                'mes' => 'No se encontró la mensualidad del mes seleccionado para este estudiante.',
-            ])->withInput();
-        }
-
-        if (in_array($cuota->estado, ['PAGADA', 'ESPERA'])) {
-            $msg = $cuota->estado === 'ESPERA'
-                ? 'La mensualidad de este mes ya fue registrada y está pendiente de verificación.'
-                : 'La mensualidad de este mes ya se encuentra pagada.';
-            return back()->withErrors(['mes' => $msg])->withInput();
-        }
-
-        $generarFactura = $request->boolean('generar_factura', true);
-        $facturaId = null;
-        $facturaMsg = '';
-        $invoice = null;
-
-        if ($generarFactura) {
-            try {
-                $invoice = $this->crearFacturaExenta($estudiante, $cuota, $validated);
-                $facturaId = $invoice->id;
-                $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada (PDF listo para imprimir/compartir).";
-                $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$validated['mes']);
-                $facturaMsg .= " Enviada por correo al tutor.";
-            } catch (\Throwable $e) {
-                Log::error('Error factura auto: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
-                $facturaMsg = ' (Factura no pudo generarse: '.$e->getMessage().')';
+            if (! $inscripcion) {
+                throw ValidationException::withMessages([
+                    'mes' => 'El estudiante no tiene una matrícula activa para registrar el pago.',
+                ]);
             }
-        }
 
-        $cuota->update([
-            'fecha'        => $validated['fecha'],
-            'metodo_pago'  => $validated['metodo_pago'],
-            'estado'       => 'PAGADA',
-            'electronic_invoice_id' => $facturaId ?? $cuota->electronic_invoice_id,
-        ]);
+            $registration = $inscripcion->registration()->lockForUpdate()->first();
 
-        if ($facturaId) {
-            $pdfUrl = route('electronic-invoices.pdf', $facturaId);
+            if (! $registration) {
+                throw ValidationException::withMessages([
+                    'mes' => 'El estudiante no tiene una matrícula activa para registrar el pago.',
+                ]);
+            }
+
+            $cuota = $registration->monthlyPayments()
+                ->where('mes', $validated['mes'])
+                ->lockForUpdate()
+                ->first();
+
+            if (! $cuota) {
+                throw ValidationException::withMessages([
+                    'mes' => 'No se encontró la mensualidad del mes seleccionado para este estudiante.',
+                ]);
+            }
+
+            if (in_array($cuota->estado, ['PAGADA', 'ESPERA'])) {
+                $msg = $cuota->estado === 'ESPERA'
+                    ? 'La mensualidad de este mes ya fue registrada y está pendiente de verificación.'
+                    : 'La mensualidad de este mes ya se encuentra pagada.';
+                throw ValidationException::withMessages(['mes' => $msg]);
+            }
+
+            $generarFactura = (bool) ($validated['generar_factura'] ?? true);
+            $facturaId = null;
+            $facturaMsg = '';
+            $invoice = null;
+
+            if ($generarFactura) {
+                try {
+                    $invoice = $this->crearFacturaExenta($estudiante, $cuota, $validated);
+                    $facturaId = $invoice->id;
+                    $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada (PDF listo para imprimir/compartir).";
+                } catch (\Throwable $e) {
+                    Log::error('Error factura auto: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
+                    $facturaMsg = ' (Factura no pudo generarse: '.$e->getMessage().')';
+                }
+            }
+
+            $cuota->update([
+                'fecha'        => $validated['fecha'],
+                'metodo_pago'  => $validated['metodo_pago'],
+                'estado'       => 'PAGADA',
+                'electronic_invoice_id' => $facturaId ?? $cuota->electronic_invoice_id,
+            ]);
+
+            return compact('invoice', 'facturaMsg');
+        });
+
+        $invoice = $resultado['invoice'];
+        $facturaMsg = $resultado['facturaMsg'];
+
+        if ($invoice) {
+            // El correo se envía después del commit para no retener locks de BD.
+            $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$validated['mes']);
+            $facturaMsg .= " Enviada por correo al tutor.";
+            $pdfUrl = route('electronic-invoices.pdf', $invoice->id);
             return redirect()->route('monthly-payments.estudiante', $estudiante)
-                ->with('mensaje', 'Pago registrado correctamente.'.$facturaMsg.' <a href="'.$pdfUrl.'" target="_blank" class="underline font-bold text-primary">Ver factura PDF</a>');
+                ->with('mensaje', 'Pago registrado correctamente.'.$facturaMsg.' Ver factura: '.$pdfUrl);
         }
 
         return redirect()->route('monthly-payments.estudiante', $estudiante)
@@ -191,7 +211,7 @@ class MonthlyPaymentController extends Controller
         $invoice = $pago->electronicInvoice;
         try {
             $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
-            return back()->with('mensaje', 'Factura N° '.str_pad($invoice->nro_factura,8,'0',STR_PAD_LEFT).' reenviada por correo a '.($invoice->email_receptor ?? 'tutor').'. <a href="'.route('electronic-invoices.pdf',$invoice).'" target="_blank" class="underline font-bold text-primary">Ver PDF</a>');
+            return back()->with('mensaje', 'Factura N° '.str_pad($invoice->nro_factura,8,'0',STR_PAD_LEFT).' reenviada por correo a '.($invoice->email_receptor ?? 'tutor').'. Ver PDF: '.route('electronic-invoices.pdf',$invoice));
         } catch (\Throwable $e) {
             Log::error('Error reenvio factura: '.$e->getMessage());
             return back()->with('error', 'No se pudo reenviar: '.$e->getMessage());
@@ -206,36 +226,54 @@ class MonthlyPaymentController extends Controller
     {
         $this->authorize('managePayments', $estudiante);
 
-        if ($pago->registration->enrollment->student_id !== $estudiante->id) abort(404);
-        if ($pago->estado !== 'ESPERA') {
-            return back()->with('error', 'Este pago no está en estado de espera.');
-        }
-
         $validated = $request->validate([
             'observaciones' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $invoice = null;
-        $facturaMsg = '';
+        $resultado = DB::transaction(function () use ($estudiante, $pago, $validated) {
+            $bloqueado = MonthlyPayment::whereKey($pago->id)->lockForUpdate()->firstOrFail();
 
-        try {
-            $invoice = $this->crearFacturaExenta($estudiante, $pago, ['mes' => (int)$pago->mes]);
-            $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
-            $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada y enviada por correo.";
-        } catch (\Throwable $e) {
-            Log::error('Error factura al aprobar: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
-            $facturaMsg = ' (Error al generar factura: '.$e->getMessage().')';
+            if ($bloqueado->registration->enrollment->student_id !== $estudiante->id) {
+                abort(404);
+            }
+
+            if ($bloqueado->estado !== 'ESPERA') {
+                return ['error' => 'Este pago no está en estado de espera.'];
+            }
+
+            $invoice = null;
+            $facturaMsg = '';
+
+            try {
+                $invoice = $this->crearFacturaExenta($estudiante, $bloqueado, ['mes' => (int) $bloqueado->mes]);
+                $facturaMsg = " Factura N° ".str_pad((string)$invoice->nro_factura,8,'0',STR_PAD_LEFT)." generada.";
+            } catch (\Throwable $e) {
+                Log::error('Error factura al aprobar: '.$e->getMessage(), ['trace'=>$e->getTraceAsString()]);
+                $facturaMsg = ' (Error al generar factura: '.$e->getMessage().')';
+            }
+
+            $bloqueado->update([
+                'estado' => 'PAGADA',
+                'electronic_invoice_id' => $invoice?->id ?? $bloqueado->electronic_invoice_id,
+                'observaciones' => $validated['observaciones'] ?? $bloqueado->observaciones,
+            ]);
+
+            return compact('invoice', 'facturaMsg');
+        });
+
+        if (isset($resultado['error'])) {
+            return back()->with('error', $resultado['error']);
         }
 
-        $pago->update([
-            'estado' => 'PAGADA',
-            'electronic_invoice_id' => $invoice?->id ?? $pago->electronic_invoice_id,
-            'observaciones' => $validated['observaciones'] ?? $pago->observaciones,
-        ]);
+        $invoice = $resultado['invoice'];
+        $facturaMsg = $resultado['facturaMsg'];
 
         if ($invoice) {
+            // El correo se envía después del commit para no retener locks de BD.
+            $this->enviarFacturaPorCorreo($estudiante, $invoice, (int)$pago->mes);
+            $facturaMsg .= ' Enviada por correo.';
             $pdfUrl = route('electronic-invoices.pdf', $invoice->id);
-            return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg.' <a href="'.$pdfUrl.'" target="_blank" class="underline font-bold text-primary">Ver factura PDF</a>');
+            return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg.' Ver factura: '.$pdfUrl);
         }
 
         return back()->with('mensaje', 'Pago aprobado correctamente.'.$facturaMsg);

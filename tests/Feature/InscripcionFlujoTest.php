@@ -241,7 +241,7 @@ class InscripcionFlujoTest extends TestCase
 
         $doc = $student->documents()->where('tipo_documento', 'CI_ANVERSO')->first();
         $this->assertSame('ENTREGADO', $doc->estado);
-        Storage::disk('public')->assertExists($doc->archivo);
+        Storage::disk('local')->assertExists($doc->archivo);
 
         // Mi inscripción renderiza
         $this->actingAs($estUser)->get(route('inscripciones.mi-inscripcion'))->assertOk();
