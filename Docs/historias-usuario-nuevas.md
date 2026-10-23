@@ -507,3 +507,4 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Rutas** - los grupos principales agregaron `permission:` junto al `role:` existente: estudiantes, docentes, pagos, facturas, asistencia, evaluaciones, reportes, RUDE, expediente, boletín, diario y conducta.
 - **Middleware** - `permission:` usa `EnsureUserHasPermission`, que consulta Spatie y, si el entorno aún no tiene permisos sembrados, recurre al catálogo `config/permisos360.php`. `role_or_permission:` sigue disponible para casos mixtos.
 - **Pruebas** - `PermissionSpatieTest` valida sincronización de roles/permisos, creación de roles por `nombre`, idempotencia del seeder y middleware de permisos.
+- **Administración** - nueva pantalla `/roles-permisos` solo para Administrador: lista roles y permite marcar/desmarcar permisos por rol. El rol Administrador queda bloqueado con todos los permisos para evitar bloqueos. Ruta protegida con `permission:roles.gestionar`.
