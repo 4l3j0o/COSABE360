@@ -496,3 +496,12 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Sesiones y cabeceras** - sesión cifrada por defecto, cookie `secure` automática en producción, `throttle:10,1` en login y middleware global con `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP mínima y HSTS en HTTPS.
 - **Pagos** - registro y aprobación usan transacción con `lockForUpdate` sobre matrícula/cuota; el correo se envía después del commit. Se evita duplicar una mensualidad ya pagada o en espera.
 - **PII** - se retiraron del repositorio `database/data/estudiantes_2026.sql`, `database/data/docentes_20261.xlsx` y los datos docentes embebidos; `Docentes2026Seeder` lee `database/data/docentes_2026.json` (ignorado por Git). Ver `database/data/README.md`.
+
+## HU-85: Roles y permisos con Spatie (2026-10-23)
+- **Paquete** - `spatie/laravel-permission` 8.3.2 (Laravel 12/PHP 8.3+). Se actualizó Laravel a 12.70.1 y dependencias con advisories corregidos.
+- **Esquema** - se conserva `users.role_id` y la columna `roles.nombre` durante la transición. La migración agrega `name`/`guard_name` a `roles`, crea `permissions`, `model_has_roles`, `model_has_permissions` y `role_has_permissions`, y copia las asignaciones actuales al pivote.
+- **Modelos** - `App\Models\Role` extiende el rol de Spatie y sincroniza `nombre`/`name`; `User` usa `HasRoles`, mantiene `hasRole`/`hasAnyRole` compatibles (incluye strings con comas) y sincroniza `role_id` con el pivote.
+- **Catálogo** - `config/permisos360.php` define 76 permisos relevantes de 360 (estudiantes, pagos, asistencia, evaluaciones, conducta, diario, reportes, comunicados, RUDE, etc.) y su asignación a Administrador, Director, Secretaría, Docente, Estudiante y Regente.
+- **Seeder** - `PermissionSeeder` crea permisos, los asigna a los roles y sincroniza usuarios. Se ejecuta dentro de `DatabaseSeeder` y puede repetirse sin duplicar.
+- **Uso** - `canAccess()` consulta primero el permiso granular y conserva la matriz antigua como respaldo. Se agregaron los middleware `permission:` y `role_or_permission:`.
+- **Pruebas** - `PermissionSpatieTest` valida sincronización de roles/permisos, creación de roles por `nombre`, idempotencia del seeder y middleware de permisos.
