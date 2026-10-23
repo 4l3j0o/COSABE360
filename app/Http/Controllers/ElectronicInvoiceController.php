@@ -6,6 +6,7 @@ use App\Models\ElectronicInvoice;
 use App\Models\InvoiceDetail;
 use App\Models\InvoiceSequence;
 use App\Models\TaxConfiguration;
+use App\Support\AccessScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,11 +16,13 @@ class ElectronicInvoiceController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', ElectronicInvoice::class);
+
         if ($request->expectsJson()) {
             return $this->apiIndex($request);
         }
 
-        $invoices = ElectronicInvoice::with('detalles')
+        $invoices = AccessScope::aplicarFacturas(ElectronicInvoice::with('detalles'), $request->user())
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->when($request->query('nit_receptor'), fn ($q, $v) => $q->where('nit_receptor', 'like', "%{$v}%"))
             ->orderByDesc('fecha_emision')->orderByDesc('nro_factura')
@@ -30,7 +33,7 @@ class ElectronicInvoiceController extends Controller
 
     private function apiIndex(Request $request): JsonResponse
     {
-        $invoices = ElectronicInvoice::with('detalles')
+        $invoices = AccessScope::aplicarFacturas(ElectronicInvoice::with('detalles'), $request->user())
             ->when($request->query('estado'), fn ($q, $v) => $q->where('estado', $v))
             ->orderByDesc('fecha_emision')->get();
         return response()->json(['data' => $invoices]);
@@ -38,6 +41,8 @@ class ElectronicInvoiceController extends Controller
 
     public function show(ElectronicInvoice $electronicInvoice): JsonResponse
     {
+        $this->authorize('view', $electronicInvoice);
+
         return response()->json(['data' => $electronicInvoice->load('detalles')]);
     }
 
@@ -48,6 +53,8 @@ class ElectronicInvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', ElectronicInvoice::class);
+
         $validated = $request->validate([
             'codigo_sucursal' => ['sometimes', 'string', 'max:10'],
             'nit_receptor' => ['nullable', 'string', 'max:20'],
@@ -165,6 +172,8 @@ class ElectronicInvoiceController extends Controller
 
     public function update(Request $request, ElectronicInvoice $electronicInvoice)
     {
+        $this->authorize('update', $electronicInvoice);
+
         // Solo permite anular o actualizar estado/leyendas - no recalcula totales
         $validated = $request->validate([
             'estado' => ['sometimes', 'in:ENVIADA,AUTORIZADA,RECHAZADA,CONTINGENCIA,ANULADA'],
@@ -182,6 +191,8 @@ class ElectronicInvoiceController extends Controller
 
     public function destroy(ElectronicInvoice $electronicInvoice)
     {
+        $this->authorize('delete', $electronicInvoice);
+
         if ($electronicInvoice->estado === 'AUTORIZADA') {
             if (request()->expectsJson()) {
                 return response()->json(['message' => 'No se puede eliminar factura autorizada. Anule en su lugar.'], 409);
@@ -198,25 +209,13 @@ class ElectronicInvoiceController extends Controller
     }
 
     /**
-     * Admin/Secretaría/Director pasan directo; cualquier otro rol se rechaza.
-     * (Los tutores no tienen cuenta; la entrega de la factura es por correo.)
-     */
-    private function autorizarFactura(ElectronicInvoice $invoice): void
-    {
-        $user = auth()->user();
-        if (! $user) abort(403, 'No autenticado');
-        $rol = $user->rol?->nombre;
-        if (in_array($rol, ['Administrador', 'Secretaría', 'Director'], true)) return;
-        abort(403, 'Rol no autorizado para ver facturas.');
-    }
-
-    /**
      * Genera PDF factura electrónica para imprimir/compartir (formato SFE profesional no genérico).
      * Usa plantilla SIN-compliant con branding verde institucional, QR real y literal en palabras.
      */
     public function pdf(ElectronicInvoice $electronicInvoice)
     {
-        $this->autorizarFactura($electronicInvoice);
+        $this->authorize('view', $electronicInvoice);
+
         $invoice = $electronicInvoice->load('detalles');
         $tax = TaxConfiguration::first();
         $logoBase64 = $this->resolveLogoBase64();
@@ -249,7 +248,8 @@ class ElectronicInvoiceController extends Controller
 
     public function downloadPdf(ElectronicInvoice $electronicInvoice)
     {
-        $this->autorizarFactura($electronicInvoice);
+        $this->authorize('view', $electronicInvoice);
+
         $invoice = $electronicInvoice->load('detalles');
         $tax = TaxConfiguration::first();
         $logoBase64 = $this->resolveLogoBase64();
