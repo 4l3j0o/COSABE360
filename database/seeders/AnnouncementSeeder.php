@@ -138,7 +138,7 @@ class AnnouncementSeeder extends Seeder
     private function usuariosDeRol(string $rol): \Illuminate\Support\Collection
     {
         return Role::where('nombre', $rol)->first()
-            ? User::where('role_id', Role::where('nombre', $rol)->value('id'))
+            ? User::whereHas('roles', fn ($q) => $q->where('roles.nombre', $rol))
                 ->where('estado', 'ACTIVO')
                 ->pluck('id')
             : collect();

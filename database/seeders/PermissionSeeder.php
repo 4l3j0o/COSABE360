@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -37,15 +36,6 @@ class PermissionSeeder extends Seeder
                 $rol->syncPermissions($permisos);
             }
         }
-
-        // Mantiene el pivote de Spatie alineado con users.role_id.
-        User::whereNotNull('role_id')
-            ->with('rol')
-            ->chunkById(500, function ($usuarios) {
-                foreach ($usuarios as $usuario) {
-                    $usuario->syncRoles($usuario->rol ? [$usuario->rol->name] : []);
-                }
-            });
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

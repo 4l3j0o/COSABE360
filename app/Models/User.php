@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -64,27 +64,58 @@ class User extends Authenticatable
         ];
     }
 
+    /** HU-86: rol pendiente de sincronizar cuando llega como atributo role_id. */
+    private ?int $pendingRoleId = null;
+
+    private bool $pendingRoleSync = false;
+
     protected static function booted(): void
     {
-        // HU-85: mantiene el pivote de Spatie sincronizado con role_id
-        // durante la transición. Se retirará cuando role_id desaparezca.
+        // HU-86: `role_id` sigue aceptándose en formularios/seeders/tests como
+        // alias de compatibilidad, pero ya no se guarda en users.
+        static::saving(function (User $user) {
+            if (array_key_exists('role_id', $user->getAttributes())) {
+                $valor = $user->getAttributes()['role_id'];
+                $user->pendingRoleId = $valor === null ? null : (int) $valor;
+                $user->pendingRoleSync = true;
+                unset($user->role_id);
+            }
+        });
+
         static::saved(function (User $user) {
+            if (! $user->pendingRoleSync) {
+                return;
+            }
+
+            $user->pendingRoleSync = false;
+
             if (! Schema::hasTable(config('permission.table_names.model_has_roles'))) {
                 return;
             }
 
-            if (! $user->wasRecentlyCreated && ! $user->wasChanged('role_id')) {
-                return;
-            }
-
-            $rol = $user->role_id ? Role::find($user->role_id) : null;
+            $rol = $user->pendingRoleId ? Role::find($user->pendingRoleId) : null;
             $user->syncRoles($rol ? [$rol->name] : []);
+            $user->pendingRoleId = null;
         });
     }
 
-    public function rol(): BelongsTo
+    /** Rol principal resuelto desde el pivote de Spatie. */
+    public function rol(): HasOneThrough
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->hasOneThrough(
+            Role::class,
+            ModelHasRole::class,
+            'model_id',
+            'id',
+            'id',
+            'role_id',
+        )->where('model_has_roles.model_type', static::class);
+    }
+
+    /** Compatibilidad: `$user->role_id` ahora se lee del pivote. */
+    public function getRoleIdAttribute(): ?int
+    {
+        return $this->rol?->id;
     }
 
     public function student(): HasOne
