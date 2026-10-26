@@ -75,7 +75,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 // HU-84 Sprint 1B: archivos privados (fotos, documentos, evidencias, adjuntos).
-Route::middleware('auth')->get('/archivos', [SecureFileController::class, 'show'])
+Route::middleware(['auth', 'throttle:archivos'])->get('/archivos', [SecureFileController::class, 'show'])
     ->name('archivos.show');
 
 // DASHBOARD - dividido por roles
