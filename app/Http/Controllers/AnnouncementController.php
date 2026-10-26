@@ -422,7 +422,7 @@ class AnnouncementController extends Controller
             return 'Este comunicado se genera automáticamente desde una licencia. Gestiónalo desde el módulo de Licencias.';
         }
 
-        if (! $user->esAdmin() && ! $user->hasRole('Director') && (int) $announcement->author_id !== (int) $user->id) {
+        if (! $user->puede('comunicados.gestionar.todos') && (int) $announcement->author_id !== (int) $user->id) {
             return 'Solo puedes gestionar tus propios comunicados.';
         }
 

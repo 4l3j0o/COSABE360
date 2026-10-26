@@ -200,9 +200,11 @@ class DiarioAulaController extends Controller
     {
         $user = $request->user();
 
-        $puede = $user->hasRole('Administrador')
+        $puede = $user->puede('diario.eliminar') && (
+            $user->hasRole('Administrador')
             || ($user->hasRole('Director') && $this->permiteCurso($user, $diario->section_id, $this->cursosPermitidos($user)))
-            || ($user->hasRole('Docente') && $user->teacher && $diario->teacher_id === $user->teacher->id);
+            || ($user->hasRole('Docente') && $user->teacher && $diario->teacher_id === $user->teacher->id)
+        );
 
         abort_unless($puede, 403, 'Solo el autor o la dirección puede eliminar esta bitácora.');
 
@@ -369,7 +371,7 @@ class DiarioAulaController extends Controller
     private function authorizeRegistro($user): void
     {
         abort_unless(
-            $user->hasAnyRole(['Docente', 'Administrador', 'Director']),
+            $user->puede('diario.crear'),
             403, 'Solo docentes y directivos registran el diario.'
         );
     }

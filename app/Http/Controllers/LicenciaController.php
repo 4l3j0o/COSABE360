@@ -25,7 +25,7 @@ class LicenciaController extends Controller
 
     public function index(Request $request): View
     {
-        $this->autorizar($request);
+        $this->autorizarPermiso($request, 'licencias.ver');
 
         $levels = Level::orderBy('orden')->get();
 
@@ -86,7 +86,7 @@ class LicenciaController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->autorizar($request);
+        $this->autorizarPermiso($request, 'licencias.crear');
 
         $validated = $request->validate([
             'section_id' => ['required', 'integer', 'exists:sections,id'],
@@ -133,7 +133,7 @@ class LicenciaController extends Controller
 
     public function anular(Request $request, Licencia $licencia): RedirectResponse
     {
-        $this->autorizar($request);
+        $this->autorizarPermiso($request, 'licencias.autorizar');
 
         $this->licencias->anular($licencia);
 
@@ -141,9 +141,8 @@ class LicenciaController extends Controller
             ->with('success', 'Licencia anulada correctamente.');
     }
 
-    private function autorizar(Request $request): void
+    private function autorizarPermiso(Request $request, string $permiso): void
     {
-        $user = $request->user();
-        abort_if(! $user->hasAnyRole(['Regente', 'Administrador', 'Director', 'Secretaría']), 403);
+        abort_unless($request->user()?->puede($permiso), 403);
     }
 }
