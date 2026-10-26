@@ -23,6 +23,7 @@ class AttendanceController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        abort_unless($user->puede('asistencia.ver'), 403);
         $cursos = collect();
         $cursosRegistro = collect();
 
@@ -72,6 +73,8 @@ class AttendanceController extends Controller
      */
     public function ahora(): RedirectResponse
     {
+        abort_unless(auth()->user()->puede('asistencia.ver'), 403);
+
         $teacher = auth()->user()->teacher
             ?? Teacher::where('user_id', auth()->id())->first();
 
@@ -110,6 +113,8 @@ class AttendanceController extends Controller
      */
     public function create(Request $request): View
     {
+        abort_unless(auth()->user()->puede('asistencia.ver'), 403);
+
         $request->validate([
             'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['nullable', 'integer'],
@@ -149,6 +154,8 @@ class AttendanceController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->puede('asistencia.registrar'), 403);
+
         $validated = $request->validate([
             'section_id' => ['required', 'exists:sections,id'],
             'subject_id' => ['nullable', 'integer'],

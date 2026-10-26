@@ -36,6 +36,8 @@ class ExpedienteController extends Controller
 
     public function show(Request $request, Student $student): View
     {
+        abort_unless($request->user()->puede('expediente.ver'), 403);
+
         $this->autorizar($request);
 
         $student->load(['documents']);
@@ -62,6 +64,8 @@ class ExpedienteController extends Controller
 
     public function store(Request $request, Student $student): RedirectResponse
     {
+        abort_unless($request->user()->puede('expediente.gestionar'), 403);
+
         $this->autorizar($request);
 
         $validated = $request->validate([
@@ -86,6 +90,8 @@ class ExpedienteController extends Controller
 
     public function status(Request $request, Student $student, int $documentoId): RedirectResponse
     {
+        abort_unless($request->user()->puede('expediente.gestionar'), 403);
+
         $this->autorizar($request);
 
         $validated = $request->validate([
@@ -119,6 +125,8 @@ class ExpedienteController extends Controller
 
     public function updateStatus(Request $request, Student $student, StudentDocument $studentDocument): RedirectResponse
     {
+        abort_unless($request->user()->puede('expediente.gestionar'), 403);
+
         $this->autorizar($request);
 
         abort_unless($studentDocument->student_id === $student->id, 404);

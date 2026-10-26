@@ -27,6 +27,7 @@ class AttendanceReportController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->puede(['reportes.asistencia.ver', 'asistencia.ver']), 403);
 
         $cursos = $this->cursosPermitidos($user);
 
@@ -53,6 +54,7 @@ class AttendanceReportController extends Controller
     public function export(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->puede(['asistencia.exportar', 'reportes.asistencia.ver']), 403);
         $cursos = $this->cursosPermitidos($user);
 
         if ($this->requiereCurso($user) && ! $request->query('section_id')) {

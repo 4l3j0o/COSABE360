@@ -63,6 +63,8 @@ class InscripcionController extends Controller
 
     public function create(Request $request): View
     {
+        abort_unless($request->user()->puede('inscripciones.gestionar'), 403);
+
         $user = $request->user();
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
         $cursos = $this->cursosInscribibles($user, $periodo);
@@ -178,6 +180,8 @@ class InscripcionController extends Controller
      */
     public function buscarPorCi(Request $request)
     {
+        abort_unless($request->user()->puede('inscripciones.gestionar'), 403);
+
         $request->validate([
             'numero_documento' => ['required', 'string', 'max:20'],
             'complemento' => ['nullable', 'string', 'max:5'],
@@ -223,6 +227,8 @@ class InscripcionController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->puede('inscripciones.gestionar'), 403);
+
         $user = $request->user();
         $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
 
@@ -513,7 +519,7 @@ class InscripcionController extends Controller
     public function verificarPago(Request $request, Enrollment $enrollment)
     {
         $user = $request->user();
-        if (! $user->hasAnyRole(['Administrador', 'Secretaría', 'Director'])) {
+        if (! $user->puede('inscripciones.gestionar')) {
             abort(403, 'Solo contabilidad puede verificar pagos de inscripción.');
         }
 
@@ -849,6 +855,8 @@ class InscripcionController extends Controller
 
     public function contrato(Student $student)
     {
+        abort_unless(request()->user()->puede('inscripciones.gestionar'), 403);
+
         $datos = $this->datosContrato($student);
         $pdf = Pdf::loadView('inscripciones.pdf.contrato', $datos)->setPaper('a4', 'portrait');
 
@@ -857,6 +865,8 @@ class InscripcionController extends Controller
 
     public function anexo(Student $student)
     {
+        abort_unless(request()->user()->puede('inscripciones.gestionar'), 403);
+
         $datos = $this->datosContrato($student);
         $pdf = Pdf::loadView('inscripciones.pdf.anexo', $datos)->setPaper('a4', 'portrait');
 
