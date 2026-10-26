@@ -9,6 +9,8 @@ class TaxConfigurationController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()->puede('configuracion.gestionar'), 403);
+
         $config = TaxConfiguration::firstOrCreate(
             [],
             [
@@ -35,6 +37,8 @@ class TaxConfigurationController extends Controller
 
     public function update(Request $request)
     {
+        abort_unless($request->user()->puede('configuracion.gestionar'), 403);
+
         $validated = $request->validate([
             'nit_colegio' => ['required', 'string', 'max:20'],
             'razon_social' => ['required', 'string', 'max:200'],
