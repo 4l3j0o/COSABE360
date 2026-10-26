@@ -96,7 +96,8 @@ return [
 
         'comunicados.ver' => 'Ver comunicados',
         'comunicados.crear' => 'Crear comunicados',
-        'comunicados.gestionar' => 'Editar y publicar comunicados',
+        'comunicados.gestionar' => 'Editar y publicar los propios comunicados',
+        'comunicados.gestionar.todos' => 'Gestionar comunicados de cualquier usuario',
     ],
 
     'roles' => [
@@ -110,14 +111,14 @@ return [
             'expediente.ver', 'expediente.gestionar', 'rude.ver',
             'pagos.ver', 'pagos.registrar', 'pagos.aprobar',
             'facturas.ver', 'facturas.gestionar',
-            'asistencia.ver', 'licencias.ver',
+            'asistencia.ver', 'licencias.ver', 'licencias.crear', 'licencias.autorizar',
             'evaluaciones.ver', 'boletines.ver', 'historial.ver',
             'conducta.ver', 'conducta.registrar', 'conducta.exportar',
             'diario.ver', 'diario.crear', 'diario.editar', 'diario.eliminar',
             'reportes.ver', 'reportes.exportar',
             'reportes.administrativos.ver', 'reportes.academicos.ver',
             'reportes.asistencia.ver', 'reportes.evaluacion.ver',
-            'comunicados.ver', 'comunicados.crear', 'comunicados.gestionar',
+            'comunicados.ver', 'comunicados.crear', 'comunicados.gestionar', 'comunicados.gestionar.todos',
         ],
 
         'Secretaría' => [
@@ -129,7 +130,7 @@ return [
             'rude.ver', 'rude.editar', 'rude.imprimir',
             'pagos.ver', 'pagos.registrar', 'pagos.aprobar', 'pagos.exportar',
             'facturas.ver', 'facturas.gestionar',
-            'horarios.ver', 'asistencia.ver', 'licencias.ver', 'boletines.ver',
+            'horarios.ver', 'asistencia.ver', 'licencias.ver', 'licencias.crear', 'licencias.autorizar', 'boletines.ver',
             'reportes.ver', 'reportes.exportar', 'reportes.administrativos.ver',
             'comunicados.ver',
         ],

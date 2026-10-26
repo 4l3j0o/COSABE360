@@ -38,7 +38,7 @@ class ConductaReporteController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        abort_unless($this->scope->tieneAcceso($user), 403, 'No tiene acceso al módulo de conducta.');
+        abort_unless($user->puede('conducta.ver') && $this->scope->tieneAcceso($user), 403, 'No tiene acceso al módulo de conducta.');
 
         $sectionId = $request->filled('section_id') ? (int) $request->query('section_id') : null;
         $subjectId = $request->filled('subject_id') ? (int) $request->query('subject_id') : null;
@@ -125,7 +125,7 @@ class ConductaReporteController extends Controller
     public function create(Request $request): View
     {
         $user = $request->user();
-        abort_unless(! $this->scope->esEstudiante($user), 403, 'No puede registrar reportes de conducta.');
+        abort_unless($user->puede('conducta.registrar'), 403, 'No puede registrar reportes de conducta.');
 
         $cursos = $this->scope->cursosCreables($user);
         abort_if($cursos->isEmpty(), 403, 'No tiene cursos asignados para registrar conducta.');
@@ -161,7 +161,7 @@ class ConductaReporteController extends Controller
     public function store(StoreConductaReporteRequest $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless(! $this->scope->esEstudiante($user), 403, 'No puede registrar reportes de conducta.');
+        abort_unless($user->puede('conducta.registrar'), 403, 'No puede registrar reportes de conducta.');
 
         $data = $request->validated();
         $section = Section::findOrFail($data['section_id']);
@@ -207,7 +207,7 @@ class ConductaReporteController extends Controller
     public function estudiante(Request $request): View
     {
         $user = $request->user();
-        abort_unless($this->scope->tieneAcceso($user), 403);
+        abort_unless($user->puede('conducta.ver') && $this->scope->tieneAcceso($user), 403);
 
         $vista = $this->scope->vistaParaEstudiante($user);
         $estudiantes = $this->scope->estudiantesVisibles($user, $vista);
@@ -236,7 +236,7 @@ class ConductaReporteController extends Controller
     public function export(Request $request)
     {
         $user = $request->user();
-        abort_unless($this->scope->tieneAcceso($user), 403);
+        abort_unless($user->puede('conducta.ver') && $this->scope->tieneAcceso($user), 403);
 
         $formato = $request->query('format') === 'excel' ? 'excel' : 'pdf';
         $studentId = $request->filled('student_id') ? (int) $request->query('student_id') : null;
