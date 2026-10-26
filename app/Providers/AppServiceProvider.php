@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -28,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // HU-87: nunca permitir depuración visible en producción.
+        if ($this->app->environment('production') && config('app.debug')) {
+            config(['app.debug' => false]);
+            Log::critical('APP_DEBUG=true en producción; se forzó APP_DEBUG=false.');
+        }
+
         Password::defaults(function () {
             return Password::min(8);
         });

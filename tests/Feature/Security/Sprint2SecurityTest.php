@@ -21,6 +21,14 @@ class Sprint2SecurityTest extends TestCase
         $this->seed([RoleSeeder::class, PermissionSeeder::class]);
     }
 
+    public function test_pagina_404_personalizada_no_expone_detalles(): void
+    {
+        $this->get('/ruta-que-no-existe-'.fake()->unique()->numerify('####'))
+            ->assertNotFound()
+            ->assertSee('Página no encontrada')
+            ->assertDontSee('Stack trace');
+    }
+
     public function test_comunicado_rechaza_svg_aunque_sea_imagen(): void
     {
         $admin = User::create([

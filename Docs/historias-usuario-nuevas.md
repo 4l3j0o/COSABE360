@@ -521,7 +521,9 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Rate limiting** - limitadores nombrados para exportaciones/PDF (60/min), subidas (30/min), inscripción (20/min) y archivos privados (120/min), aplicados por usuario/IP.
 - **Subidas** - validación de MIME real además de extensión; SVG y formatos no permitidos quedan bloqueados en comunicados, diario, estudiantes, licencias, documentos de inscripción y fachadas.
 - **Auditoría** - canal `security` (`storage/logs/security.log`, retención 90 días). Registra login fallido/exitoso, errores y rechazos de Google, accesos denegados por rol/permiso, descargas de archivos privados y cambios de pagos.
-- **CI** - workflow `.github/workflows/tests.yml` con MySQL 8, PHP 8.4, suite Laravel y build de assets.
+- **CI** - workflow `.github/workflows/tests.yml` con MySQL 8, PHP 8.4, suite Laravel, build de assets, `npm audit` y ejecución manual (`workflow_dispatch`).
+- **Errores de producción** - vistas personalizadas 404, 419, 429 y 500; sin trazas ni datos internos.
+- **APP_DEBUG** - en producción el arranque fuerza `APP_DEBUG=false` si estuviera mal configurado y registra un evento crítico.
 - **Pendiente en seguridad** - 2FA para roles administrativos, CSP completa, antivirus de PDFs y CAPTCHA/honeypot si la inscripción se abre al público.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.
