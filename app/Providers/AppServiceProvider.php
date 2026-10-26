@@ -10,7 +10,10 @@ use App\Policies\ElectronicInvoicePolicy;
 use App\Policies\MonthlyPaymentPolicy;
 use App\Policies\SectionPolicy;
 use App\Policies\StudentPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +31,16 @@ class AppServiceProvider extends ServiceProvider
         Password::defaults(function () {
             return Password::min(8);
         });
+
+        // HU-87 Sprint 2: límites por usuario/IP para operaciones sensibles.
+        RateLimiter::for('exportaciones', fn (Request $request) => Limit::perMinute(60)
+            ->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)
+            ->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('inscripcion', fn (Request $request) => Limit::perMinute(20)
+            ->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('archivos', fn (Request $request) => Limit::perMinute(120)
+            ->by($request->user()?->id ?: $request->ip()));
 
         // HU05: Directivas Blade para ocultar menús y botones según rol
         Blade::if('role', function (string $role) {

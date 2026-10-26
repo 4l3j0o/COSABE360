@@ -28,7 +28,7 @@ class UpdateStudentRequest extends FormRequest
             'direccion'          => 'nullable|string|max:255',
             'telefono'           => 'nullable|string|max:20',
             'email'             => ['nullable', 'email', 'max:150', Rule::unique('students', 'email')->ignore($studentId)->where('estado', '!=', 'ELIMINADO')],
-            'fotografia'         => 'nullable|image|max:2048',
+            'fotografia'         => 'nullable|image|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:2048',
             'idioma'             => 'nullable|string|max:50',
             'cultura'            => 'nullable|string|max:50',
             'discapacidad'       => 'nullable|string|max:100',

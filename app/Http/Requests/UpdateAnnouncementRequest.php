@@ -45,7 +45,7 @@ class UpdateAnnouncementRequest extends FormRequest
             'fecha_publicacion' => ['nullable', 'date'],
             'estado' => ['sometimes', Rule::in(['BORRADOR', 'PUBLICADO', 'ARCHIVADO'])],
             'destacado' => ['sometimes', 'boolean'],
-            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:2048'],
             'tipo_destinatario' => ['sometimes', 'required', Rule::in(['TODOS', 'DOCENTES', 'ESTUDIANTES', 'CURSO_ESPECIFICO', 'NIVEL_DOCENTES', 'DOCENTES_CURSO'])],
             'section_ids' => ['nullable', 'array'],
             'section_ids.*' => ['integer', 'exists:sections,id'],

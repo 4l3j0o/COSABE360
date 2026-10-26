@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SecurityLog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -50,6 +51,10 @@ class EnsureUserHasPermission
                 return $next($request);
             }
         }
+
+        SecurityLog::event('access.denied.permission', [
+            'permisos' => $requeridos,
+        ]);
 
         if ($request->expectsJson()) {
             abort(403, 'Acceso denegado: permiso insuficiente.');

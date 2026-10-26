@@ -11,6 +11,7 @@ use App\Models\StudentRudeRecord;
 use App\Services\ComunicadoAlcanceService;
 use App\Support\AccessScope;
 use App\Support\ArchivoPrivado;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -30,6 +31,8 @@ class SecureFileController extends Controller
         abort_if($ruta === null, 404);
 
         abort_unless($this->autorizar($request->user(), $path), 403);
+
+        SecurityLog::event('file.download', ['path' => $path]);
 
         return response()->file($ruta, [
             'Content-Disposition' => 'inline; filename="'.basename($ruta).'"',

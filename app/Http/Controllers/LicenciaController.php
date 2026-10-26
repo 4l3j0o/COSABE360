@@ -94,7 +94,7 @@ class LicenciaController extends Controller
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'motivo' => ['nullable', 'string', 'max:500'],
-            'evidencia' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:10240'],
+            'evidencia' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:10240'],
         ], [
             'evidencia.image' => 'La evidencia debe ser una imagen (JPG, PNG, GIF o WEBP).',
             'evidencia.mimes' => 'La evidencia debe ser una imagen JPG, PNG, GIF o WEBP.',
