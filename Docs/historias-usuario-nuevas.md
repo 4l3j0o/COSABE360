@@ -499,8 +499,8 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 ## HU-85: Roles y permisos con Spatie (2026-10-23)
 - **Paquete** - `spatie/laravel-permission` 8.3.2 (Laravel 12/PHP 8.3+). Se actualizó Laravel a 12.70.1 y dependencias con advisories corregidos.
-- **Esquema** - se conserva `users.role_id` y la columna `roles.nombre` durante la transición. La migración agrega `name`/`guard_name` a `roles`, crea `permissions`, `model_has_roles`, `model_has_permissions` y `role_has_permissions`, y copia las asignaciones actuales al pivote.
-- **Modelos** - `App\Models\Role` extiende el rol de Spatie y sincroniza `nombre`/`name`; `User` usa `HasRoles`, mantiene `hasRole`/`hasAnyRole` compatibles (incluye strings con comas) y sincroniza `role_id` con el pivote.
+- **Esquema** - en HU-85 se conservó temporalmente `users.role_id` y la columna `roles.nombre` (HU-86 retiró `users.role_id`). La migración agrega `name`/`guard_name` a `roles`, crea `permissions`, `model_has_roles`, `model_has_permissions` y `role_has_permissions`, y copia las asignaciones actuales al pivote.
+- **Modelos** - `App\Models\Role` extiende el rol de Spatie y sincroniza `nombre`/`name`; `User` usa `HasRoles`, mantiene `hasRole`/`hasAnyRole` compatibles (incluye strings con comas) y sincroniza el atributo `role` con el pivote.
 - **Catálogo** - `config/permisos360.php` define 76 permisos relevantes de 360 (estudiantes, pagos, asistencia, evaluaciones, conducta, diario, reportes, comunicados, RUDE, etc.) y su asignación a Administrador, Director, Secretaría, Docente, Estudiante y Regente.
 - **Seeder** - `PermissionSeeder` crea permisos, los asigna a los roles y sincroniza usuarios. Se ejecuta dentro de `DatabaseSeeder` y puede repetirse sin duplicar.
 - **Uso** - `canAccess()` consulta primero el permiso granular y conserva la matriz antigua como respaldo.
