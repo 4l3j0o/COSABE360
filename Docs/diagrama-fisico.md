@@ -23,7 +23,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              SEGURIDAD Y USUARIOS                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│  roles ──< users                                                                │
+  users >--< model_has_roles >--< roles
 │                                                                                │
 │  users ──< operation_histories                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -116,8 +116,7 @@ CREATE TABLE users (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role_id BIGINT UNSIGNED NOT NULL,
+    password VARCHAR(255) NULL,
     telefono VARCHAR(20) NULL,
     estado ENUM('ACTIVO', 'INACTIVO', 'ELIMINADO') DEFAULT 'ACTIVO',
     intentos_fallidos TINYINT UNSIGNED DEFAULT 0,
@@ -127,15 +126,14 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (role_id)
-        REFERENCES roles(id)
-        ON DELETE RESTRICT,
-
     INDEX idx_email (email),
-    INDEX idx_estado (estado),
-    INDEX idx_role (role_id)
+    INDEX idx_estado (estado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
+> **HU-86:** `users.role_id` fue eliminado. La relación usuario-rol se guarda en
+> `model_has_roles` (pivote de `spatie/laravel-permission`). El rol principal se
+> resuelve con `User::rol()`.
 
 ---
 
@@ -1539,7 +1537,6 @@ id
 
 FK
 ────────────────────────────────────────
-role_id
 user_id
 student_id
 parent_guardian_id

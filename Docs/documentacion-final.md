@@ -658,7 +658,7 @@ El modelo conceptual representa las principales entidades del sistema y sus rela
 | Tabla | Clave Primaria | Claves Foráneas | Atributos principales |
 |---|---|---|---|
 | roles | id | — | nombre, descripcion, estado |
-| users | id | role_id | nombre, apellido, email, password, estado |
+| users | id | - | nombre, apellido, email, password, estado; roles vía `model_has_roles` |
 | operation_histories | id | user_id | accion, modulo, detalle |
 | students | id | user_id | codigo, nombres, apellidos, documento |
 | parent_guardians | id | user_id | nombres, apellidos, documento |
@@ -744,8 +744,7 @@ CREATE TABLE users (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role_id BIGINT UNSIGNED NOT NULL,
+    password VARCHAR(255) NULL,
     telefono VARCHAR(20) NULL,
     estado ENUM('ACTIVO', 'INACTIVO', 'ELIMINADO')
         DEFAULT 'ACTIVO',
@@ -753,16 +752,15 @@ CREATE TABLE users (
     bloqueado_hasta TIMESTAMP NULL,
     ultimo_acceso TIMESTAMP NULL,
     remember_token VARCHAR(100) NULL,
-    FOREIGN KEY (role_id)
-        REFERENCES roles(id)
-        ON DELETE RESTRICT,
     INDEX idx_email (email),
-    INDEX idx_estado (estado),
-    INDEX idx_role (role_id)
+    INDEX idx_estado (estado)
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
 ```
+
+> **HU-86:** la relación usuario-rol vive en la tabla pivote
+> `model_has_roles` de `spatie/laravel-permission`; `users.role_id` ya no existe.
 
 **Ejemplo de tabla students.**
 
@@ -1472,8 +1470,7 @@ La gestión de riesgos permitirá identificar anticipadamente situaciones que pu
 | nombre | VARCHAR(100) | Nombre | NOT NULL |
 | apellido | VARCHAR(100) | Apellido | NOT NULL |
 | email | VARCHAR(150) | Correo | UNIQUE |
-| password | VARCHAR(255) | Contraseña cifrada mediante hash | NOT NULL |
-| role_id | BIGINT UNSIGNED | Rol | FK |
+| password | VARCHAR(255) | Contraseña cifrada mediante hash | NULLABLE |
 | estado | ENUM | Estado del usuario | DEFAULT ACTIVO |
 | intentos_fallidos | TINYINT | Intentos fallidos | DEFAULT 0 |
 
