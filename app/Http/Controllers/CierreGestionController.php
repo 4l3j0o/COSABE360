@@ -24,6 +24,8 @@ class CierreGestionController extends Controller
 {
     public function index(Request $request): View
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $cursos = $this->cursosPermitidos($request->user());
 
         $curso = $request->query('section_id')
@@ -41,6 +43,8 @@ class CierreGestionController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $curso = Section::with(['grade', 'gestion'])->findOrFail($request->query('section_id'));
         $resultado = $this->build($curso);
 

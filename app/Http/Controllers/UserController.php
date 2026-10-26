@@ -13,6 +13,8 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless($request->user()->puede('usuarios.ver'), 403);
+
         $users = User::with('rol')
             ->where('estado', '!=', 'ELIMINADO')
             ->when($request->query('buscar'), function ($query, $buscar) {
@@ -37,11 +39,15 @@ class UserController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
+
         return view('users.create', ['roles' => Role::orderBy('id')->get()]);
     }
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->puede('usuarios.gestionar'), 403);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
@@ -64,6 +70,8 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
+
         return view('users.edit', [
             'user' => $user,
             'roles' => Role::orderBy('id')->get(),
@@ -72,6 +80,8 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
+        abort_unless(auth()->user()->puede('usuarios.ver'), 403);
+
         $user->load('rol');
 
         return view('users.show', [
@@ -82,6 +92,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        abort_unless($request->user()->puede('usuarios.gestionar'), 403);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
@@ -116,6 +128,8 @@ class UserController extends Controller
 
     public function toggle(User $user)
     {
+        abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
+
         if ($user->is(auth()->user())) {
             return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes desactivar tu propia cuenta.', 'error');
         }
@@ -131,6 +145,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
+
         if ($user->is(auth()->user())) {
             return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes eliminar tu propia cuenta.', 'error');
         }

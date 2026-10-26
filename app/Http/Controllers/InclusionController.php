@@ -68,6 +68,6 @@ class InclusionController extends Controller
 
     private function autorizar(Request $request): void
     {
-        abort_unless($request->user()->hasAnyRole(['Administrador', 'Director', 'Secretaría']), 403);
+        abort_unless($request->user()->puede('expediente.gestionar'), 403);
     }
 }

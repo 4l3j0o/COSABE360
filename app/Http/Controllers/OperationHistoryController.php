@@ -10,6 +10,8 @@ class OperationHistoryController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless($request->user()->puede('auditoria.ver'), 403);
+
         $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'modulo' => ['nullable', 'string', 'max:50'],
@@ -38,6 +40,8 @@ class OperationHistoryController extends Controller
 
     public function show(Request $request, OperationHistory $operationHistory)
     {
+        abort_unless($request->user()->puede('auditoria.ver'), 403);
+
         $operationHistory->load(['user.rol']);
         if ($request->expectsJson()) {
             return response()->json(['data' => $operationHistory]);
