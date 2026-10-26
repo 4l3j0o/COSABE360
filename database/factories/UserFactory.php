@@ -22,7 +22,7 @@ class UserFactory extends Factory
             'apellido' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
-            'role_id' => fn () => Role::query()->inRandomOrder()->value('id')
+            'role' => fn () => Role::query()->inRandomOrder()->value('id')
                 ?? Role::query()->create(['nombre' => 'Docente', 'descripcion' => 'Registro de calificaciones y asistencia'])->id,
             'telefono' => fake()->optional()->phoneNumber(),
             'estado' => 'ACTIVO',
@@ -33,7 +33,7 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->state(fn () => [
-            'role_id' => Role::query()->firstOrCreate(['nombre' => 'Administrador'])->id,
+            'role' => Role::query()->firstOrCreate(['nombre' => 'Administrador'])->id,
         ]);
     }
 }

@@ -511,8 +511,9 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 
 ## HU-86: Retiro de users.role_id (2026-10-26)
 - **Columna eliminada** - se elimina `users.role_id`; el rol principal se resuelve desde `model_has_roles` mediante `User::rol()` (`HasOneThrough`).
-- **Compatibilidad** - `role_id` sigue aceptándose como atributo virtual en formularios, seeders, factories y tests. Al guardar, el modelo lo intercepta y sincroniza el rol de Spatie; `$user->role_id` devuelve el id del rol desde el pivote.
+- **Compatibilidad** - se retiró el alias virtual `role_id`. Formularios, seeders, factories y tests usan ahora el atributo de entrada `role`, que se traduce al pivote de Spatie al guardar. `$user->role` devuelve el id del rol principal.
 - **Vistas y consultas** - `$user->rol`, `with('rol')` y `whereHas('rol')` siguen funcionando. Las consultas directas `where('role_id')` se reemplazaron por `whereHas('roles')`.
+- **Configuración antigua** - se eliminó `config/permisos.php`. `canAccess()` ahora se resuelve únicamente con `permisos360` y los permisos de Spatie.
 - **Migración** - antes de eliminar la columna se asegura que todos los usuarios tengan su fila en `model_has_roles`.
 - **Pruebas** - se agregó cobertura que verifica que `users` ya no tiene `role_id` y que el rol se resuelve desde el pivote.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.

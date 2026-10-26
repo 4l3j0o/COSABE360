@@ -35,7 +35,7 @@ class DocenteAccesosDiarioConductaTest extends TestCase
         $subject = Subject::firstOrCreate(['nombre' => 'Tecnología Acc'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Acc', 'email' => 'doc_acc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Acc', 'email' => 'doc_acc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'nombres' => 'Docente', 'apellidos' => 'Acc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
         SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 

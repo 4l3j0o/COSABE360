@@ -43,7 +43,7 @@ class GestionarUsuariosTest extends TestCase
             'apellido' => 'Lopez',
             'email' => 'maria@sanber.com',
             'password' => 'password123',
-            'role_id' => $rolDocente->id,
+            'role' => $rolDocente->id,
             'telefono' => '70012345',
         ])->assertRedirect(route('users.index'));
 
@@ -75,7 +75,7 @@ class GestionarUsuariosTest extends TestCase
             'apellido' => 'Usuario',
             'email' => 'duplicado@sanber.com',
             'password' => 'password123',
-            'role_id' => $rol->id,
+            'role' => $rol->id,
         ])->assertSessionHasErrors('email');
 
         $this->assertDatabaseCount('users', 2);
@@ -92,7 +92,7 @@ class GestionarUsuariosTest extends TestCase
             'nombre' => 'NombreEditado',
             'apellido' => 'ApellidoEditado',
             'email' => $user->email,
-            'role_id' => $rolDirector->id,
+            'role' => $rolDirector->id,
             'telefono' => '70098765',
         ])->assertRedirect(route('users.show', $user));
 
@@ -121,7 +121,7 @@ class GestionarUsuariosTest extends TestCase
             'nombre' => $user->nombre,
             'apellido' => $user->apellido,
             'email' => 'otro@sanber.com',
-            'role_id' => $rol->id,
+            'role' => $rol->id,
         ])->assertSessionHasErrors('email');
     }
 

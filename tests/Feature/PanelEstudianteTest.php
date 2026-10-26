@@ -35,7 +35,7 @@ class PanelEstudianteTest extends TestCase
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
         $est = Student::create(['codigo' => 'E' . $sufijo, 'nombres' => 'Est', 'apellidos' => 'Alu ' . $sufijo, 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '555' . $sufijo, 'email' => 'est_' . $sufijo . '@t.bo', 'estado' => 'ACTIVO']);
-        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Alu', 'email' => 'est_' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Alu', 'email' => 'est_' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $userEst->id]);
 
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);

@@ -54,7 +54,7 @@ class AttendanceReportTest extends TestCase
     private function crearDocente(): array
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Rep', 'email' => 'doc_rep_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Rep', 'email' => 'doc_rep_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Rep', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
 
         return compact('user', 'teacher');
@@ -118,7 +118,7 @@ class AttendanceReportTest extends TestCase
     private function crearEstudianteUser(Student $est): User
     {
         $rol = Role::where('nombre', 'Estudiante')->first();
-        $user = User::create(['nombre' => 'Est', 'apellido' => 'Rep', 'email' => 'est_rep_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Est', 'apellido' => 'Rep', 'email' => 'est_rep_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $user->id]);
 
         return $user;

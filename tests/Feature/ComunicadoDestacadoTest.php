@@ -29,7 +29,7 @@ class ComunicadoDestacadoTest extends TestCase
     private function docente(string $email = 'doc_dest@t.bo'): User
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Dest', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Dest', 'email' => $email, 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
         return $user;
     }

@@ -87,7 +87,7 @@ class DocenteUsuariosSeeder extends Seeder
                     'nombre' => $nombre,
                     'apellido' => $apellido,
                     'password' => $password,
-                    'role_id' => $rolDocente,
+                    'role' => $rolDocente,
                     'estado' => 'ACTIVO',
                 ]
             );

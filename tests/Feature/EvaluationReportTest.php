@@ -55,7 +55,7 @@ class EvaluationReportTest extends TestCase
     private function crearDocente(): array
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Eval', 'email' => 'doc_eval_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Eval', 'email' => 'doc_eval_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Eval', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
 
         return compact('user', 'teacher');

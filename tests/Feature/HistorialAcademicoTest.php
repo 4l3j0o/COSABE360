@@ -39,7 +39,7 @@ class HistorialAcademicoTest extends TestCase
         $subject = Subject::create(['nombre' => 'Matemáticas Trim', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDoc = Role::where('nombre', 'Docente')->first();
-        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Hist', 'email' => 'doc_hist_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
+        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Hist', 'email' => 'doc_hist_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDoc->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDoc->id, 'nombres' => 'Doc', 'apellidos' => 'Hist', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
         $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
@@ -74,7 +74,7 @@ class HistorialAcademicoTest extends TestCase
     private function crearEstudianteUser(Student $student, string $email): User
     {
         $rolEst = Role::where('nombre', 'Estudiante')->first();
-        $user = User::create(['nombre' => 'Hist', 'apellido' => 'Est', 'email' => $email, 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Hist', 'apellido' => 'Est', 'email' => $email, 'password' => bcrypt('password'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $student->update(['user_id' => $user->id]);
 
         return $user;
@@ -142,7 +142,7 @@ class HistorialAcademicoTest extends TestCase
     {
         $datos = $this->crearDatosHistorial();
         $rolDir = Role::where('nombre', 'Director')->first() ?? Role::where('nombre', 'Administrador')->first();
-        $userDir = User::create(['nombre' => 'Dir', 'apellido' => 'Hist', 'email' => 'dir_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDir->id, 'estado' => 'ACTIVO']);
+        $userDir = User::create(['nombre' => 'Dir', 'apellido' => 'Hist', 'email' => 'dir_hist@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDir->id, 'estado' => 'ACTIVO']);
 
         $this->actingAs($userDir);
         $response = $this->get('/historial-academico?student_id=' . $datos['student']->id);

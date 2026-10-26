@@ -38,7 +38,7 @@ class HorariosDetalladosTest extends TestCase
         $subject = Subject::create(['nombre' => 'Materia Det Univoca', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Det', 'email' => 'doc_det@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Det', 'email' => 'doc_det@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Det', 'numero_documento' => '9990001', 'estado' => 'ACTIVO']);
 
         Schedule::create([
@@ -65,7 +65,7 @@ class HorariosDetalladosTest extends TestCase
         $secSec = Section::create(['grade_id' => $gSec->id, 'nombre' => 'C', 'codigo' => 'S1Y', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Vis', 'email' => 'doc_vis@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Vis', 'email' => 'doc_vis@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Vis', 'numero_documento' => '9990002', 'estado' => 'ACTIVO']);
 
         (new HorariosDetalladosSeeder)->aplicarDetalle($teacher, [
@@ -123,7 +123,7 @@ class HorariosDetalladosTest extends TestCase
         $subject = Subject::create(['nombre' => 'Fisica Tarde Univoca', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $userDocente = User::create(['nombre' => 'Doc', 'apellido' => 'Tarde', 'email' => 'doc_tarde@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::create(['nombre' => 'Doc', 'apellido' => 'Tarde', 'email' => 'doc_tarde@t.bo', 'password' => bcrypt('x'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'nombres' => 'Doc', 'apellidos' => 'Tarde', 'numero_documento' => '9990007', 'estado' => 'ACTIVO']);
 
         Schedule::create([
@@ -132,7 +132,7 @@ class HorariosDetalladosTest extends TestCase
         ]);
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
-        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Tarde', 'email' => 'est_tarde@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Tarde', 'email' => 'est_tarde@t.bo', 'password' => bcrypt('x'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est = Student::create(['codigo' => 'EST-TARDE-1', 'nombres' => 'Est', 'apellidos' => 'Tarde', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '9990008', 'estado' => 'ACTIVO', 'user_id' => $userEst->id]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
         Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $section->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
@@ -146,7 +146,7 @@ class HorariosDetalladosTest extends TestCase
     private function docenteDetalle(string $email, string $doc = '9990011'): array
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Detalle', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Detalle', 'email' => $email, 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Detalle', 'numero_documento' => $doc, 'estado' => 'ACTIVO']);
 
         return compact('user', 'teacher');
@@ -311,7 +311,7 @@ class HorariosDetalladosTest extends TestCase
         $section = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => $codigo, 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Fb', 'email' => 'doc_fb_' . strtolower($codigo) . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Fb', 'email' => 'doc_fb_' . strtolower($codigo) . '@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Fb', 'numero_documento' => '99903' . substr($codigo, 1, 2), 'estado' => 'ACTIVO']);
 
         return compact('nivel', 'section', 'gestion', 'teacher');
@@ -368,7 +368,7 @@ class HorariosDetalladosTest extends TestCase
         ]);
         $subject = Subject::create(['nombre' => 'Mat Par Man', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
         $rol = Role::where('nombre', 'Docente')->first();
-        $u = User::create(['nombre' => 'Doc', 'apellido' => 'Pm', 'email' => 'doc_pm@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $u = User::create(['nombre' => 'Doc', 'apellido' => 'Pm', 'email' => 'doc_pm@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $u->id, 'nombres' => 'Doc', 'apellidos' => 'Pm', 'numero_documento' => '9990801', 'estado' => 'ACTIVO']);
         Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '14:00', 'hora_fin' => '14:40', 'estado' => 'ACTIVO']);
         Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'MARTES', 'hora_inicio' => '09:15', 'hora_fin' => '09:55', 'estado' => 'ACTIVO']);
@@ -393,7 +393,7 @@ class HorariosDetalladosTest extends TestCase
         $subject = Subject::create(['nombre' => 'Mat Man Univoca', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Man', 'email' => 'doc_man@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Man', 'email' => 'doc_man@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Man', 'numero_documento' => '9990777', 'estado' => 'ACTIVO']);
 
         // Una clase de tarde y una de mañana (misma sección secundaria)
@@ -418,13 +418,13 @@ class HorariosDetalladosTest extends TestCase
         $subject = Subject::create(['nombre' => 'Inv Man Univoca', 'level_id' => $sec->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $ud = User::create(['nombre' => 'Doc', 'apellido' => 'Men', 'email' => 'doc_men@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $ud = User::create(['nombre' => 'Doc', 'apellido' => 'Men', 'email' => 'doc_men@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $ud->id, 'nombres' => 'Doc', 'apellidos' => 'Men', 'numero_documento' => '9990778', 'estado' => 'ACTIVO']);
         Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'LUNES', 'hora_inicio' => '14:00', 'hora_fin' => '14:40', 'estado' => 'ACTIVO']);
         Schedule::create(['section_id' => $section->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id, 'tipo' => 'CLASE', 'dia' => 'MIERCOLES', 'hora_inicio' => '07:30', 'hora_fin' => '08:15', 'estado' => 'ACTIVO']);
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
-        $ue = User::create(['nombre' => 'Est', 'apellido' => 'Men', 'email' => 'est_men@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $ue = User::create(['nombre' => 'Est', 'apellido' => 'Men', 'email' => 'est_men@t.bo', 'password' => bcrypt('x'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est = Student::create(['codigo' => 'EST-MAN-1', 'nombres' => 'Est', 'apellidos' => 'Men', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '9990779', 'estado' => 'ACTIVO', 'user_id' => $ue->id]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'COMPLETADA']);
         Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $section->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);

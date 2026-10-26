@@ -29,7 +29,7 @@ class ReportesConsolidacionTest extends TestCase
     {
         $rol = Role::where('nombre', 'Administrador')->first();
 
-        return User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'admin_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        return User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'admin_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_landings_viejas_redirigen_a_central(): void
@@ -95,7 +95,7 @@ class ReportesConsolidacionTest extends TestCase
     public function test_director_no_ve_ni_descarga_matriculas_pagos(): void
     {
         $rol = Role::where('nombre', 'Director')->first();
-        $director = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'dir_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $director = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'dir_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
         // No los ve en la central
         $response = $this->actingAs($director)->get(route('reportes.central.index'));
@@ -150,7 +150,7 @@ class ReportesConsolidacionTest extends TestCase
     public function test_director_no_abre_matriculas_ni_pagos(): void
     {
         $rol = Role::where('nombre', 'Director')->first();
-        $director = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'dir_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $director = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'dir_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
         $this->actingAs($director)->get(route('reportes.central.administrativo.matriculas'))
             ->assertRedirect(route('acceso.denegado'));

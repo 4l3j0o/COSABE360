@@ -27,7 +27,7 @@ class RolePermissionTest extends TestCase
             'apellido' => 'Prueba',
             'email' => 'admin_'.fake()->unique()->numerify('####').'@test.local',
             'password' => Hash::make('password'),
-            'role_id' => Role::where('nombre', $rol)->value('id'),
+            'role' => Role::where('nombre', $rol)->value('id'),
             'estado' => 'ACTIVO',
         ]);
     }

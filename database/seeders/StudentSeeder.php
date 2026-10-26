@@ -358,7 +358,7 @@ class StudentSeeder extends Seeder
                     'nombre' => $datos['nombres'],
                     'apellido' => $datos['apellidos'],
                     'password' => $password,
-                    'role_id' => $rolEstudiante,
+                    'role' => $rolEstudiante,
                     'telefono' => $datos['telefono'],
                     'estado' => 'ACTIVO',
                 ]

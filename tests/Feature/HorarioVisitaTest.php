@@ -23,7 +23,7 @@ class HorarioVisitaTest extends TestCase
     private function docente(string $email = 'doc_vis@t.bo'): array
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Vis', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Vis', 'email' => $email, 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Vis', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         return compact('user', 'teacher');
@@ -111,7 +111,7 @@ class HorarioVisitaTest extends TestCase
         ]);
 
         $rol = Role::where('nombre', 'Estudiante')->first();
-        $est = User::create(['nombre' => 'Est', 'apellido' => 'V', 'email' => 'est_vis@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $est = User::create(['nombre' => 'Est', 'apellido' => 'V', 'email' => 'est_vis@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         Student::create(['codigo' => 'EST-VIS-1', 'nombres' => 'Est', 'apellidos' => 'V', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '9990003', 'estado' => 'ACTIVO', 'user_id' => $est->id]);
 
         $this->actingAs($est);

@@ -40,7 +40,7 @@ class AttendanceTest extends TestCase
 
         // Docente y asignación
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Test', 'email' => 'docente_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Test', 'email' => 'docente_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'codigo' => 'DOC-ATT-' . fake()->unique()->numerify('####'), 'nombres' => 'Docente', 'apellidos' => 'Test', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $sectionSubject = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
@@ -188,7 +188,7 @@ class AttendanceTest extends TestCase
         $datos = $this->crearCursoConEstudiantes(1);
         // otro docente no asignado
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $otroUser = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_doc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $otroUser = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_doc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         Teacher::create(['user_id' => $otroUser->id, 'codigo' => 'DOC-OTRO-' . fake()->unique()->numerify('####'), 'nombres' => 'Otro', 'apellidos' => 'Doc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $this->actingAs($otroUser);
@@ -333,7 +333,7 @@ class AttendanceTest extends TestCase
     {
         $datos = $this->crearCursoConEstudiantes(1);
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $otroUser = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_doc2_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $otroUser = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_doc2_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         Teacher::create(['user_id' => $otroUser->id, 'codigo' => 'DOC-OTRO2-' . fake()->unique()->numerify('####'), 'nombres' => 'Otro', 'apellidos' => 'Doc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $this->actingAs($otroUser);
@@ -363,7 +363,7 @@ class AttendanceTest extends TestCase
     {
         $datos = $this->crearCursoConEstudiantes(1);
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
-        $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Test', 'email' => 'admin_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
+        $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Test', 'email' => 'admin_att_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolAdmin->id, 'estado' => 'ACTIVO']);
         $this->actingAs($admin);
         $this->post('/asistencias', [
             'section_id' => $datos['curso']->id,
@@ -410,7 +410,7 @@ class AttendanceTest extends TestCase
     {
         $datos = $this->crearCursoConEstudiantes(2);
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
-        $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Edita', 'email' => 'admin_edita_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
+        $admin = User::create(['nombre' => 'Admin', 'apellido' => 'Edita', 'email' => 'admin_edita_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolAdmin->id, 'estado' => 'ACTIVO']);
         $this->actingAs($admin);
 
         // Queda una ausencia de hace semanas en Matemáticas

@@ -57,7 +57,7 @@ class ReporteCentralTest extends TestCase
     private function crearDocente(string $sufijo = ''): array
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'RC' . $sufijo, 'email' => 'doc_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'RC' . $sufijo, 'email' => 'doc_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'RC' . $sufijo, 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
 
         return compact('user', 'teacher');
@@ -67,7 +67,7 @@ class ReporteCentralTest extends TestCase
     {
         $rol = Role::where('nombre', 'Administrador')->first();
 
-        return User::create(['nombre' => 'Admin', 'apellido' => 'RC', 'email' => 'admin_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        return User::create(['nombre' => 'Admin', 'apellido' => 'RC', 'email' => 'admin_rc_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_landing_muestra_los_cuatro_reportes(): void

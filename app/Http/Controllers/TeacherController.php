@@ -74,7 +74,7 @@ class TeacherController extends Controller
                         'email' => $validated['email'],
                         // Acceso vía Google: contraseña aleatoria sin uso.
                         'password' => Hash::make(Str::random(32)),
-                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'role' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',
                     ]);
                 }
@@ -142,7 +142,7 @@ class TeacherController extends Controller
                         'apellido' => $validated['apellidos'],
                         'email' => $validated['email'],
                         'password' => Hash::make(Str::random(32)),
-                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'role' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => 'ACTIVO',
                     ]);
                 }

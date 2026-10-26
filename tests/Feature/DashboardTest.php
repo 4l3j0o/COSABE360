@@ -24,7 +24,7 @@ class DashboardTest extends TestCase
             'apellido' => 'Sistema',
             'email' => 'admin@test.com',
             'password' => 'password123',
-            'role_id' => $role->id,
+            'role' => $role->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -87,7 +87,7 @@ class DashboardTest extends TestCase
             'apellido' => 'Usuario',
             'email' => 'otro@test.com',
             'password' => 'password123',
-            'role_id' => $roleDocente->id,
+            'role' => $roleDocente->id,
             'estado' => 'ACTIVO',
         ]);
 

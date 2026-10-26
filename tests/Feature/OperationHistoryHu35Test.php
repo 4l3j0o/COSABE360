@@ -25,7 +25,7 @@ class OperationHistoryHu35Test extends TestCase
             'apellido' => 'User',
             'email' => strtolower(str_replace('/', '', $rol)) . '@test.com',
             'password' => 'password123',
-            'role_id' => $role->id,
+            'role' => $role->id,
             'estado' => 'ACTIVO',
         ]);
     }

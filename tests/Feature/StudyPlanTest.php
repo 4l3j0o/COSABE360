@@ -38,7 +38,7 @@ class StudyPlanTest extends TestCase
     private function docente(string $email, string $doc): Teacher
     {
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Plan', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Doc', 'apellido' => 'Plan', 'email' => $email, 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
         return Teacher::create(['user_id' => $user->id, 'nombres' => 'Doc', 'apellidos' => 'Plan', 'numero_documento' => $doc, 'estado' => 'ACTIVO']);
     }

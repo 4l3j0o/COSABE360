@@ -61,7 +61,7 @@ class ConductaReporteTest extends TestCase
         $userEst = User::create([
             'nombre' => 'Juan', 'apellido' => 'Pérez',
             'email' => 'est_cond_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
-            'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO',
+            'password' => bcrypt('password'), 'role' => $rolEst->id, 'estado' => 'ACTIVO',
         ]);
         $est1->update(['user_id' => $userEst->id]);
 
@@ -69,7 +69,7 @@ class ConductaReporteTest extends TestCase
             'nombre' => 'Directora', 'apellido' => 'Primaria',
             'email' => 'dir_cond_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Director')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Director')->value('id'), 'estado' => 'ACTIVO',
         ]);
         $director->nivelesACargo()->attach($primaria->id);
 
@@ -77,14 +77,14 @@ class ConductaReporteTest extends TestCase
             'nombre' => 'Regente', 'apellido' => 'General',
             'email' => 'reg_cond_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Regente')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Regente')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
         $secretaria = User::create([
             'nombre' => 'Secretaria', 'apellido' => 'Cond',
             'email' => 'sec_cond_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Secretaría')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Secretaría')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
         $admin = User::whereHas('roles', fn ($q) => $q->where('roles.nombre', 'Administrador'))->firstOrFail();
@@ -102,7 +102,7 @@ class ConductaReporteTest extends TestCase
             'nombre' => $nombre, 'apellido' => $apellido,
             'email' => 'doc_cond_'.fake()->unique()->numerify('#####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Docente')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Docente')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
         $teacher = Teacher::create([

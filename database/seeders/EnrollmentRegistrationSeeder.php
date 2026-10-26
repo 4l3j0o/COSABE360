@@ -169,7 +169,7 @@ class EnrollmentRegistrationSeeder extends Seeder
                 'nombre'       => $nombres[$semilla % count($nombres)],
                 'apellido'     => $apellidos[$semilla % count($apellidos)],
                 'password'     => Hash::make('password123'),
-                'role_id'      => Role::where('nombre', 'Estudiante')->value('id'),
+                'role'      => Role::where('nombre', 'Estudiante')->value('id'),
                 'telefono'     => '7' . str_pad((string) (rand(1000000, 9999999)), 7, '0', STR_PAD_LEFT),
                 'estado'       => 'ACTIVO',
             ]

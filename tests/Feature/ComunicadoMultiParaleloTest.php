@@ -38,7 +38,7 @@ class ComunicadoMultiParaleloTest extends TestCase
             'apellido' => "U{$this->seq}",
             'email' => "m{$this->seq}_".strtolower(str_replace(['/', ' '], '', $rolNombre)).'@test.com',
             'password' => 'password123',
-            'role_id' => $this->rol($rolNombre)->id,
+            'role' => $this->rol($rolNombre)->id,
             'estado' => 'ACTIVO',
         ]);
     }

@@ -42,7 +42,7 @@ class InscripcionFlujoTest extends TestCase
     {
         $rol = Role::where('nombre', $rolNombre)->first();
 
-        return User::create(['nombre' => 'Test', 'apellido' => 'Ins', 'email' => $email, 'password' => bcrypt('password'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        return User::create(['nombre' => 'Test', 'apellido' => 'Ins', 'email' => $email, 'password' => bcrypt('password'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
     }
 
     private function datosInscripcion(int $cursoId, string $ci, string $paterno = 'Estudiante'): array

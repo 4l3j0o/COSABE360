@@ -159,7 +159,7 @@ class EstadoCuentaTest extends TestCase
             'apellido' => 'Test',
             'email' => 'doc_ec_' . fake()->unique()->numerify('####') . '@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => $rolDocente->id,
+            'role' => $rolDocente->id,
             'estado' => 'ACTIVO',
         ]);
 

@@ -40,7 +40,7 @@ class EvaluationLogicTest extends TestCase
         $subject = Subject::firstOrCreate(['nombre' => 'Materia Log'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDoc = Role::where('nombre', 'Docente')->first();
-        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Log', 'email' => 'doc_log_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
+        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Log', 'email' => 'doc_log_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDoc->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDoc->id, 'nombres' => 'Doc', 'apellidos' => 'Log', 'tipo_documento' => 'CI', 'numero_documento' => fake()->unique()->numerify('########'), 'complemento' => '', 'estado' => 'ACTIVO']);
         $cs = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
