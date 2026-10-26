@@ -33,7 +33,7 @@ class StoreDiarioAulaRequest extends FormRequest
 
             'recursos' => ['nullable', 'array', 'max:30'],
             'recursos.*.nombre' => ['nullable', 'string', 'max:150'],
-            'recursos.*.imagen' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+            'recursos.*.imagen' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:10240'],
             'recursos.*.link' => ['nullable', 'url', 'max:500'],
         ];
     }

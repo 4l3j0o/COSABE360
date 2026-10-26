@@ -237,7 +237,7 @@ class StudentController extends Controller
             'direccion'          => 'nullable|string|max:255',
             'telefono'           => 'nullable|string|max:20',
             'email'             => 'nullable|email|max:150|unique:students,email',
-            'fotografia'         => 'nullable|image|max:2048',
+            'fotografia'         => 'nullable|image|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:2048',
             'idioma'             => 'nullable|string|max:50',
             'cultura'            => 'nullable|string|max:50',
             'discapacidad'       => 'nullable|string|max:100',

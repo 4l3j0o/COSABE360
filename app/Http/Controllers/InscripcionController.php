@@ -567,7 +567,7 @@ class InscripcionController extends Controller
 
         $validated = $request->validate([
             'tipo_documento' => ['required', Rule::in(array_keys(self::DOCS_LINEA))],
-            'archivo' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'archivo' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'mimetypes:application/pdf,image/jpeg,image/png', 'max:5120'],
         ], [
             'archivo.required' => 'Seleccione un archivo para subir.',
             'archivo.mimes' => 'El archivo debe ser de tipo: pdf, jpg, jpeg, png.',
@@ -624,7 +624,7 @@ class InscripcionController extends Controller
         $validated = $request->validate([
             'dir_latitud' => ['required', 'numeric', 'between:-90,90'],
             'dir_longitud' => ['required', 'numeric', 'between:-180,180'],
-            'foto_fachada' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'foto_fachada' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'mimetypes:image/jpeg,image/png', 'max:5120'],
         ], [
             'dir_latitud.required' => 'Marque la ubicación de su domicilio en el mapa.',
             'foto_fachada.mimes' => 'La foto debe ser de tipo: jpg, jpeg, png.',

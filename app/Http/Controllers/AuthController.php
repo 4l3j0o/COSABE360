@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -54,6 +55,11 @@ class AuthController extends Controller
                 $this->registrarIntentoFallido($user);
             }
 
+            SecurityLog::event('login.failed', [
+                'email' => $credenciales['email'],
+                'metodo' => 'password',
+            ]);
+
             return back()
                 ->withErrors(['email' => 'Credenciales incorrectas.'])
                 ->onlyInput('email');
@@ -77,6 +83,8 @@ class AuthController extends Controller
             'intentos_fallidos' => 0,
             'bloqueado_hasta' => null,
         ])->save();
+
+        SecurityLog::event('login.success', ['metodo' => 'password']);
 
         return redirect()->intended(route('dashboard'));
     }
@@ -142,6 +150,10 @@ class AuthController extends Controller
                 'tiene_code' => $request->has('code'),
                 'origen' => $e->getFile().':'.$e->getLine(),
             ]);
+            SecurityLog::event('login.google.error', [
+                'clase' => get_class($e),
+                'codigo' => $e->getCode(),
+            ]);
 
             return redirect()->route('login')
                 ->withErrors(['email' => 'No se pudo completar el acceso con Google. Intente nuevamente.']);
@@ -151,6 +163,8 @@ class AuthController extends Controller
         $dominio = substr(strrchr($email, '@'), 1);
 
         if ($dominio !== self::GOOGLE_HD) {
+            SecurityLog::event('login.google.rejected_domain', ['email' => $email]);
+
             return redirect()->route('login')
                 ->withErrors(['email' => 'Solo se permiten cuentas del dominio @'.self::GOOGLE_HD.'.']);
         }
@@ -160,12 +174,15 @@ class AuthController extends Controller
 
         if (! $user) {
             Log::warning('HU-36 login email no registrado', ['email' => $email, 'google_id' => $googleUser->getId()]);
+            SecurityLog::event('login.google.unregistered', ['email' => $email]);
 
             return redirect()->route('login')
                 ->withErrors(['email' => 'Su cuenta Google no está registrada en el sistema. Contacte al administrador.']);
         }
 
         if ($user->estado !== 'ACTIVO') {
+            SecurityLog::event('login.google.inactive', ['user_id' => $user->id]);
+
             return redirect()->route('login')
                 ->withErrors(['email' => 'Su cuenta se encuentra inactiva. Contacte al administrador.']);
         }
@@ -180,6 +197,8 @@ class AuthController extends Controller
             'intentos_fallidos' => 0,
             'bloqueado_hasta' => null,
         ])->save();
+
+        SecurityLog::event('login.google.success', ['metodo' => 'google']);
 
         return redirect()->intended(route('dashboard'));
     }

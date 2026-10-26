@@ -8,6 +8,7 @@ use App\Models\MonthlyPayment;
 use App\Models\ParentGuardian;
 use App\Models\Student;
 use App\Support\AccessScope;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -178,11 +179,17 @@ class MonthlyPaymentController extends Controller
                 'electronic_invoice_id' => $facturaId ?? $cuota->electronic_invoice_id,
             ]);
 
-            return compact('invoice', 'facturaMsg');
+            return compact('cuota', 'invoice', 'facturaMsg');
         });
 
         $invoice = $resultado['invoice'];
         $facturaMsg = $resultado['facturaMsg'];
+
+        SecurityLog::event('payment.registered', [
+            'student_id' => $estudiante->id,
+            'payment_id' => $resultado['cuota']->id,
+            'invoice_id' => $invoice?->id,
+        ]);
 
         if ($invoice) {
             // El correo se envía después del commit para no retener locks de BD.
@@ -267,6 +274,12 @@ class MonthlyPaymentController extends Controller
 
         $invoice = $resultado['invoice'];
         $facturaMsg = $resultado['facturaMsg'];
+
+        SecurityLog::event('payment.approved', [
+            'student_id' => $estudiante->id,
+            'payment_id' => $pago->id,
+            'invoice_id' => $invoice?->id,
+        ]);
 
         if ($invoice) {
             // El correo se envía después del commit para no retener locks de BD.

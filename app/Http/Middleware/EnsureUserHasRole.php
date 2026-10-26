@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SecurityLog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,6 +40,11 @@ $user = auth()->user();
         $userRole = $user->rol?->nombre;
 
         if (! in_array($userRole, $allowedRoles, true)) {
+            SecurityLog::event('access.denied.role', [
+                'rol' => $userRole,
+                'roles_permitidos' => $allowedRoles,
+            ]);
+
             // Si es petición AJAX/JSON devolver 403, sino redirigir a acceso denegado
             if ($request->expectsJson()) {
                 abort(403, 'Acceso denegado: rol no autorizado.');
