@@ -44,7 +44,7 @@ class LicenciaTest extends TestCase
             'apellido' => 'Test',
             'email' => 'regente_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => $rol->id,
+            'role' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -67,7 +67,7 @@ class LicenciaTest extends TestCase
         ]);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Lic', 'email' => 'doc_lic_'.fake()->unique()->numerify('####').'@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Lic', 'email' => 'doc_lic_'.fake()->unique()->numerify('####').'@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'codigo' => 'DOC-LIC-'.fake()->unique()->numerify('####'), 'nombres' => 'Docente', 'apellidos' => 'Lic', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $subjectA = Subject::create(['nombre' => 'Matemáticas', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);

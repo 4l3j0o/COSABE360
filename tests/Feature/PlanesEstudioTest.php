@@ -70,7 +70,7 @@ class PlanesEstudioTest extends TestCase
         $section = Section::create(['grade_id' => $grado->id, 'nombre' => 'A', 'codigo' => 'P1A', 'academic_year_id' => $gestion->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->first();
-        $user = User::create(['nombre' => 'Viviana', 'apellido' => 'Tapia', 'email' => 'viv@t.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'Viviana', 'apellido' => 'Tapia', 'email' => 'viv@t.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         Teacher::create(['user_id' => $user->id, 'nombres' => 'VIVIANA LIZ', 'apellidos' => 'TAPIA JURADO', 'numero_documento' => '9990004', 'estado' => 'ACTIVO']);
 
         $this->seed(PlanesEstudioSeeder::class);

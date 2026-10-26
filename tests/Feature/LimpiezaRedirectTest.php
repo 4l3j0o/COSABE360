@@ -29,7 +29,7 @@ class LimpiezaRedirectTest extends TestCase
     {
         $role = Role::where('nombre', $rol)->first();
 
-        return User::create(['nombre' => 'T', 'apellido' => 'T', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $role->id, 'estado' => 'ACTIVO']);
+        return User::create(['nombre' => 'T', 'apellido' => 'T', 'email' => $email, 'password' => bcrypt('x'), 'role' => $role->id, 'estado' => 'ACTIVO']);
     }
 
     public function test_calificaciones_redirige_segun_rol(): void

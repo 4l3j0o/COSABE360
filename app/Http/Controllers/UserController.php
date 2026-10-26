@@ -55,7 +55,7 @@ class UserController extends Controller
             // Acceso vía Google Workspace: la contraseña ya no se pide en el formulario.
             // Solo la cuenta de emergencia la usa; al resto se le asigna una aleatoria sin uso.
             'password' => ['nullable', 'string', 'min:8'],
-            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'role' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
@@ -106,7 +106,7 @@ class UserController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'password' => ['nullable', 'string', 'min:8'],
-            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'role' => ['required', 'integer', 'exists:roles,id'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 

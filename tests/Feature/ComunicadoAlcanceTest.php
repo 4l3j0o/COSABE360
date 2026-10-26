@@ -44,7 +44,7 @@ class ComunicadoAlcanceTest extends TestCase
             'apellido' => "U{$this->seq}",
             'email' => "u{$this->seq}_" . strtolower(str_replace(['/', ' '], '', $rolNombre)) . '@test.com',
             'password' => 'password123',
-            'role_id' => $this->rol($rolNombre)->id,
+            'role' => $this->rol($rolNombre)->id,
             'estado' => 'ACTIVO',
         ]);
     }

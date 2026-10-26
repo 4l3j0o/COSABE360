@@ -501,7 +501,7 @@ class InscripcionController extends Controller
                 'apellido' => $student->apellidos,
                 'email' => $student->email,
                 'password' => null,
-                'role_id' => $rol->id,
+                'role' => $rol->id,
                 'telefono' => $student->telefono,
                 'estado' => 'ACTIVO',
             ]);

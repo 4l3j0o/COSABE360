@@ -31,7 +31,7 @@ class AsignacionImportTest extends TestCase
         $mat = Subject::create(['nombre' => 'MATEMÁTICA', 'codigo' => '06', 'sigla' => 'MAT', 'level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rol = Role::where('nombre', 'Docente')->firstOrCreate(['nombre' => 'Docente']);
-        $user = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'd@d.bo', 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $user = User::create(['nombre' => 'D', 'apellido' => 'D', 'email' => 'd@d.bo', 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $user->id, 'nombres' => 'JUAN', 'apellidos' => 'PEREZ LOPEZ', 'numero_documento' => '1234567', 'estado' => 'ACTIVO']);
 
         return compact('curso', 'mat', 'teacher', 'gestion');

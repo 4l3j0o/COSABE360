@@ -56,7 +56,7 @@ class AccessControlTest extends TestCase
         $userEst = User::create([
             'nombre' => 'Ana', 'apellido' => 'Primaria',
             'email' => 'ana_seg_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
-            'password' => bcrypt('password'), 'role_id' => $rolEst, 'estado' => 'ACTIVO',
+            'password' => bcrypt('password'), 'role' => $rolEst, 'estado' => 'ACTIVO',
         ]);
         $estP->update(['user_id' => $userEst->id]);
 
@@ -64,7 +64,7 @@ class AccessControlTest extends TestCase
             'nombre' => 'Directora', 'apellido' => 'Primaria',
             'email' => 'dir_seg_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Director')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Director')->value('id'), 'estado' => 'ACTIVO',
         ]);
         $director->nivelesACargo()->attach($primaria->id);
 
@@ -72,7 +72,7 @@ class AccessControlTest extends TestCase
             'nombre' => 'Secretaria', 'apellido' => 'Seguridad',
             'email' => 'sec_seg_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Secretaría')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Secretaría')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
         $admin = User::whereHas('roles', fn ($q) => $q->where('roles.nombre', 'Administrador'))->firstOrFail();
@@ -95,7 +95,7 @@ class AccessControlTest extends TestCase
             'nombre' => $nombres, 'apellido' => $apellidos,
             'email' => 'doc_seg_'.fake()->unique()->numerify('#####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Docente')->value('id'), 'estado' => 'ACTIVO',
+            'role' => Role::where('nombre', 'Docente')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
         $teacher = Teacher::create([

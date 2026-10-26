@@ -20,7 +20,7 @@ class RegistrationTest extends TestCase
 
     private function admin(): User
     {
-        $user = User::factory()->create(['role_id' => Role::firstOrCreate(['nombre' => 'Administrador'])->id]);
+        $user = User::factory()->create(['role' => Role::firstOrCreate(['nombre' => 'Administrador'])->id]);
         $this->actingAs($user);
 
         return $user;

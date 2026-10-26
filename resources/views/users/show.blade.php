@@ -166,12 +166,12 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
-                            <select name="role_id" class="{{ $claseInput }}">
+                            <select name="role" class="{{ $claseInput }}">
                                 @foreach ($roles as $rol)
-                                    <option value="{{ $rol->id }}" @selected((string)old('role_id', $user->role_id) === (string)$rol->id)>{{ $rol->nombre }}</option>
+                                    <option value="{{ $rol->id }}" @selected((string)old('role', $user->role) === (string)$rol->id)>{{ $rol->nombre }}</option>
                                 @endforeach
                             </select>
-                            @error('role_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+                            @error('role') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>

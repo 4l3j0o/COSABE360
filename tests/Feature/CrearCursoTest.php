@@ -111,7 +111,7 @@ class CrearCursoTest extends TestCase
         $docente = User::create([
             'nombre' => 'Docente', 'apellido' => 'SinPermiso',
             'email' => 'doc_curso_' . fake()->unique()->numerify('####') . '@sanber.edu.bo',
-            'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO',
+            'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO',
         ]);
         $this->actingAs($docente);
 

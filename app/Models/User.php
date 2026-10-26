@@ -30,7 +30,7 @@ class User extends Authenticatable
         'apellido',
         'email',
         'password',
-        'role_id',
+        'role',
         'telefono',
         'estado',
         'intentos_fallidos',
@@ -64,21 +64,21 @@ class User extends Authenticatable
         ];
     }
 
-    /** HU-86: rol pendiente de sincronizar cuando llega como atributo role_id. */
+    /** HU-86: rol pendiente de sincronizar cuando llega como atributo `role`. */
     private ?int $pendingRoleId = null;
 
     private bool $pendingRoleSync = false;
 
     protected static function booted(): void
     {
-        // HU-86: `role_id` sigue aceptándose en formularios/seeders/tests como
-        // alias de compatibilidad, pero ya no se guarda en users.
+        // `role` es la entrada de compatibilidad para formularios/seeders/tests.
+        // No existe como columna: se traduce al pivote de Spatie al guardar.
         static::saving(function (User $user) {
-            if (array_key_exists('role_id', $user->getAttributes())) {
-                $valor = $user->getAttributes()['role_id'];
+            if (array_key_exists('role', $user->getAttributes())) {
+                $valor = $user->getAttributes()['role'];
                 $user->pendingRoleId = $valor === null ? null : (int) $valor;
                 $user->pendingRoleSync = true;
-                unset($user->role_id);
+                unset($user->role);
             }
         });
 
@@ -112,8 +112,8 @@ class User extends Authenticatable
         )->where('model_has_roles.model_type', static::class);
     }
 
-    /** Compatibilidad: `$user->role_id` ahora se lee del pivote. */
-    public function getRoleIdAttribute(): ?int
+    /** Rol principal como id para formularios y vistas. */
+    public function getRoleAttribute(): ?int
     {
         return $this->rol?->id;
     }
@@ -218,11 +218,6 @@ class User extends Authenticatable
                 return true;
             }
 
-            $modulo = array_search($permiso, config('permisos360.modulos', []), true);
-            if ($modulo && $this->canAccess($modulo)) {
-                return true;
-            }
-
             if (in_array('*', $asignados, true) || in_array($permiso, $asignados, true)) {
                 return true;
             }
@@ -232,32 +227,12 @@ class User extends Authenticatable
     }
 
     /**
-     * HU05/HU-85: primero consulta los permisos de Spatie y, durante la
-     * transición, mantiene el respaldo de config/permisos.php.
+     * Comprueba un módulo antiguo redirigiéndolo al permiso granular.
      */
     public function canAccess(string $modulo): bool
     {
         $permiso = config("permisos360.modulos.{$modulo}");
 
-        if ($permiso && $this->can($permiso)) {
-            return true;
-        }
-
-        if ($this->can($modulo)) {
-            return true;
-        }
-
-        $permisos = config('permisos.roles', []);
-        $rol = $this->rol?->nombre;
-
-        if (! $rol) {
-            return false;
-        }
-
-        if (isset($permisos[$rol]) && in_array('*', $permisos[$rol], true)) {
-            return true;
-        }
-
-        return isset($permisos[$rol]) && in_array($modulo, $permisos[$rol], true);
+        return $permiso ? $this->puede($permiso) : $this->can($modulo);
     }
 }

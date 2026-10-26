@@ -39,11 +39,11 @@ class InscripcionLineaTest extends TestCase
         $subject = Subject::firstOrCreate(['nombre' => 'Materia L' . $sufijo], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
-        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'admin_l' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
+        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'admin_l' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role' => $rolAdmin->id, 'estado' => 'ACTIVO']);
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
         $est = Student::create(['codigo' => '900' . $sufijo, 'nombres' => 'Est', 'apellidos' => 'Lin ' . $sufijo, 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '777' . $sufijo, 'email' => 'est_l' . $sufijo . '@t.bo', 'estado' => 'ACTIVO']);
-        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Lin', 'email' => 'est_l' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $userEst = User::create(['nombre' => 'Est', 'apellido' => 'Lin', 'email' => 'est_l' . $sufijo . '@t.bo', 'password' => bcrypt('x'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $userEst->id]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'PENDIENTE']);
         $enrollment->registration()->create(['section_id' => $curso->id, 'fecha' => '2026-03-01', 'monto_mensual' => 0, 'estado' => 'INACTIVA']);

@@ -171,7 +171,7 @@ class TeacherSeeder extends Seeder
                         'nombre' => $docente['nombres'],
                         'apellido' => $docente['apellidos'],
                         'password' => Hash::make('password123'),
-                        'role_id' => Role::where('nombre', 'Docente')->value('id'),
+                        'role' => Role::where('nombre', 'Docente')->value('id'),
                         'estado' => $docente['estado'] === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
                     ]
                 );

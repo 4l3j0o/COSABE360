@@ -43,7 +43,7 @@ class BoletinJerarquiaTest extends TestCase
 
         $rol = Role::where('nombre', 'Docente')->first();
         $mkDoc = function (string $email, string $doc) use ($rol) {
-            $u = User::create(['nombre' => 'Doc', 'apellido' => 'Jer', 'email' => $email, 'password' => bcrypt('x'), 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+            $u = User::create(['nombre' => 'Doc', 'apellido' => 'Jer', 'email' => $email, 'password' => bcrypt('x'), 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
             return Teacher::create(['user_id' => $u->id, 'nombres' => 'Doc', 'apellidos' => 'Jer', 'numero_documento' => $doc, 'estado' => 'ACTIVO']);
         };

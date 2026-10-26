@@ -27,12 +27,12 @@ class HumoWizardTest extends TestCase
         $curso = $seccion;
 
         $rolAdmin = Role::where('nombre', 'Administrador')->first();
-        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'a@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolAdmin->id, 'estado' => 'ACTIVO']);
+        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'a@t.bo', 'password' => bcrypt('x'), 'role' => $rolAdmin->id, 'estado' => 'ACTIVO']);
         $this->actingAs($admin)->get(route('inscripciones.create'))->assertOk();
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
         $est = Student::create(['codigo' => '1', 'nombres' => 'E', 'apellidos' => 'L', 'fecha_nacimiento' => '2015-01-01', 'sexo' => 'M', 'numero_documento' => '123', 'email' => 'e@t.bo', 'estado' => 'ACTIVO']);
-        $userEst = User::create(['nombre' => 'E', 'apellido' => 'L', 'email' => 'e@t.bo', 'password' => bcrypt('x'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $userEst = User::create(['nombre' => 'E', 'apellido' => 'L', 'email' => 'e@t.bo', 'password' => bcrypt('x'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $userEst->id]);
         $enrollment = Enrollment::create(['student_id' => $est->id, 'academic_year_id' => $gestion->id, 'fecha' => '2026-03-01', 'estado' => 'PENDIENTE']);
         $enrollment->registration()->create(['section_id' => $curso->id, 'fecha' => '2026-03-01', 'monto_mensual' => 0, 'estado' => 'INACTIVA']);

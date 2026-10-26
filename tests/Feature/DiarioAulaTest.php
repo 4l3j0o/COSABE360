@@ -40,7 +40,7 @@ class DiarioAulaTest extends TestCase
         $subject = Subject::firstOrCreate(['nombre' => 'Tecnología Diario'], ['level_id' => $nivel->id, 'estado' => 'ACTIVO']);
 
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Diario', 'email' => 'doc_diario_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::create(['nombre' => 'Docente', 'apellido' => 'Diario', 'email' => 'doc_diario_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         $teacher = Teacher::create(['user_id' => $userDocente->id, 'nombres' => 'Docente', 'apellidos' => 'Diario', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
         $sectionSubject = SectionSubject::create(['section_id' => $curso->id, 'subject_id' => $subject->id, 'teacher_id' => $teacher->id]);
 
@@ -54,7 +54,7 @@ class DiarioAulaTest extends TestCase
         Registration::create(['enrollment_id' => $enrollment->id, 'section_id' => $curso->id, 'fecha' => '2026-03-02', 'monto_mensual' => 0, 'estado' => 'ACTIVA']);
 
         $rolEst = Role::where('nombre', 'Estudiante')->first();
-        $userEst = User::create(['nombre' => 'Juan', 'apellido' => 'Carlos', 'email' => 'est_diario_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolEst->id, 'estado' => 'ACTIVO']);
+        $userEst = User::create(['nombre' => 'Juan', 'apellido' => 'Carlos', 'email' => 'est_diario_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolEst->id, 'estado' => 'ACTIVO']);
         $est->update(['user_id' => $userEst->id]);
 
         return compact('curso', 'subject', 'teacher', 'userDocente', 'est', 'userEst', 'sectionSubject');
@@ -120,7 +120,7 @@ class DiarioAulaTest extends TestCase
     {
         $d = $this->crearCurso();
         $rolDocente = Role::where('nombre', 'Docente')->first();
-        $otro = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_dia_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $otro = User::create(['nombre' => 'Otro', 'apellido' => 'Doc', 'email' => 'otro_dia_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         Teacher::create(['user_id' => $otro->id, 'nombres' => 'Otro', 'apellidos' => 'Doc', 'numero_documento' => fake()->unique()->numerify('########'), 'estado' => 'ACTIVO']);
 
         $this->actingAs($otro);
@@ -318,7 +318,7 @@ class DiarioAulaTest extends TestCase
             'nombre' => 'Directora', 'apellido' => 'Diario',
             'email' => 'dir_diario_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Director')->value('id'),
+            'role' => Role::where('nombre', 'Director')->value('id'),
             'estado' => 'ACTIVO',
         ]);
         $director->nivelesACargo()->attach($primaria->id);
@@ -360,7 +360,7 @@ class DiarioAulaTest extends TestCase
             'nombre' => 'Secretaria', 'apellido' => 'Diario',
             'email' => 'sec_diario_'.fake()->unique()->numerify('####').'@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => Role::where('nombre', 'Secretaría')->value('id'),
+            'role' => Role::where('nombre', 'Secretaría')->value('id'),
             'estado' => 'ACTIVO',
         ]);
 

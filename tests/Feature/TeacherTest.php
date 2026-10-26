@@ -22,7 +22,7 @@ class TeacherTest extends TestCase
         Role::firstOrCreate(['nombre' => 'Docente'], ['descripcion' => 'Docente']);
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
-            'role_id' => $rol->id,
+            'role' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }

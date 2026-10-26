@@ -18,7 +18,7 @@ class UpdateStudentRegresionTest extends TestCase
     {
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
-            'role_id' => $rol->id,
+            'role' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -223,7 +223,7 @@ class UpdateStudentRegresionTest extends TestCase
         $this->actingAs($this->adminUser());
 
         $rolDocente = Role::firstOrCreate(['nombre' => 'Docente'], ['descripcion' => 'Docente']);
-        $userDocente = User::factory()->create(['role_id' => $rolDocente->id, 'estado' => 'ACTIVO']);
+        $userDocente = User::factory()->create(['role' => $rolDocente->id, 'estado' => 'ACTIVO']);
         Teacher::create([
             'user_id' => $userDocente->id,
             'codigo' => 'DOC-TEST-01',

@@ -267,7 +267,7 @@ class SectionTest extends TestCase
         $user = User::create([
             'nombre' => 'Test', 'apellido' => 'Secretaria',
             'email' => 'test.secretaria.sections@test.com', 'password' => 'password123',
-            'role_id' => $role->id, 'estado' => 'ACTIVO',
+            'role' => $role->id, 'estado' => 'ACTIVO',
         ]);
         $this->actingAs($user);
 

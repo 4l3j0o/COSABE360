@@ -15,7 +15,7 @@ class StudentDocumentTest extends TestCase
 
     private function admin(): User
     {
-        $user = User::factory()->create(['role_id' => Role::firstOrCreate(['nombre' => 'Administrador'])->id, 'estado' => 'ACTIVO']);
+        $user = User::factory()->create(['role' => Role::firstOrCreate(['nombre' => 'Administrador'])->id, 'estado' => 'ACTIVO']);
         $this->actingAs($user);
 
         return $user;

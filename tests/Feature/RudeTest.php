@@ -35,7 +35,7 @@ class RudeTest extends TestCase
             'apellido' => 'Rude',
             'email' => 'secre_rude_' . fake()->unique()->numerify('####') . '@sanber.edu.bo',
             'password' => bcrypt('password'),
-            'role_id' => $rol->id,
+            'role' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }
@@ -314,7 +314,7 @@ class RudeTest extends TestCase
     public function test_docente_no_accede_a_rude(): void
     {
         $rolDoc = \App\Models\Role::where('nombre', 'Docente')->first();
-        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Rude', 'email' => 'doc_rude_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role_id' => $rolDoc->id, 'estado' => 'ACTIVO']);
+        $userDoc = User::create(['nombre' => 'Doc', 'apellido' => 'Rude', 'email' => 'doc_rude_' . fake()->unique()->numerify('####') . '@sanber.edu.bo', 'password' => bcrypt('password'), 'role' => $rolDoc->id, 'estado' => 'ACTIVO']);
         $est = $this->crearEstudiante();
         $this->actingAs($userDoc);
         $this->get('/rude')->assertRedirect(route('acceso.denegado'));

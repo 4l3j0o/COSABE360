@@ -51,7 +51,7 @@ class OrdenNivelTest extends TestCase
         $this->curso('Inicial', 1, 'Ini 1ro', 1, 'I1A');
 
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'x']);
-        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'ord@test.com', 'password' => 'x', 'role_id' => $rol->id, 'estado' => 'ACTIVO']);
+        $admin = User::create(['nombre' => 'A', 'apellido' => 'A', 'email' => 'ord@test.com', 'password' => 'x', 'role' => $rol->id, 'estado' => 'ACTIVO']);
 
         $cursos = app(ComunicadoAlcanceService::class)->cursosCreables($admin);
         $this->assertSame(['I1A', 'S1A'], $cursos->map(fn ($c) => $c->codigo)->all());

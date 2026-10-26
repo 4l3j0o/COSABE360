@@ -25,7 +25,7 @@ class StudentHu07Test extends TestCase
     {
         $rol = Role::firstOrCreate(['nombre' => 'Administrador'], ['descripcion' => 'Admin']);
         return User::factory()->create([
-            'role_id' => $rol->id,
+            'role' => $rol->id,
             'estado' => 'ACTIVO',
         ]);
     }

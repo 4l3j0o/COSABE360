@@ -861,7 +861,7 @@ class StudentController extends Controller
                 'apellido' => $student->apellidos,
                 'email'    => $student->email,
                 'password' => Str::random(32),
-                'role_id'  => $rolEstudiante->id,
+                'role'  => $rolEstudiante->id,
                 'telefono' => $student->telefono,
                 'estado'   => 'ACTIVO',
             ]);

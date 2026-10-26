@@ -45,7 +45,7 @@ class UsuariosRealesSeeder extends Seeder
                     'nombre' => $nombre,
                     'apellido' => $apellido,
                     'password' => $password,
-                    'role_id' => Role::where('nombre', $rolNombre)->value('id'),
+                    'role' => Role::where('nombre', $rolNombre)->value('id'),
                     'estado' => 'ACTIVO',
                 ]
             );

@@ -29,12 +29,12 @@ class PermissionSpatieTest extends TestCase
             'apellido' => $rol,
             'email' => strtolower($rol).'_'.fake()->unique()->numerify('####').'@test.local',
             'password' => Hash::make('password'),
-            'role_id' => Role::where('nombre', $rol)->value('id'),
+            'role' => Role::where('nombre', $rol)->value('id'),
             'estado' => 'ACTIVO',
         ]);
     }
 
-    public function test_roles_y_permisos_se_sincronizan_con_role_id(): void
+    public function test_roles_y_permisos_se_sincronizan_con_role(): void
     {
         $admin = $this->usuario('Administrador');
         $docente = $this->usuario('Docente');
@@ -51,7 +51,7 @@ class PermissionSpatieTest extends TestCase
         $this->assertTrue($docente->hasAnyRole('Director,Docente'));
 
         $this->assertDatabaseHas('model_has_roles', [
-            'role_id' => $admin->role_id,
+            'role_id' => $admin->role,
             'model_type' => User::class,
             'model_id' => $admin->id,
         ]);
@@ -66,14 +66,14 @@ class PermissionSpatieTest extends TestCase
         $this->assertSame('web', $rol->guard_name);
     }
 
-    public function test_users_ya_no_guarda_role_id_y_el_rol_se_resuelve_del_pivote(): void
+    public function test_users_ya_no_guarda_role_y_el_rol_se_resuelve_del_pivote(): void
     {
-        $this->assertFalse(Schema::hasColumn('users', 'role_id'));
+        $this->assertFalse(Schema::hasColumn('users', 'role'));
 
         $admin = $this->usuario('Administrador');
 
         $this->assertSame('Administrador', $admin->rol?->nombre);
-        $this->assertSame($admin->role_id, $admin->rol?->id);
+        $this->assertSame($admin->role, $admin->rol?->id);
         $this->assertTrue(
             User::whereHas('rol', fn ($q) => $q->where('roles.nombre', 'Administrador'))->exists()
         );
