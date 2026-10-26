@@ -508,5 +508,12 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Middleware** - `permission:` usa `EnsureUserHasPermission`, que consulta Spatie y, si el entorno aún no tiene permisos sembrados, recurre al catálogo `config/permisos360.php`. `role_or_permission:` sigue disponible para casos mixtos.
 - **Pruebas** - `PermissionSpatieTest` valida sincronización de roles/permisos, creación de roles por `nombre`, idempotencia del seeder y middleware de permisos.
 - **Administración** - nueva pantalla `/roles-permisos` solo para Administrador: lista roles y permite marcar/desmarcar permisos por rol. El rol Administrador queda bloqueado con todos los permisos para evitar bloqueos. Ruta protegida con `permission:roles.gestionar`.
+
+## HU-86: Retiro de users.role_id (2026-10-26)
+- **Columna eliminada** - se elimina `users.role_id`; el rol principal se resuelve desde `model_has_roles` mediante `User::rol()` (`HasOneThrough`).
+- **Compatibilidad** - `role_id` sigue aceptándose como atributo virtual en formularios, seeders, factories y tests. Al guardar, el modelo lo intercepta y sincroniza el rol de Spatie; `$user->role_id` devuelve el id del rol desde el pivote.
+- **Vistas y consultas** - `$user->rol`, `with('rol')` y `whereHas('rol')` siguen funcionando. Las consultas directas `where('role_id')` se reemplazaron por `whereHas('roles')`.
+- **Migración** - antes de eliminar la columna se asegura que todos los usuarios tengan su fila en `model_has_roles`.
+- **Pruebas** - se agregó cobertura que verifica que `users` ya no tiene `role_id` y que el rol se resuelve desde el pivote.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.

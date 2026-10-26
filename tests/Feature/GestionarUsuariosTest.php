@@ -47,12 +47,18 @@ class GestionarUsuariosTest extends TestCase
             'telefono' => '70012345',
         ])->assertRedirect(route('users.index'));
 
+        $creado = User::where('email', 'maria@sanber.com')->firstOrFail();
+
         $this->assertDatabaseHas('users', [
             'email' => 'maria@sanber.com',
             'nombre' => 'Maria',
             'apellido' => 'Lopez',
-            'role_id' => $rolDocente->id,
             'estado' => 'ACTIVO',
+        ]);
+        $this->assertDatabaseHas('model_has_roles', [
+            'role_id' => $rolDocente->id,
+            'model_type' => User::class,
+            'model_id' => $creado->id,
         ]);
     }
 
@@ -94,7 +100,11 @@ class GestionarUsuariosTest extends TestCase
             'id' => $user->id,
             'nombre' => 'NombreEditado',
             'apellido' => 'ApellidoEditado',
+        ]);
+        $this->assertDatabaseHas('model_has_roles', [
             'role_id' => $rolDirector->id,
+            'model_type' => User::class,
+            'model_id' => $user->id,
         ]);
     }
 

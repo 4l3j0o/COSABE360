@@ -8,6 +8,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PermissionSpatieTest extends TestCase
@@ -63,6 +64,19 @@ class PermissionSpatieTest extends TestCase
         $this->assertSame('Inspector', $rol->nombre);
         $this->assertSame('Inspector', $rol->name);
         $this->assertSame('web', $rol->guard_name);
+    }
+
+    public function test_users_ya_no_guarda_role_id_y_el_rol_se_resuelve_del_pivote(): void
+    {
+        $this->assertFalse(Schema::hasColumn('users', 'role_id'));
+
+        $admin = $this->usuario('Administrador');
+
+        $this->assertSame('Administrador', $admin->rol?->nombre);
+        $this->assertSame($admin->role_id, $admin->rol?->id);
+        $this->assertTrue(
+            User::whereHas('rol', fn ($q) => $q->where('roles.nombre', 'Administrador'))->exists()
+        );
     }
 
     public function test_middleware_permission_usa_spatie(): void

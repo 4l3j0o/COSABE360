@@ -87,7 +87,7 @@ class ConductaReporteTest extends TestCase
             'role_id' => Role::where('nombre', 'Secretaría')->value('id'), 'estado' => 'ACTIVO',
         ]);
 
-        $admin = User::where('role_id', Role::where('nombre', 'Administrador')->value('id'))->firstOrFail();
+        $admin = User::whereHas('roles', fn ($q) => $q->where('roles.nombre', 'Administrador'))->firstOrFail();
 
         return compact(
             'primaria', 'secundaria', 'gestion', 's4', 's5', 'mat', 'len', 'mat5',
