@@ -47,10 +47,10 @@ class StudentHu07Test extends TestCase
 
         // Evitar colisión de código único
         if (!isset($overrides['codigo'])) {
-            $base['codigo'] = 'EST-2026-'.str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            $base['codigo'] = 'EST-2026-'.fake()->unique()->numerify('#####');
         }
         if (!isset($overrides['email'])) {
-            $base['email'] = strtolower($base['nombres'].'.'.$base['apellidos'].rand(100,999).'@test.bo');
+            $base['email'] = strtolower($base['nombres'].'.'.$base['apellidos'].fake()->unique()->numerify('#####').'@test.bo');
         }
 
         return Student::create($base);

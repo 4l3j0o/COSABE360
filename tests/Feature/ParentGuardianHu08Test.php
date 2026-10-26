@@ -28,15 +28,15 @@ class ParentGuardianHu08Test extends TestCase
     private function crearEstudiante(array $overrides = []): Student
     {
         $base = array_merge([
-            'codigo'           => 'EST-2026-'.rand(1000, 9999),
+            'codigo'           => 'EST-2026-'.fake()->unique()->numerify('#####'),
             'nombres'          => 'Juan',
             'apellidos'        => 'Pérez',
             'fecha_nacimiento' => '2010-01-01',
             'sexo'             => 'M',
             'tipo_documento'   => 'CI',
-            'numero_documento' => (string) rand(1000000, 9999999),
+            'numero_documento' => fake()->unique()->numerify('########'),
             'complemento'      => '',
-            'email'           => 'est'.rand(100, 999).'@test.bo',
+            'email'           => 'est'.fake()->unique()->numerify('########').'@test.bo',
             'estado'           => 'ACTIVO',
             'quien_es_tutor'   => 'PADRE',
         ], $overrides);
