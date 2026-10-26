@@ -20,6 +20,8 @@ class BoletinController extends Controller
 {
     public function show(Request $request, Student $student)
     {
+        abort_unless($request->user()->puede(['boletines.ver', 'boletines.ver.propio']), 403);
+
         $this->autorizar($request, $student);
 
         if ($redir = $this->verificarPagosAlDia($request, $student)) {
@@ -44,6 +46,8 @@ class BoletinController extends Controller
 
     public function pdf(Request $request, Student $student)
     {
+        abort_unless($request->user()->puede(['boletines.ver', 'boletines.ver.propio']), 403);
+
         $this->autorizar($request, $student);
 
         if ($redir = $this->verificarPagosAlDia($request, $student)) {

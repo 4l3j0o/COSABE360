@@ -16,6 +16,8 @@ class RudeController extends Controller
 {
     public function index(Request $request): View
     {
+        abort_unless($request->user()->puede('rude.ver'), 403);
+
         $query = Student::with(['rudeRecord', 'user'])
             ->orderBy('apellidos')
             ->orderBy('nombres');
@@ -42,6 +44,8 @@ class RudeController extends Controller
 
     public function show(Student $student): View
     {
+        abort_unless(request()->user()->puede('rude.ver'), 403);
+
         $student->load(['rudeRecord', 'parentGuardians', 'medicalRecord']);
         $rude = $student->rudeRecord;
 
@@ -50,6 +54,10 @@ class RudeController extends Controller
 
     public function form(Student $student): View
     {
+        $user = request()->user();
+        $esPropio = $user->hasRole('Estudiante') && (int) $user->student?->id === (int) $student->id;
+        abort_unless($user->puede('rude.editar') || $esPropio, 403);
+
         $student->load(['rudeRecord', 'parentGuardians']);
         $rude = $student->rudeRecord
             ?? new StudentRudeRecord([
@@ -79,6 +87,10 @@ class RudeController extends Controller
 
     public function update(Request $request, Student $student): RedirectResponse
     {
+        $user = $request->user();
+        $esPropio = $user->hasRole('Estudiante') && (int) $user->student?->id === (int) $student->id;
+        abort_unless($user->puede('rude.editar') || $esPropio, 403);
+
         $deptos = array_keys(config('bolivia.departamentos'));
 
         $validated = $request->validate([
@@ -422,6 +434,8 @@ class RudeController extends Controller
      */
     public function export(Student $student): StreamedResponse
     {
+        abort_unless(request()->user()->puede('rude.ver'), 403);
+
         $student->load(['rudeRecord', 'parentGuardians', 'user']);
         $rude = $student->rudeRecord;
         $R = StudentRudeRecord::class;
@@ -566,6 +580,8 @@ class RudeController extends Controller
      */
     public function exportList(): StreamedResponse
     {
+        abort_unless(request()->user()->puede('rude.ver'), 403);
+
         $estudiantes = Student::with('rudeRecord')->orderBy('apellidos')->get();
         $filename = 'RUDE_LISTADO_'.now()->format('Ymd').'.csv';
 
@@ -596,6 +612,8 @@ class RudeController extends Controller
      */
     public function exportPdf(Student $student)
     {
+        abort_unless(request()->user()->puede('rude.ver'), 403);
+
         $student->load(['rudeRecord', 'parentGuardians', 'user']);
         $rude = $student->rudeRecord;
 

@@ -19,6 +19,8 @@ class HistorialAcademicoController extends Controller
      */
     public function index(Request $request): View
     {
+        abort_unless($request->user()->puede(['historial.ver', 'historial.ver.propio']), 403);
+
         $user = auth()->user();
         $academicYearId = $request->query('academic_year_id');
         $studentId = $request->query('student_id');

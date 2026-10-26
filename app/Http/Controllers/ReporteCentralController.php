@@ -61,6 +61,8 @@ class ReporteCentralController extends Controller
 
     public function padres(Request $request): View
     {
+        abort_unless($request->user()->puede(['reportes.ver', 'reportes.administrativos.ver']), 403);
+
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
@@ -76,6 +78,8 @@ class ReporteCentralController extends Controller
 
     public function exportPadres(Request $request)
     {
+        abort_unless($request->user()->puede(['reportes.exportar', 'reportes.administrativos.ver']), 403);
+
         $user = $request->user();
         $cursos = $this->cursosPermitidos($user);
         $resultado = $this->buildPadres($request, $user, $cursos);
@@ -252,6 +256,8 @@ class ReporteCentralController extends Controller
 
     public function centralizadorEvaluacion(Request $request): View
     {
+        abort_unless($request->user()->puede(['reportes.evaluacion.ver', 'reportes.ver']), 403);
+
         $user = $request->user();
         $sectionSubjects = $this->sectionSubjectsPermitidos($user);
         $cursos = $this->cursosPermitidos($user);
@@ -267,6 +273,8 @@ class ReporteCentralController extends Controller
 
     public function exportCentralizadorEvaluacion(Request $request)
     {
+        abort_unless($request->user()->puede(['reportes.exportar', 'reportes.evaluacion.ver']), 403);
+
         $user = $request->user();
         $sectionSubjects = $this->sectionSubjectsPermitidos($user);
         $resultado = $this->buildCentralizadorEvaluacion($request, $user, $sectionSubjects);
@@ -713,6 +721,8 @@ class ReporteCentralController extends Controller
 
     public function verInscripciones(Request $request): View
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
         $filas = Enrollment::with(['estudiante', 'academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->where('academic_year_id', $v))
@@ -735,6 +745,8 @@ class ReporteCentralController extends Controller
 
     public function verMatriculas(Request $request): View
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
         $filas = Registration::with(['enrollment.estudiante', 'section.grade', 'enrollment.academicYear'])
             ->when($request->academic_year_id, fn ($q, $v) => $q->whereHas('enrollment', fn ($eq) => $eq->where('academic_year_id', $v)))
@@ -757,6 +769,8 @@ class ReporteCentralController extends Controller
 
     public function verPagos(Request $request): View
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
         $mesNombre = [2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre'];
         $filas = MonthlyPayment::with(['registration.enrollment.estudiante', 'registration.section', 'registration.enrollment.academicYear'])
@@ -780,6 +794,8 @@ class ReporteCentralController extends Controller
 
     public function verDocumentacion(Request $request): View
     {
+        abort_unless($request->user()->puede('reportes.administrativos.ver'), 403);
+
         $filas = StudentDocument::with(['student'])
             ->when($request->estado, fn ($q, $v) => $q->where('estado', $v))
             ->when($request->tipo_documento, fn ($q, $v) => $q->where('tipo_documento', $v))
