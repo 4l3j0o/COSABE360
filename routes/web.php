@@ -169,6 +169,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // HU-85: matriz visual de roles y permisos.
     Route::middleware('permission:roles.gestionar')->group(function () {
         Route::get('/roles-permisos', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::post('/roles-permisos', [RolePermissionController::class, 'store'])->name('roles.store');
         Route::get('/roles-permisos/{role}/editar', [RolePermissionController::class, 'edit'])->name('roles.edit');
         Route::put('/roles-permisos/{role}', [RolePermissionController::class, 'update'])->name('roles.update');
     });

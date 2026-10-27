@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Support\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -18,6 +20,31 @@ class RolePermissionController extends Controller
         $roles = Role::withCount('permissions')->orderBy('id')->get();
 
         return view('roles.index', compact('roles'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:50', Rule::unique('roles', 'nombre')],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+        ], [
+            'nombre.required' => 'El nombre del rol es obligatorio.',
+            'nombre.unique' => 'Ya existe un rol con ese nombre.',
+        ]);
+
+        $role = Role::create([
+            'nombre' => $validated['nombre'],
+            'descripcion' => $validated['descripcion'] ?? null,
+            'estado' => 'ACTIVO',
+        ]);
+
+        SecurityLog::event('role.created', [
+            'role_id' => $role->id,
+            'rol' => $role->nombre,
+        ]);
+
+        return redirect()->route('roles.edit', $role)
+            ->with('success', 'Rol creado correctamente. Ahora asigne sus permisos.');
     }
 
     public function edit(Role $role)

@@ -525,5 +525,11 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Errores de producción** - vistas personalizadas 404, 419, 429 y 500; sin trazas ni datos internos.
 - **APP_DEBUG** - en producción el arranque fuerza `APP_DEBUG=false` si estuviera mal configurado y registra un evento crítico.
 - **Pendiente en seguridad** - 2FA para roles administrativos, CSP completa, antivirus de PDFs y CAPTCHA/honeypot si la inscripción se abre al público.
+
+## HU-88: Crear roles desde la interfaz (2026-10-27)
+- **Nuevo rol** - botón "Nuevo rol" en `/roles-permisos` (solo Administrador).
+- **Flujo** - se crea el rol, se registra en `security.log` y se redirige directo a la pantalla de permisos para asignarlos.
+- **Validaciones** - nombre obligatorio, único y máximo 50 caracteres; descripción opcional de hasta 255.
+- **Compatibilidad** - el rol se crea también con `name`/`guard_name` de Spatie mediante el modelo `App\Models\Role`; aparece automáticamente en el selector de roles de usuarios.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.

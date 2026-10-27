@@ -43,6 +43,35 @@ class RolePermissionTest extends TestCase
             ->assertSee('Secretaría');
     }
 
+    public function test_admin_puede_crear_un_rol_y_sincroniza_spatie(): void
+    {
+        $admin = $this->usuario('Administrador');
+
+        $this->actingAs($admin)
+            ->post(route('roles.store'), [
+                'nombre' => 'Coordinador',
+                'descripcion' => 'Coordinación académica',
+            ])
+            ->assertRedirect();
+
+        $rol = Role::where('nombre', 'Coordinador')->firstOrFail();
+
+        $this->assertSame('Coordinador', $rol->name);
+        $this->assertSame('web', $rol->guard_name);
+        $this->assertSame('Coordinación académica', $rol->descripcion);
+    }
+
+    public function test_no_permite_crear_rol_duplicado(): void
+    {
+        $admin = $this->usuario('Administrador');
+
+        $this->actingAs($admin)
+            ->post(route('roles.store'), [
+                'nombre' => 'Docente',
+            ])
+            ->assertSessionHasErrors('nombre');
+    }
+
     public function test_admin_puede_actualizar_permisos_de_un_rol(): void
     {
         $admin = $this->usuario('Administrador');
