@@ -164,15 +164,7 @@
                 <div class="bg-card border border-border rounded-xl p-6">
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Rol y Contacto</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
-                            <select name="role" class="{{ $claseInput }}">
-                                @foreach ($roles as $rol)
-                                    <option value="{{ $rol->id }}" @selected((string)old('role', $user->role) === (string)$rol->id)>{{ $rol->nombre }}</option>
-                                @endforeach
-                            </select>
-                            @error('role') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                        </div>
+                        @include('users._roles_fields', ['roles' => $roles, 'usuario' => $user])
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
                             <input name="telefono" type="tel" value="{{ old('telefono', $user->telefono) }}" class="{{ $claseInput }}">
