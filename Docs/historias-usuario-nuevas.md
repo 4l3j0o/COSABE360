@@ -540,5 +540,12 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Middleware** - `role:` evalúa `hasAnyRole`, por lo que un usuario con varios roles pasa si tiene cualquiera de los permitidos.
 - **Migración** - los usuarios existentes reciben como principal el primer rol de su pivote.
 - **Caso de uso** - `Docente + Auxiliar Inscripciones`: conserva el alcance docente y suma permisos de inscripciones.
+
+## HU-90: Niveles a cargo desde usuarios (2026-10-27)
+- **UI** - bloque "Niveles a cargo" en crear/editar/ver usuario; solo aplica al rol Director.
+- **Persistencia** - se sincroniza con `director_level` mediante `User::nivelesACargo()`.
+- **Limpieza** - si el usuario deja de ser Director, sus niveles se limpian automáticamente.
+- **Compatibilidad** - si no se envía el campo desde un flujo antiguo, no se modifican los niveles existentes.
+- **Regla vigente** - un Director sin niveles sigue viendo todo por compatibilidad; la interfaz advierte esto.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.

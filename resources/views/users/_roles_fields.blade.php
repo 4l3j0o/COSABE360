@@ -31,3 +31,25 @@
     <p class="text-[11px] text-muted-foreground mt-1">Se usa para mostrar el rol en listados y reportes. Los permisos se suman de todos los roles.</p>
     @error('primary_role_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
 </div>
+
+<div class="sm:col-span-2">
+    <input type="hidden" name="niveles_present" value="1">
+    @php
+        $nivelesSeleccionados = old('niveles', $usuario?->nivelesACargo?->pluck('id')->all() ?? []);
+    @endphp
+    <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Niveles a cargo (solo Director)</label>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-border p-3">
+        @foreach($levels as $level)
+            <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                <input type="checkbox"
+                       name="niveles[]"
+                       value="{{ $level->id }}"
+                       @checked(in_array((string) $level->id, array_map('strval', (array) $nivelesSeleccionados), true))
+                       class="rounded border-input text-primary focus:ring-primary/30">
+                {{ $level->nombre }}
+            </label>
+        @endforeach
+    </div>
+    <p class="text-[11px] text-muted-foreground mt-1">Si el usuario no es Director, estos niveles se limpian. Un Director sin niveles ve todos por compatibilidad.</p>
+    @error('niveles') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
+</div>
