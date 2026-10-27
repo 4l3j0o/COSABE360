@@ -17,9 +17,9 @@
     </div>
 
     @if($role->nombre === 'Administrador')
-        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-5 text-sm">
+        <x-ui.alert type="warning" class="mb-5">
             El rol Administrador conserva todos los permisos. Para evitar bloqueos, no se puede editar.
-        </div>
+        </x-ui.alert>
     @endif
 
     <form method="POST" action="{{ route('roles.update', $role) }}">
@@ -29,7 +29,7 @@
         <div class="space-y-5">
             @foreach($permisos as $grupo => $items)
                 <div class="bg-card border border-border rounded-xl overflow-hidden">
-                    <div class="px-4 py-3 bg-muted/40 border-b border-border">
+                    <div class="px-4 py-3 bg-muted/50 border-b border-border">
                         <h2 class="text-sm font-bold text-foreground">{{ \Illuminate\Support\Str::headline($grupo) }}</h2>
                     </div>
                     <div class="p-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

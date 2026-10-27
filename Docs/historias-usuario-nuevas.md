@@ -547,5 +547,8 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Limpieza** - si el usuario deja de ser Director, sus niveles se limpian automáticamente.
 - **Compatibilidad** - si no se envía el campo desde un flujo antiguo, no se modifican los niveles existentes.
 - **Regla vigente** - un Director sin niveles sigue viendo todo por compatibilidad; la interfaz advierte esto.
+- **Listado y filtros** - el listado de usuarios muestra todos los roles; la búsqueda y el filtro por rol consideran roles secundarios, no solo el principal.
+- **Protección del Administrador** - tampoco se puede desactivar ni eliminar al último administrador activo.
+- **Estilos** - los módulos nuevos usan tokens del tema (`card`, `border`, `muted`, `warning`, `error`) y el patrón de tablas/alertas de `Docs/guia-estilos.md`.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.

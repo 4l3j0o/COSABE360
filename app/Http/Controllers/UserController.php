@@ -26,10 +26,10 @@ class UserController extends Controller
                         ->orWhere('apellido', 'like', "%{$buscable}%")
                         ->orWhere('email', 'like', "%{$buscable}%")
                         ->orWhere('telefono', 'like', "%{$buscable}%")
-                        ->orWhereHas('rol', fn ($r) => $r->where('nombre', 'like', "%{$buscable}%"));
+                        ->orWhereHas('roles', fn ($r) => $r->where('nombre', 'like', "%{$buscable}%"));
                 });
             })
-            ->when($request->query('rol'), fn ($q, $v) => $q->whereHas('rol', fn ($r) => $r->where('roles.id', $v)))
+            ->when($request->query('rol'), fn ($q, $v) => $q->whereHas('roles', fn ($r) => $r->where('roles.id', $v)))
             ->orderBy('nombre')
             ->paginate(10)
             ->withQueryString();
@@ -220,6 +220,17 @@ class UserController extends Controller
         $user->nivelesACargo()->sync($niveles);
     }
 
+    private function esUltimoAdministradorActivo(User $user): bool
+    {
+        if (! $user->estaActivo() || ! $user->hasRole('Administrador')) {
+            return false;
+        }
+
+        return User::whereHas('roles', fn ($q) => $q->where('nombre', 'Administrador'))
+            ->where('estado', 'ACTIVO')
+            ->count() <= 1;
+    }
+
     public function toggle(User $user)
     {
         abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
@@ -229,6 +240,10 @@ class UserController extends Controller
         }
 
         $nuevoEstado = $user->estaActivo() ? 'INACTIVO' : 'ACTIVO';
+
+        if ($nuevoEstado === 'INACTIVO' && $this->esUltimoAdministradorActivo($user)) {
+            return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes desactivar al último administrador activo.', 'error');
+        }
 
         $user->update(['estado' => $nuevoEstado]);
 
@@ -243,6 +258,10 @@ class UserController extends Controller
 
         if ($user->is(auth()->user())) {
             return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes eliminar tu propia cuenta.', 'error');
+        }
+
+        if ($this->esUltimoAdministradorActivo($user)) {
+            return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'No puedes eliminar al último administrador activo.', 'error');
         }
 
         $user->update(['estado' => 'ELIMINADO']);

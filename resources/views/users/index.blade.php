@@ -74,9 +74,15 @@
                                             'Estudiante'    => 'bg-info/10 text-info',
                                         ];
                                     @endphp
-                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $rolColores[$user->rol?->nombre] ?? 'bg-muted text-muted-foreground' }}">
-                                        {{ $user->rol?->nombre ?? '—' }}
-                                    </span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($user->roles as $rolUsuario)
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $rolColores[$rolUsuario->nombre] ?? 'bg-muted text-muted-foreground' }}">
+                                                {{ $rolUsuario->nombre }}
+                                            </span>
+                                        @empty
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">—</span>
+                                        @endforelse
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3">
                                     @php

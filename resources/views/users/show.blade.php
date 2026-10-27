@@ -19,7 +19,7 @@
             'Docente'       => 'bg-success/10 text-success',
             'Estudiante'    => 'bg-info/10 text-info',
         ];
-        $rolNombre = $user->rol?->nombre ?? '—';
+        $rolesUsuario = $user->roles;
     @endphp
     <div class="mb-6">
         @include('layouts._volver', ['href' => route('users.index'), 'texto' => 'Volver al listado'])
@@ -60,9 +60,13 @@
                             <dd class="text-foreground">{{ $user->telefono ?: '—' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-muted-foreground">Rol</dt>
-                            <dd>
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresRol[$rolNombre] ?? 'bg-muted text-muted-foreground' }}">{{ $rolNombre }}</span>
+                            <dt class="text-muted-foreground">Roles</dt>
+                            <dd class="flex flex-wrap gap-1">
+                                @forelse($rolesUsuario as $rolUsuario)
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $coloresRol[$rolUsuario->nombre] ?? 'bg-muted text-muted-foreground' }}">{{ $rolUsuario->nombre }}</span>
+                                @empty
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">—</span>
+                                @endforelse
                             </dd>
                         </div>
                         <div>
