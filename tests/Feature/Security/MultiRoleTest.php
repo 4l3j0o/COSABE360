@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Security;
 
+use App\Models\Level;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
@@ -69,6 +70,41 @@ class MultiRoleTest extends TestCase
         $docente->refresh();
         $this->assertTrue($docente->hasAllRoles(['Docente', 'Auxiliar Inscripciones']));
         $this->assertSame('Docente', $docente->rol?->nombre);
+    }
+
+    public function test_director_puede_tener_niveles_a_cargo_y_se_limpian_al_quitar_el_rol(): void
+    {
+        $admin = $this->usuario('Administrador');
+        $director = $this->usuario('Director');
+        $nivel = Level::create(['nombre' => 'Primaria Test', 'orden' => 1, 'estado' => 'ACTIVO']);
+
+        $this->actingAs($admin)
+            ->put(route('users.update', $director), [
+                'nombre' => $director->nombre,
+                'apellido' => $director->apellido,
+                'email' => $director->email,
+                'roles' => [Role::where('nombre', 'Director')->value('id')],
+                'primary_role_id' => Role::where('nombre', 'Director')->value('id'),
+                'niveles_present' => 1,
+                'niveles' => [$nivel->id],
+            ])
+            ->assertRedirect(route('users.show', $director));
+
+        $this->assertSame([$nivel->id], $director->fresh()->nivelesACargo()->pluck('levels.id')->all());
+
+        $this->actingAs($admin)
+            ->put(route('users.update', $director), [
+                'nombre' => $director->nombre,
+                'apellido' => $director->apellido,
+                'email' => $director->email,
+                'roles' => [Role::where('nombre', 'Docente')->value('id')],
+                'primary_role_id' => Role::where('nombre', 'Docente')->value('id'),
+                'niveles_present' => 1,
+                'niveles' => [$nivel->id],
+            ])
+            ->assertRedirect(route('users.show', $director));
+
+        $this->assertSame([], $director->fresh()->nivelesACargo()->pluck('levels.id')->all());
     }
 
     public function test_no_permite_quitar_el_ultimo_administrador(): void

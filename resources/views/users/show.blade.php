@@ -164,7 +164,7 @@
                 <div class="bg-card border border-border rounded-xl p-6">
                     <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Rol y Contacto</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        @include('users._roles_fields', ['roles' => $roles, 'usuario' => $user])
+                        @include('users._roles_fields', ['roles' => $roles, 'levels' => $levels, 'usuario' => $user])
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
                             <input name="telefono" type="tel" value="{{ old('telefono', $user->telefono) }}" class="{{ $claseInput }}">

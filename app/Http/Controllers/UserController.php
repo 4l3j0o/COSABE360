@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Level;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,15 +35,19 @@ class UserController extends Controller
             ->withQueryString();
 
         $roles = Role::orderBy('id')->get();
+        $levels = Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get();
 
-        return view('users.index', compact('users', 'roles'));
+        return view('users.index', compact('users', 'roles', 'levels'));
     }
 
     public function create()
     {
         abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
 
-        return view('users.create', ['roles' => Role::orderBy('id')->get()]);
+        return view('users.create', [
+            'roles' => Role::orderBy('id')->get(),
+            'levels' => Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get(),
+        ]);
     }
 
     public function store(Request $request)
@@ -60,11 +65,14 @@ class UserController extends Controller
             'roles' => ['nullable', 'array'],
             'roles.*' => ['integer', 'exists:roles,id'],
             'primary_role_id' => ['nullable', 'integer', 'exists:roles,id'],
+            'niveles' => ['nullable', 'array'],
+            'niveles.*' => ['integer', 'exists:levels,id'],
+            'niveles_present' => ['nullable', 'boolean'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
         [$roleIds, $primaryId] = $this->resolverRoles($validated);
-        unset($validated['role'], $validated['roles'], $validated['primary_role_id']);
+        unset($validated['role'], $validated['roles'], $validated['primary_role_id'], $validated['niveles'], $validated['niveles_present']);
 
         if (empty($validated['password'])) {
             $validated['password'] = Str::random(32);
@@ -72,6 +80,7 @@ class UserController extends Controller
 
         $user = User::create($validated);
         $this->sincronizarRoles($user, $roleIds, $primaryId);
+        $this->sincronizarNiveles($user, $request);
 
         return $this->deVuelta('users.index', ['buscar', 'rol', 'page'], 'Usuario creado correctamente. El acceso es con Google Workspace.');
     }
@@ -80,11 +89,12 @@ class UserController extends Controller
     {
         abort_unless(auth()->user()->puede('usuarios.gestionar'), 403);
 
-        $user->load(['rol', 'roles']);
+        $user->load(['rol', 'roles', 'nivelesACargo']);
 
         return view('users.edit', [
             'user' => $user,
             'roles' => Role::orderBy('id')->get(),
+            'levels' => Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get(),
         ]);
     }
 
@@ -92,11 +102,12 @@ class UserController extends Controller
     {
         abort_unless(auth()->user()->puede('usuarios.ver'), 403);
 
-        $user->load(['rol', 'roles']);
+        $user->load(['rol', 'roles', 'nivelesACargo']);
 
         return view('users.show', [
             'user' => $user,
             'roles' => Role::orderBy('id')->get(),
+            'levels' => Level::where('estado', '!=', 'ELIMINADO')->orderBy('orden')->get(),
         ]);
     }
 
@@ -120,6 +131,9 @@ class UserController extends Controller
             'roles' => ['nullable', 'array'],
             'roles.*' => ['integer', 'exists:roles,id'],
             'primary_role_id' => ['nullable', 'integer', 'exists:roles,id'],
+            'niveles' => ['nullable', 'array'],
+            'niveles.*' => ['integer', 'exists:levels,id'],
+            'niveles_present' => ['nullable', 'boolean'],
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
@@ -137,7 +151,7 @@ class UserController extends Controller
             }
         }
 
-        unset($validated['role'], $validated['roles'], $validated['primary_role_id']);
+        unset($validated['role'], $validated['roles'], $validated['primary_role_id'], $validated['niveles'], $validated['niveles_present']);
 
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -152,6 +166,7 @@ class UserController extends Controller
 
         $user->update($validated);
         $this->sincronizarRoles($user, $roleIds, $primaryId);
+        $this->sincronizarNiveles($user, $request);
 
         return redirect()->route('users.show', $user)->with('success', 'Usuario actualizado correctamente.');
     }
@@ -185,6 +200,24 @@ class UserController extends Controller
         $nombres = Role::whereIn('id', $roleIds)->pluck('name')->all();
         $user->syncRoles($nombres);
         $user->forceFill(['primary_role_id' => $primaryId])->saveQuietly();
+        $user->unsetRelation('roles');
+        $user->unsetRelation('rol');
+    }
+
+    private function sincronizarNiveles(User $user, Request $request): void
+    {
+        if (! $request->has('niveles_present')) {
+            return;
+        }
+
+        $user->unsetRelation('roles');
+        $user->unsetRelation('rol');
+
+        $niveles = $user->hasRole('Director')
+            ? array_map('intval', (array) $request->input('niveles', []))
+            : [];
+
+        $user->nivelesACargo()->sync($niveles);
     }
 
     public function toggle(User $user)
