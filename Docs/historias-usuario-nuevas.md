@@ -510,7 +510,7 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Administración** - nueva pantalla `/roles-permisos` solo para Administrador: lista roles y permite marcar/desmarcar permisos por rol. El rol Administrador queda bloqueado con todos los permisos para evitar bloqueos. Ruta protegida con `permission:roles.gestionar`.
 
 ## HU-86: Retiro de users.role_id (2026-10-26)
-- **Columna eliminada** - se elimina `users.role_id`; el rol principal se resuelve desde `model_has_roles` mediante `User::rol()` (`HasOneThrough`).
+- **Columna eliminada** - se elimina `users.role_id`; durante HU-86 el rol principal se resolvía desde `model_has_roles`, y HU-89 lo formalizó con `users.primary_role_id` (`User::rol()`).
 - **Compatibilidad** - se retiró el alias virtual `role_id`. Formularios, seeders, factories y tests usan ahora el atributo de entrada `role`, que se traduce al pivote de Spatie al guardar. `$user->role` devuelve el id del rol principal.
 - **Vistas y consultas** - `$user->rol`, `with('rol')` y `whereHas('rol')` siguen funcionando. Las consultas directas `where('role_id')` se reemplazaron por `whereHas('roles')`.
 - **Configuración antigua** - se eliminó `config/permisos.php`. `canAccess()` ahora se resuelve únicamente con `permisos360` y los permisos de Spatie.
@@ -531,5 +531,14 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Flujo** - se crea el rol, se registra en `security.log` y se redirige directo a la pantalla de permisos para asignarlos.
 - **Validaciones** - nombre obligatorio, único y máximo 50 caracteres; descripción opcional de hasta 255.
 - **Compatibilidad** - el rol se crea también con `name`/`guard_name` de Spatie mediante el modelo `App\Models\Role`; aparece automáticamente en el selector de roles de usuarios.
+
+## HU-89: Soporte multi-rol y rol principal (2026-10-27)
+- **Multi-rol** - un usuario puede tener varios roles en `model_has_roles`; Spatie suma sus permisos.
+- **Rol principal** - nueva columna `users.primary_role_id` (nullable, FK a `roles`) para listados, reportes y compatibilidad con `$user->rol`. No es la fuente de permisos.
+- **UI** - formulario de usuarios con checkboxes de roles y selector de rol principal.
+- **Reglas** - se exige al menos un rol y que el principal esté entre los asignados. No se puede quitar el rol Administrador al último administrador activo.
+- **Middleware** - `role:` evalúa `hasAnyRole`, por lo que un usuario con varios roles pasa si tiene cualquiera de los permitidos.
+- **Migración** - los usuarios existentes reciben como principal el primer rol de su pivote.
+- **Caso de uso** - `Docente + Auxiliar Inscripciones`: conserva el alcance docente y suma permisos de inscripciones.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.

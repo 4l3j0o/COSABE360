@@ -53,16 +53,7 @@
             <div style="background:rgba(0,0,0,0.03); border-radius:0.75rem; padding:1.25rem; border:1px solid rgba(0,0,0,0.05);">
                 <h3 class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Rol y Contacto</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol <span class="text-error">*</span></label>
-                        <select name="role"
-                                class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                            @foreach ($roles as $rol)
-                                <option value="{{ $rol->id }}" @selected(old('role') == $rol->id)>{{ $rol->nombre }}</option>
-                            @endforeach
-                        </select>
-                        @error('role') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    @include('users._roles_fields', ['roles' => $roles, 'usuario' => null])
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Teléfono</label>
                         <input name="telefono" type="tel" value="{{ old('telefono') }}"

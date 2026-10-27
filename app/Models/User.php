@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
@@ -31,6 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'primary_role_id',
         'telefono',
         'estado',
         'intentos_fallidos',
@@ -78,6 +79,7 @@ class User extends Authenticatable
                 $valor = $user->getAttributes()['role'];
                 $user->pendingRoleId = $valor === null ? null : (int) $valor;
                 $user->pendingRoleSync = true;
+                $user->primary_role_id = $user->pendingRoleId;
                 unset($user->role);
             }
         });
@@ -99,17 +101,10 @@ class User extends Authenticatable
         });
     }
 
-    /** Rol principal resuelto desde el pivote de Spatie. */
-    public function rol(): HasOneThrough
+    /** Rol principal para vistas, reportes y compatibilidad. */
+    public function rol(): BelongsTo
     {
-        return $this->hasOneThrough(
-            Role::class,
-            ModelHasRole::class,
-            'model_id',
-            'id',
-            'id',
-            'role_id',
-        )->where('model_has_roles.model_type', static::class);
+        return $this->belongsTo(Role::class, 'primary_role_id');
     }
 
     /** Rol principal como id para formularios y vistas. */

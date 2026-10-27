@@ -22,9 +22,9 @@ class EnsureUserHasRole
             return redirect()->route('login');
         }
 
-$user = auth()->user();
+        $user = auth()->user();
 
-        // Soporta "Administrador,Secretaría" como un solo parámetro
+        // Soporta "Administrador,Secretaría" como un solo parámetro.
         $allowedRoles = [];
         foreach ($roles as $role) {
             foreach (explode(',', $role) as $r) {
@@ -32,16 +32,10 @@ $user = auth()->user();
             }
         }
 
-        // Carga relación rol si no está cargada
-        if (! $user->relationLoaded('rol')) {
-            $user->load('rol');
-        }
-
-        $userRole = $user->rol?->nombre;
-
-        if (! in_array($userRole, $allowedRoles, true)) {
+        // Multi-rol: alcanza con que el usuario tenga cualquiera de los roles.
+        if (! $user->hasAnyRole($allowedRoles)) {
             SecurityLog::event('access.denied.role', [
-                'rol' => $userRole,
+                'roles_usuario' => $user->getRoleNames()->all(),
                 'roles_permitidos' => $allowedRoles,
             ]);
 
