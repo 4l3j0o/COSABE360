@@ -4,7 +4,7 @@
 @endphp
 
 <div class="sm:col-span-2">
-    <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Roles asignados</label>
+    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Roles asignados</label>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-border p-3">
         @foreach($roles as $rol)
             <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -21,7 +21,7 @@
 </div>
 
 <div class="sm:col-span-2">
-    <label for="primary_role_id" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Rol principal</label>
+    <label for="primary_role_id" class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Rol principal</label>
     <select id="primary_role_id" name="primary_role_id" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
         <option value="">Seleccione el rol principal...</option>
         @foreach($roles as $rol)
@@ -37,7 +37,7 @@
     @php
         $nivelesSeleccionados = old('niveles', $usuario?->nivelesACargo?->pluck('id')->all() ?? []);
     @endphp
-    <label class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Niveles a cargo (solo Director)</label>
+    <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-2">Niveles a cargo (solo Director)</label>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-border p-3">
         @foreach($levels as $level)
             <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">

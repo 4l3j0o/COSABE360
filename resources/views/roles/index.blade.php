@@ -18,17 +18,17 @@
     </div>
 
     @if(session('success'))
-        <div class="bg-success/10 border border-success/20 text-success rounded-xl p-4 mb-5 text-sm">{{ session('success') }}</div>
+        <x-ui.alert type="success" class="mb-5">{{ session('success') }}</x-ui.alert>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 text-sm">{{ session('error') }}</div>
+        <x-ui.alert type="error" class="mb-5">{{ session('error') }}</x-ui.alert>
     @endif
 
     <div class="bg-card border border-border rounded-xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <thead class="bg-muted/50 border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <tr>
                         <th class="px-4 py-3 font-semibold">Rol</th>
                         <th class="px-4 py-3 font-semibold">Descripción</th>
@@ -36,9 +36,9 @@
                         <th class="px-4 py-3 font-semibold text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-border">
                     @foreach($roles as $rol)
-                        <tr class="border-t border-border hover:bg-muted/20">
+                        <tr class="hover:bg-muted/20">
                             <td class="px-4 py-3 font-medium text-foreground">{{ $rol->nombre }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $rol->descripcion ?: '—' }}</td>
                             <td class="px-4 py-3">
