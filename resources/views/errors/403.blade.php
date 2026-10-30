@@ -33,7 +33,8 @@
         <p class="text-sm text-muted-foreground mb-6 text-center max-w-md">
             No tienes permisos para acceder a esta sección. Si crees que esto es un error, contacta al administrador.
         </p>
-        <a href="{{ route('dashboard') }}" class="bg-primary text-primary-foreground font-semibold py-2.5 px-6 rounded-lg hover:opacity-90 transition-all text-sm">
+        <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 bg-primary text-primary-foreground font-semibold py-2.5 px-6 rounded-lg hover:opacity-90 transition-all text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Volver al Dashboard
         </a>
     </div>
