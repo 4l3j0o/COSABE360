@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AcademicYear;
 use App\Models\EnfermeriaAtencion;
 use App\Models\EnfermeriaMotivo;
 use App\Models\MedicalRecord;
@@ -13,7 +12,6 @@ use App\Support\SecurityLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
