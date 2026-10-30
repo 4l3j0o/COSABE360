@@ -15,7 +15,8 @@
             </div>
             <h1 class="text-2xl font-bold mb-2">@yield('titulo')</h1>
             <p class="text-sm text-muted-foreground leading-relaxed mb-6">@yield('mensaje')</p>
-            <a href="{{ url('/') }}" class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity">
+            <a href="{{ url('/') }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Volver al inicio
             </a>
         </div>

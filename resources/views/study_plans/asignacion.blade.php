@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="mb-4">
-        <a href="{{ route('study_plans.index') }}" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver a planes</a>
+        @include('layouts._volver', ['href' => route('study_plans.index'), 'texto' => 'Volver a planes'])
         <div class="mt-1">
             <h1 class="text-xl font-bold text-foreground">Asignación por Curso</h1>
             <p class="text-sm text-muted-foreground">Todos los paralelos con las materias de su plan — entra a cada uno para asignar docentes</p>

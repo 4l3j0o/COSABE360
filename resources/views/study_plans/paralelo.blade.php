@@ -7,7 +7,7 @@
 
 @section('contenido')
     <div class="mb-4">
-        <a href="{{ route('study_plans.asignacion') }}" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">← Volver a paralelos</a>
+        @include('layouts._volver', ['href' => route('study_plans.asignacion'), 'texto' => 'Volver a paralelos'])
         <div class="mt-1">
             <h1 class="text-xl font-bold text-foreground truncate">{{ $section->codigo ?: $section->nombre }} — {{ $section->grade?->nombre }}</h1>
             <p class="text-sm text-muted-foreground">Plan {{ $plan->codigo }} · {{ $materias->count() }} materias — asigna qué docente da cada materia (el horario día/hora se arma después en Horarios)</p>

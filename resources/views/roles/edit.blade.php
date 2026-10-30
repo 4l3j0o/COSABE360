@@ -6,14 +6,12 @@
 @endsection
 
 @section('contenido')
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div>
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('roles.index'), 'texto' => 'Volver a roles y permisos'])
+        <div class="mt-1">
             <h1 class="text-xl font-bold text-foreground">Permisos de {{ $role->nombre }}</h1>
             <p class="text-sm text-muted-foreground">Marque los permisos que tendrá este rol.</p>
         </div>
-        <a href="{{ route('roles.index') }}" class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium border border-border hover:bg-muted transition-colors">
-            Volver
-        </a>
     </div>
 
     @if($role->nombre === 'Administrador')
