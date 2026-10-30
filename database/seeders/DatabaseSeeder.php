@@ -59,7 +59,10 @@ class DatabaseSeeder extends Seeder
             // Descuentos / becas de la mensualidad
             DiscountTypeSeeder::class,
 
-            // Datos reales de estudiantes 2026 (PII — solo entornos privados)
+            // Catálogo base de motivos de enfermería
+            EnfermeriaMotivoSeeder::class,
+
+            // Datos reales de estudiantes 2026 (PII – solo entornos privados)
             // Incluye estudiantes, tutores, matrículas y registros RUDE reales.
             EstudiantesRealesSeeder::class,
 

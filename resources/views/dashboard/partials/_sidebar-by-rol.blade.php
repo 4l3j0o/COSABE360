@@ -8,6 +8,8 @@
     @include('dashboard.partials._sidebar-estudiante')
 @elseif(auth()->user()->hasRole('Regente'))
     @include('dashboard.partials._sidebar-regente')
+@elseif(auth()->user()->hasRole('Enfermera'))
+    @include('dashboard.partials._sidebar-enfermera')
 @else
     @include('dashboard.partials._sidebar-admin')
 @endif
