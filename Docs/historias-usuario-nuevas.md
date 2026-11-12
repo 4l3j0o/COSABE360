@@ -552,3 +552,17 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Estilos** - los módulos nuevos usan tokens del tema (`card`, `border`, `muted`, `warning`, `error`) y el patrón de tablas/alertas de `Docs/guia-estilos.md`.
 - **Policies** - `StudentPolicy`, `SectionPolicy`, `MonthlyPaymentPolicy` y `ElectronicInvoicePolicy` ahora usan `User::puede()` para permisos de acción; las reglas de ownership siguen en `AccessScope`. `puede()` consulta Spatie y cae al catálogo `permisos360` si el entorno no tiene permisos sembrados.
 - **Controladores** - los grupos de rutas principales ya aplican `permission:`; además, Comunicados, Diario de Aula, Conducta, Licencias, Asistencia, Reportes, RUDE, Expediente, Boletín, Historial, Inscripciones, Usuarios, Configuración Tributaria, Cierre de Gestión, Auditoría e Inclusión usan `puede()` para sus acciones. Los checks de roles que quedan dentro de controladores se conservan para scoping/ownership (curso, nivel, tutor, autor) y no deben sustituirse por permisos sin esa validación.
+
+## HU-92: Módulo Enfermería (2026-10-30)
+- **Rama** - `Modulo_Enfermeria`.
+- **Rol** - `Enfermera`, una sola para todo el colegio.
+- **Atenciones** - tabla `enfermeria_atenciones` con estudiante, curso, fecha/hora, motivo, indicación, observaciones internas, estado y tipo de derivación.
+- **Derivación** - solo `TUTOR_O_MAYOR` o `EMERGENCIA`, obligatoria cuando el estado es `DERIVADO`.
+- **Catálogo** - `enfermeria_motivos` con motivos base administrables.
+- **Ficha médica** - se reutiliza `medical_records`; Enfermera puede verla y editarla; cada cambio se registra en `security.log`.
+- **Búsqueda** - por nombres, apellidos, código o documento; muestra datos generales, curso y tutores, sin pagos.
+- **Estudiante** - `/mi-enfermeria` con sus atenciones, motivo e indicación; no ve observaciones internas.
+- **Director** - ve detalle y reportes de su nivel, incluidas observaciones internas.
+- **Reportes** - por estudiante, curso, nivel, motivo y mes; exportación PDF/Excel.
+- **Sin alcance** - signos vitales, medicamentos administrados, seguimiento, constancia imprimible, notificaciones y nombre/parentesco de quien retira.
+- **UI** - sidebar y dashboard de Enfermería; vistas con componentes y tokens de `Docs/guia-estilos.md`.

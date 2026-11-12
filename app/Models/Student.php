@@ -62,6 +62,11 @@ class Student extends Model
         return $this->hasOne(MedicalRecord::class, 'student_id');
     }
 
+    public function enfermeriaAtenciones(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EnfermeriaAtencion::class, 'student_id')->latest('fecha_hora');
+    }
+
     public function parentGuardians(): BelongsToMany
     {
         return $this->belongsToMany(ParentGuardian::class, 'student_parent', 'student_id', 'parent_guardian_id')

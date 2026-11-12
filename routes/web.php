@@ -21,6 +21,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\RudeController;
 use App\Http\Controllers\CierreGestionController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\EnfermeriaController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\EvaluationReportController;
@@ -78,6 +79,40 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::middleware(['auth', 'throttle:archivos'])->get('/archivos', [SecureFileController::class, 'show'])
     ->name('archivos.show');
 
+// HU-92: Enfermería
+Route::middleware(['auth', 'permission:enfermeria.ver.propio'])->get('/mi-enfermeria', [EnfermeriaController::class, 'miEnfermeria'])
+    ->name('enfermeria.mi');
+
+Route::middleware(['auth', 'permission:enfermeria.ver|enfermeria.ver.nivel'])->prefix('enfermeria')->group(function () {
+    Route::get('/', [EnfermeriaController::class, 'index'])->name('enfermeria.index');
+    Route::get('/buscar-estudiante', [EnfermeriaController::class, 'buscarEstudiante'])->name('enfermeria.buscar-estudiante');
+    Route::get('/{atencion}', [EnfermeriaController::class, 'show'])->whereNumber('atencion')->name('enfermeria.show');
+
+    Route::middleware('permission:enfermeria.registrar')->group(function () {
+        Route::get('/nueva/atencion', [EnfermeriaController::class, 'create'])->name('enfermeria.create');
+        Route::post('/nueva/atencion', [EnfermeriaController::class, 'store'])->name('enfermeria.store');
+    });
+
+    Route::middleware('permission:enfermeria.editar')->group(function () {
+        Route::get('/{atencion}/editar', [EnfermeriaController::class, 'edit'])->whereNumber('atencion')->name('enfermeria.edit');
+        Route::put('/{atencion}', [EnfermeriaController::class, 'update'])->whereNumber('atencion')->name('enfermeria.update');
+    });
+
+    Route::patch('/{atencion}/anular', [EnfermeriaController::class, 'anular'])
+        ->whereNumber('atencion')
+        ->middleware('permission:enfermeria.anular')
+        ->name('enfermeria.anular');
+
+    Route::put('/estudiantes/{student}/ficha', [EnfermeriaController::class, 'updateFicha'])
+        ->middleware('permission:salud.editar')
+        ->name('enfermeria.ficha.update');
+
+    Route::middleware('permission:enfermeria.reportes|enfermeria.ver.nivel')->group(function () {
+        Route::get('/reportes', [EnfermeriaController::class, 'reportes'])->name('enfermeria.reportes');
+        Route::get('/reportes/exportar', [EnfermeriaController::class, 'exportar'])->name('enfermeria.reportes.exportar');
+    });
+});
+
 // DASHBOARD - dividido por roles
 Route::get('/dashboard', function () {
     $rol = auth()->user()->rol->nombre;
@@ -89,6 +124,7 @@ Route::get('/dashboard', function () {
         'Docente' => 'dashboard.docente',
         'Estudiante' => 'dashboard.estudiante',
         'Regente' => 'dashboard.regente',
+        'Enfermera' => 'dashboard.enfermera',
         default => 'dashboard.administrador',
     };
 
