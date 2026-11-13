@@ -66,7 +66,10 @@ class DatabaseSeeder extends Seeder
             // Incluye estudiantes, tutores, matrículas y registros RUDE reales.
             EstudiantesRealesSeeder::class,
 
-            // Facturación SFE — catálogo SIN
+            // Corrige el paralelo de las matrículas contra Inscripciones-2026.xlsx
+            RepararCursosXlsxSeeder::class,
+
+            // Facturación SFE – catálogo SIN
             EducationalServiceSeeder::class,
         ]);
     }

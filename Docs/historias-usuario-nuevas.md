@@ -566,3 +566,10 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Reportes** - por estudiante, curso, nivel, motivo y mes; exportación PDF/Excel.
 - **Sin alcance** - signos vitales, medicamentos administrados, seguimiento, constancia imprimible, notificaciones y nombre/parentesco de quien retira.
 - **UI** - sidebar y dashboard de Enfermería; vistas con componentes y tokens de `Docs/guia-estilos.md`.
+
+## Corrección de paralelos 2026 (2026-11-13)
+- **Fuente** - `Docs/Inscripciones-2026.xlsx`, hoja `Almnos`, columnas `Paralelo` y `Codigo`.
+- **Problema** - el dump de estudiantes conservaba los `section_id` del sistema anterior; en 1ro y 2do de Secundaria no coincidían con el orden creado por `EstructuraAcademicaSeeder`. 115 estudiantes quedaban cruzados entre `S1C`, `S2A`, `S2B` y `S2C`.
+- **Corrección** - `RepararCursosXlsxSeeder` reasigna la matrícula activa de cada código al paralelo indicado en el Excel. Es idempotente y se ejecuta después de `EstudiantesRealesSeeder` en `DatabaseSeeder`.
+- **Resultado** - los 1.512 estudiantes con paralelo coinciden exactamente con el Excel; los 40 paralelos quedaron con sus conteos correctos.
+- **Nota** - los códigos de 5to y 6to conservan su sufijo en `Section::codigoCompleto()` (`S5A-BQS`, etc.).
