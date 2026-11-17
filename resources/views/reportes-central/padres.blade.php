@@ -7,7 +7,10 @@
     <div>
         @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
         <h1 class="text-xl font-bold text-foreground mt-2">Lista de Padres de Familia</h1>
-        <p class="text-sm text-muted-foreground mt-1">Padres y apoderados por estudiante. {{ $resultado['curso'] ?? 'Todos los cursos' }}.</p>
+        <p class="text-sm text-muted-foreground mt-1">
+            Padres y apoderados por estudiante.
+            {{ $resultado['curso'] ?? (auth()->user()->hasAnyRole(['Administrador', 'Director', 'Secretaría']) ? 'Todos los cursos' : 'Cursos donde dicta materia') }}.
+        </p>
     </div>
 </div>
 
@@ -15,7 +18,7 @@
     <div>
         <label class="block text-xs font-semibold text-muted-foreground mb-1">Curso</label>
         <select name="section_id" class="px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-            <option value="">Todos los cursos</option>
+            <option value="">{{ auth()->user()->hasAnyRole(['Administrador', 'Director', 'Secretaría']) ? 'Todos los cursos' : 'Todos mis cursos' }}</option>
             @foreach($cursos as $section)
                 <option value="{{ $section->id }}" {{ request('section_id') == $section->id ? 'selected' : '' }}>{{ $section->codigoCorto() }}</option>
             @endforeach

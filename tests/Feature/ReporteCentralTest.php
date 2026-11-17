@@ -112,6 +112,54 @@ class ReporteCentralTest extends TestCase
         $response->assertSee('ApellidoRCP1');
     }
 
+    public function test_docente_solo_ve_padres_de_sus_cursos_y_puede_exportar(): void
+    {
+        $a = $this->crearCurso('PAD-A');
+        $b = $this->crearCurso('PAD-B');
+        $doc = $this->crearDocente('PAD');
+        SectionSubject::create([
+            'section_id' => $a['curso']->id,
+            'subject_id' => $a['subject']->id,
+            'teacher_id' => $doc['teacher']->id,
+        ]);
+
+        $padreA = ParentGuardian::create([
+            'nombres' => 'Padre',
+            'apellidos' => 'TutorCursoA',
+            'tipo_documento' => 'CI',
+            'numero_documento' => fake()->unique()->numerify('########'),
+            'telefono' => '70000101',
+            'estado' => 'ACTIVO',
+        ]);
+        $padreB = ParentGuardian::create([
+            'nombres' => 'Padre',
+            'apellidos' => 'TutorCursoB',
+            'tipo_documento' => 'CI',
+            'numero_documento' => fake()->unique()->numerify('########'),
+            'telefono' => '70000102',
+            'estado' => 'ACTIVO',
+        ]);
+        $a['est']->parentGuardians()->attach($padreA->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
+        $b['est']->parentGuardians()->attach($padreB->id, ['tipo_relacion' => 'PADRE', 'es_principal' => 1]);
+
+        $this->actingAs($doc['user']);
+
+        $response = $this->get(route('reportes.central.padres'));
+        $response->assertOk();
+        $response->assertSee('TutorCursoA');
+        $response->assertDontSee('TutorCursoB');
+        $response->assertSee('Todos mis cursos');
+
+        $excel = $this->get(route('reportes.central.padres.export', ['format' => 'excel']));
+        $excel->assertOk()->assertHeader(
+            'content-type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+
+        $pdf = $this->get(route('reportes.central.padres.export', ['format' => 'pdf']));
+        $pdf->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
     public function test_lista_padres_muestra_curso_precargado(): void
     {
         $a = $this->crearCurso('P81');

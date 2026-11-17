@@ -65,7 +65,7 @@ class ReporteCentralController extends Controller
         abort_unless($request->user()->puede(['reportes.ver', 'reportes.administrativos.ver']), 403);
 
         $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
+        $cursos = $this->cursosPadres($user);
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
         $resultado = $this->buildPadres($request, $user, $cursos);
 
@@ -79,10 +79,10 @@ class ReporteCentralController extends Controller
 
     public function exportPadres(Request $request)
     {
-        abort_unless($request->user()->puede(['reportes.exportar', 'reportes.administrativos.ver']), 403);
+        abort_unless($request->user()->puede(['reportes.ver', 'reportes.administrativos.ver']), 403);
 
         $user = $request->user();
-        $cursos = $this->cursosPermitidos($user);
+        $cursos = $this->cursosPadres($user);
         $resultado = $this->buildPadres($request, $user, $cursos);
 
         $formato = $request->query('format', 'pdf');
@@ -112,12 +112,22 @@ class ReporteCentralController extends Controller
 
         $query = Student::with('parentGuardians')->where('students.estado', 'ACTIVO');
 
+        // Los docentes solo pueden ver padres de estudiantes de las secciones
+        // donde dictan una materia. No se usa el alcance de tutor aquí.
+        if (! $this->esSupervisor($user)) {
+            $idsPermitidos = $cursos
+                ->flatMap(fn (Section $section) => $section->students()->pluck('students.id'))
+                ->unique();
+
+            $query->whereIn('students.id', $idsPermitidos);
+        }
+
         if ($sectionId) {
             $section = Section::with(['grade', 'gestion'])->find($sectionId);
             $query->whereIn('students.id', $section->students()->pluck('students.id'));
         } elseif ($gestionId) {
             $ids = collect();
-            foreach (Section::where('academic_year_id', $gestionId)->get() as $section) {
+            foreach ($cursos->where('academic_year_id', $gestionId) as $section) {
                 $ids = $ids->merge($section->students()->pluck('students.id'));
             }
             $query->whereIn('students.id', $ids->unique());
@@ -531,6 +541,37 @@ class ReporteCentralController extends Controller
                 ->get();
 
             return Section::ordenarPorNivel($propios->concat($encargado)->unique('id')->values());
+        }
+
+        return collect();
+    }
+
+    /**
+     * Cursos visibles en la Lista de Padres de Familia.
+     *
+     * Para docentes solo cuentan las secciones donde realmente dictan una
+     * materia; ser tutor no amplía este listado.
+     */
+    private function cursosPadres($user): Collection
+    {
+        if ($this->esSupervisor($user)) {
+            return Section::with(['grade.level', 'gestion'])
+                ->where('estado', 'ACTIVO')
+                ->ordenadoPorNivel()
+                ->get();
+        }
+
+        if ($user->hasRole('Docente') && $user->teacher) {
+            $sectionIds = SectionSubject::where('teacher_id', $user->teacher->id)
+                ->pluck('section_id')
+                ->unique()
+                ->values();
+
+            return Section::with(['grade.level', 'gestion'])
+                ->where('estado', 'ACTIVO')
+                ->whereIn('id', $sectionIds)
+                ->ordenadoPorNivel()
+                ->get();
         }
 
         return collect();
