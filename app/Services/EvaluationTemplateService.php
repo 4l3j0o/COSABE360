@@ -363,7 +363,7 @@ class EvaluationTemplateService
         $sheet->getProtection()
             ->setSheet(true)
             ->setPassword(self::PASSWORD_PROTECCION)
-            ->setSelectLockedCells(false)
+            ->setSelectLockedCells(true)
             ->setSelectUnlockedCells(true)
             ->setFormatCells(false)
             ->setFormatColumns(false)
