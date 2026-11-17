@@ -890,7 +890,7 @@ class ReporteCentralController extends Controller
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
-                    ->setARGB('FFF2F2F2');
+                    ->setARGB('FFEDEDED');
             }
 
             $fila++;
