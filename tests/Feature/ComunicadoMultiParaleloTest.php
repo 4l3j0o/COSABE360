@@ -80,6 +80,19 @@ class ComunicadoMultiParaleloTest extends TestCase
         return $user;
     }
 
+    public function test_formulario_de_comunicado_muestra_selector_de_paralelos_con_checkboxes(): void
+    {
+        $admin = $this->usuario('Administrador');
+        $this->curso('A');
+
+        $response = $this->actingAs($admin)->get(route('announcements.index'));
+
+        $response->assertOk();
+        $response->assertSee('name="section_ids[]"', false);
+        $response->assertSee('Seleccioná uno o varios paralelos', false);
+        $response->assertDontSee('multiple size="6"', false);
+    }
+
     public function test_admin_crea_comunicado_a_varios_paralelos(): void
     {
         $admin = $this->usuario('Administrador');

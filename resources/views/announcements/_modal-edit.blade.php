@@ -40,13 +40,11 @@
                             </select>
                         </div>
                         <div id="edit-section-wrap" style="display:{{ $mostrarSecciones ? 'block' : 'none' }};">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelos</label>
-                            <select name="section_ids[]" id="edit-section_ids" multiple size="6" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                @foreach($sections as $section)
-                                    <option value="{{ $section->id }}" {{ in_array($section->id, $sectionIdsActual, true) ? 'selected' : '' }}>{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-muted-foreground mt-1">Puede seleccionar varios (Ctrl/Cmd + clic).</p>
+                            @include('announcements._section-picker', [
+                                'prefix' => 'edit',
+                                'sections' => $sections,
+                                'selected' => $sectionIdsActual,
+                            ])
                         </div>
                         <div id="edit-level-wrap" style="display:{{ $tipoActual === 'NIVEL_DOCENTES' ? 'block' : 'none' }};">
                             <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel</label>

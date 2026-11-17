@@ -141,8 +141,29 @@
             if (wrapSection) wrapSection.style.display = ['CURSO_ESPECIFICO', 'DOCENTES_CURSO'].includes(tipo) ? 'block' : 'none';
             if (wrapLevel) wrapLevel.style.display = tipo === 'NIVEL_DOCENTES' ? 'block' : 'none';
         }
+
+        function actualizarContadorSecciones(prefix) {
+            const wrap = document.getElementById(prefix + '-section-wrap');
+            const contador = document.getElementById(prefix + '-section-count');
+            if (!wrap || !contador) return;
+
+            const total = wrap.querySelectorAll('input[name="section_ids[]"]:checked').length;
+            contador.textContent = total === 1 ? '1 seleccionado' : total + ' seleccionados';
+        }
+
+        function limpiarSeleccionSecciones(prefix) {
+            const wrap = document.getElementById(prefix + '-section-wrap');
+            if (!wrap) return;
+
+            wrap.querySelectorAll('input[name="section_ids[]"]').forEach(function (checkbox) {
+                checkbox.checked = false;
+            });
+            actualizarContadorSecciones(prefix);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             toggleSectionSelect('edit');
+            actualizarContadorSecciones('edit');
         });
     </script>
 @endpush

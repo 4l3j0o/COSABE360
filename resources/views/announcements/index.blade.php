@@ -218,14 +218,11 @@
                                 @error('tipo_destinatario') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div id="create-section-wrap" style="display:none;">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Paralelos <span class="text-error">*</span></label>
-                                <select name="section_ids[]" multiple size="6" class="w-full px-3 py-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                                    @foreach($sections as $section)
-                                        <option value="{{ $section->id }}" {{ in_array($section->id, (array) old('section_ids', [])) ? 'selected' : '' }}>{{ $section->codigoCompleto() }} · {{ $section->grade->nombre }}</option>
-                                    @endforeach
-                                </select>
-                                @error('section_ids') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
-                                <p class="text-xs text-muted-foreground mt-1">Puede seleccionar varios (Ctrl/Cmd + clic).</p>
+                                @include('announcements._section-picker', [
+                                    'prefix' => 'create',
+                                    'sections' => $sections,
+                                    'selected' => (array) old('section_ids', []),
+                                ])
                             </div>
                             <div id="create-level-wrap" style="display:none;">
                                 <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-600 mb-1.5">Nivel <span class="text-error">*</span></label>
@@ -285,8 +282,29 @@
             if (wrapSection) wrapSection.style.display = ['CURSO_ESPECIFICO', 'DOCENTES_CURSO'].includes(tipo) ? 'block' : 'none';
             if (wrapLevel) wrapLevel.style.display = tipo === 'NIVEL_DOCENTES' ? 'block' : 'none';
         }
+
+        function actualizarContadorSecciones(prefix) {
+            const wrap = document.getElementById(prefix + '-section-wrap');
+            const contador = document.getElementById(prefix + '-section-count');
+            if (!wrap || !contador) return;
+
+            const total = wrap.querySelectorAll('input[name="section_ids[]"]:checked').length;
+            contador.textContent = total === 1 ? '1 seleccionado' : total + ' seleccionados';
+        }
+
+        function limpiarSeleccionSecciones(prefix) {
+            const wrap = document.getElementById(prefix + '-section-wrap');
+            if (!wrap) return;
+
+            wrap.querySelectorAll('input[name="section_ids[]"]').forEach(function (checkbox) {
+                checkbox.checked = false;
+            });
+            actualizarContadorSecciones(prefix);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             toggleSectionSelect('create');
+            actualizarContadorSecciones('create');
             @if($errors->has('titulo') || $errors->has('contenido') || $errors->has('tipo_destinatario') || $errors->has('section_ids'))
                 openModal('modal-create');
             @endif
