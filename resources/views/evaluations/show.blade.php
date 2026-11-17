@@ -182,8 +182,63 @@
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('form-matriz');
     if (!form) return;
+
+    var filas = Array.prototype.slice.call(form.querySelectorAll('tbody tr'));
+    var entradasPorFila = filas.map(function (fila) {
+        return Array.prototype.slice.call(fila.querySelectorAll('input.nota-input'));
+    });
+
+    function moverFoco(input, tecla) {
+        var filaActual = input.closest('tr');
+        var indiceFila = filas.indexOf(filaActual);
+        if (indiceFila < 0) return;
+
+        var filaEntradas = entradasPorFila[indiceFila];
+        var indiceColumna = filaEntradas.indexOf(input);
+        if (indiceColumna < 0) return;
+
+        var destino = null;
+
+        if (tecla === 'ArrowRight') {
+            destino = filaEntradas[indiceColumna + 1] || null;
+            if (!destino && entradasPorFila[indiceFila + 1]) {
+                destino = entradasPorFila[indiceFila + 1][0] || null;
+            }
+        } else if (tecla === 'ArrowLeft') {
+            destino = filaEntradas[indiceColumna - 1] || null;
+            if (!destino && entradasPorFila[indiceFila - 1]) {
+                var anterior = entradasPorFila[indiceFila - 1];
+                destino = anterior[anterior.length - 1] || null;
+            }
+        } else if (tecla === 'ArrowDown') {
+            var filaSiguiente = entradasPorFila[indiceFila + 1];
+            if (filaSiguiente) {
+                destino = filaSiguiente[indiceColumna] || filaSiguiente[filaSiguiente.length - 1] || null;
+            }
+        } else if (tecla === 'ArrowUp') {
+            var filaAnterior = entradasPorFila[indiceFila - 1];
+            if (filaAnterior) {
+                destino = filaAnterior[indiceColumna] || filaAnterior[filaAnterior.length - 1] || null;
+            }
+        }
+
+        if (destino) {
+            destino.focus();
+            destino.select();
+        }
+    }
+
     form.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && e.target.matches('input[type="number"]')) {
+        var input = e.target.closest('input.nota-input');
+        if (!input) return;
+
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            moverFoco(input, e.key);
+            return;
+        }
+
+        if (e.key === 'Enter') {
             e.preventDefault();
             form.submit();
         }

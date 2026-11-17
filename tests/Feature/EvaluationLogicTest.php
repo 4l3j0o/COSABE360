@@ -17,7 +17,9 @@ use App\Models\User;
 use App\Services\EvaluationService;
 use App\Services\EvaluationTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use Tests\TestCase;
 
 class EvaluationLogicTest extends TestCase
@@ -309,5 +311,45 @@ class EvaluationLogicTest extends TestCase
 
         $this->assertNotEmpty($resultado['errores']);
         $this->assertSame(0, $resultado['notas']);
+    }
+
+    public function test_plantilla_excel_protege_hojas_y_solo_desbloquea_notas(): void
+    {
+        ['cs' => $cs] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $template = app(EvaluationTemplateService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+
+        foreach ($plan->criteria as $criterion) {
+            $service->crearActividad($criterion, 'Act ' . $criterion->codigo, null, 1);
+        }
+        $plan->refresh()->load('criteria.activities');
+
+        $ruta = storage_path('app/protected_template_test.xlsx');
+        file_put_contents($ruta, $template->exportar($plan));
+
+        $spreadsheet = IOFactory::load($ruta);
+        $notas = $spreadsheet->getSheetByName('Notas');
+        $criterios = $spreadsheet->getSheetByName('Criterios');
+
+        $this->assertTrue($notas->getProtection()->getSheet());
+        $this->assertTrue($criterios->getProtection()->getSheet());
+
+        // Cabecera bloqueada, celda de actividad desbloqueada.
+        $this->assertSame(
+            Protection::PROTECTION_PROTECTED,
+            $notas->getStyle('A1')->getProtection()->getLocked()
+        );
+        $this->assertSame(
+            Protection::PROTECTION_UNPROTECTED,
+            $notas->getStyle('D10')->getProtection()->getLocked()
+        );
+
+        $validacion = $notas->getDataValidation('D10');
+        $this->assertSame(DataValidation::TYPE_WHOLE, $validacion->getType());
+        $this->assertSame('0', $validacion->getFormula1());
+        $this->assertSame('10', $validacion->getFormula2());
+
+        @unlink($ruta);
     }
 }

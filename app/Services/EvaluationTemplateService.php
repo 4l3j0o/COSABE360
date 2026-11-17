@@ -6,11 +6,13 @@ use App\Models\SectionSubject;
 use App\Models\EvaluationPlan;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -48,6 +50,7 @@ class EvaluationTemplateService
     private const COLOR_BORDE = 'C9D9C9';        // verde grisáceo para bordes
     private const COLOR_TITULO = '003200';       // verde institucional para títulos
     private const COLOR_INSTITUCIONAL_CLARO = 'F6FAF6';
+    private const PASSWORD_PROTECCION = 'CSB360-EVALUACION';
 
     /**
      * Inserta el logo institucional centrado horizontalmente en un bloque de columnas
@@ -225,7 +228,8 @@ class EvaluationTemplateService
         // --- Hoja Notas (réplica de la planilla oficial) ---
         $sheetN = $spreadsheet->createSheet();
         $sheetN->setTitle('Notas');
-        $this->construirHojaNotas($sheetN, $plan, $cs, $criterios, $this->estudiantes($cs), true);
+        $celdasNotas = $this->construirHojaNotas($sheetN, $plan, $cs, $criterios, $this->estudiantes($cs), true);
+        $this->protegerPlantilla($spreadsheet, $sheetC, $sheetN, $celdasNotas);
 
         $writer = new Xlsx($spreadsheet);
         ob_start();
@@ -266,8 +270,9 @@ class EvaluationTemplateService
         Collection $criterios,
         Collection $estudiantes,
         bool $conFormulas
-    ): void {
+    ): array {
         $service = app(EvaluationService::class);
+        $celdasNotas = [];
 
         // Metadatos (filas 1-7): membrete institucional + DOCENTE/CURSO/MATERIA/TRIMESTRE
         $sheetN->setCellValue('D1', 'UNIDAD EDUCATIVA SAN BERNARDO — TARIJA');
@@ -351,9 +356,16 @@ class EvaluationTemplateService
                 $inicio = $col;
                 $nAct = $criterion->activities->count();
                 foreach ($criterion->activities as $activity) {
+                    $coordenada = $this->colLetter($col).$filaDatos;
+
+                    if ($conFormulas) {
+                        $this->configurarCeldaNota($sheetN, $coordenada, $criterion->porcentaje);
+                        $celdasNotas[] = $coordenada;
+                    }
+
                     $nota = $activity->notaDe($student);
                     if ($nota !== null) {
-                        $sheetN->setCellValue($this->colLetter($col).$filaDatos, $nota);
+                        $sheetN->setCellValue($coordenada, $nota);
                     }
                     $col++;
                 }
@@ -391,6 +403,87 @@ class EvaluationTemplateService
 
         $this->estilizarHojaNotas($sheetN, $ultimaCol, $filaC, $filaA, $ultimaFila, $criterios, $promCols, $colTotal, $rangosCriterio);
         $this->insertarLogo($sheetN, 110, 15);
+
+        return $celdasNotas;
+    }
+
+    /**
+     * Prepara la celda de una actividad: solo admite enteros dentro del rango.
+     */
+    private function configurarCeldaNota(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, string $coordenada, int $maximo): void
+    {
+        $validacion = $sheet->getDataValidation($coordenada);
+        $validacion->setType(DataValidation::TYPE_WHOLE)
+            ->setErrorStyle(DataValidation::STYLE_STOP)
+            ->setAllowBlank(true)
+            ->setShowInputMessage(true)
+            ->setShowErrorMessage(true)
+            ->setErrorTitle('Nota no válida')
+            ->setError('Solo se permiten números enteros entre 0 y '.$maximo.'.')
+            ->setPromptTitle('Nota')
+            ->setPrompt('Ingrese un número entero entre 0 y '.$maximo.'.')
+            ->setOperator(DataValidation::OPERATOR_BETWEEN)
+            ->setFormula1('0')
+            ->setFormula2((string) $maximo);
+    }
+
+    /**
+     * Protege las dos hojas de la plantilla y deja editables únicamente
+     * las celdas de actividades de la hoja Notas.
+     *
+     * @param  array<int, string>  $celdasNotas
+     */
+    private function protegerPlantilla(
+        Spreadsheet $spreadsheet,
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $criterios,
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $notas,
+        array $celdasNotas
+    ): void {
+        $password = self::PASSWORD_PROTECCION;
+
+        $spreadsheet->getSecurity()
+            ->setLockStructure(true)
+            ->setLockWindows(true)
+            ->setWorkbookPassword($password);
+
+        $this->bloquearCeldas($criterios);
+        $this->bloquearCeldas($notas);
+
+        foreach ($celdasNotas as $coordenada) {
+            $notas->getStyle($coordenada)
+                ->getProtection()
+                ->setLocked(Protection::PROTECTION_UNPROTECTED);
+        }
+
+        $this->protegerHoja($criterios);
+        $this->protegerHoja($notas);
+    }
+
+    private function bloquearCeldas(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): void
+    {
+        $rango = 'A1:'.$sheet->getHighestColumn().$sheet->getHighestRow();
+        $sheet->getStyle($rango)->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
+    }
+
+    private function protegerHoja(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): void
+    {
+        $sheet->getProtection()
+            ->setSheet(true)
+            ->setPassword(self::PASSWORD_PROTECCION)
+            ->setSelectLockedCells(false)
+            ->setSelectUnlockedCells(true)
+            ->setFormatCells(false)
+            ->setFormatColumns(false)
+            ->setFormatRows(false)
+            ->setInsertColumns(false)
+            ->setInsertRows(false)
+            ->setDeleteColumns(false)
+            ->setDeleteRows(false)
+            ->setSort(false)
+            ->setAutoFilter(false)
+            ->setPivotTables(false)
+            ->setObjects(false)
+            ->setScenarios(false);
     }
 
     /**
