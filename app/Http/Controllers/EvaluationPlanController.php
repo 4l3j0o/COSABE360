@@ -199,11 +199,16 @@ class EvaluationPlanController extends Controller
 
         $contenido = app(EvaluationTemplateService::class)->exportar($plan->load('criteria.activities'));
 
-        $nombre = 'evaluacion_trim'.$plan->trimestre.'_'.$sectionSubject->id.'_'.now()->format('Ymd').'.xlsx';
+        $nombre = 'evaluacion_trim'.$plan->trimestre.'_'.$sectionSubject->id.'_'.now()->format('Ymd_His').'_protegida.xlsx';
 
         return response()->streamDownload(function () use ($contenido) {
             echo $contenido;
-        }, $nombre, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+        }, $nombre, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**
