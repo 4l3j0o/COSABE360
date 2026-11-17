@@ -94,6 +94,32 @@ class AttendanceTest extends TestCase
         $response->assertSee('RETIRO_JUSTIFICADO');
     }
 
+    public function test_formulario_asistencia_vuelve_a_la_url_anterior(): void
+    {
+        $datos = $this->crearCursoConEstudiantes();
+        $volver = route('docente.cursos.show', $datos['sectionSubject']);
+
+        $this->actingAs($datos['userDocente']);
+
+        $this->get('/asistencias/crear?section_id='.$datos['curso']->id
+            .'&subject_id='.$datos['sectionSubject']->subject_id
+            .'&fecha='.now()->toDateString()
+            .'&volver='.urlencode($volver))
+            ->assertOk()
+            ->assertSee('Volver al curso')
+            ->assertSee($volver, false);
+
+        $this->post('/asistencias', [
+            'section_id' => $datos['curso']->id,
+            'subject_id' => $datos['sectionSubject']->subject_id,
+            'fecha' => now()->toDateString(),
+            'volver' => $volver,
+            'asistencias' => [
+                $datos['estudiantes'][0]->id => ['estado' => 'PRESENTE'],
+            ],
+        ])->assertRedirect($volver);
+    }
+
     public function test_docente_registra_asistencia_con_5_estados(): void
     {
         $datos = $this->crearCursoConEstudiantes(3);

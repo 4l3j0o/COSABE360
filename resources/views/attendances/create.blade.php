@@ -15,6 +15,15 @@
         $editando = $asistenciasExistentes->isNotEmpty();
         $modoLectura = $editando && ! $editar;
         $rutaBase = ['section_id' => $section->id, 'subject_id' => $subjectId, 'fecha' => $fecha];
+        if (! empty($volver)) {
+            $rutaBase['volver'] = $volver;
+        }
+        $volverHref = $editar
+            ? route('asistencias.create', $rutaBase)
+            : ($volver ?: route('asistencias.index'));
+        $volverTexto = $editar
+            ? 'Cancelar'
+            : ($volver ? 'Volver al curso' : 'Volver a Cursos');
         $badges = [
             'PRESENTE' => 'bg-success/10 text-success border-success/30',
             'AUSENTE' => 'bg-error/10 text-error border-error/30',
@@ -31,6 +40,11 @@
             'RETIRO_JUSTIFICADO' => 'peer-checked:bg-purple-500/10 peer-checked:text-purple-600 peer-checked:border-purple-500/40',
         ];
     @endphp
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => $volverHref, 'texto' => $volverTexto])
+    </div>
+
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Registrar Asistencia</h1>
@@ -49,7 +63,6 @@
                     </a>
                 @endif
             @endif
-            @include('layouts._volver', ['href' => $editar ? route('asistencias.create', $rutaBase) : route('asistencias.index'), 'texto' => $editar ? 'Cancelar' : 'Volver'])
         </div>
     </div>
 
@@ -109,6 +122,9 @@
             <input type="hidden" name="section_id" value="{{ $section->id }}">
             <input type="hidden" name="subject_id" value="{{ $subjectId }}">
             <input type="hidden" name="fecha" value="{{ $fecha }}">
+            @if($volver)
+                <input type="hidden" name="volver" value="{{ $volver }}">
+            @endif
 
             <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/30">
                 <p class="text-xs text-muted-foreground">Marca PRESENTE a todos (se respetan las licencias ya registradas) y luego ajusta los casos.</p>

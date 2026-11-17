@@ -142,11 +142,12 @@ class AttendanceController extends Controller
             ->keyBy('student_id');
 
         $editar = $request->boolean('editar');
+        $volver = $this->volverSeguro($request->query('volver'));
 
         // HU-82: estudiantes con licencia activa que cubre la fecha (no modificables)
         $licenciados = $this->estudiantesLicenciados($section, $fecha);
 
-        return view('attendances.create', compact('section', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId', 'licenciados'));
+        return view('attendances.create', compact('section', 'fecha', 'estudiantes', 'asistenciasExistentes', 'editar', 'materias', 'subjectId', 'licenciados', 'volver'));
     }
 
     /**
@@ -230,7 +231,10 @@ class AttendanceController extends Controller
             }
         }
 
-        return redirect()->route('asistencias.index')->with('success', 'Asistencia registrada correctamente para ' . $fechaNormalizada);
+        $volver = $this->volverSeguro($request->input('volver'));
+
+        return redirect($volver ?: route('asistencias.index'))
+            ->with('success', 'Asistencia registrada correctamente para '.$fechaNormalizada);
     }
 
 /**
@@ -407,5 +411,17 @@ class AttendanceController extends Controller
         }
 
         abort(403);
+    }
+
+    /**
+     * Solo permite volver a una URL interna.
+     */
+    private function volverSeguro(mixed $url): ?string
+    {
+        if (! is_string($url) || trim($url) === '') {
+            return null;
+        }
+
+        return str_starts_with($url, url('/')) ? $url : null;
     }
 }

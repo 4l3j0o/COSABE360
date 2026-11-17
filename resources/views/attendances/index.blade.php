@@ -62,6 +62,7 @@
                                     <td class="px-4 py-3 text-right">
                                         <form method="GET" action="{{ route('asistencias.create') }}" class="inline-flex items-center gap-2">
                                             <input type="hidden" name="section_id" value="{{ $curso->id }}">
+                                            <input type="hidden" name="volver" value="{{ url()->full() }}">
                                             @php $materias = $materiasPorCurso[$curso->id] ?? collect(); @endphp
                                             @if($materias->isNotEmpty())
                                                 <select name="subject_id" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary/30">
