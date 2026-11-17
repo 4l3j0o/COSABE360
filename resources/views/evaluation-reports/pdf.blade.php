@@ -97,6 +97,35 @@
     @endforeach
   </table>
 
+  <div class="section-title">Proyección anual por materia — Falta para aprobar con 51</div>
+  <table class="grid">
+    <tr>
+      <th style="width:4%">#</th><th class="left">Estudiante</th>
+      <th style="width:6%">T1</th><th style="width:6%">T2</th><th style="width:6%">T3</th>
+      <th style="width:8%">Suma T1+T2</th><th style="width:8%">Prom. T1+T2</th>
+      <th style="width:10%">Falta en T3</th><th style="width:10%">Anual</th>
+    </tr>
+    @foreach($resultado['filas'] as $i => $fila)
+      <tr class="{{ $i % 2 === 1 ? 'zebra' : '' }}">
+        <td>{{ $i + 1 }}</td>
+        <td class="left">{{ $fila->student->apellidos }} {{ $fila->student->nombres }}</td>
+        <td>{{ $fila->trimestres[1] ?? '—' }}</td>
+        <td>{{ $fila->trimestres[2] ?? '—' }}</td>
+        <td>{{ $fila->trimestres[3] ?? '—' }}</td>
+        <td>{{ $fila->suma_dos ?? '—' }}</td>
+        <td>{{ $fila->promedio_dos ?? '—' }}</td>
+        <td>
+          @if($fila->faltante === null) —
+          @elseif($fila->faltante === 0) <span class="aprobado">Ya aprueba</span>
+          @elseif($fila->faltante > 100) <span class="reprobado">No alcanza</span>
+          @else <strong>{{ $fila->faltante }}</strong>
+          @endif
+        </td>
+        <td>{{ $fila->anual ?? '—' }}</td>
+      </tr>
+    @endforeach
+  </table>
+
   <table class="firmas">
     <tr>
       <td><div class="linea">Docente de materia<br><strong>Firma y sello</strong></div></td>

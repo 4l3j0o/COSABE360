@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\EvaluationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
@@ -61,6 +62,24 @@ class EvaluationReportTest extends TestCase
         return compact('user', 'teacher');
     }
 
+    private function asignarNotaTrimestre(SectionSubject $cs, Student $student, int $trimestre, int $objetivo): void
+    {
+        $service = app(EvaluationService::class);
+        $porcentajes = ['SE' => 10, 'SA' => 45, 'HA' => 40, 'AU' => 5];
+
+        $plan = $service->obtenerOCrearPlan($cs, $trimestre);
+        $plan->load('criteria');
+
+        foreach ($plan->criteria as $criterion) {
+            $activity = $service->crearActividad($criterion, 'Actividad '.$trimestre, null, 1);
+            $service->registrarNota(
+                $activity,
+                $student,
+                round((($porcentajes[$criterion->codigo] ?? 0) * $objetivo) / 100)
+            );
+        }
+    }
+
     public function test_docente_sin_curso_elegido_ve_prompt(): void
     {
         $a = $this->crearCurso('E1');
@@ -89,6 +108,35 @@ class EvaluationReportTest extends TestCase
         $response->assertSee('ApellidoEvalE3');
         // HU-57: ya no existe el filtro de período de asistencia
         $response->assertDontSee('Asistencia (período)');
+    }
+
+    public function test_proyeccion_anual_muestra_faltante_para_aprobar(): void
+    {
+        $a = $this->crearCurso('E3P');
+        $doc = $this->crearDocente();
+        $cs = SectionSubject::create([
+            'section_id' => $a['curso']->id,
+            'subject_id' => $a['subject']->id,
+            'teacher_id' => $doc['teacher']->id,
+        ]);
+        $this->asignarNotaTrimestre($cs, $a['est'], 1, 80);
+        $this->asignarNotaTrimestre($cs, $a['est'], 2, 60);
+
+        $response = $this->actingAs($doc['user'])->get(route('evaluation-reports.index', [
+            'section_subject_id' => $cs->id,
+            'trimestre' => 2,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Proyección anual por materia');
+        $response->assertSee('Falta en T3');
+
+        $fila = $response->viewData('resultado')['filas']->first();
+        $this->assertSame(140.0, $fila->suma_dos);
+        $this->assertSame(70.0, $fila->promedio_dos);
+        $this->assertSame(12.0, $fila->faltante);
+        $this->assertNull($fila->anual);
+        $this->assertSame('pendiente', $fila->estado_proyeccion);
     }
 
     public function test_export_sin_curso_redirige_con_error(): void

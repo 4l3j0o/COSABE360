@@ -654,7 +654,7 @@ class ReporteCentralController extends Controller
         if ($esSupervisor || $esDocente) {
             $existentes[] = [
                 'nombre' => 'Reportes de Evaluación',
-                'descripcion' => 'Aprobados/reprobados, mejores calificaciones y asistencia por curso y trimestre.',
+                'descripcion' => 'Aprobados/reprobados, mejores calificaciones, asistencia y proyección anual para aprobar.',
                 'parametros' => 'curso / materia / trimestre',
                 'ruta' => 'evaluation-reports.index',
                 'tipo' => 'link',

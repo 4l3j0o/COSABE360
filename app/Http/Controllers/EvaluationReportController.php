@@ -103,10 +103,12 @@ class EvaluationReportController extends Controller
             return ['filas' => collect(), 'curso' => null, 'trimestre' => $trimestre, 'resumen' => [], 'top' => collect(), 'requiere_curso' => true];
         }
 
-        $plan = EvaluationPlan::where('section_subject_id', $cs->id)
-            ->where('trimestre', $trimestre)
+        $planes = EvaluationPlan::where('section_subject_id', $cs->id)
+            ->whereIn('trimestre', [1, 2, 3])
             ->with('criteria.activities')
-            ->first();
+            ->get()
+            ->keyBy('trimestre');
+        $plan = $planes->get($trimestre);
 
         $students = $cs->section->students()
             ->where('students.estado', 'ACTIVO')
@@ -115,19 +117,29 @@ class EvaluationReportController extends Controller
 
         $service = app(EvaluationService::class);
 
-        // Filas: nota de trimestre + valoración + estado
-        $filas = $students->map(function (Student $student) use ($service, $plan) {
+        // Filas: nota de trimestre + valoración + estado + proyección anual
+        $filas = $students->map(function (Student $student) use ($service, $plan, $planes) {
             $notaTrim = $plan ? $service->notaTrimestre($plan, $student) : null;
             $valoracion = $notaTrim !== null ? EvaluationService::valoracion($notaTrim) : null;
 
-            return (object) [
+            $notasTrimestres = [];
+            foreach ([1, 2, 3] as $numeroTrimestre) {
+                $planTrimestre = $planes->get($numeroTrimestre);
+                $notasTrimestres[$numeroTrimestre] = $planTrimestre
+                    ? $service->notaTrimestre($planTrimestre, $student)
+                    : null;
+            }
+            $proyeccion = $this->proyeccionAnual($notasTrimestres);
+
+            return (object) array_merge([
                 'student' => $student,
                 'nota' => $notaTrim,
                 'codigo' => $valoracion['codigo'] ?? '—',
                 'nombre_val' => $valoracion['nombre'] ?? '—',
                 'aprobado' => $notaTrim !== null ? EvaluationService::aprobado($notaTrim) : null,
                 'criterios' => $plan ? $this->notasCriterio($plan, $student, $service) : [],
-            ];
+                'trimestres' => $notasTrimestres,
+            ], $proyeccion);
         });
 
         // Métricas de asistencia del trimestre por estudiante (HU-57: sin filtro de período)
@@ -164,6 +176,50 @@ class EvaluationReportController extends Controller
         }
 
         return $notas;
+    }
+
+    /**
+     * Proyección anual de una materia.
+     *
+     * El promedio anual oficial se redondea. Para que ese promedio sea >= 51,
+     * la suma de los tres trimestres debe ser >= 152. Si T1 y T2 ya están
+     * completos, se muestra cuánto falta en T3 para llegar a esa suma.
+     *
+     * @param  array<int, float|null>  $notas
+     * @return array<string, mixed>
+     */
+    private function proyeccionAnual(array $notas): array
+    {
+        $t1 = $notas[1] ?? null;
+        $t2 = $notas[2] ?? null;
+        $t3 = $notas[3] ?? null;
+
+        $sumaDos = ($t1 !== null && $t2 !== null) ? $t1 + $t2 : null;
+        $promedioDos = $sumaDos !== null ? (float) round($sumaDos / 2) : null;
+
+        $faltante = null;
+        $anual = null;
+        $estado = null;
+
+        if ($t1 !== null && $t2 !== null) {
+            if ($t3 !== null) {
+                $anual = (float) round(($t1 + $t2 + $t3) / 3);
+                $estado = $anual >= 51 ? 'aprobado' : 'reprobado';
+            } else {
+                $faltante = max(0, 152 - $sumaDos);
+                $estado = $faltante > 100
+                    ? 'imposible'
+                    : ($faltante === 0 ? 'alcanza' : 'pendiente');
+            }
+        }
+
+        return [
+            'suma_dos' => $sumaDos,
+            'promedio_dos' => $promedioDos,
+            'faltante' => $faltante,
+            'anual' => $anual,
+            'estado_proyeccion' => $estado,
+        ];
     }
 
     /**
@@ -399,6 +455,51 @@ class EvaluationReportController extends Controller
         $sheet->getColumnDimension('A')->setWidth(5);
         $sheet->getColumnDimension('B')->setWidth(34);
         $this->insertarLogoCentrado($sheet, 'A', 'B', 84, 2);
+
+        // Hoja de proyección anual
+        $proyeccion = $spreadsheet->createSheet();
+        $proyeccion->setTitle('Proyección');
+        $proyeccion->mergeCells('A1:I1');
+        $proyeccion->setCellValue('A1', 'Proyección anual — '.$nombreCurso.' — '.$nombreMateria.' — Mínimo 51');
+        $proyeccion->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003200');
+        $proyeccion->mergeCells('A2:I2');
+        $proyeccion->setCellValue('A2', 'T1 + T2: suma y promedio de los dos primeros trimestres. Falta en T3: mínimo necesario para aprobar.');
+
+        $cabeceraProyeccion = ['N.º', 'Estudiante', 'T1', 'T2', 'T3', 'Suma T1+T2', 'Prom. T1+T2', 'Falta en T3', 'Anual'];
+        foreach ($cabeceraProyeccion as $i => $texto) {
+            $proyeccion->setCellValue($this->colLetter($i + 1).'4', $texto);
+        }
+        $proyeccion->getStyle('A4:I4')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $proyeccion->getStyle('A4:I4')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003200');
+        $proyeccion->getStyle('A4:I4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $filaProyeccion = 5;
+        foreach ($resultado['filas'] as $i => $f) {
+            $falta = $f->faltante === null
+                ? '—'
+                : ($f->faltante === 0 ? 'Ya aprueba' : ($f->faltante > 100 ? 'No alcanza' : $f->faltante));
+
+            $proyeccion->setCellValue('A'.$filaProyeccion, $i + 1);
+            $proyeccion->setCellValue('B'.$filaProyeccion, $f->student->apellidos.' '.$f->student->nombres);
+            $proyeccion->setCellValue('C'.$filaProyeccion, $f->trimestres[1] ?? '—');
+            $proyeccion->setCellValue('D'.$filaProyeccion, $f->trimestres[2] ?? '—');
+            $proyeccion->setCellValue('E'.$filaProyeccion, $f->trimestres[3] ?? '—');
+            $proyeccion->setCellValue('F'.$filaProyeccion, $f->suma_dos ?? '—');
+            $proyeccion->setCellValue('G'.$filaProyeccion, $f->promedio_dos ?? '—');
+            $proyeccion->setCellValue('H'.$filaProyeccion, $falta);
+            $proyeccion->setCellValue('I'.$filaProyeccion, $f->anual ?? '—');
+            $filaProyeccion++;
+        }
+
+        $proyeccion->getStyle('A4:I'.($filaProyeccion - 1))->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+            ->getColor()->setARGB('FFD1DFD1');
+        foreach (range(1, 9) as $c) {
+            $proyeccion->getColumnDimension($this->colLetter($c))->setAutoSize(true);
+        }
+        $proyeccion->freezePane('A5');
+        $proyeccion->getSheetView()->setZoomScale(90);
+        $spreadsheet->setActiveSheetIndex(0);
 
         $writer = new Xlsx($spreadsheet);
         ob_start();

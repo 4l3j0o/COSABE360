@@ -7,7 +7,7 @@
     <div>
         @include('layouts._volver', ['href' => route('reportes.central.index'), 'texto' => 'Volver a Central de Reportes'])
         <h1 class="text-xl font-bold text-foreground mt-2">Reportes de Evaluación</h1>
-        <p class="text-sm text-muted-foreground mt-1">Aprobados/reprobados, mejores calificaciones y asistencia por curso y trimestre.</p>
+        <p class="text-sm text-muted-foreground mt-1">Aprobados/reprobados, mejores calificaciones, asistencia y proyección anual para aprobar.</p>
     </div>
 </div>
 
@@ -81,6 +81,68 @@
             </div>
         </div>
     @endif
+
+    <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm mb-5">
+        <div class="px-4 sm:px-5 py-4 border-b border-border">
+            <h3 class="font-semibold text-foreground">Proyección anual por materia</h3>
+            <p class="text-xs text-muted-foreground mt-1">
+                T1, T2, T3 · suma y promedio de los dos primeros · mínimo necesario en T3 para aprobar con 51.
+                Con el redondeo oficial, la suma mínima de los 3 trimestres es 152. La columna “Falta en T3”
+                muestra el mínimo necesario; si supera 100, no alcanza.
+            </p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border bg-muted/50 text-left">
+                        <th class="px-4 py-3 font-semibold text-foreground">#</th>
+                        <th class="px-4 py-3 font-semibold text-foreground">Estudiante</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">T1</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">T2</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">T3</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">Suma T1+T2</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">Prom. T1+T2</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">Falta en T3</th>
+                        <th class="px-4 py-3 text-center font-semibold text-foreground">Anual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($resultado['filas'] as $i => $fila)
+                        <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
+                            <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
+                            <td class="px-4 py-3 font-medium text-foreground">{{ $fila->student->apellidos }} {{ $fila->student->nombres }}</td>
+                            <td class="px-4 py-3 text-center">{{ $fila->trimestres[1] ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ $fila->trimestres[2] ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ $fila->trimestres[3] ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ $fila->suma_dos ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">{{ $fila->promedio_dos ?? '—' }}</td>
+                            <td class="px-4 py-3 text-center">
+                                @if($fila->faltante === null)
+                                    —
+                                @elseif($fila->faltante === 0)
+                                    <span class="text-success font-medium">Ya aprueba</span>
+                                @elseif($fila->faltante > 100)
+                                    <span class="text-error font-medium">No alcanza</span>
+                                @else
+                                    <span class="font-semibold text-foreground">{{ $fila->faltante }}</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                @if($fila->anual !== null)
+                                    <span class="font-semibold text-foreground">{{ $fila->anual }}</span>
+                                    <span class="ml-1 text-xs {{ $fila->estado_proyeccion === 'aprobado' ? 'text-success' : 'text-error' }}">
+                                        {{ $fila->estado_proyeccion === 'aprobado' ? 'Aprobado' : 'Reprobado' }}
+                                    </span>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
