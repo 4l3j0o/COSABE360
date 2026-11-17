@@ -55,39 +55,7 @@ class ReporteCentralController extends Controller
         $reportes = $this->catalogoReportes($user);
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
 
-        $rankingNiveles = $cursos
-            ->map(fn ($section) => $section->grade?->level)
-            ->filter()
-            ->unique('id')
-            ->sortBy('orden')
-            ->values();
-        $rankingGrados = $cursos
-            ->map(fn ($section) => $section->grade)
-            ->filter()
-            ->unique('id')
-            ->sortBy(fn ($grade) => (int) ($grade->level?->orden ?? 999) * 100 + (int) $grade->orden)
-            ->values();
-        $rankingMaterias = $sectionSubjects
-            ->map(fn ($cs) => $cs->subject)
-            ->filter()
-            ->unique('id')
-            ->sortBy('nombre')
-            ->values();
-        $rankingGeneral = $this->esSupervisor($user)
-            || ($user->teacher && $cursos->contains(
-                fn ($section) => (int) $section->teacher_id === (int) $user->teacher->id
-            ));
-
-        return view('reportes-central.index', compact(
-            'cursos',
-            'sectionSubjects',
-            'reportes',
-            'gestiones',
-            'rankingNiveles',
-            'rankingGrados',
-            'rankingMaterias',
-            'rankingGeneral'
-        ));
+        return view('reportes-central.index', compact('cursos', 'sectionSubjects', 'reportes', 'gestiones'));
     }
 
     // -------------------------------------------- Lista de padres de familia
@@ -665,7 +633,7 @@ class ReporteCentralController extends Controller
             $nuevos[] = [
                 'nombre' => 'Ranking de mejores promedios',
                 'descripcion' => 'Mejores promedios por ámbito: global, nivel, curso/grado o paralelo; general o por materia.',
-                'parametros' => 'ámbito / materia / período',
+                'parametros' => 'Se configura dentro del reporte',
                 'ruta' => 'reportes.ranking.index',
                 'tipo' => 'form',
             ];

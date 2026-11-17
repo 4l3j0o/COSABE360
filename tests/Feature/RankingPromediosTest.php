@@ -130,7 +130,7 @@ class RankingPromediosTest extends TestCase
         }
     }
 
-    public function test_central_de_reportes_muestra_filtros_del_ranking(): void
+    public function test_central_de_reportes_solo_ejecuta_el_ranking_sin_filtros_inline(): void
     {
         $this->curso('Z');
         $admin = $this->usuario('Administrador');
@@ -139,8 +139,8 @@ class RankingPromediosTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Ranking de mejores promedios');
-        $response->assertSee('name="scope"', false);
-        $response->assertSee('Top 50');
+        $response->assertSee('Se configura dentro del reporte');
+        $response->assertDontSee('name="scope"', false);
         $response->assertSee('Volver al dashboard');
     }
 

@@ -51,8 +51,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-                            @elseif($reporte['ruta'] === 'reportes.ranking.index')
-                                @include('reportes-central.partials._filtros-ranking')
                             @else
                                 {{ $reporte['parametros'] }}
                             @endif
