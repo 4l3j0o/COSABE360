@@ -10,6 +10,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     @php $esAdmin = auth()->user()->esAdmin(); @endphp
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>

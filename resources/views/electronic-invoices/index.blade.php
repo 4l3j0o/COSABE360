@@ -2,6 +2,10 @@
 @section('titulo','Facturas Electrónicas')
 @section('sidebar') @include('dashboard.partials._sidebar-admin') @endsection
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
   <div>
     <h1 class="text-xl font-bold text-foreground">Facturas Electrónicas SFE</h1>

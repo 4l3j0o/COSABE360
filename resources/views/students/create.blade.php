@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('students.index'), 'texto' => 'Volver al listado'])
+    </div>
     <div class="fixed inset-0 z-20 flex items-start justify-center pt-4 pb-8 px-4 overflow-y-auto" style="margin: -1.5rem; padding: 1.5rem;">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="window.location='{{ route('students.index') }}'"></div>
 

@@ -2,6 +2,10 @@
 @section('titulo','Secuencias Facturación')
 @section('sidebar') @include('dashboard.partials._sidebar-admin') @endsection
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <h1 class="text-xl font-bold mb-6">Secuencias de Numeración</h1>
 <div class="bg-card border border-border rounded-xl overflow-hidden">
 <table class="w-full text-sm"><thead><tr class="border-b bg-muted/50"><th class="px-4 py-3 text-left">Sucursal</th><th class="px-4 py-3">Punto Venta</th><th class="px-4 py-3">Último Nro</th><th class="px-4 py-3">Estado</th></tr></thead>

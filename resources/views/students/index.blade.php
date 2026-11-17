@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     @php
         $esAdmin = auth()->user()->esAdmin();
         // Errores que pertenecen únicamente al formulario de "Registrar nuevo estudiante"

@@ -130,6 +130,20 @@ class RankingPromediosTest extends TestCase
         }
     }
 
+    public function test_central_de_reportes_muestra_filtros_del_ranking(): void
+    {
+        $this->curso('Z');
+        $admin = $this->usuario('Administrador');
+
+        $response = $this->actingAs($admin)->get(route('reportes.central.index'));
+
+        $response->assertOk();
+        $response->assertSee('Ranking de mejores promedios');
+        $response->assertSee('name="scope"', false);
+        $response->assertSee('Top 50');
+        $response->assertSee('Volver al dashboard');
+    }
+
     public function test_admin_ve_ranking_general_y_exporta(): void
     {
         $a = $this->curso('A');

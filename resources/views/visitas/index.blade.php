@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     <div class="mb-6">
         <h1 class="text-xl font-bold text-foreground">Horarios de visita para padres</h1>
         <p class="text-sm text-muted-foreground">Días y horas en que cada docente atiende a los padres.</p>

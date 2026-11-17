@@ -3,6 +3,10 @@
 @section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
         <h1 class="text-xl font-bold text-foreground">Central de Reportes</h1>
@@ -47,6 +51,8 @@
                                         @endforeach
                                     </select>
                                 </div>
+                            @elseif($reporte['ruta'] === 'reportes.ranking.index')
+                                @include('reportes-central.partials._filtros-ranking')
                             @else
                                 {{ $reporte['parametros'] }}
                             @endif

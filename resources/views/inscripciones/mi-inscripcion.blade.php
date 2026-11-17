@@ -3,6 +3,10 @@
 @section('sidebar') @include('dashboard.partials._sidebar-by-rol') @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <div class="mb-6">
     <h1 class="text-xl font-bold text-foreground">Mi Inscripción en Línea</h1>
     <p class="text-sm text-muted-foreground mt-1">{{ $student->apellidos }} {{ $student->nombres }} · Código {{ $student->codigo }} · Estado: <strong>{{ $inscripcion?->estado === 'COMPLETADA' ? 'inscrito' : 'preinscripción' }}</strong></p>

@@ -7,6 +7,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">RUDE - Registro Único de Estudiantes</h1>

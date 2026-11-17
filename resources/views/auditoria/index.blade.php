@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     <div class="flex flex-col gap-6">
         <div>
             <h1 class="text-xl font-bold text-foreground">Historial de Operaciones</h1>

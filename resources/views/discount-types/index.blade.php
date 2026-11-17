@@ -2,6 +2,10 @@
 @section('titulo', 'Tipos de Descuento')
 @section('sidebar') @include('dashboard.partials._sidebar-admin') @endsection
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 @php $R = \App\Models\DiscountType::class; @endphp
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>

@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     @php
         $clavesErrorNuevoUsuario = ['nombre', 'apellido', 'email', 'password', 'role', 'telefono', 'general'];
         $esErrorNuevoUsuario = collect($errors->keys())

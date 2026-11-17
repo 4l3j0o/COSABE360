@@ -6,10 +6,9 @@
 @endsection
 
 @section('contenido')
-    <a href="{{ route('docente.cursos') }}" class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        Mis Cursos
-    </a>
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('docente.cursos'), 'texto' => 'Volver a Mis Cursos'])
+    </div>
 
     <div class="mb-4">
         <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ $curso->subject->nombre }}</p>

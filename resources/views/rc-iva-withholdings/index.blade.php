@@ -2,6 +2,10 @@
 @section('titulo','Retenciones RC-IVA')
 @section('sidebar') @include('dashboard.partials._sidebar-admin') @endsection
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <h1 class="text-xl font-bold mb-6">Retenciones RC-IVA 13% </h1>
 <div class="bg-card border border-border rounded-xl overflow-hidden">
 <table class="w-full text-sm"><thead><tr class="border-b bg-muted/50"><th class="px-4 py-3">Fecha</th><th class="px-4 py-3 text-left">Sujeto</th><th class="px-4 py-3">Base</th><th class="px-4 py-3">Retención 13%</th><th class="px-4 py-3">Estado</th></tr></thead>

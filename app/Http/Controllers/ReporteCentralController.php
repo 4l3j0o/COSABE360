@@ -55,7 +55,39 @@ class ReporteCentralController extends Controller
         $reportes = $this->catalogoReportes($user);
         $gestiones = AcademicYear::orderByDesc('nombre')->get();
 
-        return view('reportes-central.index', compact('cursos', 'sectionSubjects', 'reportes', 'gestiones'));
+        $rankingNiveles = $cursos
+            ->map(fn ($section) => $section->grade?->level)
+            ->filter()
+            ->unique('id')
+            ->sortBy('orden')
+            ->values();
+        $rankingGrados = $cursos
+            ->map(fn ($section) => $section->grade)
+            ->filter()
+            ->unique('id')
+            ->sortBy(fn ($grade) => (int) ($grade->level?->orden ?? 999) * 100 + (int) $grade->orden)
+            ->values();
+        $rankingMaterias = $sectionSubjects
+            ->map(fn ($cs) => $cs->subject)
+            ->filter()
+            ->unique('id')
+            ->sortBy('nombre')
+            ->values();
+        $rankingGeneral = $this->esSupervisor($user)
+            || ($user->teacher && $cursos->contains(
+                fn ($section) => (int) $section->teacher_id === (int) $user->teacher->id
+            ));
+
+        return view('reportes-central.index', compact(
+            'cursos',
+            'sectionSubjects',
+            'reportes',
+            'gestiones',
+            'rankingNiveles',
+            'rankingGrados',
+            'rankingMaterias',
+            'rankingGeneral'
+        ));
     }
 
     // -------------------------------------------- Lista de padres de familia
@@ -512,7 +544,7 @@ class ReporteCentralController extends Controller
     private function cursosPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
-            return Section::with(['grade', 'gestion'])
+            return Section::with(['grade.level', 'gestion'])
                 ->where('estado', 'ACTIVO')
                 ->ordenadoPorNivel()
                 ->get();

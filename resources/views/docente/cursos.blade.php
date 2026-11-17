@@ -6,6 +6,10 @@
 @endsection
 
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
     <div class="flex items-center justify-between gap-3 mb-4">
         <h1 class="text-lg font-bold text-foreground">Mis Cursos</h1>
         <span class="text-sm text-muted-foreground">{{ $cursos->count() }}</span>

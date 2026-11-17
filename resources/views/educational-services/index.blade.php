@@ -2,6 +2,10 @@
 @section('titulo','Servicios Educativos')
 @section('sidebar') @include('dashboard.partials._sidebar-admin') @endsection
 @section('contenido')
+
+    <div class="mb-4">
+        @include('layouts._volver', ['href' => route('dashboard'), 'texto' => 'Volver al dashboard'])
+    </div>
 <div class="flex justify-between items-center mb-6">
   <h1 class="text-xl font-bold">Catálogo Servicios / Productos SIN (RF29)</h1>
   <span class="text-sm text-muted-foreground">{{ $services->total() }} registros</span>
