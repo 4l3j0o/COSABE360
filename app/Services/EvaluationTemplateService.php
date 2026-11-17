@@ -334,13 +334,6 @@ class EvaluationTemplateService
         \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $notas,
         array $celdasNotas
     ): void {
-        $password = self::PASSWORD_PROTECCION;
-
-        $spreadsheet->getSecurity()
-            ->setLockStructure(true)
-            ->setLockWindows(true)
-            ->setWorkbookPassword($password);
-
         $this->bloquearCeldas($notas);
 
         foreach ($celdasNotas as $coordenada) {
@@ -363,8 +356,6 @@ class EvaluationTemplateService
         $sheet->getProtection()
             ->setSheet(true)
             ->setPassword(self::PASSWORD_PROTECCION)
-            ->setSelectLockedCells(true)
-            ->setSelectUnlockedCells(true)
             ->setFormatCells(false)
             ->setFormatColumns(false)
             ->setFormatRows(false)
