@@ -238,17 +238,34 @@ class EvaluationReportController extends Controller
     private function sectionSubjectsPermitidos($user): Collection
     {
         if ($user->hasAnyRole(['Administrador', 'Director', 'Secretaría'])) {
-            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
-                ->orderBy('section_id')->orderBy('subject_id')->get();
+            return $this->ordenarSectionSubjects(
+                SectionSubject::with(['subject', 'section.grade.level', 'section', 'section.gestion'])->get()
+            );
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
-            return $user->teacher->sectionSubjects()
-                ->with(['subject', 'section.grade', 'section', 'section.gestion'])
-                ->orderBy('section_id')->orderBy('subject_id')->get();
+            return $this->ordenarSectionSubjects(
+                $user->teacher->sectionSubjects()
+                    ->with(['subject', 'section.grade.level', 'section', 'section.gestion'])
+                    ->get()
+            );
         }
 
         return collect();
+    }
+
+    /**
+     * Orden pedagógico: nivel → grado → código del paralelo → materia.
+     * Se encadena de menor a mayor significancia porque sortBy es estable.
+     */
+    private function ordenarSectionSubjects(Collection $sectionSubjects): Collection
+    {
+        return $sectionSubjects
+            ->sortBy(fn ($cs) => $cs->subject?->nombre ?? '')
+            ->sortBy(fn ($cs) => $cs->section?->codigo ?? $cs->section?->nombre ?? '')
+            ->sortBy(fn ($cs) => $cs->section?->grade?->orden ?? 999)
+            ->sortBy(fn ($cs) => $cs->section?->grade?->level?->orden ?? 999)
+            ->values();
     }
 
     private function exportPdf(array $resultado): StreamedResponse

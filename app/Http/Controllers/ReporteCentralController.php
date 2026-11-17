@@ -521,16 +521,16 @@ class ReporteCentralController extends Controller
         if ($user->hasRole('Docente') && $user->teacher) {
             // Secciones donde dicta + donde es tutor/encargado del paralelo.
             $propios = $user->teacher->sectionSubjects()
-                ->with(['section.grade', 'section.gestion'])
+                ->with(['section.grade.level', 'section.gestion'])
                 ->get()
                 ->map(fn ($cs) => $cs->section);
 
-            $encargado = Section::with(['grade', 'gestion'])
+            $encargado = Section::with(['grade.level', 'gestion'])
                 ->where('estado', 'ACTIVO')
                 ->where('teacher_id', $user->teacher->id)
                 ->get();
 
-            return $propios->concat($encargado)->unique('id')->values()->sortBy('nombre');
+            return Section::ordenarPorNivel($propios->concat($encargado)->unique('id')->values());
         }
 
         return collect();
@@ -539,11 +539,11 @@ class ReporteCentralController extends Controller
     private function sectionSubjectsPermitidos($user): Collection
     {
         if ($this->esSupervisor($user)) {
-            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
-                ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
-                ->orderBy('section_id')
-                ->orderBy('subject_id')
-                ->get();
+            return $this->ordenarSectionSubjects(
+                SectionSubject::with(['subject', 'section.grade.level', 'section', 'section.gestion'])
+                    ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
+                    ->get()
+            );
         }
 
         if ($user->hasRole('Docente') && $user->teacher) {
@@ -552,17 +552,30 @@ class ReporteCentralController extends Controller
             $cursosEncargado = Section::where('teacher_id', $user->teacher->id)
                 ->pluck('id');
 
-            return SectionSubject::with(['subject', 'section.grade', 'section', 'section.gestion'])
-                ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
-                ->where(fn ($q) => $q
-                    ->where('teacher_id', $user->teacher->id)
-                    ->orWhereIn('section_id', $cursosEncargado))
-                ->orderBy('section_id')
-                ->orderBy('subject_id')
-                ->get();
+            return $this->ordenarSectionSubjects(
+                SectionSubject::with(['subject', 'section.grade.level', 'section', 'section.gestion'])
+                    ->whereHas('section', fn ($q) => $q->where('estado', 'ACTIVO'))
+                    ->where(fn ($q) => $q
+                        ->where('teacher_id', $user->teacher->id)
+                        ->orWhereIn('section_id', $cursosEncargado))
+                    ->get()
+            );
         }
 
         return collect();
+    }
+
+    /**
+     * Orden pedagógico: nivel → grado → código del paralelo → materia.
+     */
+    private function ordenarSectionSubjects(Collection $sectionSubjects): Collection
+    {
+        return $sectionSubjects
+            ->sortBy(fn ($cs) => $cs->subject?->nombre ?? '')
+            ->sortBy(fn ($cs) => $cs->section?->codigo ?? $cs->section?->nombre ?? '')
+            ->sortBy(fn ($cs) => $cs->section?->grade?->orden ?? 999)
+            ->sortBy(fn ($cs) => $cs->section?->grade?->level?->orden ?? 999)
+            ->values();
     }
 
     private function permiteCurso($user, int $sectionId, Collection $cursos): bool

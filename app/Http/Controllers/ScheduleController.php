@@ -71,8 +71,6 @@ class ScheduleController extends Controller
 
         $bloquesDia = $this->bloquesDia();
 
-        $sections = Section::all();
-
         // Materiales del nivel del curso (ej. 1ro Primaria no ve Informática, que es de Secundaria)
         $levelId = $section->grade?->level_id;
         $subjects = Subject::where('level_id', $levelId)->get();
@@ -153,7 +151,7 @@ class ScheduleController extends Controller
             $gruposParalelo[] = $this->construirGrupo($schedules, $nivelSeccion ?? 'PRIMARIA', 'Horario semanal', 'primaria');
         }
 
-        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'sections', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel', 'gruposParalelo'));
+        return view('schedules.show', compact('section', 'dias', 'horas', 'tabla', 'subjects', 'teachers', 'schedules', 'bloquesDia', 'recesos', 'diasDisponibles', 'franjasLibresPorDia', 'materiasDocentes', 'docentesLabel', 'gruposParalelo'));
     }
 
     /**
@@ -657,9 +655,9 @@ class ScheduleController extends Controller
 
     public function create()
     {
-        $sections = Section::all();
-        $subjects = Subject::all();
-        $teachers = Teacher::all();
+        $sections = Section::with(['grade.level'])->ordenadoPorNivel()->get();
+        $subjects = Subject::orderBy('nombre')->get();
+        $teachers = Teacher::orderBy('apellidos')->orderBy('nombres')->get();
 
         return view('schedules.create', compact('sections', 'subjects', 'teachers'));
     }

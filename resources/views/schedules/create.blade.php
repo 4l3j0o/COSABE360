@@ -32,7 +32,7 @@
                                 placeholder="Buscar curso..."
                                 searchHint="Escriba para buscar por nombre de curso."
                                 value="{{ old('section_id') }}"
-                                :items="$sections->map(fn($c) => ['value' => $c->id, 'label' => $c->nombre, 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->nombre . ' aula ' . ($c->aula ?? '')])"
+                                :items="$sections->map(fn($c) => ['value' => $c->id, 'label' => $c->codigoCompleto() . ' — ' . ($c->grade?->nombre ?? ''), 'subtitulo' => $c->aula ? 'Aula: ' . $c->aula : '', 'search' => $c->codigoCompleto() . ' ' . ($c->grade?->nombre ?? '') . ' ' . ($c->aula ?? '')])"
                             />
                             @error('section_id') <p class="text-xs text-error mt-1">{{ $message }}</p> @enderror
                         </div>
