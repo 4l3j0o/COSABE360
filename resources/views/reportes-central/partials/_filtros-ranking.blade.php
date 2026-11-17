@@ -3,56 +3,118 @@
     $subjectRanking = $rankingGeneral ? '' : ($rankingMaterias->first()?->id ?? '');
 @endphp
 
-<div class="flex flex-wrap gap-1.5 max-w-[560px]">
-    <select name="scope" form="{{ $formRanking }}" title="Ámbito" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-        <option value="global">Global</option>
-        <option value="nivel">Nivel</option>
-        <option value="grado">Curso/Grado</option>
-        <option value="paralelo">Paralelo</option>
-    </select>
+<div>
+    <button
+        type="button"
+        onclick="document.getElementById('central-ranking-filtros').classList.toggle('hidden')"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-medium text-foreground hover:bg-muted transition-colors"
+    >
+        <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M10 18h4"/>
+        </svg>
+        Filtros
+        <span class="text-muted-foreground font-normal">Global · Anual · Top 50</span>
+        <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
 
-    <select name="nivel_id" form="{{ $formRanking }}" title="Nivel" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[140px]">
-        <option value="">Nivel…</option>
-        @foreach($rankingNiveles as $nivel)
-            <option value="{{ $nivel->id }}">{{ $nivel->nombre }}</option>
-        @endforeach
-    </select>
+    <div id="central-ranking-filtros" class="hidden mt-2 w-[360px] max-w-full rounded-xl border border-border bg-muted/20 p-3">
+        <div class="grid grid-cols-2 gap-2.5">
+            <label class="block">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Ámbito</span>
+                <select id="central-ranking-scope" name="scope" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    <option value="global">Global</option>
+                    <option value="nivel">Por nivel</option>
+                    <option value="grado">Por curso/grado</option>
+                    <option value="paralelo">Por paralelo</option>
+                </select>
+            </label>
 
-    <select name="grado_id" form="{{ $formRanking }}" title="Curso / grado" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[140px]">
-        <option value="">Curso…</option>
-        @foreach($rankingGrados as $grado)
-            <option value="{{ $grado->id }}" data-level="{{ $grado->level_id }}">{{ $grado->nombre }}</option>
-        @endforeach
-    </select>
+            <label class="block">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Materia</span>
+                <select name="subject_id" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    @if($rankingGeneral)
+                        <option value="">Promedio general</option>
+                    @endif
+                    @foreach($rankingMaterias as $materia)
+                        <option value="{{ $materia->id }}" @selected((string) $subjectRanking === (string) $materia->id)>{{ $materia->nombre }}</option>
+                    @endforeach
+                </select>
+            </label>
 
-    <select name="section_id" form="{{ $formRanking }}" title="Paralelo" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[150px]">
-        <option value="">Paralelo…</option>
-        @foreach($cursos as $section)
-            <option value="{{ $section->id }}" data-grade="{{ $section->grade_id }}">{{ $section->codigoCompleto() }}</option>
-        @endforeach
-    </select>
+            <label id="central-ranking-nivel-wrap" class="block hidden">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Nivel</span>
+                <select name="nivel_id" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    @foreach($rankingNiveles as $nivel)
+                        <option value="{{ $nivel->id }}">{{ $nivel->nombre }}</option>
+                    @endforeach
+                </select>
+            </label>
 
-    <select name="subject_id" form="{{ $formRanking }}" title="Materia" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs max-w-[150px]">
-        @if($rankingGeneral)
-            <option value="">Promedio general</option>
-        @endif
-        @foreach($rankingMaterias as $materia)
-            <option value="{{ $materia->id }}" @selected((string) $subjectRanking === (string) $materia->id)>{{ $materia->nombre }}</option>
-        @endforeach
-    </select>
+            <label id="central-ranking-grado-wrap" class="block hidden">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Curso / grado</span>
+                <select name="grado_id" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    @foreach($rankingGrados as $grado)
+                        <option value="{{ $grado->id }}">{{ $grado->nombre }}</option>
+                    @endforeach
+                </select>
+            </label>
 
-    <select name="periodo" form="{{ $formRanking }}" title="Período" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-        <option value="anual">Anual</option>
-        <option value="1">1er trim.</option>
-        <option value="2">2do trim.</option>
-        <option value="3">3er trim.</option>
-    </select>
+            <label id="central-ranking-paralelo-wrap" class="block hidden">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Paralelo</span>
+                <select name="section_id" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    @foreach($cursos as $section)
+                        <option value="{{ $section->id }}">{{ $section->codigoCompleto() }}</option>
+                    @endforeach
+                </select>
+            </label>
 
-    <select name="limite" form="{{ $formRanking }}" title="Cantidad" class="px-2 py-1 border border-input rounded-lg bg-background text-foreground text-xs">
-        <option value="10">Top 10</option>
-        <option value="25">Top 25</option>
-        <option value="50" selected>Top 50</option>
-        <option value="100">Top 100</option>
-        <option value="todos">Todos</option>
-    </select>
+            <label class="block">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Período</span>
+                <select name="periodo" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    <option value="anual">Anual</option>
+                    <option value="1">1er trimestre</option>
+                    <option value="2">2do trimestre</option>
+                    <option value="3">3er trimestre</option>
+                </select>
+            </label>
+
+            <label class="block">
+                <span class="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cantidad</span>
+                <select name="limite" form="{{ $formRanking }}" class="w-full px-2 py-1.5 border border-input rounded-lg bg-background text-foreground text-xs">
+                    <option value="10">Top 10</option>
+                    <option value="25">Top 25</option>
+                    <option value="50" selected>Top 50</option>
+                    <option value="100">Top 100</option>
+                    <option value="todos">Todos</option>
+                </select>
+            </label>
+        </div>
+    </div>
 </div>
+
+@push('scripts')
+<script>
+    (function () {
+        const scope = document.getElementById('central-ranking-scope');
+        if (!scope) return;
+
+        const campos = {
+            nivel: document.getElementById('central-ranking-nivel-wrap'),
+            grado: document.getElementById('central-ranking-grado-wrap'),
+            paralelo: document.getElementById('central-ranking-paralelo-wrap'),
+        };
+
+        function actualizarCamposRanking() {
+            Object.entries(campos).forEach(function ([nombre, campo]) {
+                if (!campo) return;
+                campo.classList.toggle('hidden', scope.value !== nombre);
+            });
+        }
+
+        scope.addEventListener('change', actualizarCamposRanking);
+        actualizarCamposRanking();
+    })();
+</script>
+@endpush
