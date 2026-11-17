@@ -162,7 +162,7 @@
                                                 name="notas[{{ $activity->id }}][{{ $student->id }}]"
                                                 value="{{ $activity->notaDe($student) }}"
                                                 placeholder="—"
-                                                class="w-16 px-1 py-0.5 border border-input rounded-md bg-white text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30">
+                                                class="nota-input w-16 px-1 py-0.5 border border-input rounded-md bg-white text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30">
                                         </td>
                                     @endforeach
                                 @endif

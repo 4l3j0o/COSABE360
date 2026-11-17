@@ -429,6 +429,18 @@ body {
     transform: translateX(0);
 }
 
+/* Campos de notas: sin flechas de incremento/decremento, solo teclado. */
+.nota-input::-webkit-outer-spin-button,
+.nota-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.nota-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
 @media (max-width: 767px) {
     #sidebar-desktop {
         display: none !important;
