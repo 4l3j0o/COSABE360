@@ -21,7 +21,7 @@
   table.grid th { background: #003200; color: #fff; font-size: 8px; padding: 5px 4px; text-align: center; overflow: hidden; }
   table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; overflow: hidden; word-wrap: break-word; }
   table.grid td.left { text-align: left; }
-  table.grid tr.zebra td { background: #ededed; }
+  table.grid tr.zebra td { background: #e6f4e6; }
   .foot { margin-top: 10px; font-size: 7px; color: #64748b; text-align: center; }
 </style>
 </head>

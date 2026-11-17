@@ -73,7 +73,7 @@
                                 $grupoEstudiante++;
                                 $codigoAnterior = $fila['codigo'];
                             }
-                            $fondoGrupo = $grupoEstudiante % 2 === 0 ? 'bg-neutral-200/70' : 'bg-background';
+                            $fondoGrupo = $grupoEstudiante % 2 === 0 ? 'bg-primary-50' : 'bg-background';
                         @endphp
                         <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 {{ $fondoGrupo }}">
                             <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
