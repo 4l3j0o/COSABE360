@@ -65,6 +65,50 @@ class EvaluationLogicTest extends TestCase
         return compact('cs', 'userDoc', 'teacher', 'estudiantes', 'curso');
     }
 
+    public function test_admin_cierra_y_habilita_la_carga_de_notas_por_trimestre(): void
+    {
+        ['cs' => $cs, 'userDoc' => $doc, 'teacher' => $teacher, 'estudiantes' => $est] = $this->setupCurso();
+        $service = app(EvaluationService::class);
+        $plan = $service->obtenerOCrearPlan($cs, 1);
+        $activity = $service->crearActividad($plan->criterio('SE'), 'Actividad SE', null, 1);
+        $admin = User::where('email', 'admin@sanber.edu.bo')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('evaluaciones.administracion.index', ['trimestre' => 1]))
+            ->assertOk()
+            ->assertSee('Administrar evaluaciones');
+
+        // Cerrado: el docente puede ver, pero no guardar.
+        $this->actingAs($admin)->put(route('evaluaciones.administracion.update'), [
+            'trimestre' => 1,
+            'modo' => 'CERRADO',
+        ])->assertRedirect(route('evaluaciones.administracion.index', ['trimestre' => 1]));
+
+        $this->assertDatabaseHas('evaluation_period_settings', [
+            'trimestre' => 1,
+            'modo' => 'CERRADO',
+        ]);
+
+        $this->actingAs($doc)->post(route('evaluations.grades', [$cs, $plan]), [
+            'notas' => [$activity->id => [$est[0]->id => 8]],
+        ])->assertForbidden();
+
+        // Solo el docente seleccionado puede escribir.
+        $this->actingAs($admin)->put(route('evaluaciones.administracion.update'), [
+            'trimestre' => 1,
+            'modo' => 'SELECCIONADOS',
+            'teacher_ids' => [$teacher->id],
+        ])->assertRedirect(route('evaluaciones.administracion.index', ['trimestre' => 1]));
+
+        $this->assertDatabaseHas('evaluation_period_teachers', [
+            'teacher_id' => $teacher->id,
+        ]);
+
+        $this->actingAs($doc)->post(route('evaluations.grades', [$cs, $plan]), [
+            'notas' => [$activity->id => [$est[0]->id => 8]],
+        ])->assertRedirect(route('evaluations.show', [$cs, $plan]));
+    }
+
     public function test_nota_criterio_ignora_actividades_sin_nota(): void
     {
         ['cs' => $cs, 'estudiantes' => $est, 'userDoc' => $userDoc] = $this->setupCurso();

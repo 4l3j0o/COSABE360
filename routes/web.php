@@ -24,6 +24,7 @@ use App\Http\Controllers\CierreGestionController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\EnfermeriaController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EvaluationPeriodSettingController;
 use App\Http\Controllers\EvaluationPlanController;
 use App\Http\Controllers\EvaluationReportController;
 use App\Http\Controllers\ExpedienteController;
@@ -337,6 +338,12 @@ Route::middleware(['auth', 'role:Docente', 'permission:evaluaciones.ver'])->pref
 
     // HU-61: matriz vieja por estudiante -> sistema vigente.
     Route::get('/{sectionSubject}/notas', fn (App\Models\SectionSubject $sectionSubject) => redirect()->route('evaluations.index', $sectionSubject))->name('docente.notas-curso');
+});
+
+// Administración de la carga de notas por trimestre (solo Administrador, validado en el controlador)
+Route::middleware(['auth'])->prefix('admin/evaluaciones')->name('evaluaciones.administracion.')->group(function () {
+    Route::get('/', [EvaluationPeriodSettingController::class, 'index'])->name('index');
+    Route::put('/', [EvaluationPeriodSettingController::class, 'update'])->name('update');
 });
 
 // HU-13 + HU-69: Administrar paralelos (unidad-clase: grado + gestión + aula) solo Administrador

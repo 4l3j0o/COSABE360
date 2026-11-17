@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\SectionSubject;
 use App\Models\EvaluationCriterion;
+use App\Models\EvaluationPeriodSetting;
 use App\Models\EvaluationPlan;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Services\EvaluationService;
 use App\Services\EvaluationTemplateService;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +34,15 @@ class EvaluationPlanController extends Controller
 
         $hijas = app(EvaluationService::class)->hijasDe($sectionSubject);
 
-        return view('evaluations.index', compact('sectionSubject', 'plans', 'hijas'));
+        $teacher = $request->user()->teacher;
+        $permisosCalificacion = [];
+        foreach (EvaluationPlan::TRIMESTRES as $trimestre) {
+            $permisosCalificacion[$trimestre] = $teacher
+                ? EvaluationPeriodSetting::para($trimestre)->permiteEditar($teacher)
+                : false;
+        }
+
+        return view('evaluations.index', compact('sectionSubject', 'plans', 'hijas', 'permisosCalificacion'));
     }
 
     /**
@@ -82,8 +92,9 @@ class EvaluationPlanController extends Controller
 
         $estado = $plan->estado;
         $hijas = $service->hijasDe($sectionSubject);
+        $puedeEditar = $this->puedeEditar($request->user()->teacher, $plan);
 
-        return view('evaluations.show', compact('sectionSubject', 'plan', 'students', 'service', 'estado', 'hijas'));
+        return view('evaluations.show', compact('sectionSubject', 'plan', 'students', 'service', 'estado', 'hijas', 'puedeEditar'));
     }
 
     /**
@@ -92,6 +103,7 @@ class EvaluationPlanController extends Controller
     public function agregarActividad(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+        abort_unless($this->puedeEditar($request->user()->teacher, $plan), 403, 'La carga de notas está cerrada para este trimestre.');
 
         if ($redir = $this->bloquearSiPadre($sectionSubject)) {
             return $redir;
@@ -127,6 +139,7 @@ class EvaluationPlanController extends Controller
     public function guardarNotas(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+        abort_unless($this->puedeEditar($request->user()->teacher, $plan), 403, 'La carga de notas está cerrada para este trimestre.');
 
         if ($redir = $this->bloquearSiPadre($sectionSubject)) {
             return $redir;
@@ -217,6 +230,7 @@ class EvaluationPlanController extends Controller
     public function subirPlantilla(Request $request, SectionSubject $sectionSubject, EvaluationPlan $plan): RedirectResponse
     {
         $this->autorizar($request, $sectionSubject);
+        abort_unless($this->puedeEditar($request->user()->teacher, $plan), 403, 'La carga de notas está cerrada para este trimestre.');
 
         if ($redir = $this->bloquearSiPadre($sectionSubject)) {
             return $redir;
@@ -254,6 +268,15 @@ class EvaluationPlanController extends Controller
 
         return redirect()->route('evaluations.show', [$sectionSubject, $plan])
             ->with($resultado['errores'] ? 'error' : 'success', $mensaje);
+    }
+
+    private function puedeEditar(?Teacher $teacher, EvaluationPlan $plan): bool
+    {
+        if (! $teacher) {
+            return false;
+        }
+
+        return EvaluationPeriodSetting::para($plan->trimestre)->permiteEditar($teacher);
     }
 
     private function autorizar(Request $request, SectionSubject $sectionSubject): void

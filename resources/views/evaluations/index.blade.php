@@ -63,11 +63,16 @@
                             <td class="px-4 py-3 font-bold text-foreground">{{ $plan->trimestre }}° — {{ $nombresTrim[$plan->trimestre] ?? '' }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $plan->criteria_count }} criterios</td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estilosEstado[$plan->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $plan->estado }}</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $estilosEstado[$plan->estado] ?? 'bg-muted text-muted-foreground' }}">{{ $plan->estado }}</span>
+                                    @if(! ($permisosCalificacion[$plan->trimestre] ?? false))
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">Solo lectura</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <a href="{{ route('evaluations.show', [$sectionSubject, $plan]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
-                                    Cargar actividades y notas
+                                    {{ ($permisosCalificacion[$plan->trimestre] ?? false) ? 'Cargar actividades y notas' : 'Ver evaluación' }}
                                 </a>
                             </td>
                         </tr>

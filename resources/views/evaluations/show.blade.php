@@ -23,6 +23,9 @@
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">{{ $sectionSubject->subject->nombre }}</span>
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-card border border-border text-foreground">{{ $sectionSubject->section->codigoCorto() }}</span>
             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{{ count($students) }} estudiante(s)</span>
+            @if(! $puedeEditar)
+                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning">Solo lectura</span>
+            @endif
         </div>
     </div>
     {{-- Plantilla Excel (HU-48) --}}
@@ -31,14 +34,23 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
             Descargar (.xlsx)
         </a>
-        <form method="POST" action="{{ route('evaluations.template-upload', [$sectionSubject, $plan]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
-            @csrf
-            <input type="file" name="archivo" accept=".xlsx" required class="text-sm text-muted-foreground file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
-            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:opacity-90 cursor-pointer">Subir</button>
-        </form>
+        @if($puedeEditar)
+            <form method="POST" action="{{ route('evaluations.template-upload', [$sectionSubject, $plan]) }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                @csrf
+                <input type="file" name="archivo" accept=".xlsx" required class="text-sm text-muted-foreground file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:opacity-90 cursor-pointer">Subir</button>
+            </form>
+        @endif
     </div>
 </div>
 @error('archivo') <p class="text-xs text-error mb-4">{{ $message }}</p> @enderror
+
+@if(! $puedeEditar)
+    <div class="flex items-start gap-3 bg-warning/10 border border-warning/30 text-warning px-4 py-3 rounded-xl text-sm mb-5">
+        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 4h.01M10.29 3.86l-8.02 14A2 2 0 004 21h16a2 2 0 001.73-3.14l-8-14a2 2 0 00-3.46 0z"/></svg>
+        <p>La carga de notas de este trimestre está cerrada. Podés consultar la información, pero no modificarla.</p>
+    </div>
+@endif
 
 @if(($hijas ?? collect())->isNotEmpty())
     <div class="bg-info/10 border border-info/30 rounded-xl px-4 py-3 mb-5 text-sm text-foreground">
@@ -46,6 +58,7 @@
     </div>
 @endif
 
+@if($puedeEditar)
 {{-- Crear actividades --}}
 <div class="bg-card border border-border rounded-xl p-4 mb-5">
     <h3 class="font-semibold text-foreground mb-3">Crear actividades</h3>
@@ -83,6 +96,7 @@
         @endforeach
     </div>
 </div>
+@endif
 
 {{-- Matriz de calificaciones tipo Excel --}}
 @if(count($students) > 0)
@@ -90,10 +104,12 @@
     @csrf
     <div class="sticky top-14 z-20 bg-card border border-border rounded-xl shadow-sm px-4 py-3 mb-3 flex items-center justify-between gap-3">
         <p class="text-sm text-muted-foreground">Ingrese las notas y pulse <strong class="text-foreground">Enter</strong> o el botón para guardar todo.</p>
-        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Guardar todas las notas
-        </button>
+        @if($puedeEditar)
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Guardar todas las notas
+            </button>
+        @endif
     </div>
 
     <div class="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -162,7 +178,8 @@
                                                 name="notas[{{ $activity->id }}][{{ $student->id }}]"
                                                 value="{{ $activity->notaDe($student) }}"
                                                 placeholder="—"
-                                                class="nota-input w-16 px-1 py-0.5 border border-input rounded-md bg-white text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30">
+                                                @disabled(! $puedeEditar)
+                                                class="nota-input w-16 px-1 py-0.5 border border-input rounded-md bg-white text-foreground text-xs text-center focus:ring-2 focus:ring-primary/30 disabled:bg-muted/30 disabled:text-muted-foreground">
                                         </td>
                                     @endforeach
                                 @endif
