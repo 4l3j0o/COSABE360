@@ -330,10 +330,10 @@ class EvaluationLogicTest extends TestCase
 
         $spreadsheet = IOFactory::load($ruta);
         $notas = $spreadsheet->getSheetByName('Notas');
-        $criterios = $spreadsheet->getSheetByName('Criterios');
 
+        $this->assertNotNull($notas);
+        $this->assertNull($spreadsheet->getSheetByName('Criterios'));
         $this->assertTrue($notas->getProtection()->getSheet());
-        $this->assertTrue($criterios->getProtection()->getSheet());
 
         // Cabecera bloqueada, celda de actividad desbloqueada.
         $this->assertSame(

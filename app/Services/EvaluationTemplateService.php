@@ -19,13 +19,12 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 /**
  * Exportación e importación de plantillas Excel de evaluación por trimestre (HU-48).
  *
- * Formato de la plantilla (2 hojas):
- *  - Hoja "Criterios": metadatos (colegio, curso, materia, docente, trimestre) + los 4 criterios
- *    con sus actividades. El docente puede ver/ajustar las actividades aquí.
+ * Formato de la plantilla (1 hoja):
  *  - Hoja "Notas": matriz estudiantes (filas) x actividades (columnas). Cada columna lleva el
  *    código del criterio (SE/SA/HA/AU) y el nombre de la actividad. El docente llena las notas
  *    (0..porcentaje del criterio). Al re-subir, se actualizan las notas de las actividades
  *    existentes (las actividades se administran desde la web). Se rechazan notas fuera de rango.
+ *  - Las hojas y celdas que no son de notas están protegidas; solo se editan las notas.
  */
 class EvaluationTemplateService
 {
@@ -122,114 +121,11 @@ class EvaluationTemplateService
         $criterios = $this->criteriosOrdenados($plan);
 
         $spreadsheet = new Spreadsheet;
-
-        // --- Hoja Criterios ---
-        $sheetC = $spreadsheet->getActiveSheet();
-        $sheetC->setTitle('Criterios');
-
-        // Membrete institucional
-        $sheetC->setCellValue('D1', 'UNIDAD EDUCATIVA SAN BERNARDO — TARIJA');
-        $sheetC->mergeCells('D1:G1');
-        $sheetC->setCellValue('D2', 'PLANILLA DE EVALUACIÓN POR TRIMESTRE');
-        $sheetC->mergeCells('D2:G2');
-        $sheetC->setCellValue('D3', 'Criterios y actividades');
-        $sheetC->mergeCells('D3:G3');
-        $sheetC->getStyle('D1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF'.self::COLOR_TITULO);
-        $sheetC->getStyle('D2')->getFont()->setBold(true)->setSize(11)->getColor()->setARGB('FF'.self::COLOR_TITULO);
-        $sheetC->getStyle('D3')->getFont()->setSize(9)->setItalic(true)->getColor()->setARGB('FF33412F');
-
-        // Metadatos
-        $meta = [
-            ['Colegio', $this->colegio],
-            ['Curso', $cs->section->nombre],
-            ['Materia', $cs->subject->nombre],
-            ['Docente', $cs->teacher?->nombreCompleto() ?? '—'],
-            ['Trimestre', $plan->trimestre.'°'],
-            ['Evaluación', $plan->nombre ?? ('TRIM '.$plan->trimestre)],
-        ];
-        $fila = 5;
-        foreach ($meta as [$etiqueta, $valor]) {
-            $sheetC->setCellValue('D'.$fila, $etiqueta);
-            $sheetC->setCellValue('E'.$fila, $valor);
-            $sheetC->mergeCells('E'.$fila.':G'.$fila);
-            $fila++;
-        }
-
-        // Tarjeta de información
-        $rangoInfoC = 'D5:G10';
-        $sheetC->getStyle($rangoInfoC)->getFill()
-            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF'.self::COLOR_INSTITUCIONAL_CLARO);
-        $sheetC->getStyle($rangoInfoC)->getBorders()->getAllBorders()
-            ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FF'.self::COLOR_BORDE);
-        $sheetC->getStyle('D5:D10')->getFont()->setBold(true)->getColor()->setARGB('FF'.self::COLOR_TITULO);
-        $sheetC->getStyle('D5:D10')->getAlignment()
-            ->setHorizontal(Alignment::HORIZONTAL_RIGHT)->setVertical(Alignment::VERTICAL_CENTER);
-        $sheetC->getStyle('E5:G10')->getFont()->getColor()->setARGB('FF213547');
-        $sheetC->getStyle('E5:G10')->getAlignment()
-            ->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
-
-        // Cabecera de la tabla
-        $filaCab = 12;
-        $cabecera = ['Criterio', 'Código', 'Porcentaje', 'Tipo', 'Actividad'];
-        foreach ($cabecera as $i => $texto) {
-            $sheetC->setCellValue($this->colLetter($i + 1).$filaCab, $texto);
-        }
-        $rangoCab = 'A'.$filaCab.':E'.$filaCab;
-        $sheetC->getStyle($rangoCab)->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheetC->getStyle($rangoCab)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF'.self::COLOR_TITULO);
-        $sheetC->getStyle($rangoCab)->getAlignment()
-            ->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-        $sheetC->getRowDimension($filaCab)->setRowHeight(22);
-
-        $row = $filaCab + 1;
-        foreach ($criterios as $criterion) {
-            $color = self::COLORES_CRITERIO[$criterion->codigo] ?? ['fill' => 'E7E6E6', 'font' => '595959'];
-            $inicioCrit = $row;
-
-            if ($criterion->activities->isEmpty()) {
-                $sheetC->fromArray([
-                    $criterion->nombre, $criterion->codigo, $criterion->porcentaje, $criterion->tipo, '(sin actividades)',
-                ], null, "A{$row}");
-                $row++;
-            } else {
-                foreach ($criterion->activities as $i => $activity) {
-                    $sheetC->fromArray([
-                        $i === 0 ? $criterion->nombre : '',
-                        $i === 0 ? $criterion->codigo : '',
-                        $i === 0 ? $criterion->porcentaje : '',
-                        $i === 0 ? $criterion->tipo : '',
-                        $activity->nombre,
-                    ], null, "A{$row}");
-                    $row++;
-                }
-            }
-
-            // Color por criterio en toda la fila
-            $rangoCrit = 'A'.$inicioCrit.':E'.($row - 1);
-            $sheetC->getStyle($rangoCrit)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF'.$color['fill']);
-            $sheetC->getStyle($rangoCrit)->getFont()->getColor()->setARGB('FF'.$color['font']);
-            $sheetC->getStyle('B'.$inicioCrit.':D'.$inicioCrit)->getFont()->setBold(true)
-                ->getColor()->setARGB('FF'.$color['font']);
-            $sheetC->getStyle('B'.$inicioCrit.':D'.$inicioCrit)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        }
-        $ultimaFilaC = $row - 1;
-
-        // Bordes y anchos
-        $sheetC->getStyle('A'.$filaCab.':E'.$ultimaFilaC)->getBorders()->getAllBorders()
-            ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FF'.self::COLOR_BORDE);
-        $sheetC->getColumnDimension('A')->setWidth(24);
-        $sheetC->getColumnDimension('B')->setWidth(10);
-        $sheetC->getColumnDimension('C')->setWidth(12);
-        $sheetC->getColumnDimension('D')->setWidth(16);
-        $sheetC->getColumnDimension('E')->setWidth(40);
-        $sheetC->getSheetView()->setZoomScale(95);
-        $this->insertarLogo($sheetC, 110, 45);
-
-        // --- Hoja Notas (réplica de la planilla oficial) ---
-        $sheetN = $spreadsheet->createSheet();
+        $sheetN = $spreadsheet->getActiveSheet();
         $sheetN->setTitle('Notas');
+
         $celdasNotas = $this->construirHojaNotas($sheetN, $plan, $cs, $criterios, $this->estudiantes($cs), true);
-        $this->protegerPlantilla($spreadsheet, $sheetC, $sheetN, $celdasNotas);
+        $this->protegerPlantilla($spreadsheet, $sheetN, $celdasNotas);
 
         $writer = new Xlsx($spreadsheet);
         ob_start();
@@ -435,7 +331,6 @@ class EvaluationTemplateService
      */
     private function protegerPlantilla(
         Spreadsheet $spreadsheet,
-        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $criterios,
         \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $notas,
         array $celdasNotas
     ): void {
@@ -446,7 +341,6 @@ class EvaluationTemplateService
             ->setLockWindows(true)
             ->setWorkbookPassword($password);
 
-        $this->bloquearCeldas($criterios);
         $this->bloquearCeldas($notas);
 
         foreach ($celdasNotas as $coordenada) {
@@ -455,7 +349,6 @@ class EvaluationTemplateService
                 ->setLocked(Protection::PROTECTION_UNPROTECTED);
         }
 
-        $this->protegerHoja($criterios);
         $this->protegerHoja($notas);
     }
 

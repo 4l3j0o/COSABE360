@@ -243,6 +243,14 @@ document.addEventListener('DOMContentLoaded', function () {
             form.submit();
         }
     });
+
+    // La rueda del ratón no debe alterar una nota.
+    form.addEventListener('wheel', function (e) {
+        if (e.target.closest('input.nota-input')) {
+            e.preventDefault();
+            e.target.blur();
+        }
+    }, { passive: false });
 });
 </script>
 @endpush
