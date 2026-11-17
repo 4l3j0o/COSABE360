@@ -345,10 +345,24 @@ class EvaluationLogicTest extends TestCase
             $notas->getStyle('D10')->getProtection()->getLocked()
         );
 
+        // Los promedios y el total no se editan.
+        foreach (['E10', 'G10', 'I10', 'K10', 'L10'] as $promedio) {
+            $this->assertSame(
+                Protection::PROTECTION_PROTECTED,
+                $notas->getStyle($promedio)->getProtection()->getLocked()
+            );
+        }
+
         $validacion = $notas->getDataValidation('D10');
         $this->assertSame(DataValidation::TYPE_WHOLE, $validacion->getType());
         $this->assertSame('0', $validacion->getFormula1());
         $this->assertSame('10', $validacion->getFormula2());
+
+        // SA tiene un máximo de 45; las actividades SA están en F/G.
+        $validacionSa = $notas->getDataValidation('F10');
+        $this->assertSame(DataValidation::TYPE_WHOLE, $validacionSa->getType());
+        $this->assertSame('0', $validacionSa->getFormula1());
+        $this->assertSame('45', $validacionSa->getFormula2());
 
         @unlink($ruta);
     }
