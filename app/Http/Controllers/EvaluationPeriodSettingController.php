@@ -48,14 +48,11 @@ class EvaluationPeriodSettingController extends Controller
             ])
             ->values();
 
-        $teacherIds = $planes
-            ->map(fn (EvaluationPlan $plan) => $plan->sectionSubject?->teacher_id)
-            ->filter()
-            ->unique()
-            ->values();
+        $planesPorDocente = $planes
+            ->groupBy(fn (EvaluationPlan $plan) => $plan->sectionSubject?->teacher_id)
+            ->map->count();
 
-        $teachers = Teacher::whereIn('id', $teacherIds)
-            ->where('estado', 'ACTIVO')
+        $teachers = Teacher::where('estado', 'ACTIVO')
             ->orderBy('apellidos')
             ->orderBy('nombres')
             ->get();
@@ -66,6 +63,7 @@ class EvaluationPeriodSettingController extends Controller
             'trimestre' => $trimestre,
             'setting' => $setting,
             'planes' => $planes,
+            'planesPorDocente' => $planesPorDocente,
             'teachers' => $teachers,
             'seleccionados' => $seleccionados,
             'modos' => EvaluationPeriodSetting::MODOS,

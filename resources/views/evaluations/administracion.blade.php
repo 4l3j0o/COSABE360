@@ -62,16 +62,27 @@
 
             @if($teachers->isEmpty())
                 <div class="rounded-lg border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
-                    No hay docentes con planes de evaluación en este trimestre.
+                    No hay docentes activos para seleccionar.
                 </div>
             @else
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div class="mb-3">
+                    <input type="text" id="buscar-docente-administracion" placeholder="Buscar docente por nombre o apellido..."
+                           class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
+                    <p class="text-[11px] text-muted-foreground mt-1">
+                        Se muestran todos los docentes activos. Los que aún no tienen planes aparecen con 0 planes.
+                    </p>
+                </div>
+                <div id="docentes-seleccionados-lista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     @foreach($teachers as $teacher)
-                        <label class="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted/30">
+                        <label data-docente="{{ mb_strtolower($teacher->nombreCompleto()) }}"
+                               class="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted/30">
                             <input type="checkbox" name="teacher_ids[]" value="{{ $teacher->id }}"
                                    @checked(in_array((int) $teacher->id, $seleccionados, true))
                                    class="h-4 w-4 rounded border-input accent-primary">
-                            <span class="font-medium text-foreground">{{ $teacher->nombreCompleto() }}</span>
+                            <span class="min-w-0">
+                                <span class="block font-medium text-foreground">{{ $teacher->nombreCompleto() }}</span>
+                                <span class="block text-[11px] text-muted-foreground">{{ $planesPorDocente[$teacher->id] ?? 0 }} plan(es) en este trimestre</span>
+                            </span>
                         </label>
                     @endforeach
                 </div>
@@ -100,6 +111,17 @@
 
                 radios.forEach(radio => radio.addEventListener('change', actualizarPanel));
                 actualizarPanel();
+
+                const buscador = document.getElementById('buscar-docente-administracion');
+                const docentes = document.querySelectorAll('#docentes-seleccionados-lista [data-docente]');
+                if (buscador) {
+                    buscador.addEventListener('input', function () {
+                        const termino = buscador.value.trim().toLowerCase();
+                        docentes.forEach(function (docente) {
+                            docente.classList.toggle('hidden', termino !== '' && !docente.dataset.docente.includes(termino));
+                        });
+                    });
+                }
             });
         </script>
     @endpush
