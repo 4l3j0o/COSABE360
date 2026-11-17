@@ -15,6 +15,7 @@ use App\Http\Controllers\LicenciaController;
 use App\Http\Controllers\OperationHistoryController;
 use App\Http\Controllers\ReporteAcademicoController;
 use App\Http\Controllers\ReporteAdministrativoController;
+use App\Http\Controllers\RankingPromediosController;
 use App\Http\Controllers\ReporteCentralController;
 use App\Http\Controllers\ReporteExportController;
 use App\Http\Controllers\RolePermissionController;
@@ -537,6 +538,8 @@ Route::middleware(['auth'])->prefix('reportes')->group(function () {
         Route::get('/centralizador-evaluacion/exportar', [ReporteCentralController::class, 'exportCentralizadorEvaluacion'])->name('reportes.central.evaluacion.export');
         Route::get('/centralizador-trimestre', [ReporteCentralController::class, 'centralizadorTrimestre'])->name('reportes.central.trimestre');
         Route::get('/centralizador-trimestre/exportar', [ReporteCentralController::class, 'exportCentralizadorTrimestre'])->name('reportes.central.trimestre.export');
+        Route::get('/ranking-promedios', [RankingPromediosController::class, 'index'])->name('reportes.ranking.index');
+        Route::get('/ranking-promedios/exportar', [RankingPromediosController::class, 'export'])->name('reportes.ranking.export');
     });
 
     // HU-66b: vista previa de administrativos (primero Abrir, luego exportar).

@@ -573,3 +573,13 @@ El login real se resuelve por `google_id`/`email`; `password` queda como respald
 - **Corrección** - `RepararCursosXlsxSeeder` reasigna la matrícula activa de cada código al paralelo indicado en el Excel. Es idempotente y se ejecuta después de `EstudiantesRealesSeeder` en `DatabaseSeeder`.
 - **Resultado** - los 1.512 estudiantes con paralelo coinciden exactamente con el Excel; los 40 paralelos quedaron con sus conteos correctos.
 - **Nota** - los códigos de 5to y 6to conservan su sufijo en `Section::codigoCompleto()` (`S5A-BQS`, etc.).
+
+## Ranking de mejores promedios (2026-11-17)
+- **Ruta** - `/reportes/ranking-promedios`; también aparece en la Central de Reportes.
+- **Ámbitos** - global, nivel, curso/grado y paralelo.
+- **Períodos** - 1er, 2do y 3er trimestre o promedio anual.
+- **Materias** - promedio general o una materia concreta; las materias hijas promedian dentro de su materia padre, igual que en el boletín.
+- **Alcance** - Admin, Director y Secretaría ven todo. Docente ve solo sus cursos y materias. Si es tutor, además ve el promedio general y cualquier materia de su paralelo.
+- **Exportación** - PDF y Excel con el ranking completo y el ámbito/materia/período seleccionados.
+- **Implementación** - `RankingPromediosController`, `RankingPromediosService` y vistas `ranking-promedios.index/pdf`.
+- **Orden de cursos** - los selectores de horarios, Reportes de Evaluación y Central de Reportes usan nivel → grado → código de paralelo → materia.

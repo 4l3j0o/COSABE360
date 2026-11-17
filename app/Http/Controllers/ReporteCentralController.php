@@ -629,6 +629,16 @@ class ReporteCentralController extends Controller
             ];
         }
 
+        if ($esSupervisor || $esDocente) {
+            $nuevos[] = [
+                'nombre' => 'Ranking de mejores promedios',
+                'descripcion' => 'Mejores promedios por ámbito: global, nivel, curso/grado o paralelo; general o por materia.',
+                'parametros' => 'ámbito / materia / período',
+                'ruta' => 'reportes.ranking.index',
+                'tipo' => 'form',
+            ];
+        }
+
         $existentes = [];
 
         if ($esSupervisor || $esDocente) {
