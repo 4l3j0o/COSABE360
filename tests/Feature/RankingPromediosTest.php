@@ -220,11 +220,13 @@ class RankingPromediosTest extends TestCase
             ]))
             ->assertOk()
             ->assertSee($a['student']->apellidos)
-            ->assertDontSee($b['student']->apellidos);
+            ->assertDontSee($b['student']->apellidos)
+            ->assertDontSee('<option value="global"', false)
+            ->assertSee('<option value="paralelo" selected', false);
 
         $this->actingAs($doc['user'])
             ->get(route('reportes.ranking.index', [
-                'scope' => 'global',
+                'scope' => 'paralelo',
                 'subject_id' => $csB->subject_id,
                 'periodo' => 'anual',
             ]))
@@ -264,7 +266,8 @@ class RankingPromediosTest extends TestCase
             ]))
             ->assertOk()
             ->assertSee($a['student']->apellidos)
-            ->assertSee('Promedio general');
+            ->assertSee('Promedio general')
+            ->assertDontSee('<option value="global"', false);
 
         $this->actingAs($doc['user'])
             ->get(route('reportes.ranking.index', [
@@ -273,7 +276,6 @@ class RankingPromediosTest extends TestCase
                 'subject_id' => $otraMateria->id,
                 'periodo' => 'anual',
             ]))
-            ->assertOk()
-            ->assertSee('Otra materia RK E');
+            ->assertForbidden();
     }
 }

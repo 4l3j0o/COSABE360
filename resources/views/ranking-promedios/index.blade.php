@@ -27,7 +27,9 @@
             <div>
                 <label class="block text-xs font-semibold text-muted-foreground mb-1">Ámbito</label>
                 <select name="scope" id="ranking-scope" class="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground text-sm">
-                    <option value="global" @selected($filtros['scope'] === 'global')>Global</option>
+                    @if($esSupervisor)
+                        <option value="global" @selected($filtros['scope'] === 'global')>Global</option>
+                    @endif
                     <option value="nivel" @selected($filtros['scope'] === 'nivel')>Por nivel</option>
                     <option value="grado" @selected($filtros['scope'] === 'grado')>Por curso/grado</option>
                     <option value="paralelo" @selected($filtros['scope'] === 'paralelo')>Por paralelo</option>
@@ -101,9 +103,9 @@
 
     @if(! $esSupervisor)
         <p class="text-xs text-muted-foreground mb-4">
-            Como docente, el ranking respeta tus cursos y materias asignadas.
+            Como docente, solo aparecen tus niveles, cursos y materias asignadas.
             @if($generalDisponible)
-                Como tutor, también podés ver el promedio general y cualquier materia de tu paralelo.
+                Como tutor, además podés ver el promedio general de tu paralelo.
             @endif
         </p>
     @endif

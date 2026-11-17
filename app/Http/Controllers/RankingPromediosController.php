@@ -180,12 +180,13 @@ class RankingPromediosController extends Controller
      */
     private function resolverFiltros(Request $request, array $contexto): array
     {
-        $defaultScope = (! $contexto['esSupervisor'] && $contexto['tutorIds']->isNotEmpty())
-            ? 'paralelo'
-            : 'global';
+        $scopesPermitidos = $contexto['esSupervisor']
+            ? self::SCOPES
+            : ['nivel', 'grado', 'paralelo'];
+        $defaultScope = $contexto['esSupervisor'] ? 'global' : 'paralelo';
 
         $scope = (string) $request->query('scope', $defaultScope);
-        if (! in_array($scope, self::SCOPES, true)) {
+        if (! in_array($scope, $scopesPermitidos, true)) {
             $scope = $defaultScope;
         }
 
@@ -273,7 +274,6 @@ class RankingPromediosController extends Controller
             $seccionesConMateria = $contexto['sectionSubjects']
                 ->where('subject_id', $subjectId)
                 ->filter(fn (SectionSubject $cs) => $contexto['esSupervisor']
-                    || $contexto['tutorIds']->contains((int) $cs->section_id)
                     || (int) $cs->teacher_id === $contexto['teacherId'])
                 ->pluck('section_id')
                 ->map(fn ($id) => (int) $id)
@@ -322,7 +322,6 @@ class RankingPromediosController extends Controller
     {
         return $sectionSubjects
             ->filter(fn (SectionSubject $cs) => $contexto['esSupervisor']
-                || $contexto['tutorIds']->contains((int) $cs->section_id)
                 || (int) $cs->teacher_id === $contexto['teacherId'])
             ->map(fn (SectionSubject $cs) => $cs->subject)
             ->filter()
