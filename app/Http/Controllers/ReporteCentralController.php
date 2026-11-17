@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -864,7 +865,14 @@ class ReporteCentralController extends Controller
         $this->escribirCabeceraExcel($sheet, $cabecera, 6);
 
         $fila = 7;
+        $grupoEstudiante = 0;
+        $codigoAnterior = null;
         foreach ($resultado['filas'] as $i => $f) {
+            if ($f['codigo'] !== $codigoAnterior) {
+                $grupoEstudiante++;
+                $codigoAnterior = $f['codigo'];
+            }
+
             $sheet->setCellValue('A'.$fila, $i + 1);
             $sheet->setCellValue('B'.$fila, $f['codigo']);
             $sheet->setCellValue('C'.$fila, $f['estudiante']);
@@ -876,6 +884,15 @@ class ReporteCentralController extends Controller
             $sheet->setCellValue('I'.$fila, $f['telefono']);
             $sheet->setCellValue('J'.$fila, $f['email']);
             $sheet->setCellValue('K'.$fila, $f['es_principal'] ? 'SI' : '');
+
+            if ($grupoEstudiante % 2 === 0) {
+                $sheet->getStyle('A'.$fila.':K'.$fila)
+                    ->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()
+                    ->setARGB('FFF7F7F7');
+            }
+
             $fila++;
         }
 

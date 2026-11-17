@@ -21,7 +21,7 @@
   table.grid th { background: #003200; color: #fff; font-size: 8px; padding: 5px 4px; text-align: center; overflow: hidden; }
   table.grid td { border: 1px solid #d1dfd1; padding: 4px; font-size: 8px; text-align: center; overflow: hidden; word-wrap: break-word; }
   table.grid td.left { text-align: left; }
-  table.grid tr.zebra td { background: #f2f6f2; }
+  table.grid tr.zebra td { background: #f7f7f7; }
   .foot { margin-top: 10px; font-size: 7px; color: #64748b; text-align: center; }
 </style>
 </head>
@@ -50,8 +50,18 @@
       <th style="width:10%">Parentesco</th><th class="left">Padre / Tutor</th><th style="width:9%">CI</th>
       <th style="width:9%">Teléfono</th><th style="width:14%">Email</th><th style="width:6%">Princ.</th>
     </tr>
+    @php
+      $grupoEstudiante = 0;
+      $codigoAnterior = null;
+    @endphp
     @foreach($resultado['filas'] as $i => $fila)
-      <tr>
+      @php
+        if ($fila['codigo'] !== $codigoAnterior) {
+          $grupoEstudiante++;
+          $codigoAnterior = $fila['codigo'];
+        }
+      @endphp
+      <tr class="{{ $grupoEstudiante % 2 === 0 ? 'zebra' : '' }}">
         <td>{{ $i + 1 }}</td>
         <td>{{ $fila['codigo'] }}</td>
         <td class="left">{{ $fila['estudiante'] }}</td>

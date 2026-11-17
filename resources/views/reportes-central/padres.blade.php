@@ -63,8 +63,19 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $grupoEstudiante = 0;
+                        $codigoAnterior = null;
+                    @endphp
                     @foreach($resultado['filas'] as $i => $fila)
-                        <tr class="border-b border-border last:border-b-0 hover:bg-muted/30">
+                        @php
+                            if ($fila['codigo'] !== $codigoAnterior) {
+                                $grupoEstudiante++;
+                                $codigoAnterior = $fila['codigo'];
+                            }
+                            $fondoGrupo = $grupoEstudiante % 2 === 0 ? 'bg-muted/20' : '';
+                        @endphp
+                        <tr class="border-b border-border last:border-b-0 hover:bg-muted/30 {{ $fondoGrupo }}">
                             <td class="px-4 py-3 text-muted-foreground">{{ $i + 1 }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $fila['codigo'] }}</td>
                             <td class="px-4 py-3 font-medium text-foreground">{{ $fila['estudiante'] }}</td>
