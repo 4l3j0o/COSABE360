@@ -47,6 +47,28 @@ def crear_caratula(destino: str, trabajo: str):
                 xml = xml.replace(">AGOSTO<", ">NOVIEMBRE<")
                 xml = xml.replace(" 2025</w:t>", " 2026</w:t>")
                 data = xml.encode("utf-8")
+            elif item.filename == "word/header1.xml":
+                # La plantilla trae un "1" fijo: lo cambiamos por un campo PAGE.
+                xml = data.decode("utf-8")
+                original = (
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    "<w:t>1</w:t></w:r>"
+                )
+                campo = (
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    '<w:fldChar w:fldCharType="begin"/></w:r>'
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    '<w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>'
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    '<w:fldChar w:fldCharType="separate"/></w:r>'
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    "<w:t>1</w:t></w:r>"
+                    '<w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
+                    '<w:fldChar w:fldCharType="end"/></w:r>'
+                )
+                if original in xml:
+                    xml = xml.replace(original, campo)
+                data = xml.encode("utf-8")
             salida.writestr(item, data)
 
 
