@@ -76,14 +76,16 @@ def crear_caratula(destino: str, trabajo: str):
 # Utilidades de formato
 # --------------------------------------------------------------------------- #
 def limpiar_caratula(doc):
-    """Quita los saltos de pagina y parrafos vacios que trae la plantilla."""
+    """Quita saltos de pagina y los parrafos vacios del final de la plantilla."""
     for par in list(doc.paragraphs):
         for br in par._p.findall(".//" + qn("w:br")):
             if br.get(qn("w:type")) == "page":
                 br.getparent().remove(br)
-    for par in list(doc.paragraphs):
+    for par in reversed(list(doc.paragraphs)):
         if par.text.strip() == "" and "<w:drawing" not in par._p.xml:
             par._p.getparent().remove(par._p)
+        else:
+            break
 
 
 def _font(run, size=10, bold=False, color=None):

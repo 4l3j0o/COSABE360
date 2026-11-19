@@ -387,7 +387,9 @@ def main():
         seccion.top_margin = Cm(2.5)
         seccion.bottom_margin = Cm(2.5)
         seccion.left_margin = Cm(3.0)
-        seccion.right_margin = Cm(2.5)
+        seccion.right_margin = Cm(3.0)
+
+    # La plantilla ya trae la portada sin encabezado: la numeración empieza en la página 2
 
     ficha(doc)
     api(doc)
