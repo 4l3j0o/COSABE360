@@ -1,0 +1,15 @@
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Dependencias y builds
+node_modules/
+vendor/
+__pycache__/
+*.pyc
