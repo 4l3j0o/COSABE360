@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class DiarioAula extends Model
+{
+    protected $table = 'diario_aulas';
+
+    protected $fillable = [
+        'section_id',
+        'subject_id',
+        'teacher_id',
+        'fecha',
+        'avance_curricular',
+        'observaciones',
+        'registered_by_user_id',
+    ];
+
+    protected $casts = [
+        'fecha' => 'date',
+    ];
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class);
+    }
+
+    public function registradoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by_user_id');
+    }
+
+    public function actividades(): HasMany
+    {
+        return $this->hasMany(DiarioActividad::class, 'diario_aula_id')->orderBy('orden')->orderBy('id');
+    }
+
+    public function tareas(): HasMany
+    {
+        return $this->hasMany(DiarioTarea::class, 'diario_aula_id')->orderBy('orden')->orderBy('id');
+    }
+
+    public function recursos(): HasMany
+    {
+        return $this->hasMany(DiarioRecurso::class, 'diario_aula_id')->orderBy('orden')->orderBy('id');
+    }
+}

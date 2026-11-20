@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+class Student extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'codigo',
+        'nombres',
+        'apellidos',
+        'fecha_nacimiento',
+        'lugar_nacimiento',
+        'sexo',
+        'tipo_documento',
+        'numero_documento',
+        'complemento',
+        'direccion',
+        'telefono',
+        'email',
+        'fotografia',
+        'idioma',
+        'cultura',
+        'discapacidad',
+        'estado',
+        'quien_es_tutor',
+    ];
+
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+    ];
+
+    // --- Relaciones ---
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function rudeRecord(): HasOne
+    {
+        return $this->hasOne(StudentRudeRecord::class, 'student_id');
+    }
+
+    public function curricularAdaptations(): HasMany
+    {
+        return $this->hasMany(StudentCurricularAdaptation::class, 'student_id');
+    }
+
+    public function medicalRecord(): HasOne
+    {
+        return $this->hasOne(MedicalRecord::class, 'student_id');
+    }
+
+    public function enfermeriaAtenciones(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EnfermeriaAtencion::class, 'student_id')->latest('fecha_hora');
+    }
+
+    public function parentGuardians(): BelongsToMany
+    {
+        return $this->belongsToMany(ParentGuardian::class, 'student_parent', 'student_id', 'parent_guardian_id')
+            ->withPivot(['tipo_relacion', 'es_principal', 'convive'])
+            ->withTimestamps();
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class, 'student_id');
+    }
+
+    public function registrations(): HasManyThrough
+    {
+        return $this->hasManyThrough(Registration::class, Enrollment::class, 'student_id', 'enrollment_id');
+    }
+
+    public function activeRegistration(): ?Registration
+    {
+        $periodo = AcademicYear::where('estado', 'ACTIVA')->first();
+
+        if (! $periodo) {
+            return null;
+        }
+
+        return $this->registrations()
+            ->whereHas('enrollment', function ($q) use ($periodo) {
+                $q->where('academic_year_id', $periodo->id)
+                    ->where('enrollments.estado', 'COMPLETADA');
+            })
+            ->where('registrations.estado', 'ACTIVA')
+            ->with('section')
+            ->latest('id')
+            ->first();
+    }
+
+    public function activeSection(): ?Section
+    {
+        return $this->activeRegistration()?->section;
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(StudentDocument::class, 'student_id');
+    }
+
+    public function gradeScores(): HasMany
+    {
+        return $this->hasMany(GradeScore::class);
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function conductaReportes(): HasMany
+    {
+        return $this->hasMany(ConductaReporte::class);
+    }
+
+    public function operations(): HasMany
+    {
+        return $this->hasMany(OperationHistory::class, 'modelo_id')
+            ->where('modelo', Student::class)
+            ->orderByDesc('created_at');
+    }
+}

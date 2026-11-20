@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+          MYSQL_DATABASE: csb360_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, gd, zip, intl, pdo_mysql, bcmath
+          coverage: none
+
+      - name: Instalar Composer
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Ejecutar tests
+        run: php artisan test --compact
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar y compilar assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Auditar dependencias npm
+        run: npm audit --omit=dev --audit-level=high

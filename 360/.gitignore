@@ -1,0 +1,38 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+/composer.phar
+/storage/backups
+Homestead.json
+Homestead.yaml
+Thumbs.db
+
+# HU-61: credenciales Google fuera del repo
+Docs/priv_google.json
+
+# HU-84: datos personales (PII) fuera del repositorio.
+# Los archivos deben existir solo en el servidor/equipo que los importa.
+/database/data/*.sql
+/database/data/*.xlsx
+/database/data/*.json
+
+# Archivos temporales de Office
+~$*
