@@ -3,30 +3,32 @@ import { Link, router } from 'expo-router';
 import {
   Bell,
   BookOpen,
-  CalendarCheck,
+  CalendarDays,
   ChevronRight,
   Clock,
   FileText,
-  Wallet,
+  ListChecks,
 } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, Card, Chip, ProgressRing, Screen, SectionTitle } from '@/components/ui';
 import { comunicados, estudiante, materias } from '@/data/mock';
+import { usePendientes } from '@/store/pendientes';
 import { escalaNota } from '@/theme/tokens';
 import { colors, radius, shadows, spacing } from '@/theme/tokens';
-
-const accesos = [
-  { label: 'Notas', icon: BookOpen, to: '/notas' },
-  { label: 'Asistencia', icon: CalendarCheck, to: '/asistencia' },
-  { label: 'Pagos', icon: Wallet, to: '/perfil' },
-  { label: 'Inscripción', icon: FileText, to: '/perfil' },
-];
 
 export default function Inicio() {
   const noLeidos = comunicados.filter((c) => !c.leido).length;
   const destacado = comunicados[0];
   const promedio = escalaNota(estudiante.promedio);
+  const pendientes = usePendientes((s) => s.items.filter((i) => !i.hecho).length);
+
+  const accesos = [
+    { label: 'Pendientes', icon: ListChecks, to: '/pendientes', valor: pendientes },
+    { label: 'Notas', icon: BookOpen, to: '/notas', valor: 0 },
+    { label: 'Feriados', icon: CalendarDays, to: '/feriados', valor: 0 },
+    { label: 'Perfil', icon: FileText, to: '/perfil', valor: 0 },
+  ] as const;
 
   return (
     <Screen>
@@ -57,7 +59,11 @@ export default function Inicio() {
       </AppText>
       <AppText variant="display">Hola, {estudiante.nombres}</AppText>
       <View style={{ marginVertical: spacing.md }}>
-        <Chip label={`${estudiante.curso} · Paralelo ${estudiante.paralelo}`} background={colors.slate[100]} color={colors.slate[600]} />
+        <Chip
+          label={`${estudiante.curso} · Paralelo ${estudiante.paralelo}`}
+          background={colors.slate[100]}
+          color={colors.slate[600]}
+        />
       </View>
 
       <View style={styles.hero}>
@@ -127,10 +133,17 @@ export default function Inicio() {
       <View style={styles.seccion}>
         <SectionTitle title="Accesos rápidos" />
         <View style={styles.accesos}>
-          {accesos.map(({ label, icon: Icon }) => (
+          {accesos.map(({ label, icon: Icon, to, valor }) => (
             <View key={label} style={styles.acceso}>
               <View style={styles.accesoIcono}>
                 <Icon size={20} color={colors.primary[700]} />
+                {typeof valor === 'number' && valor > 0 ? (
+                  <View style={styles.contador}>
+                    <AppText variant="micro" color="#FFFFFF">
+                      {valor}
+                    </AppText>
+                  </View>
+                ) : null}
               </View>
               <AppText variant="micro" color={colors.text.secondary}>
                 {label}
@@ -258,6 +271,18 @@ const styles = StyleSheet.create({
     borderColor: colors.surface.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  contador: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.semantic.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
   },
   comunicado: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   comunicadoIcono: {

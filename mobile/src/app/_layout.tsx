@@ -49,6 +49,8 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="materia/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="pendiente/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="pendiente/form" options={{ presentation: 'card' }} />
       </Stack>
     </QueryClientProvider>
   );

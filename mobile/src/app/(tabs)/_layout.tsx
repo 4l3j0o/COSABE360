@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { BookOpen, CalendarCheck, Home, MessageSquare, User } from 'lucide-react-native';
+import { BookOpen, CalendarDays, CalendarCheck, Home, ListChecks, User } from 'lucide-react-native';
 
 import { colors, fonts } from '@/theme/tokens';
 
@@ -27,6 +27,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="pendientes"
+        options={{
+          title: 'Pendientes',
+          tabBarIcon: ({ color, size }) => <ListChecks color={color} size={size - 2} />,
+        }}
+      />
+      <Tabs.Screen
         name="notas"
         options={{
           title: 'Notas',
@@ -34,17 +41,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="asistencia"
+        name="feriados"
         options={{
-          title: 'Asistencia',
-          tabBarIcon: ({ color, size }) => <CalendarCheck color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="comunicados"
-        options={{
-          title: 'Comunicados',
-          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size - 2} />,
+          title: 'Feriados',
+          tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
@@ -54,6 +54,9 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} />,
         }}
       />
+      {/* Pantallas opcionales fuera de la barra */}
+      <Tabs.Screen name="asistencia" options={{ href: null }} />
+      <Tabs.Screen name="comunicados" options={{ href: null }} />
     </Tabs>
   );
 }
