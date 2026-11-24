@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "name": "CSB 360",
     "slug": "csb360",
@@ -21,7 +21,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

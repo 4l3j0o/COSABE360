@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Genera las Actividades 02 y 03 de Aplicaciones Moviles I (Grupo 7)
 usando la caratula institucional de la UPDS y las capturas de la app CSB 360.
@@ -17,9 +17,11 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-DOCS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\Docs"
+DOCS_DEFAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Docs"))
+DOCS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\Docs" if os.path.exists(r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\Docs") else DOCS_DEFAULT
 PLANTILLA = os.path.join(DOCS, "Caratula_Institucional.docx")
-CAPTURAS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas"
+CAPTURAS_DEFAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "capturas"))
+CAPTURAS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas" if os.path.exists(r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas") else CAPTURAS_DEFAULT
 
 INTEGRANTES = [
     "Snaider Brayan Quispe Janco",

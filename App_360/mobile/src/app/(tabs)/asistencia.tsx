@@ -1,25 +1,42 @@
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ArrowLeft, CheckCircle2, Clock, FileWarning, ShieldAlert } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Card, Chip, Screen, SectionTitle } from '@/components/ui';
 import { asistencias, estudiante } from '@/data/mock';
 import { colors, estadoAsistencia, radius, spacing } from '@/theme/tokens';
 
-const resumen = [
-  ['PRESENTE', 'Presente'],
-  ['AUSENTE', 'Ausente'],
-  ['RETRASO', 'Retraso'],
-  ['LICENCIA', 'Licencia'],
-  ['RETIRO_JUSTIFICADO', 'Retiro'],
-] as const;
+const filtros = ['TODOS', 'PRESENTE', 'AUSENTE', 'RETRASO', 'LICENCIA'] as const;
 
-const conteo: Record<string, number> = { PRESENTE: 18, AUSENTE: 2, RETRASO: 1, LICENCIA: 1, RETIRO_JUSTIFICADO: 0 };
+const conteo: Record<string, number> = {
+  PRESENTE: 18,
+  AUSENTE: 2,
+  RETRASO: 1,
+  LICENCIA: 1,
+  RETIRO_JUSTIFICADO: 0,
+};
 
 export default function Asistencia() {
+  const [filtro, setFiltro] = useState<(typeof filtros)[number]>('TODOS');
+
+  const lista = asistencias.filter((a) => {
+    if (filtro === 'TODOS') return true;
+    return a.estado === filtro;
+  });
+
   return (
     <Screen>
-      <AppText variant="title">Asistencia</AppText>
+      <Pressable onPress={() => router.back()} style={styles.volver}>
+        <ArrowLeft size={20} color={colors.slate[700]} />
+        <AppText variant="caption" color={colors.text.secondary}>
+          Volver a Inicio
+        </AppText>
+      </Pressable>
+
+      <AppText variant="title">Asistencia Escolar</AppText>
       <AppText variant="caption" color={colors.text.secondary} style={{ marginTop: 2 }}>
-        {estudiante.curso} · Paralelo {estudiante.paralelo}
+        {estudiante.curso} · Paralelo {estudiante.paralelo} · Gestión 2026
       </AppText>
 
       <Card style={styles.resumenCard}>
@@ -28,28 +45,60 @@ export default function Asistencia() {
             {estudiante.asistenciaPct}%
           </AppText>
           <AppText variant="caption" color={colors.text.secondary} style={{ marginBottom: 8 }}>
-            de asistencia
+            de asistencia global (22 clases registradas)
           </AppText>
         </View>
+
         <View style={styles.grid}>
-          {resumen.map(([estado, label]) => {
-            const estilo = estadoAsistencia[estado];
-            return (
-              <View key={estado} style={styles.celda}>
-                <View style={[styles.punto, { backgroundColor: estilo.color }]} />
-                <AppText variant="bodyStrong">{conteo[estado]}</AppText>
-                <AppText variant="micro" color={colors.text.tertiary}>
-                  {label}
-                </AppText>
-              </View>
-            );
-          })}
+          <View style={styles.celda}>
+            <CheckCircle2 size={16} color={estadoAsistencia.PRESENTE.color} />
+            <AppText variant="bodyStrong">{conteo.PRESENTE}</AppText>
+            <AppText variant="micro" color={colors.text.tertiary}>
+              Presentes
+            </AppText>
+          </View>
+          <View style={styles.celda}>
+            <ShieldAlert size={16} color={estadoAsistencia.AUSENTE.color} />
+            <AppText variant="bodyStrong">{conteo.AUSENTE}</AppText>
+            <AppText variant="micro" color={colors.text.tertiary}>
+              Faltas
+            </AppText>
+          </View>
+          <View style={styles.celda}>
+            <Clock size={16} color={estadoAsistencia.RETRASO.color} />
+            <AppText variant="bodyStrong">{conteo.RETRASO}</AppText>
+            <AppText variant="micro" color={colors.text.tertiary}>
+              Retrasos
+            </AppText>
+          </View>
+          <View style={styles.celda}>
+            <FileWarning size={16} color={estadoAsistencia.LICENCIA.color} />
+            <AppText variant="bodyStrong">{conteo.LICENCIA}</AppText>
+            <AppText variant="micro" color={colors.text.tertiary}>
+              Licencias
+            </AppText>
+          </View>
         </View>
       </Card>
 
-      <View style={{ marginTop: spacing.xl }}>
-        <SectionTitle title="Últimos registros" />
-        {asistencias.map((a) => {
+      <View style={styles.filtros}>
+        {filtros.map((f) => (
+          <Pressable
+            key={f}
+            onPress={() => setFiltro(f)}
+            style={[styles.filtro, filtro === f && styles.filtroActivo]}>
+            <AppText
+              variant="micro"
+              color={filtro === f ? '#FFFFFF' : colors.text.secondary}>
+              {f}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={{ marginTop: spacing.lg }}>
+        <SectionTitle title={`Registros (${lista.length})`} />
+        {lista.map((a) => {
           const estilo = estadoAsistencia[a.estado];
           return (
             <Card key={a.id} style={{ marginBottom: spacing.sm }} padded={false}>
@@ -58,7 +107,7 @@ export default function Asistencia() {
                   <AppText variant="bodyStrong">{a.materia}</AppText>
                   <AppText variant="micro" color={colors.text.tertiary}>
                     {a.fecha}
-                    {a.justificacion ? ` · ${a.justificacion}` : ''}
+                    {a.justificacion ? ` · Motivo: ${a.justificacion}` : ''}
                   </AppText>
                 </View>
                 <Chip label={estilo.label} color={estilo.color} background={estilo.bg} small />
@@ -72,10 +121,18 @@ export default function Asistencia() {
 }
 
 const styles = StyleSheet.create({
-  resumenCard: { marginTop: spacing.lg },
+  volver: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md },
+  resumenCard: { marginTop: spacing.md },
   grid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.lg },
-  celda: { alignItems: 'center', gap: 2, flex: 1 },
-  punto: { width: 8, height: 8, borderRadius: 4, marginBottom: 4 },
+  celda: { alignItems: 'center', gap: 4, flex: 1 },
+  filtros: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.lg, flexWrap: 'wrap' },
+  filtro: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.slate[100],
+  },
+  filtroActivo: { backgroundColor: colors.primary[600] },
   fila: {
     flexDirection: 'row',
     alignItems: 'center',

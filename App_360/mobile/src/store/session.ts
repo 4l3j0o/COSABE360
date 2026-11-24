@@ -1,13 +1,22 @@
-﻿import { borrar, guardar, leer } from '@/lib/storage';
+import { borrar, guardar, leer } from '@/lib/storage';
 import { create } from 'zustand';
 
-import { DEMO_MODE, apiFetch } from '@/lib/api';
-import { estudiante } from '@/data/mock';
+import { iniciarSesion } from '@/data/datos';
 
 const TOKEN_KEY = 'csb360.token';
+const USER_KEY = 'csb360.usuario';
+
+export type UsuarioSesion = {
+  id: number;
+  nombre: string;
+  email: string;
+  curso: string;
+  codigo: string;
+};
 
 export type Sesion = {
   token: string | null;
+  usuarioId: number | null;
   nombre: string;
   email: string;
   curso: string;
@@ -20,18 +29,19 @@ export type Sesion = {
 type Acciones = {
   hydrate: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<boolean>;
-  signInDemo: () => Promise<void>;
+  signInDemo: () => Promise<boolean>;
   signOut: () => Promise<void>;
   clearError: () => void;
 };
 
 type LoginResponse = {
   token: string;
-  user: { nombre: string; email: string; curso?: string; codigo?: string };
+  user: UsuarioSesion;
 };
 
-export const useSesion = create<Sesion & Acciones>((set) => ({
+export const useSesion = create<Sesion & Acciones>((set, get) => ({
   token: null,
+  usuarioId: null,
   nombre: '',
   email: '',
   curso: '',
@@ -42,74 +52,81 @@ export const useSesion = create<Sesion & Acciones>((set) => ({
 
   hydrate: async () => {
     const token = await leer(TOKEN_KEY);
+    const guardado = await leer(USER_KEY);
+    let usuario: UsuarioSesion | null = null;
+
+    try {
+      usuario = guardado ? (JSON.parse(guardado) as UsuarioSesion) : null;
+    } catch {
+      usuario = null;
+    }
+
+    if (usuario && usuario.id) {
+      set({
+        token: token || 'token-activo',
+        usuarioId: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        curso: usuario.curso,
+        codigo: usuario.codigo,
+        hydrated: true,
+      });
+      return;
+    }
+
+    // Usuario por defecto para desarrollo y demostración continua (Valeria Quispe Mamani)
     set({
-      token,
+      token: 'demo-token',
+      usuarioId: 1,
+      nombre: 'Valeria Quispe Mamani',
+      email: 'valeria.quispe.8640@cosabe.edu.bo',
+      curso: '4º de Secundaria · B',
+      codigo: '8640',
       hydrated: true,
-      nombre: token ? estudiante.nombres + ' ' + estudiante.apellidos : '',
-      curso: token ? `${estudiante.curso} Â· ${estudiante.paralelo}` : '',
-      codigo: token ? estudiante.codigo : '',
     });
   },
 
   signIn: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      if (DEMO_MODE) {
-        if (!email.trim() || password.length < 4) {
-          set({ loading: false, error: 'Ingresa tu correo y una contraseÃ±a de 4 caracteres.' });
-          return false;
-        }
-        await guardar(TOKEN_KEY, 'demo-token');
-        set({
-          token: 'demo-token',
-          email,
-          nombre: `${estudiante.nombres} ${estudiante.apellidos}`,
-          curso: `${estudiante.curso} Â· ${estudiante.paralelo}`,
-          codigo: estudiante.codigo,
-          loading: false,
-        });
-        return true;
-      }
-
-      const data = await apiFetch<LoginResponse>('/auth/login', {
-        method: 'POST',
-        body: { email, password, device_name: 'expo' },
-      });
+      const data = await iniciarSesion(email.trim(), password);
       await guardar(TOKEN_KEY, data.token);
+      await guardar(USER_KEY, JSON.stringify(data.user));
       set({
         token: data.token,
+        usuarioId: data.user.id,
         email: data.user.email,
         nombre: data.user.nombre,
-        curso: data.user.curso ?? '',
-        codigo: data.user.codigo ?? '',
+        curso: data.user.curso,
+        codigo: data.user.codigo,
         loading: false,
       });
       return true;
     } catch (error) {
       set({
         loading: false,
-        error: error instanceof Error ? error.message : 'No se pudo iniciar sesiÃ³n.',
+        error: error instanceof Error ? error.message : 'No se pudo iniciar sesión.',
       });
       return false;
     }
   },
 
-  signInDemo: async () => {
-    await guardar(TOKEN_KEY, 'demo-token');
-    set({
-      token: 'demo-token',
-      email: 'valeria.quispe.8640@cosabe.edu.bo',
-      nombre: `${estudiante.nombres} ${estudiante.apellidos}`,
-      curso: `${estudiante.curso} Â· ${estudiante.paralelo}`,
-      codigo: estudiante.codigo,
-    });
-  },
+  // Acceso de prueba: usa el usuario cargado en la tabla usuarios de MySQL.
+  signInDemo: async () => get().signIn('valeria.quispe.8640@cosabe.edu.bo', 'CSB2025'),
 
   signOut: async () => {
     await borrar(TOKEN_KEY);
-    set({ token: null, nombre: '', email: '', curso: '', codigo: '', error: null });
+    await borrar(USER_KEY);
+    set({
+      token: null,
+      usuarioId: null,
+      nombre: '',
+      email: '',
+      curso: '',
+      codigo: '',
+      error: null,
+    });
   },
 
   clearError: () => set({ error: null }),
 }));
-

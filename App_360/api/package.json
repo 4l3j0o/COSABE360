@@ -1,0 +1,19 @@
+{
+  "name": "cosabe360-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API local (Node + MySQL/XAMPP) para la app CSB 360 - Jornada 3",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "crear-db": "node crear-db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.3"
+  }
+}

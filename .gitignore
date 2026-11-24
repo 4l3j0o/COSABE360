@@ -10,6 +10,14 @@ Thumbs.db
 
 # Dependencias y builds
 node_modules/
+*/node_modules/
+*/*/node_modules/
 vendor/
 __pycache__/
 *.pyc
+.expo/
+*/.expo/
+dist/
+web-build/
+.next/
+

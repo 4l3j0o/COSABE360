@@ -11,7 +11,8 @@ import generar_documentos as g
 from generar_actividad04 import codigo, h1, h2, parrafo, tabla, vineta, _font
 
 DOCS = g.DOCS
-CAPTURAS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas-dia2"
+CAPTURAS_DEFAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "capturas-dia2"))
+CAPTURAS = r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas-dia2" if os.path.exists(r"C:\Users\IT\Music\Aplicaciones_Moviles_I\App_360\scripts\capturas-dia2") else CAPTURAS_DEFAULT
 
 
 def captura(doc, archivo, numero, nombre, ancho=5.8):

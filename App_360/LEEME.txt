@@ -1,0 +1,39 @@
+========================================================================
+CSB 360 - PORTAL DEL ESTUDIANTE (Colegio San Bernardo)
+Proyecto Final - Aplicaciones Móviles I (Grupo 7 - UPDS Tarija)
+========================================================================
+
+Integrantes del Grupo 7:
+- Snaider Brayan Quispe Janco
+- Jonathan Smith Soraire Rojas
+- Joel David Cerrogrande Ortega
+- Jose Alejandro Benitez Torrez
+
+========================================================================
+INSTRUCCIONES RÁPIDAS DE INSTALACIÓN Y EJECUCIÓN (DOS PASOS):
+========================================================================
+
+1. SERVIDOR Y BASE DE DATOS (MySQL en XAMPP + API REST):
+   a) Abrir el panel de XAMPP e iniciar los módulos "Apache" y "MySQL".
+   b) Abrir una terminal en la carpeta "api":
+        cd api
+        npm install
+        npm run crear-db
+        npm run dev
+   (La API quedará escuchando en http://localhost:4000/api y http://[TU_IP]:4000/api).
+
+2. APLICACIÓN MÓVIL (React Native + Expo):
+   a) Abrir otra terminal en la carpeta "mobile":
+        cd mobile
+        npm install
+        npx expo start
+   b) Opciones de visualización:
+      - Presionar la tecla 'w' para abrirla en el navegador web (http://localhost:8081).
+      - O escanear el código QR con la app Expo Go desde tu celular (conectado a la misma red Wi-Fi).
+
+========================================================================
+ACCESO DE DEMOSTRACIÓN:
+- Correo: valeria.quispe.8640@cosabe.edu.bo
+- Contraseña: CSB2025
+(O pulsar directamente el botón "Entrar con el usuario de prueba").
+========================================================================

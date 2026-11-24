@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 
+import * as datos from '@/data/datos';
+import { useSesion } from '@/store/session';
+
 export type Prioridad = 'alta' | 'media' | 'baja';
 
 export type Pendiente = {
-  id: string;
+  id: number;
   titulo: string;
   materia: string;
   fecha: string; // dd/mm/aaaa
@@ -11,57 +14,103 @@ export type Pendiente = {
   hecho: boolean;
 };
 
-const iniciales: Pendiente[] = [
-  {
-    id: 'p1',
-    titulo: 'Resolver ejercicios de ecuaciones',
-    materia: 'Matemática',
-    fecha: '20/11/2026',
-    prioridad: 'alta',
-    hecho: false,
-  },
-  {
-    id: 'p2',
-    titulo: 'Leer capítulo 4 y hacer resumen',
-    materia: 'Lengua Castellana',
-    fecha: '21/11/2026',
-    prioridad: 'media',
-    hecho: false,
-  },
-  {
-    id: 'p3',
-    titulo: 'Preparar exposición de ecosistemas',
-    materia: 'Ciencias Naturales',
-    fecha: '18/11/2026',
-    prioridad: 'alta',
-    hecho: true,
-  },
-];
+export type NuevoPendiente = Omit<Pendiente, 'id' | 'hecho'>;
 
 type State = {
   items: Pendiente[];
-  agregar: (p: Omit<Pendiente, 'id' | 'hecho'>) => void;
-  actualizar: (id: string, cambios: Omit<Pendiente, 'id'>) => void;
-  eliminar: (id: string) => void;
-  alternar: (id: string) => void;
+  cargando: boolean;
+  guardando: boolean;
+  error: string | null;
+  cargar: () => Promise<void>;
+  agregar: (p: NuevoPendiente) => Promise<boolean>;
+  actualizar: (id: number, cambios: Omit<Pendiente, 'id'>) => Promise<boolean>;
+  eliminar: (id: number) => Promise<boolean>;
+  alternar: (id: number) => Promise<void>;
 };
 
-export const usePendientes = create<State>((set) => ({
-  items: iniciales,
-  agregar: (p) =>
-    set((s) => ({
-      items: [
-        ...s.items,
-        { ...p, id: `p${Date.now()}`, hecho: false },
-      ],
-    })),
-  actualizar: (id, cambios) =>
-    set((s) => ({
-      items: s.items.map((item) => (item.id === id ? { ...cambios, id } : item)),
-    })),
-  eliminar: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-  alternar: (id) =>
-    set((s) => ({
-      items: s.items.map((i) => (i.id === id ? { ...i, hecho: !i.hecho } : i)),
-    })),
+function mensajeDe(error: unknown) {
+  return error instanceof Error ? error.message : 'No se pudo conectar con la base de datos.';
+}
+
+export const usePendientes = create<State>((set, get) => ({
+  items: [],
+  cargando: false,
+  guardando: false,
+  error: null,
+
+  // SELECT: vuelve a leer la tabla para refrescar la pantalla.
+  cargar: async () => {
+    const usuarioId = useSesion.getState().usuarioId || 1;
+
+    set({ cargando: true, error: null });
+    try {
+      const items = (await datos.obtener(usuarioId)) as Pendiente[];
+      set({ items, cargando: false });
+    } catch (error) {
+      set({ cargando: false, error: mensajeDe(error) });
+    }
+  },
+
+  // INSERT y luego recarga de la tabla.
+  agregar: async (p) => {
+    const usuarioId = useSesion.getState().usuarioId || 1;
+
+    set({ guardando: true, error: null });
+    try {
+      await datos.agregar(usuarioId, p);
+      await get().cargar();
+      set({ guardando: false });
+      return true;
+    } catch (error) {
+      set({ guardando: false, error: mensajeDe(error) });
+      return false;
+    }
+  },
+
+  // UPDATE ... WHERE y luego recarga de la tabla.
+  actualizar: async (id, cambios) => {
+    const usuarioId = useSesion.getState().usuarioId || 1;
+
+    set({ guardando: true, error: null });
+    try {
+      await datos.modificar(usuarioId, id, cambios);
+      await get().cargar();
+      set({ guardando: false });
+      return true;
+    } catch (error) {
+      set({ guardando: false, error: mensajeDe(error) });
+      return false;
+    }
+  },
+
+  // DELETE ... WHERE y luego recarga de la tabla.
+  eliminar: async (id) => {
+    const usuarioId = useSesion.getState().usuarioId || 1;
+
+    set({ guardando: true, error: null });
+    try {
+      await datos.eliminar(usuarioId, id);
+      await get().cargar();
+      set({ guardando: false });
+      return true;
+    } catch (error) {
+      set({ guardando: false, error: mensajeDe(error) });
+      return false;
+    }
+  },
+
+  // UPDATE del campo hecho y luego recarga.
+  alternar: async (id) => {
+    const usuarioId = useSesion.getState().usuarioId || 1;
+    const actual = get().items.find((item) => item.id === id);
+    if (!actual) return;
+
+    set({ error: null });
+    try {
+      await datos.alternar(usuarioId, id, !actual.hecho);
+      await get().cargar();
+    } catch (error) {
+      set({ error: mensajeDe(error) });
+    }
+  },
 }));

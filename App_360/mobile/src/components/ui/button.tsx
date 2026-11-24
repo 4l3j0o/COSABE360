@@ -9,14 +9,16 @@ import {
 } from 'react-native';
 
 import { AppText } from './app-text';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+type Size = 'sm' | 'md' | 'lg';
 
 type Props = {
   label: string;
   onPress?: () => void;
   variant?: Variant;
+  size?: Size;
   loading?: boolean;
   disabled?: boolean;
   icon?: ReactNode;
@@ -25,8 +27,9 @@ type Props = {
 };
 
 const backgrounds: Record<Variant, string> = {
-  primary: colors.primary[600],
+  primary: colors.primary[700],
   secondary: colors.surface.card,
+  outline: 'transparent',
   ghost: 'transparent',
   danger: colors.semantic.danger,
 };
@@ -35,6 +38,7 @@ export function Button({
   label,
   onPress,
   variant = 'primary',
+  size = 'md',
   loading,
   disabled,
   icon,
@@ -42,8 +46,11 @@ export function Button({
   style,
 }: Props) {
   const isDisabled = disabled || loading;
-  const textColor =
-    variant === 'primary' || variant === 'danger' ? colors.text.inverse : colors.primary[700];
+
+  let textColor: string = colors.text.inverse;
+  if (variant === 'secondary') textColor = colors.text.primary;
+  if (variant === 'outline') textColor = colors.primary[700];
+  if (variant === 'ghost') textColor = colors.text.secondary;
 
   return (
     <Pressable
@@ -52,20 +59,32 @@ export function Button({
       onPress={isDisabled ? undefined : onPress}
       style={({ pressed }) => [
         styles.base,
+        styles[size],
         {
           backgroundColor: backgrounds[variant],
-          borderColor: variant === 'secondary' ? colors.surface.border : 'transparent',
-          opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
+          borderColor:
+            variant === 'secondary'
+              ? colors.surface.border
+              : variant === 'outline'
+              ? colors.primary[600]
+              : 'transparent',
+          borderWidth: variant === 'secondary' || variant === 'outline' ? 1.5 : 0,
+          opacity: isDisabled ? 0.45 : 1,
           width: fullWidth ? '100%' : undefined,
+          transform: [{ scale: pressed && !isDisabled ? 0.98 : 1 }],
         },
+        variant === 'primary' && !isDisabled ? shadows.brandGlow : undefined,
+        variant === 'secondary' && !isDisabled ? shadows.sm : undefined,
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator color={textColor} size={size === 'sm' ? 'small' : 'small'} />
       ) : (
         <View style={styles.content}>
           {icon}
-          <AppText variant="bodyStrong" color={textColor}>
+          <AppText
+            variant={size === 'sm' ? 'captionStrong' : 'bodyStrong'}
+            color={textColor}>
             {label}
           </AppText>
         </View>
@@ -76,13 +95,30 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 48,
     borderRadius: radius.md,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sm: {
+    minHeight: 38,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  md: {
+    minHeight: 48,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
   },
-  content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  lg: {
+    minHeight: 54,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.lg,
+    borderRadius: radius.lg,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
 });
